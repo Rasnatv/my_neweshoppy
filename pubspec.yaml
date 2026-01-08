@@ -1,0 +1,64 @@
+name: eshoppy
+description: "A new Flutter project."
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  flutter_screenutil: ^5.9.3
+  glassmorphism: ^3.0.0
+  get: ^4.7.2
+  carousel_slider: ^5.1.1
+  image_picker: ^1.2.1
+  flutter_svg: ^2.2.3
+  http: ^1.6.0
+  lottie: ^3.3.2
+  intl: ^0.20.2
+  url_launcher: ^6.3.2
+  google_maps_flutter: ^2.14.0
+  shared_preferences: ^2.5.4
+  geocoding: ^4.0.0
+  get_storage: ^2.1.1
+  cached_network_image: ^3.4.1
+  geolocator: ^14.0.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+
+
+flutter:
+
+
+  uses-material-design: true
+
+  # To add assets to your application, add an assets section, like this:
+  assets:
+    - assets/
+    - assets/images/
+    - assets/images/products/
+    - assets/images/logo/
+    - assets/images/categories/
+    - assets/images/icons/
+  fonts:
+      - family: NunitoSans
+        fonts:
+          - asset: fonts/nunito_sans.ttf
+            weight: 400
+      - family: Raleway
+        fonts:
+          - asset: fonts/raleway.ttf
+            weight: 400
+
+
+
+
