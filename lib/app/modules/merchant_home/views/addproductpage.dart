@@ -1,549 +1,755 @@
-//
-// import 'dart:io';
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-// import '../../../common/style/app_colors.dart';
-// import '../../../common/style/app_text_style.dart';
-// import '../controller/addproduct_controller.dart';
-//
-// class AddProductPage extends StatelessWidget {
-//   final ProductController controller = Get.put(ProductController());
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         automaticallyImplyLeading: true,
-//         backgroundColor: AppColors.kPrimary,
-//           iconTheme: const IconThemeData(
-//             color: Colors.white, // back arrow color
-//           ),
-//           title: Text("Add New Product",style:  AppTextStyle.rTextNunitoWhite16w600)),
-//       body: SingleChildScrollView(
-//         padding: const EdgeInsets.all(16),
-//         child: Column(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//
-//             // ---------------- Product Info ----------------
-//             Card(
-//               elevation: 2,
-//               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-//               margin: const EdgeInsets.symmetric(vertical: 8),
-//               child: Padding(
-//                 padding: const EdgeInsets.all(12),
-//                 child: Column(
-//                   crossAxisAlignment: CrossAxisAlignment.start,
-//                   children: [
-//                     const Text("Product Info", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-//                     const SizedBox(height: 12),
-//                     TextField(
-//                       controller: controller.productName,
-//                       decoration: const InputDecoration(
-//                           labelText: "Product Name", border: OutlineInputBorder()
-//                       ),
-//                     ),
-//                     const SizedBox(height: 12),
-//                     TextField(
-//                       controller: controller.productName,
-//                       decoration: const InputDecoration(
-//                           labelText: "Price", border: OutlineInputBorder()
-//                       ),
-//                     ),
-//
-//                   ],
-//                 ),
-//               ),
-//             ),
-//
-//             // ---------------- Image Picker ----------------
-//             Card(
-//               elevation: 2,
-//               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-//               margin: const EdgeInsets.symmetric(vertical: 8),
-//               child: Padding(
-//                 padding: const EdgeInsets.all(12),
-//                 child: Obx(() => Column(
-//                   crossAxisAlignment: CrossAxisAlignment.start,
-//                   children: [
-//                     const Text("Product Image", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-//                     const SizedBox(height: 12),
-//                     GestureDetector(
-//                       onTap: controller.pickSingleImage,
-//                       child: Container(
-//                         width: double.infinity,
-//                         height: 150,
-//                         decoration: BoxDecoration(
-//                           border: Border.all(color: Colors.grey),
-//                           borderRadius: BorderRadius.circular(12),
-//                           color: Colors.grey[100],
-//                         ),
-//                         child: controller.productImage.value == null
-//                             ? Column(
-//                           mainAxisAlignment: MainAxisAlignment.center,
-//                           children: const [
-//                             Icon(Icons.image, size: 36, color: Colors.grey),
-//                             SizedBox(height: 8),
-//                             Text("Tap to pick product image")
-//                           ],
-//                         )
-//                             : ClipRRect(
-//                           borderRadius: BorderRadius.circular(12),
-//                           child: Image.file(
-//                             controller.productImage.value!,
-//                             width: double.infinity,
-//                             height: 150,
-//                             fit: BoxFit.cover,
-//                           ),
-//                         ),
-//                       ),
-//                     ),
-//                     if (controller.productImage.value != null)
-//                       Align(
-//                         alignment: Alignment.topRight,
-//                         child: IconButton(
-//                           icon: const Icon(Icons.close, color: Colors.red),
-//                           onPressed: controller.removeImage,
-//                         ),
-//                       )
-//                   ],
-//                 )),
-//               ),
-//             ),
-// //---------------- Category & Stock ----------------
-//             Card(
-//               elevation: 2,
-//               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-//               margin: const EdgeInsets.symmetric(vertical: 8),
-//               child: Padding(
-//                 padding: const EdgeInsets.all(12),
-//                 child: Column(
-//                   crossAxisAlignment: CrossAxisAlignment.start,
-//                   children: [
-//                     const Text("Category & Stock", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-//                     const SizedBox(height: 12),
-//                     // Category Dropdown
-//                     Obx(() => DropdownButtonFormField<String>(
-//                       value: controller.selectedCategory.value.isEmpty ? null : controller.selectedCategory.value,
-//                       decoration: const InputDecoration(
-//                         labelText: "Select Category",
-//                         border: OutlineInputBorder(),
-//                       ),
-//                       items: controller.productCategories
-//                           .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-//                           .toList(),
-//                       onChanged: (v) => controller.selectedCategory.value = v!,
-//                     )),
-//                     const SizedBox(height: 12),
-//                     // Number of items in stock
-//                     TextField(
-//                       controller: controller.stockQuantity,
-//                       keyboardType: TextInputType.number,
-//                       decoration: const InputDecoration(
-//                         labelText: "Number of items in stock",
-//                         border: OutlineInputBorder(),
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//               ),
-//             ),
-//
-//
-//             // ---------------- Features ----------------
-//             Card(
-//               elevation: 2,
-//               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-//               margin: const EdgeInsets.symmetric(vertical: 8),
-//               child: Padding(
-//                 padding: const EdgeInsets.all(12),
-//                 child: Column(
-//                   crossAxisAlignment: CrossAxisAlignment.start,
-//                   children: [
-//                     Row(
-//                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                       children: [
-//                         const Text("Features (up to 5)", style: TextStyle(fontWeight: FontWeight.bold)),
-//                         TextButton(
-//                           onPressed: controller.features.length < 5 ? controller.addFeature : null,
-//                           child: const Text("+ Add Feature"),
-//                         ),
-//                       ],
-//                     ),
-//                     const SizedBox(height: 8),
-//                     Obx(() => Column(
-//                       children: List.generate(controller.features.length, (index) {
-//                         return Padding(
-//                           padding: const EdgeInsets.only(bottom: 8.0),
-//                           child: Row(
-//                             children: [
-//                               Expanded(
-//                                 child: TextField(
-//                                   controller: controller.features[index],
-//                                   decoration: InputDecoration(
-//                                     labelText: "Feature ${index + 1}",
-//                                     border: const OutlineInputBorder(),
-//                                   ),
-//                                 ),
-//                               ),
-//                               IconButton(
-//                                 icon: const Icon(Icons.delete, color: Colors.red),
-//                                 onPressed: () => controller.removeFeature(index),
-//                               ),
-//                             ],
-//                           ),
-//                         );
-//                       }),
-//                     )),
-//                   ],
-//                 ),
-//               ),
-//             ),
-//
-//             // ---------------- Specifications (Attributes) ----------------
-//             // ---------------- Specifications (Attributes) ----------------
-//             Card(
-//               elevation: 2,
-//               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-//               margin: const EdgeInsets.symmetric(vertical: 8),
-//               child: Padding(
-//                 padding: const EdgeInsets.all(12),
-//                 child: Column(
-//                   crossAxisAlignment: CrossAxisAlignment.start,
-//                   children: [
-//                     const Text("Specifications", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-//                     const SizedBox(height: 12),
-//                     TextButton(
-//                       onPressed: controller.attributes.length < 10 ? controller.addAttributeRow : null,
-//                       child: const Text("+ Add Attribute"),
-//                     ),
-//                     const SizedBox(height: 12),
-//                     Obx(() {
-//                       if (controller.selectedCategory.value.isEmpty) {
-//                         return const Text("Select category to see suggested attributes");
-//                       }
-//                       final attrList = controller.categoryAttributes[controller.selectedCategory.value] ?? <String>[];
-//
-//                       return Column(
-//                         children: List.generate(controller.attributes.length, (index) {
-//                           final attr = controller.attributes[index];
-//                           final bool isOther = attr["isOther"] as bool;
-//                           final bool isVariant = attr["isVariant"] as bool;
-//                           final values = attr["values"] as List<String>;
-//
-//                           return Container(
-//                             margin: const EdgeInsets.only(bottom: 12),
-//                             padding: const EdgeInsets.all(10),
-//                             decoration: BoxDecoration(
-//                               color: Colors.grey[50],
-//                               border: Border.all(color: Colors.grey.shade300),
-//                               borderRadius: BorderRadius.circular(10),
-//                             ),
-//                             child: Column(
-//                               crossAxisAlignment: CrossAxisAlignment.start,
-//                               children: [
-//                                 Row(
-//                                   children: [
-//                                     Expanded(
-//                                       child: DropdownButtonFormField<String>(
-//                                         isExpanded: true,
-//                                         value: (attr["selected"] as String).isEmpty
-//                                             ? null
-//                                             : (attr["selected"] as String),
-//                                         decoration: const InputDecoration(
-//                                           labelText: "Attribute",
-//                                           border: OutlineInputBorder(),
-//                                         ),
-//                                         items: [
-//                                           ...attrList.where((e) => e != "Other")
-//                                               .map((e) => DropdownMenuItem(value: e, child: Text(e))),
-//                                           const DropdownMenuItem(value: "Other", child: Text("Other")),
-//                                         ],
-//                                         onChanged: (val) => controller.onAttributeSelected(index, val),
-//                                       ),
-//                                     ),
-//                                     const SizedBox(width: 8),
-//                                     IconButton(
-//                                       icon: const Icon(Icons.delete, color: Colors.red),
-//                                       onPressed: () => controller.removeAttributeRow(index),
-//                                     ),
-//                                   ],
-//                                 ),
-//                                 if (isOther) ...[
-//                                   const SizedBox(height: 8),
-//                                   TextField(
-//                                     controller: attr["name"] as TextEditingController,
-//                                     decoration: const InputDecoration(
-//                                       labelText: "Custom Name",
-//                                       border: OutlineInputBorder(),
-//                                     ),
-//                                   ),
-//                                 ],
-//                                 const SizedBox(height: 8),
-//                                 if (isVariant) ...[
-//                                   Row(
-//                                     children: [
-//                                       Expanded(
-//                                         child: TextField(
-//                                           controller: TextEditingController(),
-//                                           key: ValueKey("variant_input_$index"),
-//                                           onSubmitted: (v) => controller.addVariantValue(index, v),
-//                                           decoration: const InputDecoration(
-//                                             labelText: "Add variant (press enter)",
-//                                             border: OutlineInputBorder(),
-//                                           ),
-//                                         ),
-//                                       ),
-//                                       const SizedBox(width: 8),
-//                                       IconButton(
-//                                         tooltip: "Open suggestions",
-//                                         icon: const Icon(Icons.list),
-//                                         onPressed: () {
-//                                           final name = (attr["selected"] as String);
-//                                           final suggestions = controller.attributeValueSuggestions[name] ?? [];
-//                                           if (suggestions.isEmpty) {
-//                                             Get.snackbar("No suggestions", "No suggestions available for $name");
-//                                             return;
-//                                           }
-//                                           Get.bottomSheet(
-//                                             Container(
-//                                               padding: const EdgeInsets.all(12),
-//                                               decoration: BoxDecoration(
-//                                                 color: Theme.of(context).canvasColor,
-//                                                 borderRadius: const BorderRadius.only(
-//                                                   topLeft: Radius.circular(12),
-//                                                   topRight: Radius.circular(12),
-//                                                 ),
-//                                               ),
-//                                               child: Wrap(
-//                                                 spacing: 6,
-//                                                 runSpacing: 6,
-//                                                 children: suggestions.map((v) {
-//                                                   return ActionChip(
-//                                                     label: Text(v),
-//                                                     onPressed: () {
-//                                                       controller.addVariantValue(index, v);
-//                                                       Get.back();
-//                                                     },
-//                                                   );
-//                                                 }).toList(),
-//                                               ),
-//                                             ),
-//                                           );
-//                                         },
-//                                       ),
-//                                     ],
-//                                   ),
-//                                   const SizedBox(height: 6),
-//                                   Column(
-//                                     crossAxisAlignment: CrossAxisAlignment.start,
-//                                     children: values.map((v) {
-//                                       return Container(
-//                                         margin: const EdgeInsets.symmetric(vertical: 3),
-//                                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-//                                         decoration: BoxDecoration(
-//                                           color: Colors.grey[200],
-//                                           borderRadius: BorderRadius.circular(8),
-//                                         ),
-//                                         child: Row(
-//                                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                                           children: [
-//                                             Text(v, style: const TextStyle(fontSize: 14)),
-//                                             IconButton(
-//                                               icon: const Icon(Icons.close, size: 18, color: Colors.red),
-//                                               onPressed: () => controller.removeVariantValue(index, v),
-//                                             ),
-//                                           ],
-//                                         ),
-//                                       );
-//                                     }).toList(),
-//                                   ),
-//                                 ] else
-//                                   TextField(
-//                                     controller: attr["value"] as TextEditingController,
-//                                     decoration: const InputDecoration(
-//                                       labelText: "Value",
-//                                       border: OutlineInputBorder(),
-//                                     ),
-//                                   ),
-//                               ],
-//                             ),
-//                           );
-//                         }),
-//                       );
-//                     }),
-//                   ],
-//                 ),
-//               ),
-//             ),
-//
-//
-//             const SizedBox(height: 20),
-//             SizedBox(
-//               width: double.infinity,
-//               child: ElevatedButton(
-//                 onPressed: controller.addProduct,
-//                   child: Text("Submit Product"),
-//                 ),
-//               ),
-//             const SizedBox(height: 40),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
-//
-//
-// Flutter Variant Product Add Page (Merchant)
-// Matches API payload structure exactly
 
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../../../common/style/app_colors.dart';
+import '../../../common/style/app_text_style.dart';
+import '../controller/addproduct_controller.dart';
 
-class AddVariantProductPage extends StatefulWidget {
-  const AddVariantProductPage({super.key});
-
-  @override
-  State<AddVariantProductPage> createState() => _AddVariantProductPageState();
-}
-
-class _AddVariantProductPageState extends State<AddVariantProductPage> {
-  // Selected attribute values
-  List<String> sizes = ['S', 'M'];
-  List<String> colors = ['Red', 'Blue'];
-
-  List<Map<String, dynamic>> variants = [];
-
-  @override
-  void initState() {
-    super.initState();
-    generateVariants();
-  }
-
-  void generateVariants() {
-    variants.clear();
-    for (var size in sizes) {
-      for (var color in colors) {
-        variants.add({
-          'size': size,
-          'color': color,
-          'price': TextEditingController(),
-          'stock': TextEditingController(),
-        });
-      }
-    }
-    setState(() {});
-  }
+class AddProductPage extends StatelessWidget {
+  final ProductController controller = Get.put(ProductController());
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Variant Product')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _sectionTitle('Basic Information'),
-            _textField('Product Name'),
-            _dropdown('Category'),
+      backgroundColor: Color(0xFFF8F9FA),
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: AppColors.kPrimary,
+        foregroundColor: Color(0xFF1A1A1A),
+        title: Text(
+          "Add New Product",style:  AppTextStyle.rTextNunitoWhite16w600
+          ),
 
-            const SizedBox(height: 20),
-            _sectionTitle('Attributes'),
-            Wrap(
-              spacing: 10,
-              children: const [
-                Chip(label: Text('Size')),
-                Chip(label: Text('Color')),
-              ],
+        actions: [
+          IconButton(
+            icon: Icon(Icons.save_outlined),
+            onPressed: () => _saveProduct(context),
+            tooltip: "Add Product",
+          ),
+        ],
+      ),
+      body: Obx(() => SingleChildScrollView(
+        child: Column(
+          children: [
+            // Header Section
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Basic Information",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1A1A1A),
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    "Fill in the essential details about your product",
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF6B7280),
+                    ),
+                  ),
+                ],
+              ),
             ),
 
-            const SizedBox(height: 20),
-            _sectionTitle('Variants'),
-            _variantTable(),
+            // Main Content
+            Padding(
+              padding: EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  // Product Name Card
+                  _buildCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionTitle("Product Name", Icons.shopping_bag_outlined),
+                        SizedBox(height: 12),
+                        _buildTextField(
+                          label: "Enter product name",
+                          hint: "e.g., Classic Cotton T-Shirt",
+                          icon: Icons.label_outline,
+                          onChanged: (val) => controller.productName.value = val,
+                        ),
+                      ],
+                    ),
+                  ),
 
-            const SizedBox(height: 30),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  // Build API payload here
-                },
-                child: const Text('Save Product'),
+                  SizedBox(height: 16),
+
+                  // Category Card
+                  _buildCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionTitle("Category", Icons.category_outlined),
+                        SizedBox(height: 12),
+                        _buildCategoryDropdown(context),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(height: 24),
+
+                  // Variants Section
+                  if (controller.selectedCategory.value.isNotEmpty) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Product Variants",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF1A1A1A),
+                          ),
+                        ),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.kPrimary,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(0xFF3B82F6).withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: controller.addVariant,
+                              borderRadius: BorderRadius.circular(20),
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.add, color: Colors.white, size: 18),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      "Add Variant",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 16),
+
+                    // Variant Cards
+                    if (controller.variants.isEmpty)
+                      _buildEmptyState()
+                    else
+                      ...controller.variants.asMap().entries.map((entry) {
+                        return _buildVariantCard(context, entry.key, entry.value);
+                      }).toList(),
+                  ],
+
+                  SizedBox(height: 100),
+                ],
               ),
-            )
+            ),
           ],
+        ),
+      )),
+      floatingActionButton: Obx(() => controller.variants.isNotEmpty
+          ? FloatingActionButton.extended(
+        onPressed: () => _saveProduct(context),
+        backgroundColor: Color(0xFF10B981),
+        icon: Icon(Icons.check_circle_outline),
+        label: Text(
+          "Save Product",
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        elevation: 4,
+      )
+          : SizedBox.shrink()),
+    );
+  }
+
+  Widget _buildCard({required Widget child}) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+
+  Widget _buildSectionTitle(String title, IconData icon) {
+    return Row(
+      children: [
+        Container(
+          padding: EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Color(0xFF3B82F6).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: Color(0xFF3B82F6), size: 20),
+        ),
+        SizedBox(width: 12),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF1A1A1A),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTextField({
+    required String label,
+    required String hint,
+    required IconData icon,
+    required Function(String) onChanged,
+    TextInputType? keyboardType,
+    String? suffix,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Color(0xFFE5E7EB)),
+      ),
+      child: TextField(
+        onChanged: onChanged,
+        keyboardType: keyboardType,
+        style: TextStyle(fontSize: 15, color: Color(0xFF1A1A1A)),
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hint,
+          prefixIcon: Icon(icon, color: Color(0xFF6B7280), size: 20),
+          suffixText: suffix,
+          suffixStyle: TextStyle(color: Color(0xFF6B7280), fontWeight: FontWeight.w500),
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          labelStyle: TextStyle(color: Color(0xFF6B7280), fontSize: 14),
+          hintStyle: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
         ),
       ),
     );
   }
 
-  Widget _variantTable() {
-    return Column(
-      children: variants.map((variant) {
-        return Card(
-          margin: const EdgeInsets.only(bottom: 10),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
+  Widget _buildCategoryDropdown(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Color(0xFFE5E7EB)),
+      ),
+      padding: EdgeInsets.symmetric(horizontal: 16),
+      child: DropdownButtonFormField<String>(
+        decoration: InputDecoration(
+          border: InputBorder.none,
+          prefixIcon: Icon(Icons.list_alt, color: Color(0xFF6B7280), size: 20),
+          hintText: "Choose a category",
+          hintStyle: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+        ),
+        value: controller.selectedCategory.value.isEmpty
+            ? null
+            : controller.selectedCategory.value,
+        items: controller.categoryAttributes.keys
+            .map((c) => DropdownMenuItem(
+          value: c,
+          child: Text(c, style: TextStyle(fontSize: 15)),
+        ))
+            .toList(),
+        onChanged: (val) {
+          controller.selectedCategory.value = val!;
+          controller.variants.clear();
+        },
+        dropdownColor: Colors.white,
+        icon: Icon(Icons.keyboard_arrow_down, color: Color(0xFF6B7280)),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Container(
+      padding: EdgeInsets.all(40),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Color(0xFFE5E7EB), width: 2, style: BorderStyle.solid),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Color(0xFF3B82F6).withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.inventory_2_outlined,
+              size: 48,
+              color: Color(0xFF3B82F6),
+            ),
+          ),
+          SizedBox(height: 16),
+          Text(
+            "No variants added yet",
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1A1A1A),
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            "Click 'Add Variant' to create product variations",
+            style: TextStyle(
+              fontSize: 14,
+              color: Color(0xFF6B7280),
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVariantCard(BuildContext context, int index, variant) {
+    var featureKeys = controller.categoryAttributes[controller.selectedCategory.value] ?? [];
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Variant Header
+          Container(
+            padding: EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Color(0xFF3B82F6).withOpacity(0.05),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+            ),
             child: Row(
               children: [
-                Expanded(child: Text('${variant['size']} / ${variant['color']}')),
-                SizedBox(
-                  width: 80,
-                  child: TextField(
-                    controller: variant['price'],
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Price'),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.kPrimary,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    "Variant ${index + 1}",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
                   ),
                 ),
-                const SizedBox(width: 10),
-                SizedBox(
-                  width: 80,
-                  child: TextField(
-                    controller: variant['stock'],
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Stock'),
-                  ),
-                )
+                Spacer(),
+                IconButton(
+                  icon: Icon(Icons.delete_outline, color: Color(0xFFEF4444)),
+                  onPressed: () => _showDeleteDialog(context, index),
+                  tooltip: "Remove variant",
+                ),
               ],
             ),
           ),
+
+          // Variant Content
+          Padding(
+            padding: EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Image Section
+                _buildImagePicker(context, index, variant),
+                SizedBox(height: 16),
+
+                // Price and Stock Row
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildTextField(
+                        label: "Price",
+                        hint: "0.00",
+                        icon: Icons.currency_rupee,
+                        keyboardType: TextInputType.numberWithOptions(decimal: true),
+                        onChanged: (val) => variant.price = double.tryParse(val),
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: _buildTextField(
+                        label: "Stock",
+                        hint: "0",
+                        icon: Icons.inventory_outlined,
+                        keyboardType: TextInputType.number,
+                        suffix: "units",
+                        onChanged: (val) => variant.stock = int.tryParse(val),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20),
+
+                // Features Section
+                Text(
+                  "Attributes",
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1A1A1A),
+                  ),
+                ),
+                SizedBox(height: 12),
+                Container(
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Color(0xFFE5E7EB)),
+                  ),
+                  child: Column(
+                    children: featureKeys.map((key) {
+                      return Padding(
+                        padding: EdgeInsets.only(bottom: key == featureKeys.last ? 0 : 12),
+                        child: TextField(
+                          onChanged: (val) => variant.features[key] = val,
+                          style: TextStyle(fontSize: 14),
+                          decoration: InputDecoration(
+                            labelText: key,
+                            hintText: "Enter $key",
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(color: Color(0xFFE5E7EB)),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(color: Color(0xFFE5E7EB)),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(color: Color(0xFF3B82F6), width: 2),
+                            ),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                            labelStyle: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+                            hintStyle: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImagePicker(BuildContext context, int index, variant) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Product Image",
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF1A1A1A),
+          ),
+        ),
+        SizedBox(height: 12),
+        GestureDetector(
+          onTap: () => controller.pickImage(index),
+          child: Container(
+            height: 180,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Color(0xFFF9FAFB),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Color(0xFFE5E7EB),
+                width: 2,
+                style: BorderStyle.solid,
+              ),
+            ),
+            child: variant.imagePath == null
+                ? Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Color(0xFF3B82F6).withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.add_photo_alternate_outlined,
+                    size: 40,
+                    color: Color(0xFF3B82F6),
+                  ),
+                ),
+                SizedBox(height: 12),
+                Text(
+                  "Tap to add image",
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  "JPG, PNG up to 10MB",
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF9CA3AF),
+                  ),
+                ),
+              ],
+            )
+                : Stack(
+              fit: StackFit.expand,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.file(
+                    File(variant.imagePath!),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 8,
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      icon: Icon(Icons.edit, color: Color(0xFF3B82F6), size: 20),
+                      onPressed: () => controller.pickImage(index),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showDeleteDialog(BuildContext context, int index) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Color(0xFFEF4444)),
+              SizedBox(width: 12),
+              Text("Remove Variant?"),
+            ],
+          ),
+          content: Text(
+            "Are you sure you want to remove this variant? This action cannot be undone.",
+            style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text("Cancel", style: TextStyle(color: Color(0xFF6B7280))),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                controller.removeVariant(index);
+                Navigator.of(context).pop();
+                Get.snackbar(
+                  "Removed",
+                  "Variant has been removed",
+                  snackPosition: SnackPosition.BOTTOM,
+                  backgroundColor: Color(0xFFEF4444),
+                  colorText: Colors.white,
+                  margin: EdgeInsets.all(16),
+                  borderRadius: 12,
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFFEF4444),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: Text("Remove"),
+            ),
+          ],
         );
-      }).toList(),
+      },
     );
   }
 
-  Widget _textField(String label) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: TextField(
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-      ),
-    );
-  }
+  void _saveProduct(BuildContext context) {
+    if (controller.productName.value.isEmpty) {
+      Get.snackbar(
+        "Missing Information",
+        "Please enter a product name",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Color(0xFFF59E0B),
+        colorText: Colors.white,
+        margin: EdgeInsets.all(16),
+        borderRadius: 12,
+        icon: Icon(Icons.info_outline, color: Colors.white),
+      );
+      return;
+    }
 
-  Widget _dropdown(String label) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: DropdownButtonFormField<String>(
-        items: const [],
-        onChanged: (v) {},
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-      ),
-    );
-  }
+    if (controller.selectedCategory.value.isEmpty) {
+      Get.snackbar(
+        "Missing Information",
+        "Please select a category",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Color(0xFFF59E0B),
+        colorText: Colors.white,
+        margin: EdgeInsets.all(16),
+        borderRadius: 12,
+        icon: Icon(Icons.info_outline, color: Colors.white),
+      );
+      return;
+    }
 
-  Widget _sectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Text(title,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+    if (controller.variants.isEmpty) {
+      Get.snackbar(
+        "Missing Information",
+        "Please add at least one variant",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Color(0xFFF59E0B),
+        colorText: Colors.white,
+        margin: EdgeInsets.all(16),
+        borderRadius: 12,
+        icon: Icon(Icons.info_outline, color: Colors.white),
+      );
+      return;
+    }
+
+    // Validation passed, show success
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Color(0xFF10B981).withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.check_circle_outline,
+                  size: 64,
+                  color: Color(0xFF10B981),
+                ),
+              ),
+              SizedBox(height: 24),
+              Text(
+                "Product Saved!",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1A1A1A),
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                "Your product has been successfully added",
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF6B7280),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  print("Product Name: ${controller.productName.value}");
+                  print("Category: ${controller.selectedCategory.value}");
+                  print("Variants: ${controller.variants}");
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF10B981),
+                  minimumSize: Size(double.infinity, 48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text("Done", style: TextStyle(fontWeight: FontWeight.w600)),
+              ),
+            ],
+          ),
+        );
+      },
+
     );
   }
 }

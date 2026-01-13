@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
@@ -46,6 +47,8 @@ class MerchantRegController extends GetxController {
   var states = <String>[].obs;
   var districts = <String>[].obs;
   var locations = <String>[].obs;
+  final box = GetStorage();
+
 
   // ------------------ API URLs ------------------
   static const String signupApiUrl =
@@ -620,6 +623,7 @@ class MerchantRegController extends GetxController {
         if (responseData['status'] == true) {
           // Save auth token if needed
           String authToken = responseData['data']['auth_token'];
+          box.write("auth_token", authToken);
 
           // You can save this token using GetStorage or SharedPreferences
           // Example: GetStorage().write('auth_token', authToken);

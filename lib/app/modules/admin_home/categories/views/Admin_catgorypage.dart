@@ -1,9 +1,9 @@
 
-import 'dart:io';
 import 'package:eshoppy/app/common/style/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controller/admin_categorycontroller.dart';
+import 'admin_categories.dart';
 
 class AddCategoryPage extends StatelessWidget {
   AddCategoryPage({super.key});
@@ -15,6 +15,9 @@ class AddCategoryPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
+        actions: [
+          IconButton(icon: Icon(Icons.category_rounded),onPressed: ()=>Get.to(()=>CategorieslistPage()),)
+        ],
         title: const Text(
           "Add Category",
           style: TextStyle(fontWeight: FontWeight.w600,color: Colors.white),
@@ -260,43 +263,6 @@ class AddCategoryPage extends StatelessWidget {
                           const SizedBox(height: 12),
                         ],
 
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                controller: valueCtrl,
-                                decoration: InputDecoration(
-                                  hintText: "Add value",
-                                  prefixIcon: const Icon(Icons.add_circle_outline, size: 20),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 14,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Colors.green[600],
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: IconButton(
-                                icon: const Icon(Icons.check, color: Colors.white),
-                                onPressed: () {
-                                  if (valueCtrl.text.trim().isNotEmpty) {
-                                    item.values.add(valueCtrl.text.trim());
-                                    valueCtrl.clear();
-                                    controller.items.refresh();
-                                  }
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
                         const SizedBox(height: 12),
                         Align(
                           alignment: Alignment.centerRight,

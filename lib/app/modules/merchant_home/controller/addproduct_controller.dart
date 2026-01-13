@@ -1,353 +1,405 @@
-//
-// import 'dart:io';
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-// import 'package:image_picker/image_picker.dart';
-//
-// class ProductController extends GetxController {
-//   // ---------------- BASIC FIELDS ----------------
-//   final TextEditingController productName = TextEditingController();
-//   final TextEditingController price = TextEditingController();
-//   final TextEditingController discountPercentage = TextEditingController();
-//   final TextEditingController stockQuantity = TextEditingController();
-//
-//
-//   // ---------------- STOCK STATUS ----------------
-//   RxString stockStatus = "".obs;
-//   void setStockStatus(String? val) => stockStatus.value = val ?? "";
-//
-//   // ---------------- FEATURES ----------------
-//   RxList<TextEditingController> features = <TextEditingController>[].obs;
-//
-//   void addFeature() {
-//     if (features.length >= 5) {
-//       Get.snackbar("Limit Reached", "Maximum 5 features allowed");
-//       return;
-//     }
-//     features.add(TextEditingController());
-//   }
-//
-//   void removeFeature(int index) {
-//     if (index < 0 || index >= features.length) return;
-//     features[index].dispose();
-//     features.removeAt(index);
-//   }
-//
-//   // ---------------- CATEGORY ----------------
-//   final List<String> productCategories = [
-//     "Fashion & Apparel",
-//     "Beauty & Personal Care",
-//     "Electronics",
-//     "Grocery & Essentials",
-//     "Bakery & Food",
-//     "Home Appliances",
-//     "Furniture",
-//     "Sports & Fitness",
-//     "Kids Products",
-//     "Pet Supplies",
-//     "Automobile & Accessories",
-//     "Medicine & Healthcare",
-//     "Home & Kitchen",
-//     "Tools & Hardware",
-//   ];
-//
-//   RxString selectedCategory = "".obs;
-//
-//   final Map<String, List<String>> categoryAttributes = {
-//     "Fashion & Apparel": ["Size", "Color", "Material", "Brand", "Fit", "Pattern", "Other"],
-//     "Beauty & Personal Care": ["Shade", "Skin Type", "Hair Type", "Ingredients", "Brand", "Volume", "Other"],
-//     "Electronics": ["Brand", "Model", "RAM", "Storage", "Battery", "Warranty", "Screen Size", "Other"],
-//     "Grocery & Essentials": ["Weight", "Brand", "Expiry Date", "Package Type", "Organic", "Other"],
-//     "Bakery & Food": ["Weight / Quantity", "Flavor / Type", "Ingredients", "Expiry Date", "Brand", "Allergen Info", "Packaging Type", "Other"],
-//     "Home Appliances": ["Brand", "Model", "Power", "Capacity", "Warranty", "Other"],
-//     "Furniture": ["Material", "Color", "Size", "Brand", "Weight", "Style", "Other"],
-//     "Sports & Fitness": ["Size", "Material", "Brand", "Weight", "Capacity", "Other"],
-//     "Kids Products": ["Age Group", "Material", "Brand", "Safety Info", "Other"],
-//     "Pet Supplies": ["Pet Type", "Weight", "Ingredients", "Age Group", "Brand", "Other"],
-//     "Automobile & Accessories": ["Vehicle Type", "Model", "Brand", "Year", "Part Type", "Other"],
-//     "Medicine & Healthcare": ["Medicine Type", "Dosage", "Expiry Date", "Composition", "Brand", "Other"],
-//     "Home & Kitchen": ["Material", "Brand", "Size", "Capacity", "Other"],
-//     "Tools & Hardware": ["Material", "Brand", "Size", "Power", "Other"],
-//   };
-//
-//   // ---------------- VARIANT ATTRIBUTES ----------------
-//   final Map<String, List<String>> categoryVariantAttributes = {
-//     "Fashion & Apparel": ["Size", "Color", "Pattern", "Fit"],
-//     "Beauty & Personal Care": ["Shade", "Volume"],
-//     "Electronics": ["RAM", "Storage"],
-//     "Grocery & Essentials": ["Weight"],
-//     "Bakery & Food": ["Weight / Quantity", "Flavor / Type"],
-//     "Home Appliances": ["Capacity", "Power"],
-//     "Furniture": ["Size", "Color"],
-//     "Sports & Fitness": ["Size", "Weight", "Capacity"],
-//     "Kids Products": ["Age Group"],
-//     "Pet Supplies": ["Weight", "Age Group"],
-//     "Automobile & Accessories": [],
-//     "Medicine & Healthcare": ["Dosage"],
-//     "Home & Kitchen": ["Size", "Capacity"],
-//     "Tools & Hardware": ["Size", "Power"],
-//   };
-//
-//   // ---------------- ATTRIBUTE VALUE SUGGESTIONS ----------------
-//   final Map<String, List<String>> attributeValueSuggestions = {
-//     "Size": ["S", "M", "L", "XL", "XXL"],
-//     "Color": ["Red", "Blue", "Green", "Black", "White"],
-//     "Weight": ["250g", "500g", "1kg", "2kg"],
-//     "Shade": ["Light", "Medium", "Dark"],
-//     "Volume": ["50ml", "100ml", "250ml", "500ml"],
-//     "Capacity": ["1L", "2L", "5L"],
-//     "Fit": ["Regular", "Slim", "Loose"],
-//     "Pattern": ["Solid", "Striped", "Floral"],
-//     "Age Group": ["0-2", "3-5", "6-9", "10+"],
-//     "Power": ["100W", "200W", "500W"],
-//     "RAM": ["2GB", "4GB", "6GB", "8GB"],
-//   };
-//
-//   // ---------------- ATTRIBUTE ROWS ----------------
-//   RxList<Map<String, dynamic>> attributes = <Map<String, dynamic>>[].obs;
-//
-//   void addAttributeRow() {
-//     if (attributes.length >= 10) {
-//       Get.snackbar("Limit Reached", "Maximum 10 attributes allowed");
-//       return;
-//     }
-//
-//     attributes.add({
-//       "selected": "",
-//       "isOther": false,
-//       "isVariant": false,
-//       "name": TextEditingController(),
-//       "value": TextEditingController(),
-//       "values": <String>[],
-//     });
-//   }
-//
-//   void removeAttributeRow(int index) {
-//     if (index < 0 || index >= attributes.length) return;
-//     try {
-//       (attributes[index]["name"] as TextEditingController).dispose();
-//       (attributes[index]["value"] as TextEditingController).dispose();
-//     } catch (_) {}
-//     attributes.removeAt(index);
-//   }
-//
-//   void onAttributeSelected(int index, String? val) {
-//     if (index < 0 || index >= attributes.length) return;
-//     final row = attributes[index];
-//     row["selected"] = val ?? "";
-//     row["isOther"] = (val == "Other");
-//     final variants = categoryVariantAttributes[selectedCategory.value] ?? [];
-//     row["isVariant"] = variants.contains(val);
-//     row["name"] ??= TextEditingController();
-//     row["value"] ??= TextEditingController();
-//     row["values"] ??= <String>[];
-//     attributes.refresh();
-//   }
-//
-//   void addVariantValue(int index, String value) {
-//     if (index < 0 || index >= attributes.length) return;
-//     final List<String> values = attributes[index]["values"] as List<String>;
-//     if (!values.contains(value.trim())) {
-//       values.add(value.trim());
-//       attributes.refresh();
-//     }
-//   }
-//
-//   void removeVariantValue(int index, String value) {
-//     if (index < 0 || index >= attributes.length) return;
-//     final List<String> values = attributes[index]["values"] as List<String>;
-//     values.remove(value);
-//     attributes.refresh();
-//   }
-//
-//   // ---------------- IMAGE ----------------
-//   final ImagePicker picker = ImagePicker();
-//   Rx<File?> productImage = Rx<File?>(null);
-//
-//   Future<void> pickSingleImage() async {
-//     final XFile? picked = await picker.pickImage(source: ImageSource.gallery);
-//     if (picked != null) productImage.value = File(picked.path);
-//   }
-//
-//   void removeImage() => productImage.value = null;
-//
-//   // ---------------- SUBMIT PRODUCT ----------------
-//   void addProduct() {
-//     if (productName.text.isEmpty ||
-//         selectedCategory.value.isEmpty ||
-//         price.text.isEmpty ||
-//         stockStatus.value.isEmpty ||
-//         productImage.value == null) {
-//       Get.snackbar("Missing Fields", "Please fill all required fields");
-//       return;
-//     }
-//
-//     List<Map<String, dynamic>> finalAttributes = [];
-//     for (var attr in attributes) {
-//       final isOther = attr["isOther"] as bool;
-//       final isVariant = attr["isVariant"] as bool;
-//       String title = isOther
-//           ? (attr["name"] as TextEditingController).text.trim()
-//           : (attr["selected"] as String).trim();
-//
-//       if (isVariant) {
-//         final vals = List<String>.from(attr["values"] as List);
-//         if (title.isNotEmpty && vals.isNotEmpty) {
-//           finalAttributes.add({"name": title, "values": vals});
-//         }
-//       } else {
-//         final val = (attr["value"] as TextEditingController).text.trim();
-//         if (title.isNotEmpty && val.isNotEmpty) {
-//           finalAttributes.add({"name": title, "value": val});
-//         }
-//       }
-//     }
-//
-//     final productData = {
-//       "name": productName.text.trim(),
-//       "price": price.text.trim(),
-//       "discount": discountPercentage.text.trim(),
-//       "stockStatus": stockStatus.value,
-//       "category": selectedCategory.value,
-//       "attributes": finalAttributes,
-//       "imagePath": productImage.value?.path,
-//     };
-//
-//     debugPrint("PRODUCT_PAYLOAD: $productData");
-//     Get.snackbar("Success", "Product added successfully");
-//     _clearForm();
-//   }
-//
-//   void _clearForm() {
-//     productName.clear();
-//     price.clear();
-//     discountPercentage.clear();
-//     stockStatus.value = "";
-//     selectedCategory.value = "";
-//     productImage.value = null;
-//
-//     for (var f in features) f.dispose();
-//     features.clear();
-//
-//     for (var a in attributes) {
-//       try {
-//         (a["name"] as TextEditingController).dispose();
-//         (a["value"] as TextEditingController).dispose();
-//       } catch (_) {}
-//     }
-//     attributes.clear();
-//   }
-//
-//   @override
-//   void onClose() {
-//     try {
-//       productName.dispose();
-//       price.dispose();
-//       discountPercentage.dispose();
-//       for (var f in features) f.dispose();
-//       for (var a in attributes) {
-//         try {
-//           (a["name"] as TextEditingController).dispose();
-//           (a["value"] as TextEditingController).dispose();
-//         } catch (_) {}
-//       }
-//     } catch (_) {}
-//     super.onClose();
-//   }
-// }
+
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import '../../../data/models/produuct_variantmodel.dart';
 
-class AddProductController extends GetxController {
-  // Text controllers
-  final productName = TextEditingController();
-  final description = TextEditingController();
-  final price = TextEditingController();
-  final offerPrice = TextEditingController();
-  final stock = TextEditingController();
+class ProductController extends GetxController {
+  // ---------------- BASIC FIELDS ----------------
+  var productName = ''.obs;
+  var selectedCategory = ''.obs;
+  var productDescription = ''.obs;
+  var isPublished = false.obs;
+  var isFeatured = false.obs;
 
-  // Observables
-  var categories = [].obs;
-  var subcategories = [].obs;
-  var selectedCategory = Rxn<int>();
-  var selectedSubCategory = Rxn<int>();
-  var isVariantProduct = false.obs;
-  var selectedImages = <File>[].obs;
-  var isLoading = false.obs;
+  // ---------------- CATEGORY MAPPINGS ----------------
+  final Map<String, List<String>> categoryAttributes = {
+    "Fashion & Apparel": ["Size", "Color", "Material", "Brand", "Fit", "Pattern", ],
+    "Beauty & Personal Care": ["Shade", "Skin Type", "Hair Type", "Ingredients", "Brand", "Volume", ],
+    "Electronics": ["Brand", "Model", "RAM", "Storage", "Battery", "Warranty", "Screen Size", ],
+    "Grocery & Essentials": ["Weight", "Brand", "Expiry Date", "Package Type", "Organic",],
+    "Bakery & Food": ["Weight / Quantity", "Flavor / Type", "Ingredients", "Expiry Date", "Brand", "Allergen Info", "Packaging Type", ],
+    "Home Appliances": ["Brand", "Model", "Power", "Capacity", "Warranty", ],
+    "Furniture": ["Material", "Color", "Size", "Brand", "Weight", "Style",],
+    "Sports & Fitness": ["Size", "Material", "Brand", "Weight", "Capacity", ],
+    "Kids Products": ["Age Group", "Material", "Brand", "Safety Info",],
+    "Pet Supplies": ["Pet Type", "Weight", "Ingredients", "Age Group", "Brand",],
+    "Automobile & Accessories": ["Vehicle Type", "Model", "Brand", "Year", "Part Type",],
+    "Medicine & Healthcare": ["Medicine Type", "Dosage", "Expiry Date", "Composition", "Brand",],
+    "Home & Kitchen": ["Material", "Brand", "Size", "Capacity", ],
+    "Tools & Hardware": ["Material", "Brand", "Size", "Power", ],
+  };
 
-  // Pick images
-  Future pickImages() async {
-    final ImagePicker picker = ImagePicker();
-    final picked = await picker.pickMultiImage();
-    if (picked.isNotEmpty) {
-      selectedImages.value = picked.map((e) => File(e.path)).toList();
+  // ---------------- VARIANTS ----------------
+  var variants = <ProductVariant>[].obs;
+
+  // ---------------- IMAGE PICKER ----------------
+  final ImagePicker picker = ImagePicker();
+
+  // ---------------- DRAFT MANAGEMENT ----------------
+  var isDraft = false.obs;
+  var lastSavedTime = Rx<DateTime?>(null);
+
+  // ---------------- TAGS ----------------
+  var tags = <String>[].obs;
+
+  void addTag(String tag) {
+    if (tag.trim().isNotEmpty && !tags.contains(tag.trim())) {
+      tags.add(tag.trim());
     }
   }
 
-  // Fetch categories from API
-  Future fetchCategories() async {
-    final url = Uri.parse("https://rasma.astradevelops.in/e_shoppyy/public/api/categories");
-    final res = await http.get(url);
-    if (res.statusCode == 200) {
-      categories.value = json.decode(res.body)['data'];
-    }
+  void removeTag(String tag) {
+    tags.remove(tag);
   }
 
-  // Fetch subcategories based on category
-  Future fetchSubCategories(int categoryId) async {
-    final url = Uri.parse("https://rasma.astradevelops.in/e_shoppyy/public/api/categories/$categoryId/subcategories");
-    final res = await http.get(url);
-    if (res.statusCode == 200) {
-      subcategories.value = json.decode(res.body)['data'];
-    }
-  }
-
-  // Submit product (basic/simple version)
-  Future submitProduct() async {
-    if (productName.text.isEmpty || selectedCategory.value == null) {
-      Get.snackbar("Error", "Please fill required fields");
+  // ---------------- VARIANT OPERATIONS ----------------
+  void addVariant() {
+    if (selectedCategory.value.isEmpty) {
+      Get.snackbar(
+        "Category Required",
+        "Please select a category first",
+        snackPosition: SnackPosition.BOTTOM,
+      );
       return;
     }
 
-    isLoading(true);
+    List<String> featureKeys = categoryAttributes[selectedCategory.value] ?? [];
+    variants.add(ProductVariant(features: {for (var key in featureKeys) key: ''}));
+  }
 
-    final uri = Uri.parse("https://rasma.astradevelops.in/e_shoppyy/public/api/merchant/add-product");
-    var request = http.MultipartRequest('POST', uri);
+  void removeVariant(int index) {
+    if (index >= 0 && index < variants.length) {
+      variants.removeAt(index);
+    }
+  }
 
-    request.fields.addAll({
-      'product_name': productName.text,
-      'category_id': selectedCategory.value.toString(),
-      'sub_category_id': selectedSubCategory.value?.toString() ?? '',
-      'price': price.text,
-      'offer_price': offerPrice.text,
-      'stock': stock.text,
-      'description': description.text,
-      'type': isVariantProduct.value ? 'variant' : 'simple'
-    });
+  void duplicateVariant(int index) {
+    if (index >= 0 && index < variants.length) {
+      final original = variants[index];
+      final duplicate = ProductVariant(
+        title: "${original.title} (Copy)",
+        price: original.price,
+        stock: original.stock,
+        imagePath: original.imagePath,
+        features: Map<String, dynamic>.from(original.features),
+      );
+      variants.insert(index + 1, duplicate);
+      Get.snackbar(
+        "Variant Duplicated",
+        "A copy has been created",
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
 
-    // Upload images
-    for (var img in selectedImages) {
-      request.files.add(await http.MultipartFile.fromPath('images[]', img.path));
+  // ---------------- IMAGE OPERATIONS ----------------
+  Future<void> pickImage(int index) async {
+    if (index < 0 || index >= variants.length) return;
+
+    final pickedFile = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1920,
+      maxHeight: 1920,
+      imageQuality: 85,
+    );
+
+    if (pickedFile != null) {
+      variants[index].imagePath = pickedFile.path;
+      variants.refresh();
+    }
+  }
+  Future<void> pickMultipleImages(int index) async {
+    if (index < 0 || index >= variants.length) return;
+
+    final List<XFile> pickedFiles = await picker.pickMultiImage(
+      maxWidth: 1920,
+      maxHeight: 1920,
+      imageQuality: 85,
+    );
+
+    if (pickedFiles.isNotEmpty) {
+      // Use first image as main image
+      variants[index].imagePath = pickedFiles.first.path;
+      variants.refresh();
+
+      if (pickedFiles.length > 1) {
+        Get.snackbar(
+          "Multiple Images",
+          "${pickedFiles.length} images selected. First image set as main.",
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
+    }
+  }
+
+
+  Future<void> captureImage(int index) async {
+    if (index < 0 || index >= variants.length) return;
+
+    final pickedFile = await picker.pickImage(
+      source: ImageSource.camera,
+      maxWidth: 1920,
+      maxHeight: 1920,
+      imageQuality: 85,
+    );
+
+    if (pickedFile != null) {
+      variants[index].imagePath = pickedFile.path;
+      variants.refresh();
+    }
+  }
+
+  void removeImage(int index) {
+    if (index >= 0 && index < variants.length) {
+      variants[index].imagePath = null;
+      variants.refresh();
+    }
+  }
+
+  // ---------------- VALIDATION ----------------
+  String? validateProductName(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return "Product name is required";
+    }
+    if (value.length < 3) {
+      return "Product name must be at least 3 characters";
+    }
+    if (value.length > 100) {
+      return "Product name must be less than 100 characters";
+    }
+    return null;
+  }
+
+  String? validatePrice(double? value) {
+    if (value == null || value <= 0) {
+      return "Price must be greater than 0";
+    }
+    return null;
+  }
+
+  String? validateStock(int? value) {
+    if (value == null || value < 0) {
+      return "Stock cannot be negative";
+    }
+    return null;
+  }
+
+  bool validateForm() {
+    if (productName.value.trim().isEmpty) {
+      Get.snackbar("Validation Error", "Product name is required");
+      return false;
     }
 
-    final res = await request.send();
-    isLoading(false);
-
-    if (res.statusCode == 200) {
-      Get.back();
-      Get.snackbar("Success", "Product added successfully!");
-    } else {
-      Get.snackbar("Error", "Failed to add product (${res.statusCode})");
+    if (selectedCategory.value.isEmpty) {
+      Get.snackbar("Validation Error", "Category is required");
+      return false;
     }
+
+    if (variants.isEmpty) {
+      Get.snackbar("Validation Error", "At least one variant is required");
+      return false;
+    }
+
+    // Validate each variant
+    for (int i = 0; i < variants.length; i++) {
+      final variant = variants[i];
+
+      if (variant.title == null || variant.title!.trim().isEmpty) {
+        Get.snackbar(
+          "Validation Error",
+          "Variant ${i + 1}: Title is required",
+        );
+        return false;
+      }
+
+      if (variant.price == null || variant.price! <= 0) {
+        Get.snackbar(
+          "Validation Error",
+          "Variant ${i + 1}: Valid price is required",
+        );
+        return false;
+      }
+
+      if (variant.stock == null || variant.stock! < 0) {
+        Get.snackbar(
+          "Validation Error",
+          "Variant ${i + 1}: Valid stock quantity is required",
+        );
+        return false;
+      }
+
+      if (variant.imagePath == null) {
+        Get.snackbar(
+          "Validation Error",
+          "Variant ${i + 1}: Product image is required",
+        );
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  // ---------------- DRAFT OPERATIONS ----------------
+  void saveDraft() {
+    isDraft.value = true;
+    lastSavedTime.value = DateTime.now();
+
+    final draftData = _buildProductData();
+    // Here you would save to local storage or database
+    print("DRAFT_SAVED: $draftData");
+
+    Get.snackbar(
+      "Draft Saved",
+      "Your changes have been saved",
+      snackPosition: SnackPosition.BOTTOM,
+      duration: Duration(seconds: 2),
+    );
+  }
+
+  void loadDraft() {
+    // Here you would load from local storage or database
+    Get.snackbar(
+      "Draft Loaded",
+      "Previous draft has been restored",
+      snackPosition: SnackPosition.BOTTOM,
+    );
+  }
+
+  // ---------------- PRODUCT SUBMISSION ----------------
+  void saveProduct() {
+    if (!validateForm()) return;
+
+    final productData = _buildProductData();
+
+    // Here you would send to API or database
+    print("PRODUCT_SAVED: $productData");
+
+    Get.snackbar(
+      "Success",
+      "Product has been saved successfully",
+      snackPosition: SnackPosition.BOTTOM,
+      duration: Duration(seconds: 3),
+    );
+
+    // Clear form after successful save
+    if (Get.dialog != null) {
+      _clearForm();
+    }
+  }
+
+  Map<String, dynamic> _buildProductData() {
+    return {
+      "name": productName.value.trim(),
+      "category": selectedCategory.value,
+      "description": productDescription.value.trim(),
+      "isPublished": isPublished.value,
+      "isFeatured": isFeatured.value,
+      "tags": tags.toList(),
+      "variants": variants.map((variant) {
+        return {
+          "title": variant.title,
+          "price": variant.price,
+          "stock": variant.stock,
+          "imagePath": variant.imagePath,
+          "features": variant.features,
+        };
+      }).toList(),
+      "createdAt": DateTime.now().toIso8601String(),
+      "isDraft": isDraft.value,
+    };
+  }
+
+  // ---------------- BULK OPERATIONS ----------------
+  void applyPriceToAll(double price) {
+    for (var variant in variants) {
+      variant.price = price;
+    }
+    variants.refresh();
+    Get.snackbar(
+      "Price Updated",
+      "Price applied to all variants",
+      snackPosition: SnackPosition.BOTTOM,
+    );
+  }
+
+  void applyStockToAll(int stock) {
+    for (var variant in variants) {
+      variant.stock = stock;
+    }
+    variants.refresh();
+    Get.snackbar(
+      "Stock Updated",
+      "Stock applied to all variants",
+      snackPosition: SnackPosition.BOTTOM,
+    );
+  }
+
+  // ---------------- CLEAR & RESET ----------------
+  void _clearForm() {
+    productName.value = '';
+    selectedCategory.value = '';
+    productDescription.value = '';
+    isPublished.value = false;
+    isFeatured.value = false;
+    variants.clear();
+    tags.clear();
+    isDraft.value = false;
+    lastSavedTime.value = null;
+  }
+
+  void resetForm() {
+    Get.dialog(
+      AlertDialog(
+        title: Text("Reset Form"),
+        content: Text("Are you sure you want to reset? All unsaved changes will be lost."),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              _clearForm();
+              Get.back();
+              Get.snackbar(
+                "Form Reset",
+                "All fields have been cleared",
+                snackPosition: SnackPosition.BOTTOM,
+              );
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: Text("Reset"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ---------------- IMPORT/EXPORT ----------------
+  Future<void> importFromCSV() async {
+    // Implement CSV import functionality
+    Get.snackbar(
+      "Import",
+      "CSV import feature coming soon",
+      snackPosition: SnackPosition.BOTTOM,
+    );
+  }
+
+  Future<void> exportToCSV() async {
+    // Implement CSV export functionality
+    Get.snackbar(
+      "Export",
+      "CSV export feature coming soon",
+      snackPosition: SnackPosition.BOTTOM,
+    );
   }
 
   @override
-  void onInit() {
-    super.onInit();
-    fetchCategories();
+  void onClose() {
+    // Clean up resources
+    super.onClose();
   }
-}
+ }

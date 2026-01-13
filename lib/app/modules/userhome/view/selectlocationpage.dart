@@ -1,250 +1,297 @@
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-// import '../controller/district _controller.dart';
-//
-// class SelectLocationPage extends StatelessWidget {
-//   final DistrictController controller = Get.find();
-//   final TextEditingController locationController = TextEditingController();
-//
-//   SelectLocationPage({super.key});
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     locationController.text = controller.userLocation.value;
-//
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text("Select Your Location"),
-//         backgroundColor: Colors.teal,
-//       ),
-//
-//       body: Padding(
-//         padding: const EdgeInsets.all(20),
-//         child: Column(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//
-//             // ---------------- STATE ----------------
-//             const Text("State", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-//             const SizedBox(height: 8),
-//
-//             Obx(() => DropdownButtonFormField<String>(
-//               value: controller.selectedState.value,
-//               items: controller.stateList.map((e) {
-//                 return DropdownMenuItem(value: e, child: Text(e));
-//               }).toList(),
-//               onChanged: (v) => controller.updateState(v!),
-//               decoration: InputDecoration(
-//                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-//               ),
-//             )),
-//
-//             const SizedBox(height: 20),
-//
-//             // ---------------- DISTRICT ----------------
-//             const Text("District", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-//             const SizedBox(height: 8),
-//
-//             Obx(() => DropdownButtonFormField<String>(
-//               value: controller.selectedDistrict.value,
-//               items: controller.districtList.map((e) {
-//                 return DropdownMenuItem(value: e, child: Text(e));
-//               }).toList(),
-//               onChanged: (v) => controller.updateDistrict(v!),
-//               decoration: InputDecoration(
-//                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-//               ),
-//             )),
-//
-//             const SizedBox(height: 20),
-//
-//             // ---------------- LOCATION TEXTFIELD ----------------
-//             const Text("Your Location", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-//             const SizedBox(height: 8),
-//
-//             TextField(
-//               controller: locationController,
-//               decoration: InputDecoration(
-//                 hintText: "Enter your location",
-//                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-//               ),
-//             ),
-//
-//             const Spacer(),
-//
-//             // ---------------- SUBMIT BUTTON ----------------
-//             SizedBox(
-//               width: double.infinity,
-//               child: ElevatedButton(
-//                 onPressed: () {
-//                   controller.updateUserLocation(locationController.text);
-//
-//                   Get.back(); // return to home
-//                 },
-//                 style: ElevatedButton.styleFrom(
-//                   backgroundColor: Colors.teal,
-//                   padding: const EdgeInsets.symmetric(vertical: 14),
-//                   shape: RoundedRectangleBorder(
-//                       borderRadius: BorderRadius.circular(10)),
-//                 ),
-//                 child: const Text("Save Location", style: TextStyle(color: Colors.white, fontSize: 16)),
-//               ),
-//             )
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
 
+import 'package:eshoppy/app/common/style/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../common/style/app_colors.dart';
-import '../../../common/style/app_text_style.dart';
+
+import 'package:get_storage/get_storage.dart';
+
 import '../controller/district _controller.dart';
 
 class SelectLocationPage extends StatelessWidget {
   SelectLocationPage({super.key});
 
-  final DistrictController controller = Get.find();
-  final TextEditingController locationController = TextEditingController();
+  final UserDistrictController controller = Get.put(UserDistrictController());
+  final box = GetStorage();
 
   @override
   Widget build(BuildContext context) {
-    locationController.text = controller.userLocation.value;
-
     return Scaffold(
-      backgroundColor: const Color(0xffF4F6F8),
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title:  Text("Select Location",style:AppTextStyle.rTextNunitoWhite17w700),
-        backgroundColor: AppColors.kPrimary,
+        title: const Text(
+          "Select Location",
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
         elevation: 0,
+       backgroundColor: AppColors.kPrimary,
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              /// HEADER CARD
-              SizedBox(height: 50,),
-              Card(
-                elevation: 3,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+            ),
+          );
+        }
+
+        return SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header Section
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.kPrimary,
+                        AppColors.kPrimary.withOpacity(0.8),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.kPrimary.withOpacity(0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
                     children: [
-                      const Text(
-                        "Choose your location",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.location_on,
+                          color: Colors.white,
+                          size: 28,
                         ),
                       ),
-                      const SizedBox(height: 16),
-
-                      /// STATE DROPDOWN
-                      _label("State"),
-                      Obx(() => DropdownButtonFormField<String>(
-                        value: controller.selectedState.value,
-                        items: controller.stateList
-                            .map((e) => DropdownMenuItem(
-                          value: e,
-                          child: Text(e),
-                        ))
-                            .toList(),
-                        onChanged: (v) =>
-                            controller.updateState(v ?? ""),
-                        decoration:
-                        _inputDecoration(Icons.map_outlined, "Select State"),
-                      )),
-
-                      const SizedBox(height: 16),
-
-                      /// DISTRICT DROPDOWN
-                      _label("District"),
-                      Obx(() => DropdownButtonFormField<String>(
-                        value: controller.selectedDistrict.value,
-                        items: controller.districtList
-                            .map((e) => DropdownMenuItem(
-                          value: e,
-                          child: Text(e),
-                        ))
-                            .toList(),
-                        onChanged: (v) =>
-                            controller.updateDistrict(v ?? ""),
-                        decoration: _inputDecoration(
-                            Icons.location_city_outlined, "Select District"),
-                      )),
-
-                      const SizedBox(height: 16),
-
-                      /// LOCATION TEXTFIELD
-                      _label("Your Location"),
-                      TextField(
-                        controller: locationController,
-                        decoration: _inputDecoration(
-                            Icons.place_outlined, "Enter location"),
+                      const SizedBox(width: 16),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Choose Your Location",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              "Select state, district and location",
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ),
-              ),
+                const SizedBox(height: 28),
 
-              const SizedBox(height: 30),
+                // Form Section
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // STATE
+                      _buildLabel("State", Icons.map),
+                      const SizedBox(height: 8),
+                      _buildDropdown(
+                        value: controller.selectedState.value.isEmpty
+                            ? null
+                            : controller.selectedState.value,
+                        hint: "Select State",
+                        items: controller.states,
+                        onChanged: (v) {
+                          if (v != null) controller.onStateSelected(v);
+                        },
+                        enabled: true,
+                      ),
+                      const SizedBox(height: 20),
 
-              /// SAVE BUTTON
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    controller
-                        .updateUserLocation(locationController.text.trim());
-                    Get.back();
-                  },
-                  child: const Text(
-                    "Save Location",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      // DISTRICT
+                      _buildLabel("District", Icons.location_city),
+                      const SizedBox(height: 8),
+                      _buildDropdown(
+                        value: controller.selectedDistrict.value.isEmpty
+                            ? null
+                            : controller.selectedDistrict.value,
+                        hint: "Select District",
+                        items: controller.districts,
+                        onChanged: (v) {
+                          if (v != null) controller.onDistrictSelected(v);
+                        },
+                        enabled: controller.districts.isNotEmpty,
+                      ),
+                      const SizedBox(height: 20),
+
+                      // MAIN LOCATION
+                      _buildLabel("Location", Icons.pin_drop),
+                      const SizedBox(height: 8),
+                      _buildDropdown(
+                        value: controller.selectedMainLocation.value.isEmpty
+                            ? null
+                            : controller.selectedMainLocation.value,
+                        hint: "Select Location",
+                        items: controller.mainLocations,
+                        onChanged: (v) {
+                          if (v != null) {
+                            controller.selectedMainLocation.value = v;
+                          }
+                        },
+                        enabled: controller.mainLocations.isNotEmpty,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 28),
+
+                // SAVE BUTTON
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: _isFormValid()
+                        ? () {
+                      box.write('state', controller.selectedState.value);
+                      box.write('district', controller.selectedDistrict.value);
+                      box.write('main_location', controller.selectedMainLocation.value);
+
+                      Get.back(result: {
+                        'state': controller.selectedState.value,
+                        'district': controller.selectedDistrict.value,
+                        'main_location': controller.selectedMainLocation.value,
+                      });
+                    }
+                        : null,
+                    // style: ElevatedButton.styleFrom(
+                    //   backgroundColor: Colors.blue.shade600,
+                    //   foregroundColor: Colors.white,
+                    //   elevation: 0,
+                    //   shape: RoundedRectangleBorder(
+                    //     borderRadius: BorderRadius.circular(12),
+                    //   ),
+                    //   disabledBackgroundColor: Colors.grey.shade300,
+                    // ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.check_circle_outline, size: 22),
+                        SizedBox(width: 8),
+                        Text(
+                          "Save Location",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _buildLabel(String text, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: Colors.blue.shade700),
+        const SizedBox(width: 8),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey.shade700,
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildDropdown({
+    required String? value,
+    required String hint,
+    required List<String> items,
+    required Function(String?) onChanged,
+    required bool enabled,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: enabled ? Colors.grey.shade50 : Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: enabled ? Colors.grey.shade300 : Colors.grey.shade200,
+          width: 1.5,
+        ),
+      ),
+      child: DropdownButtonFormField<String>(
+        value: value,
+        hint: Text(
+          hint,
+          style: TextStyle(color: Colors.grey.shade500, fontSize: 15),
+        ),
+        decoration: const InputDecoration(
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        ),
+        items: items
+            .map((e) => DropdownMenuItem(
+          value: e,
+          child: Text(
+            e,
+            style: const TextStyle(fontSize: 15),
+          ),
+        ))
+            .toList(),
+        onChanged: enabled ? onChanged : null,
+        icon: Icon(
+          Icons.keyboard_arrow_down_rounded,
+          color: enabled ? Colors.grey.shade600 : Colors.grey.shade400,
+        ),
+        dropdownColor: Colors.white,
+        isExpanded: true,
       ),
     );
   }
 
-  /// ---------------- HELPER WIDGETS ----------------
-  Widget _label(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Text(
-        text,
-        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-      ),
-    );
-  }
-
-  InputDecoration _inputDecoration(IconData icon, String hint) {
-    return InputDecoration(
-      hintText: hint,
-      prefixIcon: Icon(icon),
-      filled: true,
-      fillColor: Colors.grey.shade100,
-      contentPadding:
-      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide.none,
-      ),
-    );
+  bool _isFormValid() {
+    return controller.selectedState.value.isNotEmpty &&
+        controller.selectedDistrict.value.isNotEmpty &&
+        controller.selectedMainLocation.value.isNotEmpty;
   }
 }

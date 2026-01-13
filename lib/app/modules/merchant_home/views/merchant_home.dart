@@ -77,7 +77,9 @@ class MerchantDashboardPage extends StatelessWidget {
                   ),
                   onTap: () =>
 
-                  Get.to(() =>  MerchantSettingPage ()),
+
+
+          Get.to(() =>  MerchantSettingPage ()),
                 ),
                 _buildMenuCard(
                   icon: Icons.widgets_rounded,
@@ -434,7 +436,7 @@ class MerchantDashboardPage extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () => Get.to(() => AddVariantProductPage()),
+          onTap: () => Get.to(() => AddProductPage ()),
               //AddProductPage()),
           borderRadius: BorderRadius.circular(30),
           child: const Padding(

@@ -27,7 +27,7 @@ class Userhome extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final districtController = Get.put(DistrictController());
+    final controller= Get.put(UserDistrictController());
     final CartController cartController = Get.put(CartController());
 
     final List<Map<String, String>> offers = [
@@ -113,16 +113,23 @@ class Userhome extends StatelessWidget {
                           onTap: () {
                             Get.to(() => SelectLocationPage());
                           },
-                          child: Row(
+                          child:
+                          Row(
                             children: [
                               const Icon(Icons.location_on,
                                   color: Colors.red, size: 20),
-                              Obx(() => Text(
-                                districtController.selectedDistrict.value,
-                                style: AppTextStyle.rTextNunitoWhite14w700,
-                              )),
-                              const Icon(Icons.arrow_drop_down,
-                                  color: Colors.white),
+                              Obx(() {
+                                final mainLocation = controller.selectedMainLocation.value;
+
+                                return Text(
+                                  (mainLocation.isEmpty)
+                                      ? "Select Location"
+                                      : mainLocation,
+                                   style: AppTextStyle.rTextNunitoWhite14w700,
+                                );
+                              }),
+
+
                             ],
                           ),
                         ),

@@ -1,4 +1,5 @@
 
+
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -14,9 +15,24 @@ class AdminAddMerchantPage extends StatelessWidget {
 
   // ------------------ PICK STORE IMAGE ------------------
   Future pickImage() async {
-    final XFile? picked = await picker.pickImage(source: ImageSource.gallery);
-    if (picked != null) {
-      controller.setStoreImage(File(picked.path));
+    try {
+      final XFile? picked = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1920,
+        maxHeight: 1080,
+        imageQuality: 85,
+      );
+      if (picked != null) {
+        controller.setStoreImage(File(picked.path));
+      }
+    } catch (e) {
+      Get.snackbar(
+        "Error",
+        "Failed to pick image: $e",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 
@@ -38,9 +54,11 @@ class AdminAddMerchantPage extends StatelessWidget {
   }
 
   // ------------------ ENHANCED INPUT STYLE ------------------
-  InputDecoration inputStyle(String label, IconData icon) {
+  InputDecoration inputStyle(String label, IconData icon, {String? helperText}) {
     return InputDecoration(
       labelText: label,
+      helperText: helperText,
+      helperStyle: TextStyle(color: Colors.grey[600], fontSize: 11),
       labelStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
       prefixIcon: Icon(icon, color: const Color(0xFF64B5F6), size: 22),
       enabledBorder: OutlineInputBorder(
@@ -85,6 +103,67 @@ class AdminAddMerchantPage extends StatelessWidget {
               fontWeight: FontWeight.bold,
               fontSize: 18,
               letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ------------------ INFO BOX ------------------
+  Widget _infoBox() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF64B5F6).withOpacity(0.1),
+            const Color(0xFF42A5F5).withOpacity(0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFF64B5F6).withOpacity(0.3),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF64B5F6).withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.mail_outline,
+              color: Color(0xFF64B5F6),
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Auto Email Notification",
+                  style: TextStyle(
+                    color: Color(0xFF64B5F6),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "Login credentials will be automatically sent to the merchant's email after registration",
+                  style: TextStyle(
+                    color: Colors.grey[400],
+                    fontSize: 12,
+                    height: 1.3,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -191,6 +270,9 @@ class AdminAddMerchantPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ------------------ INFO BOX ------------------
+            _infoBox(),
+
             // ------------------ STORE IMAGE SECTION ------------------
             _sectionHeader("Store Image", icon: Icons.store),
             GestureDetector(
@@ -286,6 +368,7 @@ class AdminAddMerchantPage extends StatelessWidget {
               controller: controller.ownerNameController,
               style: const TextStyle(color: Colors.white),
               decoration: inputStyle("Owner Name *", Icons.person_outline),
+              textInputAction: TextInputAction.next,
             ),
             const SizedBox(height: 16),
 
@@ -293,30 +376,43 @@ class AdminAddMerchantPage extends StatelessWidget {
               controller: controller.shopNameController,
               style: const TextStyle(color: Colors.white),
               decoration: inputStyle("Shop Name *", Icons.storefront_outlined),
+              textInputAction: TextInputAction.next,
             ),
             const SizedBox(height: 16),
 
             TextFormField(
               controller: controller.emailController,
               style: const TextStyle(color: Colors.white),
-              decoration: inputStyle("Email *", Icons.email_outlined),
+              decoration: inputStyle(
+                "Email *",
+                Icons.email_outlined,
+                helperText: "Credentials will be sent to this email",
+              ),
               keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.next,
             ),
             const SizedBox(height: 16),
 
-            TextFormField(
-              controller: controller.passwordController,
-              style: const TextStyle(color: Colors.white),
-              decoration: inputStyle("Password *", Icons.lock_outline),
-              obscureText: true,
-            ),
-            const SizedBox(height: 16),
+            // TextFormField(
+            //   controller: controller.passwordController,
+            //   style: const TextStyle(color: Colors.white),
+            //   decoration: inputStyle(
+            //     "Password *",
+            //     Icons.lock_outline,
+            //     helperText: "This password will be sent via email",
+            //   ),
+            //   obscureText: true,
+            //   textInputAction: TextInputAction.next,
+            // ),
+            // const SizedBox(height: 16),
 
             TextFormField(
               controller: controller.phoneNo1Controller,
               style: const TextStyle(color: Colors.white),
               decoration: inputStyle("Phone Number *", Icons.phone_outlined),
               keyboardType: TextInputType.phone,
+              maxLength: 10,
+              textInputAction: TextInputAction.next,
             ),
             const SizedBox(height: 16),
 
@@ -325,6 +421,8 @@ class AdminAddMerchantPage extends StatelessWidget {
               style: const TextStyle(color: Colors.white),
               decoration: inputStyle("Alternate Phone (Optional)", Icons.phone_android_outlined),
               keyboardType: TextInputType.phone,
+              maxLength: 10,
+              textInputAction: TextInputAction.done,
             ),
 
             const SizedBox(height: 32),
@@ -758,7 +856,7 @@ class AdminAddMerchantPage extends StatelessWidget {
                     Icon(Icons.add_business, size: 20),
                     SizedBox(width: 8),
                     Text(
-                      "Add Merchant",
+                      "Register Merchant & Send Email",
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
