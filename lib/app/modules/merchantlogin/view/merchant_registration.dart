@@ -6,12 +6,9 @@ import '../../../common/constants/text_String.dart';
 import '../../../widgets/headline.dart';
 import '../../userlogin/view/sigin.dart';
 import '../widget/merchant_regform.dart';
-import '../../merchantlogin/view/merchant_login.dart';
 
 class MerchantRegisterScreen extends StatelessWidget {
   const MerchantRegisterScreen({super.key});
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -48,23 +45,16 @@ class MerchantRegisterScreen extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    /// 🏪 Glassmorphism Top Icon
                     _glassCircleIcon(
                       icon: Icons.storefront_rounded,
                       size: 52,
                     ),
-
                     const SizedBox(height: 12),
-
-                    /// 🧾 Headline
                     Headline(
                       head1: AppTexts.Title4,
                       head2: AppTexts.Title5,
                     ),
-
                     const SizedBox(height: 25),
-
-                    /// 🌟 Glass Form Container
                     _glassContainer(
                       blur: 20,
                       padding: const EdgeInsets.all(24),
@@ -72,8 +62,6 @@ class MerchantRegisterScreen extends StatelessWidget {
                     ),
 
                     const SizedBox(height: 20),
-
-                    /// 🔁 Login Link
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -135,7 +123,6 @@ class MerchantRegisterScreen extends StatelessWidget {
     );
   }
 
-  // 🔵 Glassmorphism Container
   Widget _glassContainer({
     required Widget child,
     double blur = 10,

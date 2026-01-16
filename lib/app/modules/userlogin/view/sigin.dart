@@ -1,5 +1,6 @@
 
 import 'dart:ui';
+import 'package:eshoppy/app/modules/forgotpassowrd/view/forgotpassword.dart';
 import 'package:eshoppy/app/modules/userlogin/view/user_signup.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -54,6 +55,23 @@ class LoginScreen extends StatelessWidget {
                       padding: const EdgeInsets.all(24),
                     ),
                     const SizedBox(height: 22),
+                Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () => Get.to(ForgotPasswordEmailView()),
+                        child: const Text(
+                          "Forgot Password?",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            decoration: TextDecoration.underline,
+                            decorationColor: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 5),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [

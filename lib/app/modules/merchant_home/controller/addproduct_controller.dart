@@ -1,35 +1,39 @@
 
+
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../data/models/produuct_variantmodel.dart';
+import 'package:http/http.dart' as http;
 
 class ProductController extends GetxController {
+  final box = GetStorage();
+
+  // API URLs
+  final String categoriesUrl = "https://rasma.astradevelops.in/e_shoppyy/public/api/merchant/categories";
+  final String addProductUrl = "https://rasma.astradevelops.in/e_shoppyy/public/api/merchant/add-product";
+
   // ---------------- BASIC FIELDS ----------------
   var productName = ''.obs;
   var selectedCategory = ''.obs;
+  var selectedCategoryId = 0.obs;
   var productDescription = ''.obs;
-  var isPublished = false.obs;
-  var isFeatured = false.obs;
 
-  // ---------------- CATEGORY MAPPINGS ----------------
-  final Map<String, List<String>> categoryAttributes = {
-    "Fashion & Apparel": ["Size", "Color", "Material", "Brand", "Fit", "Pattern", ],
-    "Beauty & Personal Care": ["Shade", "Skin Type", "Hair Type", "Ingredients", "Brand", "Volume", ],
-    "Electronics": ["Brand", "Model", "RAM", "Storage", "Battery", "Warranty", "Screen Size", ],
-    "Grocery & Essentials": ["Weight", "Brand", "Expiry Date", "Package Type", "Organic",],
-    "Bakery & Food": ["Weight / Quantity", "Flavor / Type", "Ingredients", "Expiry Date", "Brand", "Allergen Info", "Packaging Type", ],
-    "Home Appliances": ["Brand", "Model", "Power", "Capacity", "Warranty", ],
-    "Furniture": ["Material", "Color", "Size", "Brand", "Weight", "Style",],
-    "Sports & Fitness": ["Size", "Material", "Brand", "Weight", "Capacity", ],
-    "Kids Products": ["Age Group", "Material", "Brand", "Safety Info",],
-    "Pet Supplies": ["Pet Type", "Weight", "Ingredients", "Age Group", "Brand",],
-    "Automobile & Accessories": ["Vehicle Type", "Model", "Brand", "Year", "Part Type",],
-    "Medicine & Healthcare": ["Medicine Type", "Dosage", "Expiry Date", "Composition", "Brand",],
-    "Home & Kitchen": ["Material", "Brand", "Size", "Capacity", ],
-    "Tools & Hardware": ["Material", "Brand", "Size", "Power", ],
-  };
+  // Loading states
+  var isLoadingCategories = false.obs;
+  var isSubmitting = false.obs;
+
+  // ---------------- CATEGORY DATA FROM API ----------------
+  var apiCategories = <CategoryApiModel>[].obs;
+
+  // ---------------- CATEGORY CONFIGURATION ----------------
+  final Map<String, CategoryConfig> categoryConfigs = {};
+
+  // ---------------- COMMON & VARIANT ATTRIBUTES ----------------
+  var commonAttributes = <String, String>{}.obs;
+  var variantAttributeValues = <String, List<String>>{}.obs;
 
   // ---------------- VARIANTS ----------------
   var variants = <ProductVariant>[].obs;
@@ -37,25 +41,197 @@ class ProductController extends GetxController {
   // ---------------- IMAGE PICKER ----------------
   final ImagePicker picker = ImagePicker();
 
-  // ---------------- DRAFT MANAGEMENT ----------------
-  var isDraft = false.obs;
-  var lastSavedTime = Rx<DateTime?>(null);
+  @override
+  void onInit() {
+    super.onInit();
+    fetchCategories();
+  }
 
-  // ---------------- TAGS ----------------
-  var tags = <String>[].obs;
+  // ---------------- FETCH CATEGORIES FROM API ----------------
+  Future<void> fetchCategories() async {
+    try {
+      isLoadingCategories.value = true;
 
-  void addTag(String tag) {
-    if (tag.trim().isNotEmpty && !tags.contains(tag.trim())) {
-      tags.add(tag.trim());
+      final token = box.read("auth_token");
+      if (token == null) {
+        Get.snackbar("Error", "Authentication token not found");
+        return;
+      }
+
+      print("Fetching categories...");
+      print("Token: $token");
+
+      final response = await http.get(
+        Uri.parse(categoriesUrl),
+        headers: {
+          "Accept": "application/json",
+          "Authorization": "Bearer $token",
+        },
+      );
+
+      print("Response status: ${response.statusCode}");
+      print("Response body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
+
+        if (body['status'] == true) {
+          final List<dynamic> categoriesData = body['data'];
+
+          apiCategories.clear();
+          categoryConfigs.clear();
+
+          for (var catData in categoriesData) {
+            try {
+              // Parse category carefully
+              final int id = catData['id'] is int
+                  ? catData['id']
+                  : int.parse(catData['id'].toString());
+
+              final String name = catData['name']?.toString() ?? '';
+              final String image = catData['image']?.toString() ?? '';
+
+              // Parse attributes - handle both Map and List cases
+              List<String> commonAttrs = [];
+              List<String> variantAttrs = [];
+
+              if (catData['attributes'] != null) {
+                final attributes = catData['attributes'];
+
+                print("Category: $name");
+                print("Attributes type: ${attributes.runtimeType}");
+                print("Attributes value: $attributes");
+
+                if (attributes is Map) {
+                  // If it's a map with 'common' and 'variant' keys
+                  if (attributes['common'] != null) {
+                    if (attributes['common'] is List) {
+                      commonAttrs = List<String>.from(attributes['common']);
+                    }
+                  }
+
+                  if (attributes['variant'] != null) {
+                    if (attributes['variant'] is List) {
+                      variantAttrs = List<String>.from(attributes['variant']);
+                    }
+                  }
+                } else if (attributes is List) {
+                  // If it's just a list, treat them as variant attributes
+                  variantAttrs = List<String>.from(attributes);
+                }
+              }
+
+              final category = CategoryApiModel(
+                id: id,
+                name: name,
+                image: image,
+                commonAttributes: commonAttrs,
+                variantAttributes: variantAttrs,
+              );
+
+              apiCategories.add(category);
+
+              // Build category config
+              categoryConfigs[name] = CategoryConfig(
+                id: id,
+                commonAttributes: commonAttrs,
+                variantAttributes: variantAttrs,
+              );
+
+              print("✓ Loaded: $name (Common: ${commonAttrs.length}, Variant: ${variantAttrs.length})");
+
+            } catch (e) {
+              print("Error parsing category: $e");
+              print("Category data: $catData");
+            }
+          }
+
+          print("✓ Total categories loaded: ${apiCategories.length}");
+
+          Get.snackbar(
+            "Success",
+            "${apiCategories.length} categories loaded",
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+            snackPosition: SnackPosition.BOTTOM,
+          );
+
+        } else {
+          Get.snackbar("Error", body['message'] ?? "Failed to fetch categories");
+        }
+      } else {
+        Get.snackbar("Error", "Failed to fetch categories: ${response.statusCode}");
+      }
+    } catch (e) {
+      Get.snackbar("Error", "Failed to fetch categories: $e");
+      print("❌ Error fetching categories: $e");
+      print("Stack trace: ${StackTrace.current}");
+    } finally {
+      isLoadingCategories.value = false;
     }
   }
 
-  void removeTag(String tag) {
-    tags.remove(tag);
+  // ---------------- CATEGORY CHANGE ----------------
+  void onCategoryChanged(String category) {
+    selectedCategory.value = category;
+
+    final cat = apiCategories.firstWhere(
+          (c) => c.name == category,
+      orElse: () => CategoryApiModel(
+        id: 0,
+        name: '',
+        image: '',
+        commonAttributes: [],
+        variantAttributes: [],
+      ),
+    );
+    selectedCategoryId.value = cat.id;
+
+    variantAttributeValues.clear();
+    commonAttributes.clear();
+    variants.clear();
+
+    // Initialize variant attribute values
+    final config = categoryConfigs[category];
+    if (config != null) {
+      for (var attr in config.variantAttributes) {
+        variantAttributeValues[attr] = [];
+      }
+
+      print("Category changed to: $category");
+      print("Common attributes: ${config.commonAttributes}");
+      print("Variant attributes: ${config.variantAttributes}");
+    }
   }
 
-  // ---------------- VARIANT OPERATIONS ----------------
-  void addVariant() {
+  // ---------------- COMMON ATTRIBUTE MANAGEMENT ----------------
+  void setCommonAttribute(String attribute, String value) {
+    commonAttributes[attribute] = value;
+  }
+
+  // ---------------- VARIANT ATTRIBUTE VALUE MANAGEMENT ----------------
+  void addAttributeValue(String attribute, String value) {
+    if (value.trim().isEmpty) return;
+
+    if (!variantAttributeValues.containsKey(attribute)) {
+      variantAttributeValues[attribute] = [];
+    }
+
+    if (!variantAttributeValues[attribute]!.contains(value.trim())) {
+      variantAttributeValues[attribute]!.add(value.trim());
+      variantAttributeValues.refresh();
+    }
+  }
+
+  void removeAttributeValue(String attribute, String value) {
+    if (variantAttributeValues.containsKey(attribute)) {
+      variantAttributeValues[attribute]!.remove(value);
+      variantAttributeValues.refresh();
+    }
+  }
+
+  // ---------------- VARIANT GENERATION ----------------
+  void generateVariants() {
     if (selectedCategory.value.isEmpty) {
       Get.snackbar(
         "Category Required",
@@ -65,10 +241,81 @@ class ProductController extends GetxController {
       return;
     }
 
-    List<String> featureKeys = categoryAttributes[selectedCategory.value] ?? [];
-    variants.add(ProductVariant(features: {for (var key in featureKeys) key: ''}));
+    final config = categoryConfigs[selectedCategory.value];
+    if (config == null) return;
+
+    // Check if at least one variant attribute has values
+    bool hasVariantValues = false;
+    for (var attr in config.variantAttributes) {
+      if (variantAttributeValues[attr]?.isNotEmpty ?? false) {
+        hasVariantValues = true;
+        break;
+      }
+    }
+
+    if (!hasVariantValues) {
+      Get.snackbar(
+        "No Variant Attributes",
+        "Please add at least one value for variant attributes",
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    // Generate all combinations
+    List<Map<String, String>> combinations = _generateCombinations(config.variantAttributes);
+
+    // Create variants from combinations
+    variants.clear();
+    for (var combo in combinations) {
+      variants.add(ProductVariant(
+        attributes: combo,
+        price: null,
+        stock: null,
+      ));
+    }
+
+    Get.snackbar(
+      "Variants Generated",
+      "${variants.length} variant(s) created",
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Color(0xFF10B981),
+      colorText: Colors.white,
+    );
   }
 
+  List<Map<String, String>> _generateCombinations(List<String> attributes) {
+    List<Map<String, String>> results = [];
+
+    List<String> activeAttrs = [];
+    List<List<String>> activeValues = [];
+
+    for (var attr in attributes) {
+      if (variantAttributeValues[attr]?.isNotEmpty ?? false) {
+        activeAttrs.add(attr);
+        activeValues.add(variantAttributeValues[attr]!);
+      }
+    }
+
+    if (activeAttrs.isEmpty) return results;
+
+    void generate(int index, Map<String, String> current) {
+      if (index == activeAttrs.length) {
+        results.add(Map<String, String>.from(current));
+        return;
+      }
+
+      for (var value in activeValues[index]) {
+        current[activeAttrs[index]] = value;
+        generate(index + 1, current);
+      }
+    }
+
+    generate(0, {});
+    return results;
+  }
+
+  // ---------------- MANUAL VARIANT OPERATIONS ----------------
   void removeVariant(int index) {
     if (index >= 0 && index < variants.length) {
       variants.removeAt(index);
@@ -79,11 +326,10 @@ class ProductController extends GetxController {
     if (index >= 0 && index < variants.length) {
       final original = variants[index];
       final duplicate = ProductVariant(
-        title: "${original.title} (Copy)",
         price: original.price,
         stock: original.stock,
         imagePath: original.imagePath,
-        features: Map<String, dynamic>.from(original.features),
+        attributes: Map<String, String>.from(original.attributes),
       );
       variants.insert(index + 1, duplicate);
       Get.snackbar(
@@ -110,46 +356,6 @@ class ProductController extends GetxController {
       variants.refresh();
     }
   }
-  Future<void> pickMultipleImages(int index) async {
-    if (index < 0 || index >= variants.length) return;
-
-    final List<XFile> pickedFiles = await picker.pickMultiImage(
-      maxWidth: 1920,
-      maxHeight: 1920,
-      imageQuality: 85,
-    );
-
-    if (pickedFiles.isNotEmpty) {
-      // Use first image as main image
-      variants[index].imagePath = pickedFiles.first.path;
-      variants.refresh();
-
-      if (pickedFiles.length > 1) {
-        Get.snackbar(
-          "Multiple Images",
-          "${pickedFiles.length} images selected. First image set as main.",
-          snackPosition: SnackPosition.BOTTOM,
-        );
-      }
-    }
-  }
-
-
-  Future<void> captureImage(int index) async {
-    if (index < 0 || index >= variants.length) return;
-
-    final pickedFile = await picker.pickImage(
-      source: ImageSource.camera,
-      maxWidth: 1920,
-      maxHeight: 1920,
-      imageQuality: 85,
-    );
-
-    if (pickedFile != null) {
-      variants[index].imagePath = pickedFile.path;
-      variants.refresh();
-    }
-  }
 
   void removeImage(int index) {
     if (index >= 0 && index < variants.length) {
@@ -159,33 +365,6 @@ class ProductController extends GetxController {
   }
 
   // ---------------- VALIDATION ----------------
-  String? validateProductName(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return "Product name is required";
-    }
-    if (value.length < 3) {
-      return "Product name must be at least 3 characters";
-    }
-    if (value.length > 100) {
-      return "Product name must be less than 100 characters";
-    }
-    return null;
-  }
-
-  String? validatePrice(double? value) {
-    if (value == null || value <= 0) {
-      return "Price must be greater than 0";
-    }
-    return null;
-  }
-
-  String? validateStock(int? value) {
-    if (value == null || value < 0) {
-      return "Stock cannot be negative";
-    }
-    return null;
-  }
-
   bool validateForm() {
     if (productName.value.trim().isEmpty) {
       Get.snackbar("Validation Error", "Product name is required");
@@ -197,22 +376,29 @@ class ProductController extends GetxController {
       return false;
     }
 
+    if (productDescription.value.trim().isEmpty) {
+      Get.snackbar("Validation Error", "Product description is required");
+      return false;
+    }
+
+    // Validate common attributes
+    final config = categoryConfigs[selectedCategory.value];
+    if (config != null) {
+      for (var attr in config.commonAttributes) {
+        if (commonAttributes[attr]?.trim().isEmpty ?? true) {
+          Get.snackbar("Validation Error", "$attr is required");
+          return false;
+        }
+      }
+    }
+
     if (variants.isEmpty) {
       Get.snackbar("Validation Error", "At least one variant is required");
       return false;
     }
 
-    // Validate each variant
     for (int i = 0; i < variants.length; i++) {
       final variant = variants[i];
-
-      if (variant.title == null || variant.title!.trim().isEmpty) {
-        Get.snackbar(
-          "Validation Error",
-          "Variant ${i + 1}: Title is required",
-        );
-        return false;
-      }
 
       if (variant.price == null || variant.price! <= 0) {
         Get.snackbar(
@@ -233,7 +419,7 @@ class ProductController extends GetxController {
       if (variant.imagePath == null) {
         Get.snackbar(
           "Validation Error",
-          "Variant ${i + 1}: Product image is required",
+          "Variant ${i + 1}: Image is required",
         );
         return false;
       }
@@ -242,112 +428,118 @@ class ProductController extends GetxController {
     return true;
   }
 
-  // ---------------- DRAFT OPERATIONS ----------------
-  void saveDraft() {
-    isDraft.value = true;
-    lastSavedTime.value = DateTime.now();
-
-    final draftData = _buildProductData();
-    // Here you would save to local storage or database
-    print("DRAFT_SAVED: $draftData");
-
-    Get.snackbar(
-      "Draft Saved",
-      "Your changes have been saved",
-      snackPosition: SnackPosition.BOTTOM,
-      duration: Duration(seconds: 2),
-    );
-  }
-
-  void loadDraft() {
-    // Here you would load from local storage or database
-    Get.snackbar(
-      "Draft Loaded",
-      "Previous draft has been restored",
-      snackPosition: SnackPosition.BOTTOM,
-    );
-  }
-
-  // ---------------- PRODUCT SUBMISSION ----------------
-  void saveProduct() {
+  // ---------------- PRODUCT SUBMISSION TO API ----------------
+  Future<void> saveProduct() async {
     if (!validateForm()) return;
 
-    final productData = _buildProductData();
+    try {
+      isSubmitting.value = true;
 
-    // Here you would send to API or database
-    print("PRODUCT_SAVED: $productData");
+      final token = box.read("auth_token");
+      if (token == null) {
+        Get.snackbar("Error", "Authentication token not found");
+        return;
+      }
 
-    Get.snackbar(
-      "Success",
-      "Product has been saved successfully",
-      snackPosition: SnackPosition.BOTTOM,
-      duration: Duration(seconds: 3),
-    );
+      // Build variants data for API
+      List<Map<String, dynamic>> variantsData = [];
 
-    // Clear form after successful save
-    if (Get.dialog != null) {
-      _clearForm();
-    }
-  }
+      for (var variant in variants) {
+        // Convert image to base64 if exists
+        String? imageBase64;
+        if (variant.imagePath != null) {
+          final bytes = await File(variant.imagePath!).readAsBytes();
+          final extension = variant.imagePath!.split('.').last.toLowerCase();
+          String mimeType = 'image/jpeg';
 
-  Map<String, dynamic> _buildProductData() {
-    return {
-      "name": productName.value.trim(),
-      "category": selectedCategory.value,
-      "description": productDescription.value.trim(),
-      "isPublished": isPublished.value,
-      "isFeatured": isFeatured.value,
-      "tags": tags.toList(),
-      "variants": variants.map((variant) {
-        return {
-          "title": variant.title,
+          if (extension == 'png') {
+            mimeType = 'image/png';
+          } else if (extension == 'jpg' || extension == 'jpeg') {
+            mimeType = 'image/jpeg';
+          }
+
+          imageBase64 = "data:$mimeType;base64,${base64Encode(bytes)}";
+        }
+
+        variantsData.add({
+          "attributes": variant.attributes,
           "price": variant.price,
           "stock": variant.stock,
-          "imagePath": variant.imagePath,
-          "features": variant.features,
-        };
-      }).toList(),
-      "createdAt": DateTime.now().toIso8601String(),
-      "isDraft": isDraft.value,
-    };
-  }
+          "image": imageBase64,
+        });
+      }
 
-  // ---------------- BULK OPERATIONS ----------------
-  void applyPriceToAll(double price) {
-    for (var variant in variants) {
-      variant.price = price;
-    }
-    variants.refresh();
-    Get.snackbar(
-      "Price Updated",
-      "Price applied to all variants",
-      snackPosition: SnackPosition.BOTTOM,
-    );
-  }
+      // Build request body
+      final requestBody = {
+        "name": productName.value.trim(),
+        "description": productDescription.value.trim(),
+        "category_id": selectedCategoryId.value,
+        "common_attributes": commonAttributes,
+        "variants": variantsData,
+      };
 
-  void applyStockToAll(int stock) {
-    for (var variant in variants) {
-      variant.stock = stock;
+      print("Request body: ${jsonEncode(requestBody)}");
+
+      // Make API call
+      final response = await http.post(
+        Uri.parse(addProductUrl),
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: jsonEncode(requestBody),
+      );
+
+      print("Response status: ${response.statusCode}");
+      print("Response body: ${response.body}");
+
+      final body = jsonDecode(response.body);
+
+      if (response.statusCode == 201 || body['status'] == true) {
+        Get.snackbar(
+          "Success",
+          body['message'] ?? "Product added successfully",
+          backgroundColor: Color(0xFF10B981),
+          colorText: Colors.white,
+          duration: Duration(seconds: 3),
+        );
+
+        // Clear form after successful submission
+        _clearForm();
+
+        // Navigate back or to product list
+        Get.back();
+      } else {
+        Get.snackbar(
+          "Error",
+          body['message'] ?? "Failed to add product",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      print("Error saving product: $e");
+      Get.snackbar(
+        "Error",
+        "Failed to save product: $e",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      isSubmitting.value = false;
     }
-    variants.refresh();
-    Get.snackbar(
-      "Stock Updated",
-      "Stock applied to all variants",
-      snackPosition: SnackPosition.BOTTOM,
-    );
   }
 
   // ---------------- CLEAR & RESET ----------------
   void _clearForm() {
     productName.value = '';
     selectedCategory.value = '';
+    selectedCategoryId.value = 0;
     productDescription.value = '';
-    isPublished.value = false;
-    isFeatured.value = false;
     variants.clear();
-    tags.clear();
-    isDraft.value = false;
-    lastSavedTime.value = null;
+    variantAttributeValues.clear();
+    commonAttributes.clear();
   }
 
   void resetForm() {
@@ -378,28 +570,106 @@ class ProductController extends GetxController {
     );
   }
 
-  // ---------------- IMPORT/EXPORT ----------------
-  Future<void> importFromCSV() async {
-    // Implement CSV import functionality
-    Get.snackbar(
-      "Import",
-      "CSV import feature coming soon",
-      snackPosition: SnackPosition.BOTTOM,
-    );
-  }
-
-  Future<void> exportToCSV() async {
-    // Implement CSV export functionality
-    Get.snackbar(
-      "Export",
-      "CSV export feature coming soon",
-      snackPosition: SnackPosition.BOTTOM,
-    );
-  }
-
   @override
   void onClose() {
-    // Clean up resources
     super.onClose();
   }
- }
+}
+
+// ---------------- MODELS ----------------
+
+// Category configuration class
+class CategoryConfig {
+  final int id;
+  final List<String> commonAttributes;
+  final List<String> variantAttributes;
+
+  CategoryConfig({
+    required this.id,
+    required this.commonAttributes,
+    required this.variantAttributes,
+  });
+}
+
+// Category API Model with safe parsing
+class CategoryApiModel {
+  final int id;
+  final String name;
+  final String image;
+  final List<String> commonAttributes;
+  final List<String> variantAttributes;
+
+  CategoryApiModel({
+    required this.id,
+    required this.name,
+    required this.image,
+    required this.commonAttributes,
+    required this.variantAttributes,
+  });
+
+  factory CategoryApiModel.fromJson(Map<String, dynamic> json) {
+    // Safe parsing with detailed error handling
+    try {
+      final int id = json['id'] is int
+          ? json['id']
+          : int.parse(json['id'].toString());
+
+      final String name = json['name']?.toString() ?? '';
+      final String image = json['image']?.toString() ?? '';
+
+      List<String> commonAttrs = [];
+      List<String> variantAttrs = [];
+
+      // Handle attributes field safely
+      if (json['attributes'] != null) {
+        final attributes = json['attributes'];
+
+        if (attributes is Map) {
+          // Case 1: {"common": [...], "variant": [...]}
+          if (attributes['common'] != null && attributes['common'] is List) {
+            commonAttrs = List<String>.from(attributes['common']);
+          }
+
+          if (attributes['variant'] != null && attributes['variant'] is List) {
+            variantAttrs = List<String>.from(attributes['variant']);
+          }
+        } else if (attributes is List) {
+          // Case 2: Just a list of attributes (treat as variant)
+          variantAttrs = List<String>.from(attributes);
+        }
+      }
+
+      return CategoryApiModel(
+        id: id,
+        name: name,
+        image: image,
+        commonAttributes: commonAttrs,
+        variantAttributes: variantAttrs,
+      );
+    } catch (e) {
+      print("Error in CategoryApiModel.fromJson: $e");
+      print("JSON data: $json");
+      rethrow;
+    }
+  }
+}
+
+// Product Variant Model
+class ProductVariant {
+  Map<String, String> attributes;
+  double? price;
+  int? stock;
+  String? imagePath;
+
+  ProductVariant({
+    required this.attributes,
+    this.price,
+    this.stock,
+    this.imagePath,
+  });
+
+  String getDisplayName() {
+    if (attributes.isEmpty) return "Variant";
+    return attributes.values.join(" - ");
+  }
+}

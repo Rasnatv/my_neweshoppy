@@ -1,32 +1,60 @@
+//
 // class ProductVariant {
 //   String? title;
 //   double? price;
 //   int? stock;
 //   String? imagePath;
-//   Map<String, String> features;
+//   Map<String, dynamic> attributes; // Changed from features to attributes for clarity
 //
-//   ProductVariant({this.title, this.price, this.stock, this.imagePath, required this.features});
-// }
+//   ProductVariant({
+//     this.title,
+//     this.price,
+//     this.stock,
+//     this.imagePath,
+//     Map<String, dynamic>? attributes,
+//   }) : attributes = attributes ?? {};
 //
-// class Product {
-//   String? name;
-//   String? category;
-//   List<ProductVariant> variants;
+//   // Generate a display name from attributes
+//   String getDisplayName() {
+//     if (title != null && title!.isNotEmpty) return title!;
 //
-//   Product({this.name, this.category, required this.variants});
+//     List<String> parts = [];
+//     attributes.forEach((key, value) {
+//       if (value != null && value.toString().isNotEmpty &&
+//           key != 'Price' && key != 'Stock') {
+//         parts.add(value.toString());
+//       }
+//     });
+//     return parts.isEmpty ? 'Variant' : parts.join(' - ');
+//   }
+//
+//   Map<String, dynamic> toJson() {
+//     return {
+//       'title': title ?? getDisplayName(),
+//       'price': price,
+//       'stock': stock,
+//       'imagePath': imagePath,
+//       'attributes': attributes,
+//     };
+//   }
 // }
 class ProductVariant {
   String? title;
   double? price;
   int? stock;
   String? imagePath;
-  Map<String, dynamic> features;
+  Map<String, dynamic> attributes;
 
   ProductVariant({
     this.title,
     this.price,
     this.stock,
     this.imagePath,
-    required this.features,
+    required this.attributes,
   });
+
+  String getDisplayName() {
+    if (attributes.isEmpty) return "Variant";
+    return attributes.entries.map((e) => "${e.value}").join(" / ");
+  }
 }

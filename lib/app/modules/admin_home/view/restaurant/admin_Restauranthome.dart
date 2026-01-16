@@ -97,7 +97,8 @@ class AdminRestauranthome extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.blue.shade400, Colors.blue.shade600],
+          //colors: [Colors.blue.shade400, Colors.blue.shade600],
+          colors: [AppColors.kcard, AppColors.kcard1],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -259,7 +260,7 @@ class AdminRestauranthome extends StatelessWidget {
               label: const Text("Edit Menu & Tables"),
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 54),
-                backgroundColor: Colors.orange,
+                backgroundColor: AppColors.kPrimary,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

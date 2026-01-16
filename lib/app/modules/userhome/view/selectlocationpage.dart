@@ -192,15 +192,6 @@ class SelectLocationPage extends StatelessWidget {
                       });
                     }
                         : null,
-                    // style: ElevatedButton.styleFrom(
-                    //   backgroundColor: Colors.blue.shade600,
-                    //   foregroundColor: Colors.white,
-                    //   elevation: 0,
-                    //   shape: RoundedRectangleBorder(
-                    //     borderRadius: BorderRadius.circular(12),
-                    //   ),
-                    //   disabledBackgroundColor: Colors.grey.shade300,
-                    // ),
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [

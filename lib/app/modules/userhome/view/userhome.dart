@@ -116,23 +116,37 @@ class Userhome extends StatelessWidget {
                           child:
                           Row(
                             children: [
-                              const Icon(Icons.location_on,
-                                  color: Colors.red, size: 20),
-                              Obx(() {
-                                final mainLocation = controller.selectedMainLocation.value;
+                              const Icon(Icons.location_on, color: Colors.red, size: 20),
+                              const SizedBox(width: 4),
+                              // Obx(() {
+                              //   final location =
+                              //       Get.find<UserDistrictController>().selectedMainLocation.value;
+                              //
+                              //   return Text(
+                              //     location.isEmpty ? "Select Location" : location,
+                              //     style: AppTextStyle.rTextNunitoWhite14w700,
+                              //     maxLines: 1,
+                              //     overflow: TextOverflow.ellipsis,
+                              //   );
+                              // }),
+                          Obx(() {
+                            final location =
+                                Get.find<UserDistrictController>().selectedMainLocation.value;
 
-                                return Text(
-                                  (mainLocation.isEmpty)
-                                      ? "Select Location"
-                                      : mainLocation,
-                                   style: AppTextStyle.rTextNunitoWhite14w700,
-                                );
-                              }),
+                            return Text(
+                              location.isEmpty ? "Select Location" : location,
+                              style: AppTextStyle.rTextNunitoWhite14w700,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            );
+                          }
+
+                          )],
 
 
-                            ],
-                          ),
-                        ),
+
+
+                       ) ),
                       ),
                       const SizedBox(height: 6),
                       // ---------------- Search Bar ----------------
