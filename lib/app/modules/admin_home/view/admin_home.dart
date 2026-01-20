@@ -513,9 +513,9 @@ class AdminDashboard extends StatelessWidget {
                     ),
                     onPressed: () {
                       Get.back(); // close dialog
-                      AuthService.logout(
-                        message: "Logged out successfully",
-                      );
+                      // AuthService.logout(
+                      //   message: "Logged out successfully",
+                      //);
                     },
                     child: const Text("Logout"),
                   ),

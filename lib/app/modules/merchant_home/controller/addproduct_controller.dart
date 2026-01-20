@@ -148,13 +148,13 @@ class ProductController extends GetxController {
 
           print("✓ Total categories loaded: ${apiCategories.length}");
 
-          Get.snackbar(
-            "Success",
-            "${apiCategories.length} categories loaded",
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
-            snackPosition: SnackPosition.BOTTOM,
-          );
+          // Get.snackbar(
+          //   "Success",
+          //   "${apiCategories.length} categories loaded",
+          //   backgroundColor: Colors.green,
+          //   colorText: Colors.white,
+          //   snackPosition: SnackPosition.BOTTOM,
+          // );
 
         } else {
           Get.snackbar("Error", body['message'] ?? "Failed to fetch categories");

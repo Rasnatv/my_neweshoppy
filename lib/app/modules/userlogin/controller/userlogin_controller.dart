@@ -1,23 +1,20 @@
-
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
-
-// pages
-
 
 import '../../admin_home/view/admin_home.dart';
 import '../../merchant_home/views/merchant_home.dart';
 import '../../userhome/view/userhome.dart';
 
 class UserloginController extends GetxController {
-  final username = TextEditingController();
-  final password = TextEditingController();
+  final TextEditingController username = TextEditingController();
+  final TextEditingController password = TextEditingController();
 
-  final isLoading = false.obs;
-  final box = GetStorage();
+  final RxBool isLoading = false.obs;
+  final GetStorage box = GetStorage();
 
   final String loginUrl =
       "https://rasma.astradevelops.in/e_shoppyy/public/api/login";
@@ -29,10 +26,9 @@ class UserloginController extends GetxController {
     super.onClose();
   }
 
-  /// 🔹 Called from UI button (UNCHANGED)
   Future<void> submit() async {
-    final email = username.text.trim();
-    final pass = password.text.trim();
+    final String email = username.text.trim();
+    final String pass = password.text.trim();
 
     if (email.isEmpty || pass.isEmpty) {
       _error("Email and password required");
@@ -42,9 +38,8 @@ class UserloginController extends GetxController {
     isLoading.value = true;
 
     try {
-      /// TRY ROLES: USER → MERCHANT → ADMIN
       for (int role in [1, 2, 3]) {
-        final success = await _loginWithRole(
+        final bool success = await _loginWithRole(
           email: email,
           password: pass,
           role: role,
@@ -53,7 +48,6 @@ class UserloginController extends GetxController {
         if (success) return;
       }
 
-      /// IF ALL FAIL
       _error("Invalid email or password");
     } catch (e) {
       _error("Something went wrong");
@@ -62,7 +56,6 @@ class UserloginController extends GetxController {
     }
   }
 
-  /// 🔹 API CALL
   Future<bool> _loginWithRole({
     required String email,
     required String password,
@@ -70,7 +63,9 @@ class UserloginController extends GetxController {
   }) async {
     final response = await http.post(
       Uri.parse(loginUrl),
-      headers: {"Accept": "application/json"},
+      headers: {
+        "Accept": "application/json",
+      },
       body: {
         "email": email,
         "password": password,
@@ -78,27 +73,27 @@ class UserloginController extends GetxController {
       },
     );
 
-    final body = jsonDecode(response.body);
+    final Map<String, dynamic> body = jsonDecode(response.body);
 
     final status = body['status'];
-    final isSuccess =
+    final bool isSuccess =
         status == true || status == 1 || status == "1";
 
     if (!isSuccess) return false;
 
     final data = body['data'];
 
-    /// SAVE DATA
+    // Store auth data
     box.write("auth_token", data['auth_token']);
     box.write("role", data['role']);
     box.write("user_data", data);
 
-    /// NAVIGATION
+    // Navigate based on role
     if (data['role'] == 1) {
       Get.offAll(() => Userhome());
     } else if (data['role'] == 2) {
       Get.offAll(() => MerchantDashboardPage());
-    } else if (data['role'] == 3) {
+    } else {
       Get.offAll(() => AdminDashboard());
     }
 
@@ -119,4 +114,3 @@ class UserloginController extends GetxController {
     );
   }
 }
-

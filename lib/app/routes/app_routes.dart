@@ -15,6 +15,7 @@ abstract class Routes {
   static const CART = _Paths.CART;
   static const PROFILE = _Paths.PROFILE;
   static const CATEGORYS = _Paths.CATEGORYS;
+  static const CHECKEMAIL = _Paths.CHECKEMAIL;
 }
 
 abstract class _Paths {
@@ -31,4 +32,5 @@ abstract class _Paths {
   static const PROFILE = '/profile';
   static const CATEGORYS= '/category';
   static const SPLASH ='/splash';
+  static const CHECKEMAIL='/checkemail';
 }

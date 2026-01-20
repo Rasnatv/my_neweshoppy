@@ -1,35 +1,61 @@
 
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
+
+import '../../../routes/app_pages.dart';
 
 class ForgotPasswordController extends GetxController {
   final emailController = TextEditingController();
+  final isLoading = false.obs;
 
-  void sendResetLink() {
-    String email = emailController.text.trim();
-
-    if (email.isEmpty || !email.contains('@')) {
-      Get.snackbar(
-        "Invalid Email",
-        "Please enter a valid email address",
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.white,
-      );
+  Future<void> sendOtp() async {
+    if (emailController.text.trim().isEmpty) {
+      Get.snackbar("Error", "Please enter email");
       return;
     }
 
-    // 🔹 TODO: Integrate your backend / Firebase password reset here
-    // Example:
-    // await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+    try {
+      isLoading.value = true;
 
-    Get.snackbar(
-      "Reset Link Sent",
-      "A password reset link has been sent to $email",
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.white,
-    );
+      final response = await http.post(
+        Uri.parse(
+          "https://rasma.astradevelops.in/e_shoppyy/public/api/forgot-password",
+        ),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "email": emailController.text.trim(),
+          "role": 1,
+        }),
+      );
 
-    // Optionally navigate to login screen
-    // Get.off(() => const AdminLoginView());
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && data["status"] == "1") {
+        Get.snackbar("Success", data["message"]);
+
+        // ✅ CORRECT NAVIGATION
+        Get.toNamed(
+          Routes.CHECKEMAIL,
+          arguments: emailController.text.trim(),
+        );
+      } else {
+        Get.snackbar(
+          "Error",
+          data["message"] ?? "Failed to send OTP",
+        );
+      }
+    } catch (e) {
+      Get.snackbar("Error", e.toString());
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  @override
+  void onClose() {
+    emailController.dispose();
+    super.onClose();
   }
 }

@@ -1,12 +1,21 @@
-
+// import 'package:get/get.dart';
+// import '../controller/userlogin_controller.dart';
+//
+// class UserloginBinding extends Bindings {
+//   @override
+//   void dependencies() {
+//     Get.lazyPut<UserloginController>(() => UserloginController());
+//   }
+// }
 import 'package:get/get.dart';
-
 import '../controller/userlogin_controller.dart';
-class UserloginBindings extends Bindings {
+
+class UserLoginBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<UserloginController>(
-          () => UserloginController(),
+    Get.put<UserloginController>(
+      UserloginController(),
+      permanent: true,
     );
   }
 }

@@ -18,6 +18,8 @@ class UsersignupController extends GetxController {
   final phoneController = TextEditingController();
   final addressController = TextEditingController();
 
+  final box = GetStorage();
+
   RxBool isLoading = false.obs;
   RxBool isPasswordVisible = false.obs;
 
@@ -27,6 +29,21 @@ class UsersignupController extends GetxController {
 
   Future<void> register() async {
     if (!formKey.currentState!.validate()) return;
+
+    /// 🔥 READ LOCATION FROM STORAGE
+    final String? state = box.read('state');
+    final String? district = box.read('district');
+    final String? mainLocation = box.read('main_location');
+
+    if (state == null || district == null || mainLocation == null) {
+      Get.snackbar(
+        "Location Required",
+        "Please select your location before signup",
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      return;
+    }
 
     isLoading.value = true;
 
@@ -42,29 +59,47 @@ class UsersignupController extends GetxController {
           "password": passwordController.text.trim(),
           "phone": phoneController.text.trim(),
           "address": addressController.text.trim(),
+
+          /// ✅ LOCATION FIELDS
+          "state": state,
+          "district": district,
+          "main_location": mainLocation,
         }),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        /// 🔥 Clear any previous location
-        if (Get.isRegistered<UserDistrictController>()) {
-          Get.find<UserDistrictController>().resetLocationState();
-        }
+        /// 🔥 CLEAR LOCATION AFTER SIGNUP
+        // if (Get.isRegistered<UserDistrictController>()) {
+        //   Get.find<UserDistrictController>().resetLocationState();
+        // }
 
-        Get.snackbar("Success", "Signup Successful",
-            backgroundColor: Colors.green,
-            colorText: Colors.white);
+        box.remove('state');
+        box.remove('district');
+        box.remove('main_location');
+
+        Get.snackbar(
+          "Success",
+          "Signup Successful",
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
 
         Get.offAll(() => LandingView());
       } else {
-        Get.snackbar("Error", "Signup failed",
-            backgroundColor: Colors.red,
-            colorText: Colors.white);
+        Get.snackbar(
+          "Error",
+          "Signup failed",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
       }
     } catch (e) {
-      Get.snackbar("Error", "Something went wrong",
-          backgroundColor: Colors.red,
-          colorText: Colors.white);
+      Get.snackbar(
+        "Error",
+        "Something went wrong",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     } finally {
       isLoading.value = false;
     }
