@@ -1,7 +1,6 @@
 
 class DValidator{
 
-  //empty textvalidation
   static String? validateEmptyText(String? fielname,String? value){
     if(value==null || value.isEmpty){
       return'$fielname is required';

@@ -5,8 +5,7 @@ import 'package:get/get.dart';
 import '../controller/addproduct_controller.dart';
 
 
-/// Example Add Product Page
-/// This shows how to use the ProductController with your UI design pattern
+/// Add Product Page with Variant Type Dropdown
 class AddProductPage extends StatelessWidget {
   final ProductController controller = Get.put(ProductController());
 
@@ -65,21 +64,20 @@ class AddProductPage extends StatelessWidget {
                         SizedBox(height: 24),
                       ],
 
-                      // Show variant attributes section if category selected
-                      if (controller.selectedCategory.value.isNotEmpty) ...[
-                        _buildVariantAttributesSection(),
+                      // Show variant type dropdown if category has variant attributes
+                      if (controller.selectedCategory.value.isNotEmpty &&
+                          controller.hasVariantAttributes()) ...[
+                        _buildVariantTypeDropdown(context),
                         SizedBox(height: 24),
                       ],
 
-                      // Show variants if generated
+                      // Show selected variants list
                       if (controller.variants.isNotEmpty) ...[
                         _buildVariantsHeader(),
                         SizedBox(height: 16),
                         ...controller.variants.asMap().entries.map((entry) {
                           return _buildVariantCard(context, entry.key, entry.value);
                         }).toList(),
-                      ] else if (controller.selectedCategory.value.isNotEmpty) ...[
-                        _buildEmptyVariantsState(),
                       ],
                       SizedBox(height: 100),
                     ],
@@ -348,7 +346,8 @@ class AddProductPage extends StatelessWidget {
     );
   }
 
-  Widget _buildVariantAttributesSection() {
+  // NEW: Variant Type Dropdown - shows variant attribute types (Size, Color, etc.)
+  Widget _buildVariantTypeDropdown(BuildContext context) {
     final config = controller.categoryConfigs[controller.selectedCategory.value];
     if (config == null || config.variantAttributes.isEmpty) return SizedBox.shrink();
 
@@ -356,114 +355,382 @@ class AddProductPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionTitle("Variant Attributes", Icons.tune),
+          _buildSectionTitle("Select Variant Type", Icons.tune),
           SizedBox(height: 8),
           Text(
-            "Define variations that create separate products (different prices/stock)",
+            "Choose which variant type to add (Size, Color, etc.)",
             style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
           ),
           SizedBox(height: 16),
-          ...config.variantAttributes.map((attr) {
-            return Padding(
-              padding: EdgeInsets.only(bottom: 16),
-              child: _buildAttributeValueInput(attr),
-            );
-          }).toList(),
-          SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: controller.generateVariants,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF3B82F6),
-                padding: EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              icon: Icon(Icons.auto_awesome),
-              label: Text(
-                "Generate Variants",
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-              ),
+
+          // Show already configured variant types
+          Obx(() {
+            if (controller.configuredVariantTypes.isNotEmpty) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Configured Types:",
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1A1A1A),
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: controller.configuredVariantTypes.entries.map((entry) {
+                      final isSelected = controller.selectedVariantType.value == entry.key;
+                      return Container(
+                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? Color(0xFF10B981).withOpacity(0.1)
+                              : Color(0xFF3B82F6).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isSelected
+                                ? Color(0xFF10B981)
+                                : Color(0xFF3B82F6),
+                            width: isSelected ? 2 : 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.check_circle,
+                              size: 16,
+                              color: isSelected
+                                  ? Color(0xFF10B981)
+                                  : Color(0xFF3B82F6),
+                            ),
+                            SizedBox(width: 6),
+                            Text(
+                              "${entry.key} (${entry.value.length})",
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: isSelected
+                                    ? Color(0xFF10B981)
+                                    : Color(0xFF3B82F6),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  SizedBox(height: 16),
+                  Divider(),
+                  SizedBox(height: 16),
+                ],
+              );
+            }
+            return SizedBox.shrink();
+          }),
+
+          // Dropdown to select variant attribute type
+          Container(
+            decoration: BoxDecoration(
+              color: Color(0xFFF9FAFB),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Color(0xFFE5E7EB)),
             ),
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: Obx(() => DropdownButtonFormField<String>(
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                prefixIcon: Icon(Icons.category, color: Color(0xFF6B7280), size: 20),
+                hintText: "Select variant type",
+                hintStyle: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+              ),
+              value: controller.selectedVariantType.value.isEmpty
+                  ? null
+                  : controller.selectedVariantType.value,
+              items: config.variantAttributes.map((attr) {
+                final hasValues = controller.configuredVariantTypes.containsKey(attr);
+                return DropdownMenuItem(
+                  value: attr,
+                  child: Row(
+                    children: [
+                      Text(attr, style: TextStyle(fontSize: 15)),
+                      if (hasValues) ...[
+                        SizedBox(width: 8),
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Color(0xFF10B981),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            "${controller.configuredVariantTypes[attr]!.length}",
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              }).toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  controller.onVariantTypeSelected(value);
+                }
+              },
+              dropdownColor: Colors.white,
+              icon: Icon(Icons.keyboard_arrow_down, color: Color(0xFF6B7280)),
+            )),
           ),
+
+          // Show variant values input section when a type is selected
+          Obx(() {
+            if (controller.selectedVariantType.value.isEmpty) {
+              return SizedBox.shrink();
+            }
+
+            return Column(
+              children: [
+                SizedBox(height: 20),
+                Divider(),
+                SizedBox(height: 20),
+                _buildVariantValuesSection(),
+              ],
+            );
+          }),
         ],
       ),
     );
   }
 
-  Widget _buildAttributeValueInput(String attribute) {
+  Widget _buildVariantValuesSection() {
     return Obx(() {
-      final values = controller.variantAttributeValues[attribute] ?? [];
+      final variantType = controller.selectedVariantType.value;
+      final values = controller.currentVariantValues;
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            attribute,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF1A1A1A),
-            ),
-          ),
-          SizedBox(height: 8),
-          if (values.isNotEmpty)
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: values.map((value) {
-                return Chip(
-                  label: Text(value),
-                  deleteIcon: Icon(Icons.close, size: 18),
-                  onDeleted: () => controller.removeAttributeValue(attribute, value),
-                  backgroundColor: Color(0xFF3B82F6).withOpacity(0.1),
-                  labelStyle: TextStyle(
-                    color: Color(0xFF3B82F6),
-                    fontWeight: FontWeight.w500,
+          Row(
+            children: [
+              Icon(Icons.list, color: Color(0xFF3B82F6), size: 20),
+              SizedBox(width: 8),
+              Text(
+                "$variantType Values",
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1A1A1A),
+                ),
+              ),
+              Spacer(),
+              if (values.isNotEmpty)
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Color(0xFF10B981),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                );
-              }).toList(),
+                  child: Text(
+                    "${values.length} value(s)",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          SizedBox(height: 12),
+
+          // Display added values
+          if (values.isNotEmpty)
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Color(0xFFF9FAFB),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Color(0xFFE5E7EB)),
+              ),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: values.map((value) {
+                  return Chip(
+                    label: Text(value),
+                    deleteIcon: Icon(Icons.close, size: 18),
+                    onDeleted: () => controller.removeVariantValue(value),
+                    backgroundColor: Color(0xFF3B82F6).withOpacity(0.1),
+                    labelStyle: TextStyle(
+                      color: Color(0xFF3B82F6),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  );
+                }).toList(),
+              ),
+            )
+          else
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Color(0xFFF9FAFB),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Color(0xFFE5E7EB)),
+              ),
+              child: Center(
+                child: Text(
+                  "No values added yet for $variantType",
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
+              ),
             ),
-          SizedBox(height: 8),
+
+          SizedBox(height: 12),
+
+          // Input to add new value
           Row(
             children: [
               Expanded(
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: "Add $attribute value (e.g., ${_getExampleValue(attribute)})",
-                    hintStyle: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
-                    filled: true,
-                    fillColor: Color(0xFFF9FAFB),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Color(0xFFE5E7EB)),
-                    ),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Color(0xFFE5E7EB)),
                   ),
-                  onSubmitted: (value) {
-                    if (value.trim().isNotEmpty) {
-                      controller.addAttributeValue(attribute, value.trim());
-                    }
-                  },
+                  child: TextField(
+                    controller: controller.variantValueController,
+                    decoration: InputDecoration(
+                      hintText: "Add $variantType value (e.g., ${_getExampleValue(variantType)})",
+                      hintStyle: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    ),
+                    onSubmitted: (value) {
+                      if (value.trim().isNotEmpty) {
+                        controller.addVariantValue(value.trim());
+                      }
+                    },
+                  ),
                 ),
               ),
               SizedBox(width: 8),
-              Container(
-                decoration: BoxDecoration(
-                  color: Color(0xFF3B82F6),
-                  borderRadius: BorderRadius.circular(8),
+              ElevatedButton(
+                onPressed: () {
+                  final value = controller.variantValueController.text.trim();
+                  if (value.isNotEmpty) {
+                    controller.addVariantValue(value);
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF3B82F6),
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
-                child: IconButton(
-                  icon: Icon(Icons.add, color: Colors.white),
-                  onPressed: () {
-                    _showAddValueDialog(attribute);
-                  },
-                ),
+                child: Text("Add", style: TextStyle(fontWeight: FontWeight.w600)),
               ),
             ],
           ),
+
+          SizedBox(height: 16),
+
+          // Generate Variants Button - only show if we have configured types
+          Obx(() {
+            if (controller.configuredVariantTypes.isNotEmpty) {
+              return Column(
+                children: [
+                  // Show summary of all configured types
+                  Container(
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Color(0xFF10B981).withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Color(0xFF10B981).withOpacity(0.3)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.info_outline, size: 16, color: Color(0xFF10B981)),
+                            SizedBox(width: 8),
+                            Text(
+                              "Ready to generate variants:",
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF10B981),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 8),
+                        ...controller.configuredVariantTypes.entries.map((entry) {
+                          return Padding(
+                            padding: EdgeInsets.only(bottom: 4),
+                            child: Row(
+                              children: [
+                                SizedBox(width: 24),
+                                Text(
+                                  "• ${entry.key}: ",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF1A1A1A),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    entry.value.join(", "),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF6B7280),
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: controller.generateVariantsFromType,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFF10B981),
+                        padding: EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      icon: Icon(Icons.auto_awesome),
+                      label: Text(
+                        "Generate All Variants",
+                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }
+            return SizedBox.shrink();
+          }),
         ],
       );
     });
@@ -471,47 +738,14 @@ class AddProductPage extends StatelessWidget {
 
   String _getExampleValue(String attribute) {
     final examples = {
-      'size': 'S, M, L, XL',
-      'color': 'Red, Blue, Black',
-      'colour': 'Red, Blue, Black',
-      'Size': 'S, M, L, XL',
-      'Color': 'Red, Blue, Black',
-      'Colour': 'Red, Blue, Black',
+      'size': 'S, M, L',
+      'color': 'Red, Blue',
+      'colour': 'Red, Blue',
+      'Size': 'S, M, L',
+      'Color': 'Red, Blue',
+      'Colour': 'Red, Blue',
     };
     return examples[attribute] ?? 'Value';
-  }
-
-  void _showAddValueDialog(String attribute) {
-    final TextEditingController textController = TextEditingController();
-
-    Get.dialog(
-      AlertDialog(
-        title: Text("Add $attribute"),
-        content: TextField(
-          controller: textController,
-          decoration: InputDecoration(
-            hintText: "Enter $attribute value",
-            border: OutlineInputBorder(),
-          ),
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: Text("Cancel"),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (textController.text.trim().isNotEmpty) {
-                controller.addAttributeValue(attribute, textController.text.trim());
-                Get.back();
-              }
-            },
-            child: Text("Add"),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildVariantsHeader() {
@@ -539,51 +773,6 @@ class AddProductPage extends StatelessWidget {
           ],
         ),
       ],
-    );
-  }
-
-  Widget _buildEmptyVariantsState() {
-    return Container(
-      padding: EdgeInsets.all(40),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Color(0xFFE5E7EB), width: 2),
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Color(0xFF3B82F6).withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.inventory_2_outlined,
-              size: 48,
-              color: Color(0xFF3B82F6),
-            ),
-          ),
-          SizedBox(height: 16),
-          Text(
-            "No variants created yet",
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF1A1A1A),
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            "Add attribute values and click 'Generate Variants'",
-            style: TextStyle(
-              fontSize: 14,
-              color: Color(0xFF6B7280),
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
     );
   }
 
@@ -642,11 +831,6 @@ class AddProductPage extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.content_copy, color: Color(0xFF3B82F6), size: 20),
-                  onPressed: () => controller.duplicateVariant(index),
-                  tooltip: "Duplicate variant",
-                ),
-                IconButton(
                   icon: Icon(Icons.delete_outline, color: Color(0xFFEF4444), size: 20),
                   onPressed: () => _showDeleteDialog(context, index),
                   tooltip: "Remove variant",
@@ -673,7 +857,7 @@ class AddProductPage extends StatelessWidget {
                   ],
                 ),
                 SizedBox(height: 16),
-                if (config.variantAttributes.isNotEmpty) ...[
+                if (variant.attributes.isNotEmpty) ...[
                   Text(
                     "Variant Attributes",
                     style: TextStyle(
@@ -683,10 +867,10 @@ class AddProductPage extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 12),
-                  ...config.variantAttributes.map((attr) {
+                  ...variant.attributes.entries.map((entry) {
                     return Padding(
                       padding: EdgeInsets.only(bottom: 12),
-                      child: _buildVariantAttributeField(variant, attr),
+                      child: _buildVariantAttributeField(entry.key, entry.value),
                     );
                   }).toList(),
                 ],
@@ -764,7 +948,7 @@ class AddProductPage extends StatelessWidget {
     );
   }
 
-  Widget _buildVariantAttributeField(ProductVariant variant, String attribute) {
+  Widget _buildVariantAttributeField(String attribute, String value) {
     return Container(
       decoration: BoxDecoration(
         color: Color(0xFFF9FAFB),
@@ -772,10 +956,8 @@ class AddProductPage extends StatelessWidget {
         border: Border.all(color: Color(0xFFE5E7EB)),
       ),
       child: TextField(
-        controller: TextEditingController(
-          text: variant.attributes[attribute]?.toString() ?? '',
-        ),
-        enabled: false, // Read-only since generated from combinations
+        controller: TextEditingController(text: value),
+        enabled: false,
         style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
         decoration: InputDecoration(
           labelText: attribute,

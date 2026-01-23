@@ -4,14 +4,16 @@ import 'package:get/get.dart';
 
 import '../../../common/style/app_colors.dart';
 import '../../../common/style/app_text_style.dart';
-import '../../merchant_home/views/shopedit.dart';
+import '../../../core/utils/auth_service.dart';
 import '../../myoders/myoders/myodersview.dart';
+import '../../userlogin/controller/userlogin_controller.dart';
 import '../../userlogin/view/useredit_profile.dart';
 
 class ProfileView extends StatelessWidget {
-  const ProfileView({super.key});
+   ProfileView({super.key});
+   final UserloginController controller = Get.put(UserloginController());
 
-  @override
+   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7F7),
@@ -98,13 +100,50 @@ class ProfileView extends StatelessWidget {
 
             // ------------------ LOGOUT BUTTON ------------------
             SizedBox(width: MediaQuery.sizeOf(context).width,child:
-            ElevatedButton(
-              onPressed: () {},
-              child: const Text(
-                "Logout",
-                style: TextStyle(fontSize: 16, color: Colors.white),
+
+            // ------------------ LOGOUT BUTTON ------------------
+            SizedBox(
+              width: MediaQuery.sizeOf(context).width,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                ),
+                onPressed: () {
+                  Get.dialog(
+                    AlertDialog(
+                      title: const Text("Confirm Logout"),
+                      content: const Text("Are you sure you want to logout?"),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Get.back(); // close dialog
+                          },
+                          child: const Text("Cancel"),
+                        ),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                          ),
+                          onPressed: () async {
+                            Get.back(); // close dialog
+                           // AuthService.logout(message: "You have been logged out"); /// 🔥 actual logout
+                          },
+                          child: const Text("Logout"),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                child: const Text(
+                  "Logout",
+                  style: TextStyle(fontSize: 16, color: Colors.white),
+                ),
               ),
             ),
+
             )],
         ),
       ),

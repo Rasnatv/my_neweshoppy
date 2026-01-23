@@ -1,12 +1,56 @@
+import 'dart:convert';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:http/http.dart' as http;
 
-import '../../../data/models/companymodel.dart';
+import '../../../data/models/categoryshoplistmodel.dart';
 
 
 class CompanyController extends GetxController {
-  late Company company;
+  final box = GetStorage();
 
-  void setCompany(Company data) {
-    company = data;
+  final String api =
+      "https://rasma.astradevelops.in/e_shoppyy/public/api/user/shops-by-category";
+
+  var isLoading = false.obs;
+  var shops = <ShoplistModel>[].obs;
+
+  Future<void> fetchShopsByCategory(int categoryId) async {
+    final token = box.read("auth_token");
+    if (token == null) return;
+
+    try {
+      isLoading.value = true;
+
+      final response = await http.post(
+        Uri.parse(api),
+        headers: {
+          "Accept": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: {
+          "category_id": categoryId.toString(),
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final decoded = json.decode(response.body);
+        final List list = decoded['data'] ?? [];
+
+        shops.value =
+            list.map((e) => ShoplistModel.fromJson(e)).toList();
+      } else {
+        shops.clear();
+      }
+    } catch (e) {
+      shops.clear();
+      print("Shop fetch error: $e");
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  void clearShops() {
+    shops.clear();
   }
 }

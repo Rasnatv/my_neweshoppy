@@ -5,7 +5,7 @@ import '../../../common/constants/text_String.dart';
 import '../../../common/style/app_colors.dart';
 import '../../../widgets/Headline2.dart';
 import '../controller/forgotpswd_controller.dart';
-import 'checkemail.dart';
+
 
 class ForgotPasswordEmailView
     extends GetView<ForgotPasswordController> {
@@ -125,3 +125,4 @@ class ForgotPasswordEmailView
     );
   }
 }
+

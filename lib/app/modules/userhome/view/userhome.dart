@@ -1,33 +1,30 @@
 
+
 import 'dart:ui';
 
-import 'package:eshoppy/app/modules/userhome/view/selectlocationpage.dart';
+import 'package:eshoppy/app/modules/userhome/view/selectlocationpage.dart' hide UserDistrictController;
+import 'package:eshoppy/app/modules/userhome/view/user_eventsection.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_colors.dart';
 import '../../../common/style/app_text_style.dart';
-import '../../../data/models/companymodel.dart';
-import '../../../widgets/Gridviewlayout.dart';
 import '../../../widgets/iconwithbadge.dart';
 import '../../product/controller/cartcontroller.dart';
 import '../../product/view/cartscreen.dart';
-import '../../product/widgtet/productcard.dart';
 import '../../restarunent/view/restarnent_list.dart';
-import '../controller/company_controller.dart';
 import '../controller/district _controller.dart';
 import '../widget/categorygrid.dart';
 import '../widget/primaryheader.dart';
 import 'package:flutter/services.dart';
 import '../widget/promotionbanner.dart';
 import '../widget/searchbar.dart';
-import 'shopview.dart';
 
 class Userhome extends StatelessWidget {
   const Userhome({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final controller= Get.put(UserDistrictController());
+    final userLocationController = Get.put(UserLocationController(), permanent: true);
     final CartController cartController = Get.put(CartController());
 
     final List<Map<String, String>> offers = [
@@ -49,31 +46,6 @@ class Userhome extends StatelessWidget {
     ];
 
 
-    /// Dummy events data
-    final List<Map<String, String>> events = [
-      {
-        "title": "Food Fest",
-        "date": "21-12-2025",
-        "time": "10:00 AM",
-        "location": "Kanhangad",
-        "image": ""
-      },
-      {
-        "title": "New Year Bash",
-        "date": "31-12-2025",
-        "time": "08:00 PM",
-        "location": "Mall Road",
-        "image": ""
-      },
-      {
-        "title": "Music Festival",
-        "date": "24-12-2025",
-        "time": "06:00 PM",
-        "location": "Beach",
-        "image": ""
-      },
-    ];
-
     return Scaffold(
       body: AnnotatedRegion<SystemUiOverlayStyle>(
         value: const SystemUiOverlayStyle(
@@ -91,15 +63,15 @@ class Userhome extends StatelessWidget {
                 "eShoppy",
                 style: AppTextStyle.rTextNunitoWhite26w700,
               ),
-                actions: [
-                  Obx(() => IconWithBadge(
-                    icon: Icons.shopping_cart_outlined,
-                    badgeCount: cartController.cartItems.length,
-                    iconColor: Colors.white,
-                    onPressed: () => Get.to(() => CartPage()),
-                  )),
-                  const SizedBox(width: 12),
-                ],
+              actions: [
+                Obx(() => IconWithBadge(
+                  icon: Icons.shopping_cart_outlined,
+                  badgeCount: cartController.cartItems.length,
+                  iconColor: Colors.white,
+                  onPressed: () => Get.to(() => CartPage()),
+                )),
+                const SizedBox(width: 12),
+              ],
 
               flexibleSpace: FlexibleSpaceBar(
                 background: DPrimaryHeader(
@@ -113,41 +85,26 @@ class Userhome extends StatelessWidget {
                           onTap: () {
                             Get.to(() => SelectLocationPage());
                           },
-                          child:
-                          Row(
+                          child: Row(
                             children: [
                               const Icon(Icons.location_on, color: Colors.red, size: 20),
                               const SizedBox(width: 4),
-                              // Obx(() {
-                              //   final location =
-                              //       Get.find<UserDistrictController>().selectedMainLocation.value;
-                              //
-                              //   return Text(
-                              //     location.isEmpty ? "Select Location" : location,
-                              //     style: AppTextStyle.rTextNunitoWhite14w700,
-                              //     maxLines: 1,
-                              //     overflow: TextOverflow.ellipsis,
-                              //   );
-                              // }),
-                          Obx(() {
-                            final location =
-                                Get.find<UserDistrictController>().selectedMainLocation.value;
+                              Obx(() {
+                                final location =
+                                    Get.find<UserLocationController>().selectedMainLocation.value;
 
-                            return Text(
-                              location.isEmpty ? "Select Location" : location,
-                              style: AppTextStyle.rTextNunitoWhite14w700,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            );
-                          }
-
-                          )],
-
-
-
-
-                       ) ),
+                                return Text(
+                                  location.isEmpty ? "Select Location" : location,
+                                  style: AppTextStyle.rTextNunitoWhite14w700,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                );
+                              }),
+                            ],
+                          ),
+                        ),
                       ),
+
                       const SizedBox(height: 6),
                       // ---------------- Search Bar ----------------
                       Padding(
@@ -182,8 +139,8 @@ class Userhome extends StatelessWidget {
             ),
 
             // ---------------- CATEGORY GRID ----------------
-            SliverToBoxAdapter(child: FlipkartStyleCategories()),
-        SliverToBoxAdapter(
+            SliverToBoxAdapter(child: CategorySection ()),
+            SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: Stack(
@@ -202,8 +159,8 @@ class Userhome extends StatelessWidget {
                     ),
                     // Glassmorphism Button
                     Positioned(
-                     top:3,
-                     right:4,
+                      top:3,
+                      right:4,
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: BackdropFilter(
@@ -232,9 +189,9 @@ class Userhome extends StatelessWidget {
                               ),
                             ),
                           ),
+                          ),
                         ),
                       ),
-                    ),
                     ) ],
                 ),
               ),
@@ -248,109 +205,16 @@ class Userhome extends StatelessWidget {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text("Upcoming Events",
-                    style: AppTextStyle.rTextRalewayBlack19w800),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: SizedBox(
-                height: 250,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.all(16),
-                  itemCount: events.length,
-                  itemBuilder: (context, index) {
-                    final event = events[index];
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 12),
-                      child: Container(
-                        width: 180,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Colors.black12,
-                              blurRadius: 8,
-                              spreadRadius: 2,
-                              offset: Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Event image
-                            Container(
-                              height: 120,
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade300,
-                                borderRadius: const BorderRadius.vertical(
-                                    top: Radius.circular(14)),
-                              ),
-                              child: const Icon(Icons.event,
-                                  size: 40, color: Colors.white70),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(event["title"] ?? "",
-                                      style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w700)),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.calendar_today,
-                                          size: 14, color: Colors.grey),
-                                      const SizedBox(width: 4),
-                                      Text(event["date"] ?? "",
-                                          style: const TextStyle(
-                                              color: Colors.black54,
-                                              fontSize: 12)),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.access_time,
-                                          size: 14, color: Colors.grey),
-                                      const SizedBox(width: 4),
-                                      Text(event["time"] ?? "",
-                                          style: const TextStyle(
-                                              color: Colors.black54,
-                                              fontSize: 12)),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.location_on,
-                                          size: 14, color: Colors.grey),
-                                      const SizedBox(width: 4),
-                                      Flexible(
-                                        child: Text(event["location"] ?? "",
-                                            style: const TextStyle(
-                                                color: Colors.black54,
-                                                fontSize: 12),
-                                            overflow: TextOverflow.ellipsis),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            )
-                          ],
-                        ),
-                      ),
-                    );
-                  },
+                child: Text(
+                  "Upcoming Events",
+                  style: AppTextStyle.rTextRalewayBlack19w800,
                 ),
               ),
             ),
+            SliverToBoxAdapter(
+              child: UpcomingEventsSection(),
+            ),
+
 
             const SliverToBoxAdapter(child: SizedBox(height: 20)),
             // ---------------- OFFERS TITLE ----------------
@@ -464,7 +328,7 @@ class Userhome extends StatelessWidget {
             const SliverToBoxAdapter(child: SizedBox(height: 50)),
 
           ],
-       ),
+        ),
       ),
     );
   }

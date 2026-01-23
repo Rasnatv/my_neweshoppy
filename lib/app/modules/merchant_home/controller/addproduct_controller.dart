@@ -31,9 +31,21 @@ class ProductController extends GetxController {
   // ---------------- CATEGORY CONFIGURATION ----------------
   final Map<String, CategoryConfig> categoryConfigs = {};
 
-  // ---------------- COMMON & VARIANT ATTRIBUTES ----------------
+  // ---------------- COMMON ATTRIBUTES ----------------
   var commonAttributes = <String, String>{}.obs;
-  var variantAttributeValues = <String, List<String>>{}.obs;
+
+  // ---------------- VARIANT TYPE SELECTION (DROPDOWN) ----------------
+  // Currently selected variant type from dropdown (e.g., "Size", "Color")
+  var selectedVariantType = ''.obs;
+
+  // Values for the currently selected variant type
+  var currentVariantValues = <String>[].obs;
+
+  // Text controller for adding variant values
+  final TextEditingController variantValueController = TextEditingController();
+
+  // Store all variant types and their values that have been configured
+  var configuredVariantTypes = <String, List<String>>{}.obs;
 
   // ---------------- VARIANTS ----------------
   var variants = <ProductVariant>[].obs;
@@ -148,14 +160,6 @@ class ProductController extends GetxController {
 
           print("✓ Total categories loaded: ${apiCategories.length}");
 
-          // Get.snackbar(
-          //   "Success",
-          //   "${apiCategories.length} categories loaded",
-          //   backgroundColor: Colors.green,
-          //   colorText: Colors.white,
-          //   snackPosition: SnackPosition.BOTTOM,
-          // );
-
         } else {
           Get.snackbar("Error", body['message'] ?? "Failed to fetch categories");
         }
@@ -187,21 +191,26 @@ class ProductController extends GetxController {
     );
     selectedCategoryId.value = cat.id;
 
-    variantAttributeValues.clear();
+    // Clear previous data
+    selectedVariantType.value = '';
+    currentVariantValues.clear();
+    configuredVariantTypes.clear();
     commonAttributes.clear();
     variants.clear();
+    variantValueController.clear();
 
-    // Initialize variant attribute values
+    print("Category changed to: $category");
     final config = categoryConfigs[category];
     if (config != null) {
-      for (var attr in config.variantAttributes) {
-        variantAttributeValues[attr] = [];
-      }
-
-      print("Category changed to: $category");
       print("Common attributes: ${config.commonAttributes}");
       print("Variant attributes: ${config.variantAttributes}");
     }
+  }
+
+  // Check if category has variant attributes
+  bool hasVariantAttributes() {
+    final config = categoryConfigs[selectedCategory.value];
+    return config != null && config.variantAttributes.isNotEmpty;
   }
 
   // ---------------- COMMON ATTRIBUTE MANAGEMENT ----------------
@@ -209,64 +218,104 @@ class ProductController extends GetxController {
     commonAttributes[attribute] = value;
   }
 
-  // ---------------- VARIANT ATTRIBUTE VALUE MANAGEMENT ----------------
-  void addAttributeValue(String attribute, String value) {
+  // ---------------- VARIANT TYPE SELECTION ----------------
+  void onVariantTypeSelected(String variantType) {
+    // Save current values before switching if there are any
+    if (selectedVariantType.value.isNotEmpty && currentVariantValues.isNotEmpty) {
+      configuredVariantTypes[selectedVariantType.value] = List.from(currentVariantValues);
+    }
+
+    selectedVariantType.value = variantType;
+
+    // Load existing values if this type was configured before
+    if (configuredVariantTypes.containsKey(variantType)) {
+      currentVariantValues.value = List.from(configuredVariantTypes[variantType]!);
+    } else {
+      currentVariantValues.clear();
+    }
+
+    variantValueController.clear();
+
+    // Refresh to show the loaded values
+    currentVariantValues.refresh();
+  }
+
+  // Add a value to current variant type
+  void addVariantValue(String value) {
     if (value.trim().isEmpty) return;
 
-    if (!variantAttributeValues.containsKey(attribute)) {
-      variantAttributeValues[attribute] = [];
-    }
-
-    if (!variantAttributeValues[attribute]!.contains(value.trim())) {
-      variantAttributeValues[attribute]!.add(value.trim());
-      variantAttributeValues.refresh();
-    }
-  }
-
-  void removeAttributeValue(String attribute, String value) {
-    if (variantAttributeValues.containsKey(attribute)) {
-      variantAttributeValues[attribute]!.remove(value);
-      variantAttributeValues.refresh();
-    }
-  }
-
-  // ---------------- VARIANT GENERATION ----------------
-  void generateVariants() {
-    if (selectedCategory.value.isEmpty) {
+    if (selectedVariantType.value.isEmpty) {
       Get.snackbar(
-        "Category Required",
-        "Please select a category first",
+        "Error",
+        "Please select a variant type first",
         snackPosition: SnackPosition.BOTTOM,
       );
       return;
     }
 
-    final config = categoryConfigs[selectedCategory.value];
-    if (config == null) return;
+    if (!currentVariantValues.contains(value)) {
+      currentVariantValues.add(value);
 
-    // Check if at least one variant attribute has values
-    bool hasVariantValues = false;
-    for (var attr in config.variantAttributes) {
-      if (variantAttributeValues[attr]?.isNotEmpty ?? false) {
-        hasVariantValues = true;
-        break;
-      }
+      // Immediately save to configured types
+      configuredVariantTypes[selectedVariantType.value] = List.from(currentVariantValues);
+
+      variantValueController.clear();
+      currentVariantValues.refresh();
+      configuredVariantTypes.refresh();
+    } else {
+      Get.snackbar(
+        "Duplicate",
+        "$value already exists",
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
+  // Remove a value from current variant type
+  void removeVariantValue(String value) {
+    currentVariantValues.remove(value);
+
+    // Immediately update configured types
+    if (currentVariantValues.isEmpty) {
+      configuredVariantTypes.remove(selectedVariantType.value);
+    } else {
+      configuredVariantTypes[selectedVariantType.value] = List.from(currentVariantValues);
     }
 
-    if (!hasVariantValues) {
+    currentVariantValues.refresh();
+    configuredVariantTypes.refresh();
+  }
+
+  // Generate variants from the selected variant type
+  void generateVariantsFromType() {
+    if (selectedVariantType.value.isEmpty) {
       Get.snackbar(
-        "No Variant Attributes",
-        "Please add at least one value for variant attributes",
+        "Error",
+        "Please select a variant type",
         snackPosition: SnackPosition.BOTTOM,
       );
       return;
     }
 
-    // Generate all combinations
-    List<Map<String, String>> combinations = _generateCombinations(config.variantAttributes);
+    if (currentVariantValues.isEmpty) {
+      Get.snackbar(
+        "Error",
+        "Please add at least one value for ${selectedVariantType.value}",
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    // Save current configuration
+    configuredVariantTypes[selectedVariantType.value] = List.from(currentVariantValues);
+
+    // Clear existing variants
+    variants.clear();
+
+    // Generate variants based on all configured types
+    List<Map<String, String>> combinations = _generateAllCombinations();
 
     // Create variants from combinations
-    variants.clear();
     for (var combo in combinations) {
       variants.add(ProductVariant(
         attributes: combo,
@@ -276,37 +325,31 @@ class ProductController extends GetxController {
     }
 
     Get.snackbar(
-      "Variants Generated",
-      "${variants.length} variant(s) created",
+      "Success",
+      "${variants.length} variant(s) generated",
       snackPosition: SnackPosition.BOTTOM,
       backgroundColor: Color(0xFF10B981),
       colorText: Colors.white,
     );
   }
 
-  List<Map<String, String>> _generateCombinations(List<String> attributes) {
+  // Generate all combinations from configured variant types
+  List<Map<String, String>> _generateAllCombinations() {
+    if (configuredVariantTypes.isEmpty) return [];
+
+    List<String> types = configuredVariantTypes.keys.toList();
+    List<List<String>> allValues = types.map((type) => configuredVariantTypes[type]!).toList();
+
     List<Map<String, String>> results = [];
 
-    List<String> activeAttrs = [];
-    List<List<String>> activeValues = [];
-
-    for (var attr in attributes) {
-      if (variantAttributeValues[attr]?.isNotEmpty ?? false) {
-        activeAttrs.add(attr);
-        activeValues.add(variantAttributeValues[attr]!);
-      }
-    }
-
-    if (activeAttrs.isEmpty) return results;
-
     void generate(int index, Map<String, String> current) {
-      if (index == activeAttrs.length) {
+      if (index == types.length) {
         results.add(Map<String, String>.from(current));
         return;
       }
 
-      for (var value in activeValues[index]) {
-        current[activeAttrs[index]] = value;
+      for (var value in allValues[index]) {
+        current[types[index]] = value;
         generate(index + 1, current);
       }
     }
@@ -319,24 +362,6 @@ class ProductController extends GetxController {
   void removeVariant(int index) {
     if (index >= 0 && index < variants.length) {
       variants.removeAt(index);
-    }
-  }
-
-  void duplicateVariant(int index) {
-    if (index >= 0 && index < variants.length) {
-      final original = variants[index];
-      final duplicate = ProductVariant(
-        price: original.price,
-        stock: original.stock,
-        imagePath: original.imagePath,
-        attributes: Map<String, String>.from(original.attributes),
-      );
-      variants.insert(index + 1, duplicate);
-      Get.snackbar(
-        "Variant Duplicated",
-        "A copy has been created",
-        snackPosition: SnackPosition.BOTTOM,
-      );
     }
   }
 
@@ -538,8 +563,11 @@ class ProductController extends GetxController {
     selectedCategoryId.value = 0;
     productDescription.value = '';
     variants.clear();
-    variantAttributeValues.clear();
+    selectedVariantType.value = '';
+    currentVariantValues.clear();
+    configuredVariantTypes.clear();
     commonAttributes.clear();
+    variantValueController.clear();
   }
 
   void resetForm() {
@@ -572,6 +600,7 @@ class ProductController extends GetxController {
 
   @override
   void onClose() {
+    variantValueController.dispose();
     super.onClose();
   }
 }

@@ -1,82 +1,91 @@
 
-
-import 'package:eshoppy/app/modules/product/widgtet/productpriceratingbar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../common/constants/app_images.dart';
-import '../../userhome/controller/district _controller.dart';
 import '../view/prodductdetailscreen.dart';
-import 'favicon.dart';
-
 
 class ProductCard extends StatelessWidget {
-  const ProductCard({super.key});
+  final String productName;
+  final String? imageUrl;
+  final String price;
+  final int productId;
+
+  const ProductCard({
+    super.key,
+    required this.productName,
+    required this.imageUrl,
+    required this.price,
+    required this.productId,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => Get.to(() => ProductDetailPage()),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () {
+        Get.to(() => ProductDetailPage(productId: productId));
+      },
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 5,
-              spreadRadius: 1,
-              offset: Offset(2, 4),
-            ),
-          ],
         ),
-        child:Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            /// 🔹 PRODUCT IMAGE
             Expanded(
-              child: Stack(
-                children: [
-                  Container(width: double.infinity,height:200,
-                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(10),color: Colors.grey.withOpacity(0.1)),
-                child:Image.asset(AppImages.prduct2,fit: BoxFit.cover,),),
-                  Positioned(
-                    top: 6,
-                    right: 6,
-                    child:FavoriteIconButton(
-                      productId: "101",
-                      name: "Chitrarekha Pretty Kurti",
-                      image: AppImages.prduct2,
-                      price: 799,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  topRight: Radius.circular(12),
+                ),
+                child: imageUrl == null || imageUrl!.isEmpty
+                    ? Container(
+                  color: Colors.grey.shade200,
+                  child: const Center(
+                    child: Icon(
+                      Icons.image,
+                      size: 40,
+                      color: Colors.grey,
                     ),
                   ),
-                ],
+                )
+                    : Image.network(
+                  imageUrl!,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  errorBuilder: (_, __, ___) => Container(
+                    color: Colors.grey.shade200,
+                    child: const Icon(Icons.broken_image),
+                  ),
+                ),
               ),
             ),
+
+            /// 🔹 PRODUCT NAME
             Padding(
-              padding: const EdgeInsets.all(4.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "chitrarekha pretty kurti",
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  ProductPriceRating(),
-                ],
+              padding: const EdgeInsets.all(8),
+              child: Text(
+                productName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+            ),
+
+            /// 🔹 PRICE
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: Text(
+                price == "0" ? "Price on request" : "₹ $price",
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],
         ),
       ),
-
     );
   }
 }
-
-
-
