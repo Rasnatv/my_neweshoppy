@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../common/style/app_colors.dart';
+import '../../../core/utils/auth_service.dart';
 import 'addproductpage.dart';
 import 'merchant_changepassword.dart';
 import 'orderspage.dart';
@@ -204,7 +205,7 @@ class MerchantDashboardPage extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: IconButton(
-                          onPressed: () => _showLogoutDialog(),
+                          onPressed: () =>  AuthService.showLogoutDialog(),
                           icon: const Icon(
                             Icons.logout_rounded,
                             color: Colors.white,

@@ -386,87 +386,6 @@ class AdminDashboard extends StatelessWidget {
     );
   }
 
-//   // ----------- Logout Button -----------
-//   Widget _buildLogoutButton() {
-//     return Container(
-//       padding: const EdgeInsets.all(16),
-//       decoration: BoxDecoration(
-//         color: Colors.white,
-//         boxShadow: [
-//           BoxShadow(
-//             color: Colors.black.withOpacity(0.05),
-//             blurRadius: 10,
-//             offset: const Offset(0, -2),
-//           ),
-//         ],
-//       ),
-//       child: SafeArea(
-//         child: ElevatedButton(
-//           onPressed: () {
-//             // Show logout confirmation dialog
-//             Get.dialog(
-//               AlertDialog(
-//                 shape: RoundedRectangleBorder(
-//                   borderRadius: BorderRadius.circular(16),
-//                 ),
-//                 title: const Text(
-//                   "Logout",
-//                   style: TextStyle(fontWeight: FontWeight.w700),
-//                 ),
-//                 content: const Text("Are you sure you want to logout?"),
-//                 actions: [
-//                   TextButton(
-//                     onPressed: () => Get.back(),
-//                     child: Text(
-//                       "Cancel",
-//                       style: TextStyle(color: Colors.grey[600]),
-//                     ),
-//                   ),
-//                   ElevatedButton(
-//                     onPressed: () {
-//                       Get.back();
-//                       // Add logout logic here
-//                     },
-//                     // style: ElevatedButton.styleFrom(
-//                     //   backgroundColor: Colors.red,
-//                     //   shape: RoundedRectangleBorder(
-//                     //     borderRadius: BorderRadius.circular(8),
-//                     //   ),
-//                     //),
-//                     child: const Text("Logout"),
-//                   ),
-//                 ],
-//               ),
-//             );
-//           },
-//           style: ElevatedButton.styleFrom(
-//             backgroundColor: Colors.red,
-//             foregroundColor: Colors.white,
-//             padding: const EdgeInsets.symmetric(vertical: 16),
-//             shape: RoundedRectangleBorder(
-//               borderRadius: BorderRadius.circular(12),
-//             ),
-//             elevation: 0,
-//           ),
-//           child: Row(
-//             mainAxisAlignment: MainAxisAlignment.center,
-//             children: const [
-//               Icon(Icons.logout_rounded, size: 20),
-//               SizedBox(width: 8),
-//               Text(
-//                 "Logout",
-//                 style: TextStyle(
-//                   fontSize: 16,
-//                   fontWeight: FontWeight.w600,
-//                 ),
-//               ),
-//             ],
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
   Widget _buildLogoutButton() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -483,45 +402,7 @@ class AdminDashboard extends StatelessWidget {
       child: SafeArea(
         child: ElevatedButton(
           onPressed: () {
-            Get.dialog(
-              AlertDialog(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                title: const Text(
-                  "Logout",
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
-                content: const Text(
-                  "Are you sure you want to logout?",
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Get.back(),
-                    child: Text(
-                      "Cancel",
-                      style: TextStyle(color: Colors.grey[600]),
-                    ),
-                  ),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    onPressed: () {
-                      Get.back(); // close dialog
-                      // AuthService.logout(
-                      //   message: "Logged out successfully",
-                      //);
-                    },
-                    child: const Text("Logout"),
-                  ),
-                ],
-              ),
-            );
+            AuthService.showLogoutDialog();
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.red,

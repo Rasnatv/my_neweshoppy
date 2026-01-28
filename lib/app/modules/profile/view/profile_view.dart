@@ -109,34 +109,7 @@ class ProfileView extends StatelessWidget {
                   backgroundColor: Colors.red,
                 ),
                 onPressed: () {
-                  Get.dialog(
-                    AlertDialog(
-                      title: const Text("Confirm Logout"),
-                      content: const Text("Are you sure you want to logout?"),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () {
-                            Get.back(); // close dialog
-                          },
-                          child: const Text("Cancel"),
-                        ),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                          ),
-                          onPressed: () async {
-                            Get.back(); // close dialog
-                           // AuthService.logout(message: "You have been logged out"); /// 🔥 actual logout
-                          },
-                          child: const Text("Logout"),
-                        ),
-                      ],
-                    ),
-                  );
-                },
+                  AuthService.showLogoutDialog();},
                 child: const Text(
                   "Logout",
                   style: TextStyle(fontSize: 16, color: Colors.white),

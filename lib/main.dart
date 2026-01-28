@@ -22,7 +22,9 @@ Future<void> main() async {
 
   // ✅ Inject CartController globally
   Get.put(CartController(), permanent: true);
-  //Get.put(UserDistrictController(), permanent: true);
+
+
+
   Get.lazyPut(() => PromotionController(), fenix: true);
 
   runApp(const MyApp());

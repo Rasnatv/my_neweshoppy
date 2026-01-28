@@ -7,7 +7,7 @@ import '../../../common/style/app_colors.dart';
 class UsersigninForm extends StatelessWidget {
   UsersigninForm({super.key});
 
-  final UserloginController controller = Get.put(UserloginController());
+  final UserloginController controller = Get.find<UserloginController>();
   final _formKey = GlobalKey<FormState>();
 
   InputDecoration _decoration({

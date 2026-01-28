@@ -1,7 +1,5 @@
 
-
 import 'dart:ui';
-
 import 'package:eshoppy/app/modules/userhome/view/selectlocationpage.dart' hide UserDistrictController;
 import 'package:eshoppy/app/modules/userhome/view/user_eventsection.dart';
 import 'package:flutter/material.dart';
@@ -24,7 +22,8 @@ class Userhome extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final userLocationController = Get.put(UserLocationController(), permanent: true);
+    // ✅ Initialize controllers without permanent flag
+    final userLocationController = Get.put(UserLocationController());
     final CartController cartController = Get.put(CartController());
 
     final List<Map<String, String>> offers = [
@@ -44,7 +43,6 @@ class Userhome extends StatelessWidget {
         "image": "assets/images/offer3.jpg",
       },
     ];
-
 
     return Scaffold(
       body: AnnotatedRegion<SystemUiOverlayStyle>(
@@ -68,11 +66,10 @@ class Userhome extends StatelessWidget {
                   icon: Icons.shopping_cart_outlined,
                   badgeCount: cartController.cartItems.length,
                   iconColor: Colors.white,
-                  onPressed: () => Get.to(() => CartPage()),
+                  onPressed: () => Get.to(() => CartScreen()),
                 )),
                 const SizedBox(width: 12),
               ],
-
               flexibleSpace: FlexibleSpaceBar(
                 background: DPrimaryHeader(
                   child: Column(
@@ -83,28 +80,30 @@ class Userhome extends StatelessWidget {
                         padding: const EdgeInsets.only(left: 16, top: 40),
                         child: InkWell(
                           onTap: () {
+                            // Navigate to location selection
                             Get.to(() => SelectLocationPage());
                           },
                           child: Row(
                             children: [
                               const Icon(Icons.location_on, color: Colors.red, size: 20),
                               const SizedBox(width: 4),
+                              // ✅ Observe location value
                               Obx(() {
-                                final location =
-                                    Get.find<UserLocationController>().selectedMainLocation.value;
+                                final location = userLocationController.selectedMainLocation.value;
 
-                                return Text(
-                                  location.isEmpty ? "Select Location" : location,
-                                  style: AppTextStyle.rTextNunitoWhite14w700,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                return Expanded(
+                                  child: Text(
+                                    location.isEmpty ? "Select Location" : location,
+                                    style: AppTextStyle.rTextNunitoWhite14w700,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 );
                               }),
                             ],
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 6),
                       // ---------------- Search Bar ----------------
                       Padding(
@@ -133,13 +132,17 @@ class Userhome extends StatelessWidget {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(20),
-                child: Text("Categories",
-                    style: AppTextStyle.rTextRalewayBlack19w800),
+                child: Text(
+                  "Categories",
+                  style: AppTextStyle.rTextRalewayBlack19w800,
+                ),
               ),
             ),
 
             // ---------------- CATEGORY GRID ----------------
-            SliverToBoxAdapter(child: CategorySection ()),
+            SliverToBoxAdapter(child: CategorySection()),
+
+            // ---------------- HOTEL BOOKING SECTION ----------------
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(20),
@@ -159,45 +162,50 @@ class Userhome extends StatelessWidget {
                     ),
                     // Glassmorphism Button
                     Positioned(
-                      top:3,
-                      right:4,
+                      top: 3,
+                      right: 4,
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: BackdropFilter(
                           filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                          child: InkWell(onTap: ()=>Get.to(()=>RestaurantListPage()),child:
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.white.withOpacity(0.3)),
-                            ),
-                            child: const Text(
-                              "BOOK NOW",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                shadows: [
-                                  Shadow(
-                                    color: Colors.black26,
-                                    offset: Offset(0, 2),
-                                    blurRadius: 4,
-                                  )
-                                ],
+                          child: InkWell(
+                            onTap: () => Get.to(() => RestaurantListPage()),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.3),
+                                ),
+                              ),
+                              child: const Text(
+                                "BOOK NOW",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  shadows: [
+                                    Shadow(
+                                      color: Colors.black26,
+                                      offset: Offset(0, 2),
+                                      blurRadius: 4,
+                                    )
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                          ),
                         ),
                       ),
-                    ) ],
+                    ),
+                  ],
                 ),
               ),
             ),
-
-
 
             const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
@@ -215,8 +223,8 @@ class Userhome extends StatelessWidget {
               child: UpcomingEventsSection(),
             ),
 
-
             const SliverToBoxAdapter(child: SizedBox(height: 20)),
+
             // ---------------- OFFERS TITLE ----------------
             SliverToBoxAdapter(
               child: Padding(
@@ -228,7 +236,7 @@ class Userhome extends StatelessWidget {
               ),
             ),
 
-// ---------------- OFFERS LIST ----------------
+            // ---------------- OFFERS LIST ----------------
             SliverToBoxAdapter(
               child: SizedBox(
                 height: 180,
@@ -302,7 +310,9 @@ class Userhome extends StatelessWidget {
                               left: 12,
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 6),
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
                                 decoration: BoxDecoration(
                                   color: AppColors.kPrimary,
                                   borderRadius: BorderRadius.circular(20),
@@ -326,7 +336,6 @@ class Userhome extends StatelessWidget {
               ),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: 50)),
-
           ],
         ),
       ),

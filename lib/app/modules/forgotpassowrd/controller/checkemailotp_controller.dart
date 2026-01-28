@@ -47,7 +47,6 @@ class CheckEmailOtpController extends GetxController {
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "email": email,
-          "role": 1,
           "otp": otp,
         }),
       );

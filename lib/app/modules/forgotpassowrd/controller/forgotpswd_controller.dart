@@ -26,7 +26,7 @@ class ForgotPasswordController extends GetxController {
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "email": emailController.text.trim(),
-          "role": 1,
+          // "role": 1,
         }),
       );
 
