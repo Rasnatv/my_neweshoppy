@@ -21,7 +21,8 @@ class ShopDetailPage extends StatelessWidget {
 
     return DefaultTabController(
       length: 3,
-      child: SafeArea(child: Scaffold(
+      child: SafeArea(
+        child: Scaffold(
         backgroundColor: Colors.white,
         body: NestedScrollView(
           headerSliverBuilder: (context, innerBoxIsScrolled) {

@@ -23,10 +23,16 @@ class IconWithBadge extends StatelessWidget {
     return Stack(
       clipBehavior: Clip.none,
       children: [
+        Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius:
+              BorderRadius.circular(12),),
+        child:
         IconButton(
           icon: Icon(icon, color: iconColor, size: size),
           onPressed: onPressed,
-        ),
+        ),),
         if (badgeCount > 0)
           Positioned(
             right: 4,

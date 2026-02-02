@@ -6,6 +6,7 @@ import '../../modules/product/controller/cartcontroller.dart';
 import '../../modules/userhome/controller/district _controller.dart';
 import '../../modules/userhome/controller/usercategory_controller.dart';
 import '../../modules/userlogin/controller/userlogin_controller.dart';
+import '../../modules/userlogin/view/sigin.dart';
 
 
 class AuthService {
@@ -34,30 +35,25 @@ class AuthService {
       barrierDismissible: false,
     );
   }
+  static void _logout() async {
+    /// 🔐 Read token FIRST
+    final token = box.read('token');
 
-
-  static void _logout() {
-    /// 🔐 Get current token before removing it
-    final token = box.read('auth_token');
-
-    /// 🧹 Remove token-specific location data
+    /// 🧹 Clear token-specific cached data
     if (token != null) {
       box.remove('state_$token');
       box.remove('district_$token');
       box.remove('main_location_$token');
     }
 
-    /// 🔐 Remove auth token
-    box.remove('auth_token');
+    /// 🔐 CLEAR AUTH STATE (MANDATORY)
+    await box.remove('token');
+    await box.remove('is_logged_in');
+    await box.remove('role');
+    await box.remove('user');
 
-    /// 🧹 Clear and delete controllers
+    /// 🧹 Reset controllers safely
     if (Get.isRegistered<UserLocationController>()) {
-      final controller = Get.find<UserLocationController>();
-      controller.selectedState.value = '';
-      controller.selectedDistrict.value = '';
-      controller.selectedMainLocation.value = '';
-      controller.districts.clear();
-      controller.mainLocations.clear();
       Get.delete<UserLocationController>(force: true);
     }
 
@@ -73,7 +69,9 @@ class AuthService {
       Get.delete<UserloginController>(force: true);
     }
 
-    /// 🚀 Go to login
+    /// 🚀 Go to login screen
     Get.offAllNamed('/login');
   }
+
 }
+

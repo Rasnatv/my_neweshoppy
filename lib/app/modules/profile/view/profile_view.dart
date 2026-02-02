@@ -1,4 +1,5 @@
 
+import 'package:eshoppy/app/modules/profile/view/user_changepswd.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -8,16 +9,18 @@ import '../../../core/utils/auth_service.dart';
 import '../../myoders/myoders/myodersview.dart';
 import '../../userlogin/controller/userlogin_controller.dart';
 import '../../userlogin/view/useredit_profile.dart';
+import '../controller/editprofile_controller.dart';
 
 class ProfileView extends StatelessWidget {
    ProfileView({super.key});
-   final UserloginController controller = Get.put(UserloginController());
+   final EditProfileController controller =Get.find<EditProfileController>();
 
    @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7F7),
       appBar: AppBar(
+        automaticallyImplyLeading: true,
         backgroundColor: AppColors.kPrimary,
         elevation: 0,
         title: Text(
@@ -54,17 +57,18 @@ class ProfileView extends StatelessWidget {
                   const SizedBox(width: 18),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
+                    children: [
                       Text(
-                        "Rosna",
+                      controller.nameCtrl.text,
                         style: TextStyle(
                           fontSize: 20,
+
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                       SizedBox(height: 6),
                       Text(
-                        "rosna123@example.com",
+                        controller.emailCtrl.text,
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey,
@@ -94,8 +98,7 @@ class ProfileView extends StatelessWidget {
             _settingTile(
               icon: Icons.lock_outline,
               title: "Change Password",
-            onTap: (){}
-            //  onTap: () =>Get.to(()=>ChangePasswordPage()),
+             onTap: () =>Get.to(()=>ChangePasswordPage()),
             ),
 
             // ------------------ LOGOUT BUTTON ------------------
@@ -106,7 +109,7 @@ class ProfileView extends StatelessWidget {
               width: MediaQuery.sizeOf(context).width,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
+                  backgroundColor: AppColors.kPrimary,
                 ),
                 onPressed: () {
                   AuthService.showLogoutDialog();},

@@ -8,6 +8,7 @@ class RestaurantRegisterRequest {
   final String facebook;
   final String instagram;
   final String restaurantImage;
+  final String restaurantName;
   final List<String> additionalImages;
 
   RestaurantRegisterRequest({
@@ -20,7 +21,7 @@ class RestaurantRegisterRequest {
     required this.facebook,
     required this.instagram,
     required this.restaurantImage,
-    required this.additionalImages,
+    required this.additionalImages, required this.restaurantName,
   });
 
   Map<String, dynamic> toJson() {
@@ -35,6 +36,7 @@ class RestaurantRegisterRequest {
       "instagram_link": instagram,
       "restaurant_image": restaurantImage,
       "additional_images": additionalImages,
+      "restaurant_name":restaurantName
     };
   }
 }

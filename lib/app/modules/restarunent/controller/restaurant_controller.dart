@@ -1,11 +1,18 @@
+import 'dart:convert';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:http/http.dart' as http;
 import '../../../data/models/restaurantmodel.dart';
 
 class RestaurantController extends GetxController {
-  var restaurants = <Restaurant>[].obs;
-  var isLoading = true.obs;
-  var searchQuery = ''.obs;
-  var selectedCategory = 'All'.obs;
+  final restaurants = <Restaurant>[].obs;
+  final isLoading = false.obs;
+  final searchQuery = ''.obs;
+
+  final GetStorage box = GetStorage();
+
+  final String apiUrl =
+      "https://rasma.astradevelops.in/e_shoppyy/public/api/user/restaurants";
 
   @override
   void onInit() {
@@ -13,75 +20,56 @@ class RestaurantController extends GetxController {
     fetchRestaurants();
   }
 
-  void fetchRestaurants() async {
+  Future<void> fetchRestaurants() async {
     try {
       isLoading(true);
-      await Future.delayed(const Duration(seconds: 2));
 
-      var fetchedRestaurants = [
-        Restaurant(
-            id: '1',
-            name: 'The Spice Hub',
-            imageUrl: 'assets/images/indianreaturent.jpg',
-            category: 'Indian',
-            address: '123 Main Street',),
-        Restaurant(
-            id: '3',
-            name: 'Pizza Palace',
-            imageUrl: 'assets/images/indianreaturent.jpg',
-            category: 'Italian',
-            address: '789 Oak Avenue',
-          ),
-        Restaurant(
-            id: '4',
-            name: 'Burger Town',
-            imageUrl: 'assets/images/indianreaturent.jpg',
-            category: 'Fast Food',
-            address: '101 Pine Street',
-          ),
-        Restaurant(
-            id: '5',
-            name: 'Noodle House',
-            imageUrl: 'assets/images/indianreaturent.jpg',
-            category: 'Chinese',
-            address: '202 Maple Avenue',
-          ),
-      ];
+      /// 🔐 Get token from storage
+      final token = box.read('auth_token');
 
-      restaurants.assignAll(fetchedRestaurants);
+      if (token == null || token.isEmpty) {
+        Get.snackbar("Session Expired", "Please login again");
+        return;
+      }
+
+      final response = await http.get(
+        Uri.parse(apiUrl),
+        headers: {
+          "Accept": "application/json",
+          "Authorization": "Bearer $token",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
+        final List list = body['data'];
+
+        restaurants.value =
+            list.map((e) => Restaurant.fromJson(e)).toList();
+      } else if (response.statusCode == 401) {
+        Get.snackbar("Unauthorized", "Login required");
+      } else {
+        Get.snackbar("Error", "Failed to load restaurants");
+      }
     } catch (e) {
-      print('Error fetching restaurants: $e');
+      Get.snackbar("Error", e.toString());
     } finally {
       isLoading(false);
     }
   }
 
+  /// 🔍 SEARCH FILTER
   List<Restaurant> get filteredRestaurants {
-    var list = restaurants.toList();
-
-    if (selectedCategory.value != 'All') {
-      list = list
-          .where((r) =>
-      r.category.toLowerCase() ==
-          selectedCategory.value.toLowerCase())
-          .toList();
+    if (searchQuery.value.isEmpty) {
+      return restaurants;
     }
-
-    if (searchQuery.value.isNotEmpty) {
-      list = list
-          .where((r) =>
-          r.name.toLowerCase().contains(searchQuery.value.toLowerCase()))
-          .toList();
-    }
-
-    return list;
+    return restaurants
+        .where((r) =>
+        r.name.toLowerCase().contains(searchQuery.value.toLowerCase()))
+        .toList();
   }
 
   void setSearchQuery(String query) {
     searchQuery.value = query;
-  }
-
-  void setCategory(String category) {
-    selectedCategory.value = category;
   }
 }

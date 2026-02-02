@@ -92,6 +92,15 @@ class MerchantDashboardPage extends StatelessWidget {
                   onTap: () => Get.to(() => ManageProductsPage()),
                 ),
                 _buildMenuCard(
+                  icon: Icons.photo_camera_back_outlined,
+                  title: "Gallery",
+                  description: "Upload images",
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFB110B6), Color(0xFF8F0A71)],
+                  ),
+                  onTap: () => Get.to(() => MerchantOfferViewPage()),
+                ),
+                _buildMenuCard(
                   icon: Icons.receipt_long_rounded,
                   title: "Orders",
                   description: "Track orders",

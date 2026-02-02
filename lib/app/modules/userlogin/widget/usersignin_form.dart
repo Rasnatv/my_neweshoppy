@@ -1,8 +1,6 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/userlogin_controller.dart';
-import '../../../common/style/app_colors.dart';
 
 class UsersigninForm extends StatelessWidget {
   UsersigninForm({super.key});
@@ -10,67 +8,67 @@ class UsersigninForm extends StatelessWidget {
   final UserloginController controller = Get.find<UserloginController>();
   final _formKey = GlobalKey<FormState>();
 
-  InputDecoration _decoration({
-    required String hint,
+  InputDecoration _inputDecoration({
+    required String label,
     required IconData icon,
     Widget? suffixIcon,
   }) {
     return InputDecoration(
-      hintText: hint,
-      hintStyle: TextStyle(
-        color: Colors.white.withOpacity(0.6),
-        fontSize: 15,
-        fontWeight: FontWeight.w400,
+      labelText: label,
+      labelStyle: const TextStyle(
+        color: Color(0xFF6B7280),
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
       ),
       prefixIcon: Icon(
         icon,
-        color: Colors.white.withOpacity(0.8),
+        color: const Color(0xFF009788),
         size: 22,
       ),
       suffixIcon: suffixIcon,
       filled: true,
-      fillColor: Colors.white.withOpacity(0.12),
+      fillColor: const Color(0xFFF9FAFB),
       contentPadding: const EdgeInsets.symmetric(
         horizontal: 20,
         vertical: 18,
       ),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(
-          color: Colors.white.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(
+          color: Color(0xFFE5E7EB),
           width: 1.5,
         ),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(
-          color: Colors.white.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(
+          color: Color(0xFFE5E7EB),
           width: 1.5,
         ),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(
-          color: AppColors.kPrimary,
+          color: Color(0xFF009788),
           width: 2,
         ),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(
-          color: Colors.red.shade400,
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(
+          color: Color(0xFFEF4444),
           width: 1.5,
         ),
       ),
       focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(
-          color: Colors.red.shade400,
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(
+          color: Color(0xFFEF4444),
           width: 2,
         ),
       ),
-      errorStyle: TextStyle(
-        color: Colors.red.shade300,
+      errorStyle: const TextStyle(
+        color: Color(0xFFEF4444),
         fontSize: 12,
         fontWeight: FontWeight.w500,
       ),
@@ -82,6 +80,7 @@ class UsersigninForm extends StatelessWidget {
     return Form(
       key: _formKey,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Email Field
           TextFormField(
@@ -98,19 +97,19 @@ class UsersigninForm extends StatelessWidget {
               return null;
             },
             style: const TextStyle(
-              color: Colors.white,
+              color: Color(0xFF1F2937),
               fontSize: 15,
               fontWeight: FontWeight.w500,
             ),
-            decoration: _decoration(
-              hint: "Email",
+            decoration: _inputDecoration(
+              label: "Email",
               icon: Icons.email_outlined,
             ),
           ),
 
-          const SizedBox(height: 18),
+          const SizedBox(height: 20),
 
-          // Password Field with Toggle
+          // Password Field
           Obx(() => TextFormField(
             controller: controller.password,
             obscureText: !controller.isPasswordVisible.value,
@@ -130,33 +129,32 @@ class UsersigninForm extends StatelessWidget {
               return null;
             },
             style: const TextStyle(
-              color: Colors.white,
+              color: Color(0xFF1F2937),
               fontSize: 15,
               fontWeight: FontWeight.w500,
             ),
-            decoration: _decoration(
-              hint: "Password",
-              icon: Icons.lock_outline,
+            decoration: _inputDecoration(
+              label: "Password",
+              icon: Icons.lock_outline_rounded,
               suffixIcon: IconButton(
                 icon: Icon(
                   controller.isPasswordVisible.value
                       ? Icons.visibility_outlined
                       : Icons.visibility_off_outlined,
-                  color: Colors.white.withOpacity(0.7),
+                  color: const Color(0xFF9CA3AF),
                   size: 22,
                 ),
                 onPressed: controller.togglePasswordVisibility,
-                splashRadius: 20,
               ),
             ),
           )),
 
           const SizedBox(height: 28),
 
-          // Login Button with Loading Indicator
+          // Login Button
           Obx(() => SizedBox(
             width: double.infinity,
-            height: 56,
+            height: 54,
             child: ElevatedButton(
               onPressed: controller.isLoading.value
                   ? null
@@ -167,52 +165,74 @@ class UsersigninForm extends StatelessWidget {
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.kPrimary,
+                backgroundColor: const Color(0xFF17A398),
                 foregroundColor: Colors.white,
-                disabledBackgroundColor: AppColors.kPrimary.withOpacity(0.6),
+                disabledBackgroundColor: const Color(0xFFD1D5DB),
                 elevation: 0,
-                shadowColor: AppColors.kPrimary.withOpacity(0.4),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
               child: controller.isLoading.value
-                  ? Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Colors.white.withOpacity(0.9),
-                      ),
-                    ),
+                  ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    Colors.white,
                   ),
-                  const SizedBox(width: 12),
-                  Text(
-                    "Logging in...",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.3,
-                      color: Colors.white.withOpacity(0.9),
-                    ),
-                  ),
-                ],
+                ),
               )
                   : const Text(
-                "Login",
+                "Sign In",
                 style: TextStyle(
-                  fontSize: 17,
+                  fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  letterSpacing: 0.5,
+                  letterSpacing: 0.3,
                 ),
               ),
             ),
           )),
+
+          const SizedBox(height: 24),
+
+          // Social Login Buttons
+
         ],
+      ),
+    );
+  }
+
+  Widget _buildSocialButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return OutlinedButton.icon(
+      onPressed: onTap,
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        side: const BorderSide(
+          color: Color(0xFFE5E7EB),
+          width: 1.5,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      icon: Icon(
+        icon,
+        color: const Color(0xFF6B7280),
+        size: 22,
+      ),
+      label: Text(
+        label,
+        style: const TextStyle(
+          color: Color(0xFF374151),
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

@@ -1,87 +1,5 @@
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-//
-// import '../../../common/style/app_colors.dart';
-//
-//
-// class ChangePasswordPage extends StatelessWidget {
-//   ChangePasswordPage({super.key});
-//
-//   final TextEditingController oldPasswordCtrl = TextEditingController();
-//   final TextEditingController newPasswordCtrl = TextEditingController();
-//   final TextEditingController confirmPasswordCtrl = TextEditingController();
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text("Change Password"),
-//         backgroundColor: AppColors.kPrimary,
-//       ),
-//       body: SingleChildScrollView(
-//         padding: const EdgeInsets.all(20),
-//         child: Column(
-//           children: [
-//             _passwordField(controller: oldPasswordCtrl, label: "Old Password"),
-//             const SizedBox(height: 16),
-//             _passwordField(controller: newPasswordCtrl, label: "New Password"),
-//             const SizedBox(height: 16),
-//             _passwordField(controller: confirmPasswordCtrl, label: "Confirm Password"),
-//             const SizedBox(height: 30),
-//
-//             SizedBox(
-//               width: double.infinity,
-//               child: ElevatedButton(
-//                 style: ElevatedButton.styleFrom(
-//                   backgroundColor: AppColors.kPrimary,
-//                   padding: const EdgeInsets.symmetric(vertical: 14),
-//                   shape: RoundedRectangleBorder(
-//                     borderRadius: BorderRadius.circular(14),
-//                   ),
-//                 ),
-//                 onPressed: () {
-//                   // Validate password fields
-//                   if (oldPasswordCtrl.text.isEmpty || newPasswordCtrl.text.isEmpty || confirmPasswordCtrl.text.isEmpty) {
-//                     Get.snackbar("Error", "All fields are required", backgroundColor: Colors.redAccent, colorText: Colors.white);
-//                     return;
-//                   }
-//
-//                   if (newPasswordCtrl.text != confirmPasswordCtrl.text) {
-//                     Get.snackbar("Error", "New Password and Confirm Password do not match",
-//                         backgroundColor: Colors.redAccent, colorText: Colors.white);
-//                     return;
-//                   }
-//
-//                   // Call API to change password here
-//                   Get.back(); // Go back after success
-//                   Get.snackbar("Success", "Password changed successfully",
-//                       backgroundColor: Colors.green, colorText: Colors.white);
-//                 },
-//                 child: const Text(
-//                   "Change Password",
-//                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
-//                 ),
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-//
-//   // Password TextField
-//   Widget _passwordField({required TextEditingController controller, required String label}) {
-//     return TextField(
-//       controller: controller,
-//       obscureText: true,
-//       decoration: InputDecoration(
-//         labelText: label,
-//         prefixIcon: const Icon(Icons.lock_outline),
-//         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-//       ),
-//     );
-//   }
-// }
+
+import 'package:eshoppy/app/modules/profile/controller/user_chnagepassword_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_colors.dart';
@@ -93,6 +11,7 @@ class ChangePasswordPage extends StatelessWidget {
   final TextEditingController oldPasswordCtrl = TextEditingController();
   final TextEditingController newPasswordCtrl = TextEditingController();
   final TextEditingController confirmPasswordCtrl = TextEditingController();
+  final ChangePasswordController controller=Get.put(ChangePasswordController());
 
   @override
   Widget build(BuildContext context) {
@@ -180,6 +99,7 @@ class ChangePasswordPage extends StatelessWidget {
           ),
           elevation: 3,
         ),
+
         onPressed: () {
           if (oldPasswordCtrl.text.isEmpty ||
               newPasswordCtrl.text.isEmpty ||
@@ -203,15 +123,13 @@ class ChangePasswordPage extends StatelessWidget {
             return;
           }
 
-          // API call here
-          Get.back();
-          Get.snackbar(
-            "Success",
-            "Password changed successfully",
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
+          controller.changePassword(
+            oldPassword: oldPasswordCtrl.text.trim(),
+            newPassword: newPasswordCtrl.text.trim(),
+            confirmPassword: confirmPasswordCtrl.text.trim(),
           );
         },
+
         child: const Text(
           "Change Password",
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),

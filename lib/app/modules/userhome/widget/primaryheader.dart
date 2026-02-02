@@ -1,37 +1,8 @@
-// import 'package:abc/app/common/style/app_colors.dart';
-// import 'package:flutter/material.dart';
-// import 'curved edge.dart';
-// import 'dcircularcontainer.dart';
-// class DPrimaryHeader extends StatelessWidget {
-//   const DPrimaryHeader({super.key, required this.child,  this.height=380, });
-//
-//   final Widget child;
-//   final double? height;
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//         width: double.infinity,
-//         height: 230,
-//         color: AppColors.kPrimary,
-//         padding: EdgeInsets.all(0),
-//         child: Stack(
-//             children: [
-//               Positioned(top:-50,right: -250,
-//                   child: DcircularContainer(backgroundcolor: AppColors.white.withOpacity(0.1),)),
-//               Positioned(top:60,right: -300,
-//                   child: DcircularContainer(backgroundcolor: AppColors.white.withOpacity(0.1),)),
-//               child
-//
-//             ]),
-//
-//
-//     );
-//   }
-// }
+
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../common/style/app_colors.dart';
-import 'dcircularcontainer.dart';
+
 
 class DPrimaryHeader extends StatelessWidget {
   const DPrimaryHeader({
@@ -57,6 +28,7 @@ class DPrimaryHeader extends StatelessWidget {
             height: height,
             width: double.infinity,
             decoration: BoxDecoration(
+              color: AppColors.kPrimary,
               gradient: LinearGradient(
                 colors: [
                   AppColors.kPrimary.withOpacity(0.55),
@@ -67,7 +39,7 @@ class DPrimaryHeader extends StatelessWidget {
                 end: Alignment.bottomRight,
               ),
             ),
-          ),
+    ),
 
           // 💎 Glass blur layer
           BackdropFilter(
@@ -125,4 +97,4 @@ class DPrimaryHeader extends StatelessWidget {
       ),
     );
   }
-}
+ }

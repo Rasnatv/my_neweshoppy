@@ -1,28 +1,26 @@
 class Restaurant {
-  final String id;
+  final String restaurantId;
   final String name;
   final String imageUrl;
-  final String category;
   final String address;
 
-
   Restaurant({
-
-    required this.id,
+    required this.restaurantId,
     required this.name,
     required this.imageUrl,
-    required this.category,
     required this.address,
   });
 
   factory Restaurant.fromJson(Map<String, dynamic> json) {
-    return Restaurant(
-      id: json['id'],
-      name: json['name'],
-      imageUrl: json['imageUrl'],
-      category: json['category'],
-      address: json['address'],
+    final rawName = json['restaurant_name'];
 
+    return Restaurant(
+      restaurantId: json['restaurant_id'].toString(),
+      name: (rawName == null || rawName.toString().trim().isEmpty)
+          ? 'Restaurant'
+          : rawName,
+      imageUrl: json['restaurant_image'] ?? '',
+      address: json['address'] ?? '',
     );
   }
 }

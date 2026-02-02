@@ -32,6 +32,7 @@ class RestaurantRegistrationPage extends StatelessWidget {
               title: "Basic Information",
               child: Column(
                 children: [
+                  _field("Restaurant Name", controller.restaurantNameCtrl),
                   _field("Owner Name", controller.ownerCtrl),
                   _field("Address", controller.addressCtrl),
                   _field("Phone", controller.phoneCtrl,

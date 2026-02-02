@@ -161,7 +161,7 @@ class AdminRestauranthome extends StatelessWidget {
               : null,
         ),
         title: Text(
-          restaurant['owner_name'] ?? "Unnamed",
+          restaurant['restaurant_name'] ?? "Unnamed",
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
         subtitle: Padding(

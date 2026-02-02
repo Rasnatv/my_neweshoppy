@@ -1,5 +1,4 @@
 
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -11,13 +10,14 @@ import '../../landingview/view/landing_screen.dart';
 import '../../merchant_home/views/merchant_home.dart';
 
 class UserloginController extends GetxController {
-  // Text Controllers
+  // // Text Controllers
   final TextEditingController username = TextEditingController();
   final TextEditingController password = TextEditingController();
 
-  // Reactive States
+  // Reactive states
   final RxBool isLoading = false.obs;
   final RxBool isPasswordVisible = false.obs;
+  final RxInt selectedRole = 1.obs; // Default to User (1)
 
   // Storage
   final GetStorage box = GetStorage();
@@ -26,6 +26,31 @@ class UserloginController extends GetxController {
   final String loginUrl =
       "https://rasma.astradevelops.in/e_shoppyy/public/api/login";
 
+  // Role definitions
+  final Map<int, RoleInfo> roles = {
+    1: RoleInfo(
+      id: 1,
+      name: 'User',
+      icon: Icons.person_outline_rounded,
+      description: 'Shop amazing products',
+      color: const Color(0xFF2196F3),
+    ),
+    2: RoleInfo(
+      id: 2,
+      name: 'Merchant',
+      icon: Icons.storefront_outlined,
+      description: 'Manage your store',
+      color: const Color(0xFFFF9800),
+    ),
+    3: RoleInfo(
+      id: 3,
+      name: 'Admin',
+      icon: Icons.admin_panel_settings_outlined,
+      description: 'System administration',
+      color: const Color(0xFF9C27B0),
+    ),
+  };
+
   @override
   void onClose() {
     username.dispose();
@@ -33,117 +58,92 @@ class UserloginController extends GetxController {
     super.onClose();
   }
 
-  /// Toggle password visibility
   void togglePasswordVisibility() {
     isPasswordVisible.value = !isPasswordVisible.value;
   }
 
-  /// Main submit method with role-based login
+  void setRole(int role) {
+    selectedRole.value = role;
+  }
   Future<void> submit() async {
-    final String email = username.text.trim();
-    final String pass = password.text.trim();
+    final email = username.text.trim();
+    final pass = password.text.trim();
 
-    // Basic validation
+    // Validation
     if (email.isEmpty || pass.isEmpty) {
       _showError("Email and password are required");
       return;
     }
 
-    // Email validation
     if (!GetUtils.isEmail(email)) {
-      _showError("Please enter a valid email address");
+      _showError("Enter a valid email address");
       return;
     }
 
-    // Start loading
     isLoading.value = true;
 
-    try {
-      // Try login with each role (User: 1, Merchant: 2, Admin: 3)
-      for (int role in [1, 2, 3]) {
-        final bool success = await _loginWithRole(
-          email: email,
-          password: pass,
-          role: role,
-        );
-
-        if (success) {
-          isLoading.value = false;
-          return;
-        }
-      }
-
-      // If no role worked, show error
-      _showError("Invalid email or password");
-    } catch (e) {
-      _showError("Something went wrong. Please try again.");
-      debugPrint("Login error: $e");
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  /// Login attempt with specific role
-  Future<bool> _loginWithRole({
-    required String email,
-    required String password,
-    required int role,
-  }) async {
     try {
       final response = await http.post(
         Uri.parse(loginUrl),
         headers: {
           "Accept": "application/json",
-          "Content-Type": "application/x-www-form-urlencoded",
+          "Content-Type": "application/json",
         },
-        body: {
+        body: jsonEncode({
           "email": email,
-          "password": password,
-          "role": role.toString(),
-        },
+          "password": pass,
+          "role": selectedRole.value,
+        }),
       ).timeout(const Duration(seconds: 30));
 
-      // Parse response
-      final Map<String, dynamic> body = jsonDecode(response.body);
+      final body = jsonDecode(response.body);
       final status = body['status'];
-      final bool isSuccess =
-          status == true || status == 1 || status == "1" || status == "true";
 
-      if (!isSuccess) {
-        return false;
+      if (status != 1 && status != "1" && status != true) {
+        _showError(body['message'] ?? "Login failed");
+        return;
       }
 
       final data = body['data'];
-
       if (data == null) {
-        return false;
+        _showError("Invalid server response");
+        return;
       }
 
-      // Store auth data
+      // Verify role matches
+      final serverRole = data['role'];
+      if (serverRole != selectedRole.value) {
+        _showError("Invalid credentials for selected role");
+        return;
+      }
+
+      // Save auth data
       await _saveAuthData(data);
 
-      // Navigate based on role
+      // Navigate automatically based on role
       _navigateToHome(data['role']);
 
-      // Show success message
-      _showSuccess(body['message'] ?? "Login successful!");
+      _showSuccess(body['message'] ?? "Login successful");
 
-      return true;
     } catch (e) {
-      debugPrint("Login with role $role failed: $e");
-      return false;
+      debugPrint("Login error: $e");
+      _showError("Something went wrong. Please try again.");
+    } finally {
+      isLoading.value = false;
     }
   }
 
-  /// Save authentication data to local storage
+  /// Save authentication data locally
   Future<void> _saveAuthData(Map<String, dynamic> data) async {
-    await box.write("auth_token", data['p']);
+    // await box.write("auth_token", data['auth_token'] ?? data['token'] ?? '');
+
+     await box.write("auth_token", data['auth_token']);
     await box.write("role", data['role']);
     await box.write("user_data", data);
     await box.write("is_logged_in", true);
   }
 
-  /// Navigate to appropriate home screen based on role
+  /// Navigate to the correct home screen based on role
   void _navigateToHome(int role) {
     switch (role) {
       case 1:
@@ -184,16 +184,6 @@ class UserloginController extends GetxController {
       borderRadius: 12,
       margin: const EdgeInsets.all(16),
       duration: const Duration(seconds: 4),
-      isDismissible: true,
-      dismissDirection: DismissDirection.horizontal,
-      forwardAnimationCurve: Curves.easeOutBack,
-      boxShadows: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.2),
-          blurRadius: 10,
-          offset: const Offset(0, 4),
-        ),
-      ],
     );
   }
 
@@ -209,16 +199,6 @@ class UserloginController extends GetxController {
       borderRadius: 12,
       margin: const EdgeInsets.all(16),
       duration: const Duration(seconds: 3),
-      isDismissible: true,
-      dismissDirection: DismissDirection.horizontal,
-      forwardAnimationCurve: Curves.easeOutBack,
-      boxShadows: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.2),
-          blurRadius: 10,
-          offset: const Offset(0, 4),
-        ),
-      ],
     );
   }
 
@@ -227,5 +207,23 @@ class UserloginController extends GetxController {
     username.clear();
     password.clear();
     isPasswordVisible.value = false;
+    selectedRole.value = 1;
   }
+}
+
+/// Role information model
+class RoleInfo {
+  final int id;
+  final String name;
+  final IconData icon;
+  final String description;
+  final Color color;
+
+  RoleInfo({
+    required this.id,
+    required this.name,
+    required this.icon,
+    required this.description,
+    required this.color,
+  });
 }

@@ -1,19 +1,18 @@
 
+
 import 'package:flutter/material.dart';
-import 'dart:async';
+import 'package:get/get.dart';
+import '../../core/controllers/auth_controller.dart';
 
-import '../userhome/view/userhome.dart';
-
-class AnimatedSplash extends StatefulWidget {
-  const AnimatedSplash({super.key});
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
 
   @override
-  State<AnimatedSplash> createState() => _AnimatedSplashState();
+  State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _AnimatedSplashState extends State<AnimatedSplash>
+class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
-
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
@@ -22,26 +21,21 @@ class _AnimatedSplashState extends State<AnimatedSplash>
   void initState() {
     super.initState();
 
+    // 🔐 Auth check controller
+    Get.put(AuthCheckController());
+
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 2),
+      duration: const Duration(milliseconds: 1200),
     );
 
-    _scaleAnimation = Tween<double>(begin: 0.6, end: 1.0)
-        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+    _scaleAnimation =
+        CurvedAnimation(parent: _controller, curve: Curves.easeOutBack);
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0)
-        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
+    _fadeAnimation =
+        CurvedAnimation(parent: _controller, curve: Curves.easeIn);
 
     _controller.forward();
-
-    // Navigate after 3 seconds
-    Timer(const Duration(seconds: 3), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const Userhome()),
-      );
-    });
   }
 
   @override
@@ -53,26 +47,49 @@ class _AnimatedSplashState extends State<AnimatedSplash>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF009688), // background color from your 2nd image
-      body: Center(
-        child: AnimatedBuilder(
-          animation: _controller,
-          builder: (context, child) {
-            return Opacity(
-              opacity: _fadeAnimation.value,
-              child: Transform.scale(
-                scale: _scaleAnimation.value,
-                child: child,
+      body: Container(
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFF009788),
+              Color(0xFF229C93),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Center(
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: ScaleTransition(
+              scale: _scaleAnimation,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // 🔥 Logo
+                  Container(
+                    height: 160,
+                    width: 160,
+                    decoration: BoxDecoration(image: DecorationImage(image: AssetImage( "assets/images/logo/eshoppylogo.png"),fit: BoxFit.cover)),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // ✨ Tagline
+                  const Text(
+                    "Buy Smart,Sell Better",
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white70,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ],
               ),
-            );
-          },
-          child: Image.asset(
-            "assets/images/logo.png",     // <-- put your eShoppy logo here
-            width: 180,
+            ),
           ),
         ),
       ),
     );
   }
 }
-
