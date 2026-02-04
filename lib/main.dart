@@ -9,6 +9,7 @@ import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:get_storage/get_storage.dart';
 import 'app/common/style/app_theme.dart';
 import 'app/modules/product/controller/cartcontroller.dart';
+import 'app/modules/profile/controller/editprofile_controller.dart';
 import 'app/modules/userhome/controller/district _controller.dart';
 import 'app/modules/userhome/controller/promotionbanner_controller.dart';
 import 'app/routes/app_pages.dart';
@@ -22,6 +23,7 @@ Future<void> main() async {
 
   // ✅ Inject CartController globally
   Get.put(CartController(), permanent: true);
+  Get.put(EditProfileController(), permanent: true);
 
 
 

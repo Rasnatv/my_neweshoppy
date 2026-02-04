@@ -76,11 +76,11 @@ class AppPages {
       page: () =>  Userhome(),
       //binding: CartBinding(),
     ),
-    GetPage(
-      name: _Paths.PROFILE,
-      page: () =>  ProfileView(),
-      binding: EditprofileBinding(),
-    ),
+    // GetPage(
+    //   name: _Paths.PROFILE,
+    //   page: () =>  ProfileView(),
+    //   binding: EditprofileBinding(),
+    // ),
     // GetPage(
     //   name: _Paths.CATEGORYS,
     //   page: () => CategoriesScreen(),

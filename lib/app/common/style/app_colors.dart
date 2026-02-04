@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 abstract class AppColors {
-  static const kPrimary = Color(0xFF17A896);
+  static const kPrimary = Color(0xFF089385);
    static const kcard = Color(0xFF0B615D);
    static const bagecolor= Color(0xFF7998EA);
    static const kcard1 = Color(0xFF42BCB7);

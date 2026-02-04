@@ -6,6 +6,7 @@ import '../../../common/style/app_colors.dart';
 import '../../../core/utils/auth_service.dart';
 import 'addproductpage.dart';
 import 'merchant_changepassword.dart';
+import 'merchant_gallerypage.dart';
 import 'orderspage.dart';
 import 'shopedit.dart';
 import 'manageproducts.dart';
@@ -98,7 +99,7 @@ class MerchantDashboardPage extends StatelessWidget {
                   gradient: const LinearGradient(
                     colors: [Color(0xFFB110B6), Color(0xFF8F0A71)],
                   ),
-                  onTap: () => Get.to(() => MerchantOfferViewPage()),
+                  onTap: () => Get.to(() => MerchantGalleryPage ()),
                 ),
                 _buildMenuCard(
                   icon: Icons.receipt_long_rounded,

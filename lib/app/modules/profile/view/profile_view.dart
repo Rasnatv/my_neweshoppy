@@ -1,176 +1,105 @@
 
-import 'package:eshoppy/app/modules/profile/view/user_changepswd.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../../../common/style/app_colors.dart';
 import '../../../common/style/app_text_style.dart';
-import '../../../core/utils/auth_service.dart';
 import '../../myoders/myoders/myodersview.dart';
-import '../../userlogin/controller/userlogin_controller.dart';
 import '../../userlogin/view/useredit_profile.dart';
 import '../controller/editprofile_controller.dart';
+import 'user_changepswd.dart';
+import '../../../core/utils/auth_service.dart';
 
 class ProfileView extends StatelessWidget {
-   ProfileView({super.key});
-   final EditProfileController controller =Get.find<EditProfileController>();
+  ProfileView({super.key});
 
-   @override
+  final EditProfileController controller =
+  Get.find<EditProfileController>();
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7F7),
       appBar: AppBar(
-        automaticallyImplyLeading: true,
         backgroundColor: AppColors.kPrimary,
-        elevation: 0,
-        title: Text(
-          "Profile",style:AppTextStyle.rTextNunitoWhite17w700)
-        ),
-
-
+        title: Text("Profile",
+            style: AppTextStyle.rTextNunitoWhite17w700),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            /// 🔥 PROFILE HEADER
+            Obx(() {
+              final user = controller.profile.value;
 
-            // ------------------ PROFILE HEADER ------------------
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  const CircleAvatar(
-                    radius: 40,
-                    backgroundColor: Colors.blueGrey,
-                    backgroundImage: AssetImage("assets/images/namsthe.png"),
-                  ),
-                  const SizedBox(width: 18),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                      controller.nameCtrl.text,
-                        style: TextStyle(
-                          fontSize: 20,
+              if (user == null) {
+                return const CircularProgressIndicator();
+              }
 
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      SizedBox(height: 6),
-                      Text(
-                        controller.emailCtrl.text,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
-                        ),
-                      )
-                    ],
-                  )
-                ],
-              ),
-            ),
+              return Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 40,
+                      backgroundImage: user.profileImage.isNotEmpty
+                          ? NetworkImage(user.profileImage)
+                          : const AssetImage(
+                          "assets/images/namsthe.png")
+                      as ImageProvider,
+                    ),
+                    const SizedBox(width: 18),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(user.fullName,
+                            style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700)),
+                        const SizedBox(height: 6),
+                        Text(user.email,
+                            style: const TextStyle(color: Colors.grey)),
+                      ],
+                    )
+                  ],
+                ),
+              );
+            }),
 
             const SizedBox(height: 25),
 
-            // ------------------ ACCOUNT OPTIONS ------------------
-            _sectionTitle("Account Settings"),
+            _tile("Edit Profile", Icons.person,
+                    () => Get.to(() => EditProfilePage())),
+            _tile("My Orders", Icons.shopping_bag,
+                    () => Get.to(() => Myodersview())),
+            _tile("Change Password", Icons.lock,
+                    () => Get.to(() => ChangePasswordPage())),
 
-            _settingTile(
-              icon: Icons.person_outline,
-              title: "Edit Profile",
-              onTap: ()=>Get.to(()=>EditProfilePage()),
-            ),
-            _settingTile(
-              icon: Icons.shopping_bag_outlined,
-              title: "My Orders",
-              onTap: () =>Get.to(()=>Myodersview()),
-            ),
-            _settingTile(
-              icon: Icons.lock_outline,
-              title: "Change Password",
-             onTap: () =>Get.to(()=>ChangePasswordPage()),
-            ),
+            const SizedBox(height: 20),
 
-            // ------------------ LOGOUT BUTTON ------------------
-            SizedBox(width: MediaQuery.sizeOf(context).width,child:
-
-            // ------------------ LOGOUT BUTTON ------------------
-            SizedBox(
-              width: MediaQuery.sizeOf(context).width,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.kPrimary,
-                ),
-                onPressed: () {
-                  AuthService.showLogoutDialog();},
-                child: const Text(
-                  "Logout",
-                  style: TextStyle(fontSize: 16, color: Colors.white),
-                ),
+           SizedBox(width: double.infinity,child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.kPrimary,
               ),
+              onPressed: AuthService.showLogoutDialog,
+              child: const Text("Logout"),
             ),
-
-            )],
+           ) ],
         ),
       ),
     );
   }
 
-  // ---------- section title ----------
-  Widget _sectionTitle(String title) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: Text(
-          title,
-          style: const TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ---------- settings tiles ----------
-  Widget _settingTile({
-    required IconData icon,
-    required String title,
-    required Function() onTap,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: ListTile(
-        leading: Icon(icon, color: Colors.black87, size: 26),
-        title: Text(
-          title,
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-        ),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-        onTap: onTap,
-      ),
+  Widget _tile(String title, IconData icon, VoidCallback onTap) {
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(title),
+      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+      onTap: onTap,
     );
   }
 }

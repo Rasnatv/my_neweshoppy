@@ -300,7 +300,8 @@ class AdminDashboard extends StatelessWidget {
         title: "Offers",
         subtitle: "Merchant offers",
         color: const Color(0xFFF97316),
-        onTap: () => Get.to(() => AdminMerchantofferspage()),
+        onTap:(){}
+        //onTap: () => Get.to(() => AdminMerchantofferspage()),
       ),
     ];
 
