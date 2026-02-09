@@ -19,12 +19,12 @@ class UserEventController extends GetxController {
     super.onInit();
     fetchEvents(); // auto load
   }
-
   Future<void> fetchEvents() async {
     try {
       isLoading(true);
 
       final token = box.read("auth_token");
+      Get.log("EVENT TOKEN => $token");
 
       if (token == null || token.toString().isEmpty) {
         events.clear();
@@ -35,13 +35,14 @@ class UserEventController extends GetxController {
         Uri.parse(apiUrl),
         headers: {
           "Accept": "application/json",
-          "Authorization": "Bearer $token", // 🔑 token used
+          "Authorization": "Bearer $token",
         },
       );
 
       final decoded = jsonDecode(response.body);
+      Get.log("EVENT RESPONSE => $decoded");
 
-      if (decoded['status'] == "1") {
+      if (decoded['status'] == 1 || decoded['status'] == "1") {
         events.value = (decoded['data'] as List)
             .map((e) => UserEventModel.fromJson(e))
             .toList();
@@ -53,5 +54,4 @@ class UserEventController extends GetxController {
     } finally {
       isLoading(false);
     }
-  }
-}
+  }}

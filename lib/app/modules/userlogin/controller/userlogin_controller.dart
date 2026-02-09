@@ -133,11 +133,14 @@ class UserloginController extends GetxController {
     }
   }
 
-  /// Save authentication data locally
-  Future<void> _saveAuthData(Map<String, dynamic> data) async {
-    // await box.write("auth_token", data['auth_token'] ?? data['token'] ?? '');
 
-     await box.write("auth_token", data['auth_token']);
+  Future<void> _saveAuthData(Map<String, dynamic> data) async {
+    final token =
+        data['auth_token'] ??
+            data['token'] ??
+            data['access_token'];
+
+    await box.write("auth_token", token);
     await box.write("role", data['role']);
     await box.write("user_data", data);
     await box.write("is_logged_in", true);

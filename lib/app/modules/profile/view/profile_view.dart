@@ -13,7 +13,7 @@ class ProfileView extends StatelessWidget {
   ProfileView({super.key});
 
   final EditProfileController controller =
-  Get.find<EditProfileController>();
+  Get.put(EditProfileController());
 
   @override
   Widget build(BuildContext context) {

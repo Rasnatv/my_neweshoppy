@@ -1,5 +1,4 @@
 
-
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -37,6 +36,9 @@ class ProductController extends GetxController {
   // ---------------- VARIANT TYPE SELECTION (DROPDOWN) ----------------
   // Currently selected variant type from dropdown (e.g., "Size", "Color")
   var selectedVariantType = ''.obs;
+
+  // Track which variant type section is expanded
+  var expandedVariantType = ''.obs;
 
   // Values for the currently selected variant type
   var currentVariantValues = <String>[].obs;
@@ -193,6 +195,7 @@ class ProductController extends GetxController {
 
     // Clear previous data
     selectedVariantType.value = '';
+    expandedVariantType.value = '';
     currentVariantValues.clear();
     configuredVariantTypes.clear();
     commonAttributes.clear();
@@ -253,22 +256,39 @@ class ProductController extends GetxController {
       return;
     }
 
-    if (!currentVariantValues.contains(value)) {
-      currentVariantValues.add(value);
+    // ✅ Split comma-separated values
+    final List<String> values = value
+        .split(',')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toSet()
+        .toList();
 
-      // Immediately save to configured types
-      configuredVariantTypes[selectedVariantType.value] = List.from(currentVariantValues);
+    bool addedAny = false;
 
-      variantValueController.clear();
-      currentVariantValues.refresh();
-      configuredVariantTypes.refresh();
-    } else {
+    for (final v in values) {
+      if (!currentVariantValues.contains(v)) {
+        currentVariantValues.add(v);
+        addedAny = true;
+      }
+    }
+
+    if (!addedAny) {
       Get.snackbar(
         "Duplicate",
-        "$value already exists",
+        "Value already exists",
         snackPosition: SnackPosition.BOTTOM,
       );
+      return;
     }
+
+    // Save immediately
+    configuredVariantTypes[selectedVariantType.value] =
+        List.from(currentVariantValues);
+
+    variantValueController.clear();
+    currentVariantValues.refresh();
+    configuredVariantTypes.refresh();
   }
 
   // Remove a value from current variant type
@@ -288,35 +308,36 @@ class ProductController extends GetxController {
 
   // Generate variants from the selected variant type
   void generateVariantsFromType() {
-    if (selectedVariantType.value.isEmpty) {
+    if (configuredVariantTypes.isEmpty) {
       Get.snackbar(
         "Error",
-        "Please select a variant type",
+        "Please configure at least one variant type with values",
         snackPosition: SnackPosition.BOTTOM,
       );
       return;
     }
 
-    if (currentVariantValues.isEmpty) {
-      Get.snackbar(
-        "Error",
-        "Please add at least one value for ${selectedVariantType.value}",
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return;
+    // Save current configuration if editing
+    if (selectedVariantType.value.isNotEmpty && currentVariantValues.isNotEmpty) {
+      configuredVariantTypes[selectedVariantType.value] = List.from(currentVariantValues);
     }
 
-    // Save current configuration
-    configuredVariantTypes[selectedVariantType.value] = List.from(currentVariantValues);
+    // Generate new combinations based on all configured types
+    List<Map<String, String>> newCombinations = _generateAllCombinations();
 
-    // Clear existing variants
-    variants.clear();
+    // Check which combinations already exist
+    List<Map<String, String>> combinationsToAdd = [];
+    for (var combo in newCombinations) {
+      bool exists = variants.any((variant) =>
+          _areMapsEqual(variant.attributes, combo)
+      );
+      if (!exists) {
+        combinationsToAdd.add(combo);
+      }
+    }
 
-    // Generate variants based on all configured types
-    List<Map<String, String>> combinations = _generateAllCombinations();
-
-    // Create variants from combinations
-    for (var combo in combinations) {
+    // Add new variants
+    for (var combo in combinationsToAdd) {
       variants.add(ProductVariant(
         attributes: combo,
         price: null,
@@ -324,13 +345,36 @@ class ProductController extends GetxController {
       ));
     }
 
-    Get.snackbar(
-      "Success",
-      "${variants.length} variant(s) generated",
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Color(0xFF10B981),
-      colorText: Colors.white,
-    );
+    if (combinationsToAdd.isNotEmpty) {
+      Get.snackbar(
+        "Success",
+        "${combinationsToAdd.length} new variant(s) added! Total: ${variants.length}",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Color(0xFF10B981),
+        colorText: Colors.white,
+        duration: Duration(seconds: 3),
+      );
+    } else {
+      Get.snackbar(
+        "Info",
+        "All variants already exist. No new variants added.",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Color(0xFF3B82F6),
+        colorText: Colors.white,
+      );
+    }
+
+    // Close all sections after generation
+    expandedVariantType.value = '';
+  }
+
+  // Helper function to compare two maps
+  bool _areMapsEqual(Map<String, String> map1, Map<String, String> map2) {
+    if (map1.length != map2.length) return false;
+    for (var key in map1.keys) {
+      if (map1[key] != map2[key]) return false;
+    }
+    return true;
   }
 
   // Generate all combinations from configured variant types
@@ -428,7 +472,7 @@ class ProductController extends GetxController {
       if (variant.price == null || variant.price! <= 0) {
         Get.snackbar(
           "Validation Error",
-          "Variant ${i + 1}: Valid price is required",
+          "Variant ${i + 1} (${variant.getDisplayName()}): Valid price is required",
         );
         return false;
       }
@@ -436,7 +480,7 @@ class ProductController extends GetxController {
       if (variant.stock == null || variant.stock! < 0) {
         Get.snackbar(
           "Validation Error",
-          "Variant ${i + 1}: Valid stock quantity is required",
+          "Variant ${i + 1} (${variant.getDisplayName()}): Valid stock quantity is required",
         );
         return false;
       }
@@ -444,7 +488,7 @@ class ProductController extends GetxController {
       if (variant.imagePath == null) {
         Get.snackbar(
           "Validation Error",
-          "Variant ${i + 1}: Image is required",
+          "Variant ${i + 1} (${variant.getDisplayName()}): Image is required",
         );
         return false;
       }
@@ -557,6 +601,22 @@ class ProductController extends GetxController {
   }
 
   // ---------------- CLEAR & RESET ----------------
+  void clearVariantConfiguration() {
+    selectedVariantType.value = '';
+    expandedVariantType.value = '';
+    currentVariantValues.clear();
+    configuredVariantTypes.clear();
+    variantValueController.clear();
+
+    Get.snackbar(
+      "Configuration Cleared",
+      "Variant configuration has been reset. Your generated variants are safe.",
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Color(0xFF3B82F6),
+      colorText: Colors.white,
+    );
+  }
+
   void _clearForm() {
     productName.value = '';
     selectedCategory.value = '';
@@ -564,6 +624,7 @@ class ProductController extends GetxController {
     productDescription.value = '';
     variants.clear();
     selectedVariantType.value = '';
+    expandedVariantType.value = '';
     currentVariantValues.clear();
     configuredVariantTypes.clear();
     commonAttributes.clear();

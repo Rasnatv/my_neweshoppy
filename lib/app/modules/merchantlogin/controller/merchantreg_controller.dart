@@ -8,12 +8,11 @@ import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
-
 import '../../merchant_home/views/merchant_home.dart';
 
 
 class MerchantRegController extends GetxController {
-  // ------------------ TEXT CONTROLLERS ------------------
+
   final ownerNameController = TextEditingController();
   final shopNameController = TextEditingController();
   final emailController = TextEditingController();
@@ -70,11 +69,6 @@ class MerchantRegController extends GetxController {
   Future<void> fetchStates() async {
     try {
       isLoadingStates.value = true;
-
-      print("════════════════════════════════════════");
-      print("Fetching States from: $statesApi");
-      print("════════════════════════════════════════");
-
       final response = await http.get(
         Uri.parse(statesApi),
         headers: {
@@ -83,10 +77,6 @@ class MerchantRegController extends GetxController {
         },
       );
 
-      print("════════════════════════════════════════");
-      print("States API Response Status: ${response.statusCode}");
-      print("States API Response Body: ${response.body}");
-      print("════════════════════════════════════════");
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -97,17 +87,6 @@ class MerchantRegController extends GetxController {
           // Remove duplicates by converting to Set and back to List
           List<String> uniqueStates = statesList.toSet().toList();
           states.assignAll(uniqueStates);
-
-          print("✅ Loaded ${states.length} states: $uniqueStates");
-
-          Get.snackbar(
-            "Success",
-            "States loaded successfully",
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
-            duration: const Duration(seconds: 2),
-          );
         } else {
           throw Exception("API returned status: ${data['status']}");
         }
@@ -115,9 +94,6 @@ class MerchantRegController extends GetxController {
         throw Exception("Failed to load states. Status: ${response.statusCode}");
       }
     } catch (e) {
-      print("════════════════════════════════════════");
-      print("❌ Error fetching states: $e");
-      print("════════════════════════════════════════");
 
       Get.snackbar(
         "Error",
@@ -143,11 +119,6 @@ class MerchantRegController extends GetxController {
       selectedDistrict.value = "";
       selectedLocation.value = "";
 
-      print("════════════════════════════════════════");
-      print("Fetching Districts for State: $state");
-      print("API: $districtsApi");
-      print("════════════════════════════════════════");
-
       final response = await http.post(
         Uri.parse(districtsApi),
         headers: {
@@ -156,11 +127,6 @@ class MerchantRegController extends GetxController {
         },
         body: jsonEncode({"state": state}),
       );
-
-      print("════════════════════════════════════════");
-      print("Districts API Response Status: ${response.statusCode}");
-      print("Districts API Response Body: ${response.body}");
-      print("════════════════════════════════════════");
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -191,9 +157,6 @@ class MerchantRegController extends GetxController {
         throw Exception("Failed to load districts. Status: ${response.statusCode}");
       }
     } catch (e) {
-      print("════════════════════════════════════════");
-      print("❌ Error fetching districts: $e");
-      print("════════════════════════════════════════");
 
       Get.snackbar(
         "Error",
@@ -217,13 +180,6 @@ class MerchantRegController extends GetxController {
       locations.clear();
       selectedLocation.value = "";
 
-      print("════════════════════════════════════════");
-      print("Fetching Locations for:");
-      print("State: $state");
-      print("District: $district");
-      print("API: $locationsApi");
-      print("════════════════════════════════════════");
-
       final response = await http.post(
         Uri.parse(locationsApi),
         headers: {
@@ -236,10 +192,6 @@ class MerchantRegController extends GetxController {
         }),
       );
 
-      print("════════════════════════════════════════");
-      print("Locations API Response Status: ${response.statusCode}");
-      print("Locations API Response Body: ${response.body}");
-      print("════════════════════════════════════════");
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -270,9 +222,6 @@ class MerchantRegController extends GetxController {
         throw Exception("Failed to load locations. Status: ${response.statusCode}");
       }
     } catch (e) {
-      print("════════════════════════════════════════");
-      print("❌ Error fetching locations: $e");
-      print("════════════════════════════════════════");
 
       Get.snackbar(
         "Error",
@@ -596,12 +545,6 @@ class MerchantRegController extends GetxController {
         requestBody["website_link"] = websiteController.text.trim();
       }
 
-      print("════════════════════════════════════════");
-      print("Registration Request:");
-      print("URL: $signupApiUrl");
-      print("Body: ${jsonEncode(requestBody)}");
-      print("════════════════════════════════════════");
-
       // Make API call
       final response = await http.post(
         Uri.parse(signupApiUrl),
@@ -612,11 +555,6 @@ class MerchantRegController extends GetxController {
         body: jsonEncode(requestBody),
       );
 
-      print("════════════════════════════════════════");
-      print("Registration Response Status: ${response.statusCode}");
-      print("Registration Response Body: ${response.body}");
-      print("════════════════════════════════════════");
-
       if (response.statusCode == 201 || response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
 
@@ -624,7 +562,8 @@ class MerchantRegController extends GetxController {
           // Save auth token if needed
           String authToken = responseData['data']['auth_token'];
           box.write("auth_token", authToken);
-
+          box.write("is_logged_in", true);
+          box.write("role", 2);
           // You can save this token using GetStorage or SharedPreferences
           // Example: GetStorage().write('auth_token', authToken);
 

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import '../../modules/product/controller/cartcontroller.dart';
+import '../../modules/profile/controller/editprofile_controller.dart';
 import '../../modules/userhome/controller/district _controller.dart';
 import '../../modules/userhome/controller/usercategory_controller.dart';
 import '../../modules/userlogin/controller/userlogin_controller.dart';
@@ -37,7 +38,7 @@ class AuthService {
   }
   static void _logout() async {
     /// 🔐 Read token FIRST
-    final token = box.read('token');
+    final token = box.read('auth_token');
 
     /// 🧹 Clear token-specific cached data
     if (token != null) {
@@ -68,6 +69,11 @@ class AuthService {
     if (Get.isRegistered<UserloginController>()) {
       Get.delete<UserloginController>(force: true);
     }
+    // 🔥 VERY IMPORTANT
+    if (Get.isRegistered<EditProfileController>()) {
+      Get.delete<EditProfileController>(force: true);
+    }
+
 
     /// 🚀 Go to login screen
     Get.offAllNamed('/login');

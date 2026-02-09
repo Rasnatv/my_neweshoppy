@@ -2,10 +2,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../common/style/app_colors.dart';
 import '../controller/addproduct_controller.dart';
 
 
-/// Add Product Page with Variant Type Dropdown
+/// Add Product Page with Enhanced Variant Generation UI
 class AddProductPage extends StatelessWidget {
   final ProductController controller = Get.put(ProductController());
 
@@ -15,7 +16,7 @@ class AddProductPage extends StatelessWidget {
       backgroundColor: Color(0xFFF8F9FA),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Color(0xFF3B82F6),
+        backgroundColor:AppColors.kPrimary,
         foregroundColor: Colors.white,
         title: Text(
           "Add New Product",
@@ -64,14 +65,14 @@ class AddProductPage extends StatelessWidget {
                         SizedBox(height: 24),
                       ],
 
-                      // Show variant type dropdown if category has variant attributes
+                      // Show variant configuration if category has variant attributes
                       if (controller.selectedCategory.value.isNotEmpty &&
                           controller.hasVariantAttributes()) ...[
-                        _buildVariantTypeDropdown(context),
+                        _buildVariantConfigurationCard(context),
                         SizedBox(height: 24),
                       ],
 
-                      // Show selected variants list
+                      // Show generated variants list
                       if (controller.variants.isNotEmpty) ...[
                         _buildVariantsHeader(),
                         SizedBox(height: 16),
@@ -346,8 +347,8 @@ class AddProductPage extends StatelessWidget {
     );
   }
 
-  // NEW: Variant Type Dropdown - shows variant attribute types (Size, Color, etc.)
-  Widget _buildVariantTypeDropdown(BuildContext context) {
+  // NEW: Enhanced Variant Configuration Card
+  Widget _buildVariantConfigurationCard(BuildContext context) {
     final config = controller.categoryConfigs[controller.selectedCategory.value];
     if (config == null || config.variantAttributes.isEmpty) return SizedBox.shrink();
 
@@ -355,385 +356,455 @@ class AddProductPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionTitle("Select Variant Type", Icons.tune),
-          SizedBox(height: 8),
-          Text(
-            "Choose which variant type to add (Size, Color, etc.)",
-            style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+          Row(
+            children: [
+              Icon(Icons.tune, color: Color(0xFF3B82F6), size: 24),
+              SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Variant Configuration",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1A1A1A),
+                      ),
+                    ),
+                    Text(
+                      "Add values for each variant type to generate all combinations",
+                      style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          SizedBox(height: 16),
+          SizedBox(height: 20),
 
-          // Show already configured variant types
+          // Display each variant type
+          ...config.variantAttributes.map((variantType) {
+            return _buildVariantTypeSection(variantType);
+          }).toList(),
+
+          SizedBox(height: 20),
+
+          // Preview and Generate Button
           Obx(() {
             if (controller.configuredVariantTypes.isNotEmpty) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Configured Types:",
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF1A1A1A),
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: controller.configuredVariantTypes.entries.map((entry) {
-                      final isSelected = controller.selectedVariantType.value == entry.key;
-                      return Container(
-                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? Color(0xFF10B981).withOpacity(0.1)
-                              : Color(0xFF3B82F6).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: isSelected
-                                ? Color(0xFF10B981)
-                                : Color(0xFF3B82F6),
-                            width: isSelected ? 2 : 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.check_circle,
-                              size: 16,
-                              color: isSelected
-                                  ? Color(0xFF10B981)
-                                  : Color(0xFF3B82F6),
-                            ),
-                            SizedBox(width: 6),
-                            Text(
-                              "${entry.key} (${entry.value.length})",
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: isSelected
-                                    ? Color(0xFF10B981)
-                                    : Color(0xFF3B82F6),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                  SizedBox(height: 16),
-                  Divider(),
-                  SizedBox(height: 16),
-                ],
-              );
+              return _buildGenerateVariantsSection();
             }
             return SizedBox.shrink();
-          }),
-
-          // Dropdown to select variant attribute type
-          Container(
-            decoration: BoxDecoration(
-              color: Color(0xFFF9FAFB),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Color(0xFFE5E7EB)),
-            ),
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: Obx(() => DropdownButtonFormField<String>(
-              decoration: InputDecoration(
-                border: InputBorder.none,
-                prefixIcon: Icon(Icons.category, color: Color(0xFF6B7280), size: 20),
-                hintText: "Select variant type",
-                hintStyle: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
-              ),
-              value: controller.selectedVariantType.value.isEmpty
-                  ? null
-                  : controller.selectedVariantType.value,
-              items: config.variantAttributes.map((attr) {
-                final hasValues = controller.configuredVariantTypes.containsKey(attr);
-                return DropdownMenuItem(
-                  value: attr,
-                  child: Row(
-                    children: [
-                      Text(attr, style: TextStyle(fontSize: 15)),
-                      if (hasValues) ...[
-                        SizedBox(width: 8),
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Color(0xFF10B981),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            "${controller.configuredVariantTypes[attr]!.length}",
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                );
-              }).toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  controller.onVariantTypeSelected(value);
-                }
-              },
-              dropdownColor: Colors.white,
-              icon: Icon(Icons.keyboard_arrow_down, color: Color(0xFF6B7280)),
-            )),
-          ),
-
-          // Show variant values input section when a type is selected
-          Obx(() {
-            if (controller.selectedVariantType.value.isEmpty) {
-              return SizedBox.shrink();
-            }
-
-            return Column(
-              children: [
-                SizedBox(height: 20),
-                Divider(),
-                SizedBox(height: 20),
-                _buildVariantValuesSection(),
-              ],
-            );
           }),
         ],
       ),
     );
   }
 
-  Widget _buildVariantValuesSection() {
+  Widget _buildVariantTypeSection(String variantType) {
     return Obx(() {
-      final variantType = controller.selectedVariantType.value;
-      final values = controller.currentVariantValues;
+      final values = controller.configuredVariantTypes[variantType] ?? [];
+      final isExpanded = controller.expandedVariantType.value == variantType;
 
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.list, color: Color(0xFF3B82F6), size: 20),
-              SizedBox(width: 8),
-              Text(
-                "$variantType Values",
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF1A1A1A),
-                ),
-              ),
-              Spacer(),
-              if (values.isNotEmpty)
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Color(0xFF10B981),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    "${values.length} value(s)",
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-            ],
+      return Container(
+        margin: EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: Color(0xFFF9FAFB),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: values.isNotEmpty ? Color(0xFF10B981) : Color(0xFFE5E7EB),
+            width: values.isNotEmpty ? 2 : 1,
           ),
-          SizedBox(height: 12),
-
-          // Display added values
-          if (values.isNotEmpty)
-            Container(
-              padding: EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Color(0xFFF9FAFB),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Color(0xFFE5E7EB)),
-              ),
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: values.map((value) {
-                  return Chip(
-                    label: Text(value),
-                    deleteIcon: Icon(Icons.close, size: 18),
-                    onDeleted: () => controller.removeVariantValue(value),
-                    backgroundColor: Color(0xFF3B82F6).withOpacity(0.1),
-                    labelStyle: TextStyle(
-                      color: Color(0xFF3B82F6),
-                      fontWeight: FontWeight.w500,
+        ),
+        child: Column(
+          children: [
+            // Header
+            InkWell(
+              onTap: () {
+                if (isExpanded) {
+                  controller.expandedVariantType.value = '';
+                } else {
+                  controller.expandedVariantType.value = variantType;
+                  controller.selectedVariantType.value = variantType;
+                  controller.currentVariantValues.value = List.from(values);
+                }
+              },
+              child: Container(
+                padding: EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: values.isNotEmpty
+                            ? Color(0xFF10B981).withOpacity(0.1)
+                            : Color(0xFF3B82F6).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        values.isNotEmpty ? Icons.check_circle : Icons.radio_button_unchecked,
+                        color: values.isNotEmpty ? Color(0xFF10B981) : Color(0xFF3B82F6),
+                        size: 20,
+                      ),
                     ),
-                  );
-                }).toList(),
-              ),
-            )
-          else
-            Container(
-              padding: EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Color(0xFFF9FAFB),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Color(0xFFE5E7EB)),
-              ),
-              child: Center(
-                child: Text(
-                  "No values added yet for $variantType",
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF6B7280),
-                  ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            variantType,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF1A1A1A),
+                            ),
+                          ),
+                          if (values.isNotEmpty)
+                            Text(
+                              "${values.length} value(s): ${values.join(', ')}",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF6B7280),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            )
+                          else
+                            Text(
+                              "Tap to add values",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF9CA3AF),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                      color: Color(0xFF6B7280),
+                    ),
+                  ],
                 ),
               ),
             ),
 
-          SizedBox(height: 12),
+            // Expanded content
+            if (isExpanded) ...[
+              Divider(height: 1),
+              Padding(
+                padding: EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Display current values
+                    if (values.isNotEmpty) ...[
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: values.map((value) {
+                          return Chip(
+                            label: Text(value),
+                            deleteIcon: Icon(Icons.close, size: 16),
+                            onDeleted: () => controller.removeVariantValue(value),
+                            backgroundColor: Color(0xFF3B82F6).withOpacity(0.1),
+                            labelStyle: TextStyle(
+                              color: Color(0xFF3B82F6),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      SizedBox(height: 12),
+                    ],
 
-          // Input to add new value
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Color(0xFFF9FAFB),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Color(0xFFE5E7EB)),
-                  ),
-                  child: TextField(
-                    controller: controller.variantValueController,
-                    decoration: InputDecoration(
-                      hintText: "Add $variantType value (e.g., ${_getExampleValue(variantType)})",
-                      hintStyle: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    // Input field
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Color(0xFFE5E7EB)),
+                            ),
+                            child: TextField(
+                              controller: controller.variantValueController,
+                              decoration: InputDecoration(
+                                hintText: "e.g., ${_getExampleValue(variantType)}",
+                                hintStyle: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                prefixIcon: Icon(Icons.add, size: 18, color: Color(0xFF6B7280)),
+                              ),
+                              onSubmitted: (value) {
+                                if (value.trim().isNotEmpty) {
+                                  controller.addVariantValue(value.trim());
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: () {
+                            final value = controller.variantValueController.text.trim();
+                            if (value.isNotEmpty) {
+                              controller.addVariantValue(value);
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(0xFF3B82F6),
+                            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: Text("Add", style: TextStyle(fontWeight: FontWeight.w600)),
+                        ),
+                      ],
                     ),
-                    onSubmitted: (value) {
-                      if (value.trim().isNotEmpty) {
-                        controller.addVariantValue(value.trim());
-                      }
-                    },
-                  ),
+
+                    SizedBox(height: 8),
+                    Text(
+                      "💡 Tip: Separate multiple values with commas (e.g., S, M, L)",
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF6B7280),
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              SizedBox(width: 8),
-              ElevatedButton(
-                onPressed: () {
-                  final value = controller.variantValueController.text.trim();
-                  if (value.isNotEmpty) {
-                    controller.addVariantValue(value);
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF3B82F6),
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: Text("Add", style: TextStyle(fontWeight: FontWeight.w600)),
               ),
             ],
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _buildGenerateVariantsSection() {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Color(0xFF10B981).withOpacity(0.1),
+            Color(0xFF10B981).withOpacity(0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Color(0xFF10B981).withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Color(0xFF10B981),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.preview, color: Colors.white, size: 20),
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  "Variants Preview",
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1A1A1A),
+                  ),
+                ),
+              ),
+              // Clear configuration button
+              TextButton.icon(
+                onPressed: () => _showClearConfigurationDialog(Get.context!),
+                icon: Icon(Icons.refresh, size: 18),
+                label: Text("Reset"),
+                style: TextButton.styleFrom(
+                  foregroundColor: Color(0xFFEF4444),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12),
+
+          // Show combinations that will be generated
+          Container(
+            padding: EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ...controller.configuredVariantTypes.entries.map((entry) {
+                  return Padding(
+                    padding: EdgeInsets.only(bottom: 6),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "${entry.key}:",
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF1A1A1A),
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            entry.value.join(", "),
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF6B7280),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                Divider(height: 20),
+                Row(
+                  children: [
+                    Icon(Icons.auto_awesome, size: 16, color: Color(0xFF10B981)),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        "Will generate ${_calculateTotalCombinations()} combination(s)",
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF10B981),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (controller.variants.isNotEmpty) ...[
+                  SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.info_outline, size: 16, color: Color(0xFF3B82F6)),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          "${controller.variants.length} variant(s) already exist. New ones will be added.",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF3B82F6),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
           ),
 
           SizedBox(height: 16),
 
-          // Generate Variants Button - only show if we have configured types
-          Obx(() {
-            if (controller.configuredVariantTypes.isNotEmpty) {
-              return Column(
-                children: [
-                  // Show summary of all configured types
-                  Container(
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Color(0xFF10B981).withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Color(0xFF10B981).withOpacity(0.3)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.info_outline, size: 16, color: Color(0xFF10B981)),
-                            SizedBox(width: 8),
-                            Text(
-                              "Ready to generate variants:",
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF10B981),
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 8),
-                        ...controller.configuredVariantTypes.entries.map((entry) {
-                          return Padding(
-                            padding: EdgeInsets.only(bottom: 4),
-                            child: Row(
-                              children: [
-                                SizedBox(width: 24),
-                                Text(
-                                  "• ${entry.key}: ",
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF1A1A1A),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Text(
-                                    entry.value.join(", "),
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Color(0xFF6B7280),
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: controller.generateVariantsFromType,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF10B981),
-                        padding: EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      icon: Icon(Icons.auto_awesome),
-                      label: Text(
-                        "Generate All Variants",
-                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            }
-            return SizedBox.shrink();
-          }),
+          // Generate button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: controller.generateVariantsFromType,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFF10B981),
+                padding: EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 2,
+              ),
+              icon: Icon(Icons.add_circle_outline, size: 20),
+              label: Text(
+                controller.variants.isEmpty ? "Generate Variants" : "Add More Variants",
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
+              ),
+            ),
+          ),
+
+          SizedBox(height: 8),
+          Center(
+            child: Text(
+              controller.variants.isEmpty
+                  ? "Each variant will have its own price, stock, and image"
+                  : "Keep adding more color/size combinations incrementally",
+              style: TextStyle(
+                fontSize: 11,
+                color: Color(0xFF6B7280),
+                fontStyle: FontStyle.italic,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
         ],
-      );
-    });
+      ),
+    );
+  }
+
+  void _showClearConfigurationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Color(0xFFEF4444)),
+              SizedBox(width: 12),
+              Text("Reset Configuration?"),
+            ],
+          ),
+          content: Text(
+            "This will clear all configured variant types. Generated variants will not be affected.",
+            style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                controller.clearVariantConfiguration();
+                Navigator.of(context).pop();
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFEF4444)),
+              child: Text("Reset"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  int _calculateTotalCombinations() {
+    if (controller.configuredVariantTypes.isEmpty) return 0;
+
+    int total = 1;
+    for (var values in controller.configuredVariantTypes.values) {
+      total *= values.length;
+    }
+    return total;
   }
 
   String _getExampleValue(String attribute) {
@@ -744,35 +815,128 @@ class AddProductPage extends StatelessWidget {
       'Size': 'S, M, L',
       'Color': 'Red, Blue',
       'Colour': 'Red, Blue',
+      'material': 'Cotton, Polyester',
+      'style': 'Casual, Formal',
     };
-    return examples[attribute] ?? 'Value';
+    return examples[attribute.toLowerCase()] ?? 'Value1, Value2';
   }
 
   Widget _buildVariantsHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Product Variants",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF1A1A1A),
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Color(0xFF10B981), width: 2),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Color(0xFF10B981),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(Icons.inventory_2, color: Colors.white, size: 24),
               ),
+              SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Generated Variants",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1A1A1A),
+                      ),
+                    ),
+                    Text(
+                      "${controller.variants.length} variant(s) • Set price, stock & image for each",
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF6B7280),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                onPressed: () => _showClearAllVariantsDialog(Get.context!),
+                icon: Icon(Icons.delete_sweep, color: Color(0xFFEF4444)),
+                tooltip: "Clear all variants",
+              ),
+            ],
+          ),
+          SizedBox(height: 12),
+          Container(
+            padding: EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Color(0xFF10B981).withOpacity(0.05),
+              borderRadius: BorderRadius.circular(8),
             ),
-            Text(
-              "${controller.variants.length} variant(s)",
-              style: TextStyle(
-                fontSize: 13,
-                color: Color(0xFF6B7280),
-              ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, size: 16, color: Color(0xFF10B981)),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    "You can add more variants incrementally by configuring more combinations above",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF10B981),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showClearAllVariantsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Color(0xFFEF4444)),
+              SizedBox(width: 12),
+              Text("Clear All Variants?"),
+            ],
+          ),
+          content: Text(
+            "Are you sure you want to remove all ${controller.variants.length} generated variants? This action cannot be undone.",
+            style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                controller.variants.clear();
+                Navigator.of(context).pop();
+                Get.snackbar(
+                  "Variants Cleared",
+                  "All variants have been removed",
+                  snackPosition: SnackPosition.BOTTOM,
+                );
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFEF4444)),
+              child: Text("Clear All"),
             ),
           ],
-        ),
-      ],
+        );
+      },
     );
   }
 
@@ -787,9 +951,9 @@ class AddProductPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: Offset(0, 2),
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 12,
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -798,7 +962,12 @@ class AddProductPage extends StatelessWidget {
           Container(
             padding: EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Color(0xFF3B82F6).withOpacity(0.05),
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFF3B82F6).withOpacity(0.1),
+                  Color(0xFF3B82F6).withOpacity(0.05),
+                ],
+              ),
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(16),
                 topRight: Radius.circular(16),
@@ -806,32 +975,34 @@ class AddProductPage extends StatelessWidget {
             ),
             child: Row(
               children: [
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Color(0xFF3B82F6),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    "#${index + 1}",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                SizedBox(width: 12),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Variant ${index + 1}",
-                        style: TextStyle(
-                          color: Color(0xFF3B82F6),
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        variant.getDisplayName(),
-                        style: TextStyle(
-                          color: Color(0xFF1A1A1A),
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    variant.getDisplayName(),
+                    style: TextStyle(
+                      color: Color(0xFF1A1A1A),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.delete_outline, color: Color(0xFFEF4444), size: 20),
+                  icon: Icon(Icons.delete_outline, color: Color(0xFFEF4444), size: 22),
                   onPressed: () => _showDeleteDialog(context, index),
                   tooltip: "Remove variant",
                 ),
@@ -856,23 +1027,64 @@ class AddProductPage extends StatelessWidget {
                     ),
                   ],
                 ),
-                SizedBox(height: 16),
                 if (variant.attributes.isNotEmpty) ...[
-                  Text(
-                    "Variant Attributes",
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF1A1A1A),
+                  SizedBox(height: 16),
+                  Container(
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Color(0xFFF9FAFB),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Variant Specifications",
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF6B7280),
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 8,
+                          children: variant.attributes.entries.map((entry) {
+                            return Container(
+                              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: Color(0xFFE5E7EB)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    "${entry.key}:",
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF6B7280),
+                                    ),
+                                  ),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    entry.value,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF1A1A1A),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ],
                     ),
                   ),
-                  SizedBox(height: 12),
-                  ...variant.attributes.entries.map((entry) {
-                    return Padding(
-                      padding: EdgeInsets.only(bottom: 12),
-                      child: _buildVariantAttributeField(entry.key, entry.value),
-                    );
-                  }).toList(),
                 ],
               ],
             ),
@@ -948,27 +1160,6 @@ class AddProductPage extends StatelessWidget {
     );
   }
 
-  Widget _buildVariantAttributeField(String attribute, String value) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Color(0xFFE5E7EB)),
-      ),
-      child: TextField(
-        controller: TextEditingController(text: value),
-        enabled: false,
-        style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
-        decoration: InputDecoration(
-          labelText: attribute,
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          labelStyle: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
-        ),
-      ),
-    );
-  }
-
   Widget _buildImagePicker(BuildContext context, int index, ProductVariant variant) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -985,28 +1176,48 @@ class AddProductPage extends StatelessWidget {
         GestureDetector(
           onTap: () => controller.pickImage(index),
           child: Container(
-            height: 160,
+            height: 180,
             width: double.infinity,
             decoration: BoxDecoration(
               color: Color(0xFFF9FAFB),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Color(0xFFE5E7EB), width: 2),
+              border: Border.all(
+                color: variant.imagePath != null
+                    ? Color(0xFF10B981)
+                    : Color(0xFFE5E7EB),
+                width: 2,
+              ),
             ),
             child: variant.imagePath == null
                 ? Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.add_photo_alternate_outlined,
-                  size: 40,
-                  color: Color(0xFF3B82F6),
+                Container(
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Color(0xFF3B82F6).withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.add_photo_alternate_outlined,
+                    size: 40,
+                    color: Color(0xFF3B82F6),
+                  ),
                 ),
-                SizedBox(height: 8),
+                SizedBox(height: 12),
                 Text(
                   "Tap to add image",
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
                     color: Color(0xFF6B7280),
+                  ),
+                ),
+                Text(
+                  "Required",
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF9CA3AF),
                   ),
                 ),
               ],
@@ -1036,7 +1247,7 @@ class AddProductPage extends StatelessWidget {
                       ],
                     ),
                     child: IconButton(
-                      icon: Icon(Icons.edit, color: Color(0xFF3B82F6), size: 18),
+                      icon: Icon(Icons.edit, color: Color(0xFF3B82F6), size: 20),
                       onPressed: () => controller.pickImage(index),
                     ),
                   ),
@@ -1134,7 +1345,7 @@ class AddProductPage extends StatelessWidget {
             ],
           ),
           content: Text(
-            "Are you sure you want to remove this variant?",
+            "Are you sure you want to remove this variant? This action cannot be undone.",
             style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
           ),
           actions: [
