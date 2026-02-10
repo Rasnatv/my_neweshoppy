@@ -662,7 +662,7 @@ class MerchantRegform extends StatelessWidget {
           // Current Location Button
           Obx(() => SizedBox(
             width: double.infinity,
-            height: 48,
+            height: 50,
             child: ElevatedButton.icon(
               onPressed: controller.isGettingCurrentLocation.value
                   ? null
@@ -670,7 +670,7 @@ class MerchantRegform extends StatelessWidget {
               icon: controller.isGettingCurrentLocation.value
                   ? const SizedBox(
                 width: 16,
-                height: 16,
+                height: 17,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
                   color: Colors.white,
@@ -687,7 +687,7 @@ class MerchantRegform extends StatelessWidget {
                 ),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF4CAF50),
+                backgroundColor: const Color(0xFF089385),
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
@@ -802,7 +802,7 @@ class MerchantRegform extends StatelessWidget {
                     children: [
                       const Icon(
                         Icons.check_circle_outline,
-                        color: Color(0xFF4CAF50),
+                        color: Color(0xFF089385),
                         size: 16,
                       ),
                       const SizedBox(width: 8),
@@ -810,7 +810,7 @@ class MerchantRegform extends StatelessWidget {
                         child: Text(
                           "Location set: ${controller.shopLat.value.toStringAsFixed(6)}, ${controller.shopLng.value.toStringAsFixed(6)}",
                           style: const TextStyle(
-                            color: Color(0xFF2E7D32),
+                            color: Color(0xFF089385),
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                           ),

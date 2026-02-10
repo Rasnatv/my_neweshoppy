@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import '../app_colors.dart';
 
-
-
-
 class DElevatedButtonTheme{
   DElevatedButtonTheme._();
   static final LightElevatedButtonTheme=ElevatedButtonThemeData(

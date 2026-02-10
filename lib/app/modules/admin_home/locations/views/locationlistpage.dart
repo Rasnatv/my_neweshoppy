@@ -1,91 +1,4 @@
-//
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-// import '../../../../common/style/app_colors.dart';
-// import '../../../../common/style/app_text_style.dart';
-// import '../../controller/admin_locationcontroller.dart';
-//
-// class DistrictLocationListPage extends StatelessWidget {
-//   final LocationController controller = Get.find();
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       backgroundColor: Colors.grey[100],
-//       appBar: AppBar(
-//         backgroundColor: AppColors.kPrimary,
-//         title: Text(
-//           "Location List",
-//           style: AppTextStyle.rTextNunitoWhite17w700,
-//         ),
-//         actions: [
-//           IconButton(
-//             icon: Icon(Icons.refresh),
-//             onPressed: () => controller.fetchLocations(),
-//           )
-//         ],
-//       ),
-//       body: Obx(() {
-//         if (controller.isLoading.value) {
-//           return Center(child: CircularProgressIndicator());
-//         }
-//
-//         if (controller.stateList.isEmpty) {
-//           return Center(
-//             child: Text(
-//               "No locations found",
-//               style: TextStyle(fontSize: 18, color: Colors.grey),
-//             ),
-//           );
-//         }
-//
-//         return ListView.builder(
-//           padding: EdgeInsets.all(12),
-//           itemCount: controller.stateList.length,
-//           itemBuilder: (context, sIndex) {
-//             final state = controller.stateList[sIndex];
-//
-//             return Card(
-//               shape: RoundedRectangleBorder(
-//                 borderRadius: BorderRadius.circular(14),
-//               ),
-//               child: ExpansionTile(
-//                 title: Text(
-//                   state.state,
-//                   style: TextStyle(
-//                     fontSize: 20,
-//                     fontWeight: FontWeight.bold,
-//                     color: Colors.deepPurple,
-//                   ),
-//                 ),
-//                 children: state.districts.map((district) {
-//                   return ExpansionTile(
-//                     title: Text(
-//                       district.district,
-//                       style: TextStyle(
-//                         fontSize: 17,
-//                         fontWeight: FontWeight.w600,
-//                       ),
-//                     ),
-//                     children: district.locations.map((loc) {
-//                       return ListTile(
-//                         leading: Icon(
-//                           Icons.location_on,
-//                           color: Colors.deepPurple,
-//                         ),
-//                         title: Text(loc.location),
-//                       );
-//                     }).toList(),
-//                   );
-//                 }).toList(),
-//               ),
-//             );
-//           },
-//         );
-//       }),
-//     );
-//   }
-// }
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../common/style/app_colors.dart';
@@ -162,7 +75,7 @@ class _StateCard extends StatelessWidget {
       ),
       child: ExpansionTile(
         tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        leading: const Icon(Icons.map, color: Colors.deepPurple),
+        leading: const Icon(Icons.map, color: Color(0xFF089385)),
         title: Text(
           state.state,
           style: const TextStyle(
@@ -199,7 +112,7 @@ class _DistrictCard extends StatelessWidget {
       child: ExpansionTile(
         tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         leading: const Icon(Icons.location_city,
-            color: Colors.deepPurple),
+            color: Color(0xFF089385)),
         title: Text(
           district.district,
           style: const TextStyle(
@@ -241,7 +154,7 @@ class _LocationTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.place, color: Colors.deepPurple, size: 20),
+          const Icon(Icons.place, color: Color(0xFF089385), size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Text(

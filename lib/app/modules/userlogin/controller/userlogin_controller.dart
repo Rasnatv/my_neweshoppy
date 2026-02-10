@@ -195,8 +195,6 @@ class UserloginController extends GetxController {
     Get.snackbar(
       "Success",
       message,
-      backgroundColor: Colors.green.shade600,
-      colorText: Colors.white,
       icon: const Icon(Icons.check_circle_outline, color: Colors.white),
       snackPosition: SnackPosition.TOP,
       borderRadius: 12,

@@ -7,7 +7,6 @@ import '../../modules/profile/controller/editprofile_controller.dart';
 import '../../modules/userhome/controller/district _controller.dart';
 import '../../modules/userhome/controller/usercategory_controller.dart';
 import '../../modules/userlogin/controller/userlogin_controller.dart';
-import '../../modules/userlogin/view/sigin.dart';
 
 
 class AuthService {
@@ -46,14 +45,11 @@ class AuthService {
       box.remove('district_$token');
       box.remove('main_location_$token');
     }
-
-    /// 🔐 CLEAR AUTH STATE (MANDATORY)
     await box.remove('token');
     await box.remove('is_logged_in');
     await box.remove('role');
     await box.remove('user');
 
-    /// 🧹 Reset controllers safely
     if (Get.isRegistered<UserLocationController>()) {
       Get.delete<UserLocationController>(force: true);
     }
@@ -69,13 +65,10 @@ class AuthService {
     if (Get.isRegistered<UserloginController>()) {
       Get.delete<UserloginController>(force: true);
     }
-    // 🔥 VERY IMPORTANT
     if (Get.isRegistered<EditProfileController>()) {
       Get.delete<EditProfileController>(force: true);
     }
 
-
-    /// 🚀 Go to login screen
     Get.offAllNamed('/login');
   }
 

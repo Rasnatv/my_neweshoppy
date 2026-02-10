@@ -1,4 +1,6 @@
 
+import 'package:eshoppy/app/common/style/app_colors.dart';
+import 'package:eshoppy/app/widgets/iconbox.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../merchantlogin/view/merchant_registration.dart';
@@ -30,8 +32,6 @@ class LoginScreen extends StatelessWidget {
                 const SizedBox(height: 20),
                 _buildForgotPassword(),
                 const SizedBox(height: 32),
-                _buildDivider(),
-                const SizedBox(height: 32),
                 _buildSignUpSection(),
               ],
             ),
@@ -42,36 +42,8 @@ class LoginScreen extends StatelessWidget {
   }
 
   Widget _buildHeader() {
-    return Column(
-      children: [
-        // Modern Logo
-        Container(
-          width: 80,
-          height: 80,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [
-                Color(0xFF00BFA5),
-                Color(0xFF009788),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF00BFA5).withOpacity(0.4),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: const Icon(
-            Icons.shopping_bag_outlined,
-            color: Colors.white,
-            size: 40,
-          ),
-        ),
+    return Column(children: [
+      IconBox(icon:Icons.shopping_cart,iconColor: Colors.white,backgroundColor: AppColors.kPrimary,),
         const SizedBox(height: 24),
         const Text(
           "eShoppy",
@@ -134,8 +106,6 @@ class LoginScreen extends StatelessWidget {
                 ],
               ),
             ),
-
-
       Container(
       decoration: BoxDecoration(
         color: const Color(0xFFF8F9FA),
@@ -259,51 +229,6 @@ class LoginScreen extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildDivider() {
-    return Row(
-      children: [
-        Expanded(
-          child: Container(
-            height: 1,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.transparent,
-                  Colors.grey[300]!,
-                ],
-              ),
-            ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text(
-            "OR",
-            style: TextStyle(
-              color: Colors.grey[500],
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1,
-            ),
-          ),
-        ),
-        Expanded(
-          child: Container(
-            height: 1,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.grey[300]!,
-                  Colors.transparent,
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 

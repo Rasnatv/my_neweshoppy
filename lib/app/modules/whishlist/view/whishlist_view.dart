@@ -18,7 +18,7 @@ class WishlistScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
           backgroundColor: AppColors.kPrimary,
-          title:  Text("My Wishlist",style: AppTextStyle.rTextNunitoWhite17w700)
+          title:  Text("Wishlist",style: AppTextStyle.rTextNunitoWhite17w700)
       ),
       body: Obx(() {
         if (controller.isLoading.value) {

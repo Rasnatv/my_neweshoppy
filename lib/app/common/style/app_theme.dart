@@ -14,7 +14,7 @@ class AppTheme {
       primaryColor: AppColors.black,
       primarySwatch: AppColors.kPrimarySwatch,
       elevatedButtonTheme:DElevatedButtonTheme.LightElevatedButtonTheme,
-      inputDecorationTheme:DTextFormFieldTheme.lightinputdecorationTheme,
+      // inputDecorationTheme:DTextFormFieldTheme.lightInputDecorationTheme,
       //outlinedButtonTheme: DOutlineButtonTheme.LightOutlineButtonTheme,
       colorScheme: ColorScheme.fromSeed(
         seedColor: const Color.fromRGBO(16, 76, 146, 1),

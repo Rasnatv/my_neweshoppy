@@ -1,4 +1,5 @@
 
+import 'package:eshoppy/app/common/style/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/cartcontroller.dart';
@@ -13,6 +14,7 @@ class CartScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
+        backgroundColor:AppColors.kPrimary,
         title: const Text(
           "My Cart",
           style: TextStyle(
@@ -21,7 +23,6 @@ class CartScreen extends StatelessWidget {
             fontSize: 20,
           ),
         ),
-        backgroundColor: Colors.white,
         iconTheme: const IconThemeData(color: Colors.black87),
         elevation: 0,
         actions: [
@@ -39,7 +40,7 @@ class CartScreen extends StatelessWidget {
                 child: Text(
                   "${cartController.cartItems.length} items",
                   style: TextStyle(
-                    color: Colors.deepOrange.shade700,
+                    color: Colors.black,
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
                   ),
@@ -57,7 +58,7 @@ class CartScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 CircularProgressIndicator(
-                  color: Colors.deepOrange,
+                  color: Colors.white
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -112,7 +113,7 @@ class CartScreen extends StatelessWidget {
                   icon: const Icon(Icons.arrow_back),
                   label: const Text("Continue Shopping"),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepOrange,
+                    backgroundColor:AppColors.kPrimary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
                         horizontal: 32, vertical: 16),
@@ -457,7 +458,7 @@ class CartScreen extends StatelessWidget {
                             Get.toNamed('/checkout');
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.deepOrange,
+                            backgroundColor: AppColors.kPrimary,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 18),
                             shape: RoundedRectangleBorder(

@@ -91,13 +91,12 @@ class RestaurantController extends GetxController {
       timeSlots.where((e) => e.mealType == meal).toList();
 
   void saveAllData() {
-    debugPrint("====== TABLE TYPES ======");
+
     for (var t in tableTypes) {
       debugPrint(
           "${t.name} (${t.capacity}) × ${t.tableCount} - ${t.seatingType.name}");
     }
 
-    debugPrint("====== TIME SLOTS ======");
     for (var m in MealType.values) {
       debugPrint(m.name.toUpperCase());
       for (var t in getSlotsByMeal(m)) debugPrint(" - ${t.time}");

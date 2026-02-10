@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../common/style/app_text_style.dart';
 import '../../core/controllers/auth_controller.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -21,7 +22,6 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
 
-    // 🔐 Auth check controller
     Get.put(AuthCheckController());
 
     _controller = AnimationController(
@@ -76,12 +76,9 @@ class _SplashScreenState extends State<SplashScreen>
                   const SizedBox(height: 8),
 
                   // ✨ Tagline
-                  const Text(
-                    "Buy Smart,Sell Better",
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.white70,
-                      letterSpacing: 1,
+                  Text(
+                    "Buy Smart,Sell Better", style: TextStyle(
+                      fontSize: 14, color: Colors.white70, letterSpacing: 1,
                     ),
                   ),
                 ],

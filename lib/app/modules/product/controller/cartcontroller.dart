@@ -52,8 +52,8 @@ class CartController extends GetxController {
       } else if (response.statusCode == 401) {
         cartItems.clear();
         total.value = 0.0;
-        Get.snackbar("Unauthorized", "Please login again",
-            backgroundColor: Colors.red, colorText: Colors.white);
+        // Get.snackbar("Unauthorized", "Please login again",
+        //     backgroundColor: Colors.red, colorText: Colors.white);
       } else {
         cartItems.clear();
         total.value = 0.0;
