@@ -1,7 +1,7 @@
+//
 // import 'dart:io';
 // import 'package:flutter/material.dart';
 // import 'package:get/get.dart';
-//
 // import '../../../common/style/app_colors.dart';
 // import '../../../data/models/offerproductcontroller.dart';
 //
@@ -151,7 +151,7 @@
 //           ),
 //         ],
 //       ),
-//       child: Column(
+//        child: Column(
 //         crossAxisAlignment: CrossAxisAlignment.start,
 //         children: [
 //           Text(
@@ -183,19 +183,6 @@
 //           _buildSectionTitle("Offer Details", Icons.local_offer_outlined),
 //           SizedBox(height: 16),
 //
-//           // Offer Name
-//           Text(
-//             "Discount Percentage",
-//             style: TextStyle(
-//               fontSize: 29,
-//               fontWeight: FontWeight.w600,
-//               color: Color(0xFF1A1A1A),
-//             ),
-//           ),
-//           SizedBox(height: 8),
-//
-//           SizedBox(height: 16),
-//
 //           // Discount Percentage
 //           Text(
 //             "Discount Percentage",
@@ -223,6 +210,12 @@
 //                 contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
 //                 hintStyle: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
 //               ),
+//               onChanged: (value) {
+//                 // Recalculate all variant offer prices when discount changes
+//                 for (int i = 0; i < controller.variants.length; i++) {
+//                   controller.updateVariantPrice(i, controller.variants[i].price);
+//                 }
+//               },
 //             ),
 //           ),
 //           SizedBox(height: 16),
@@ -1052,8 +1045,8 @@
 //             controller:
 //             TextEditingController(text: variant.price?.toString() ?? ''),
 //             onChanged: (val) {
-//               variant.price = double.tryParse(val);
-//               controller.variants.refresh();
+//               final price = double.tryParse(val);
+//               controller.updateVariantPrice(index, price);
 //             },
 //             keyboardType: TextInputType.numberWithOptions(decimal: true),
 //             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
@@ -1077,12 +1070,15 @@
 //         SizedBox(height: 8),
 //         // Show offer price
 //         Obx(() {
-//           // Access observable to trigger rebuild
+//           // Trigger rebuild when variants or discount changes
 //           final _ = controller.variants.length;
 //           final __ = controller.discountPercentageCtrl.text;
-//           final offerPrice = controller.calculateOfferPrice(variant.price);
+//
+//           // Use the stored offer price
+//           final offerPrice = variant.offerPrice;
 //
 //           if (offerPrice != null && variant.price != null && variant.price! > 0) {
+//             final discount = controller.discountPercentageCtrl.text;
 //             return Container(
 //               padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
 //               decoration: BoxDecoration(
@@ -1097,7 +1093,7 @@
 //                   SizedBox(width: 4),
 //                   Flexible(
 //                     child: Text(
-//                       "₹${offerPrice.toStringAsFixed(0)} (${controller.discountPercentageCtrl.text}% off)",
+//                       "₹${offerPrice.toStringAsFixed(0)} (${discount}% off)",
 //                       style: TextStyle(
 //                         fontSize: 11,
 //                         fontWeight: FontWeight.w700,
@@ -1371,7 +1367,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../../../common/style/app_colors.dart';
 import '../../../data/models/offerproductcontroller.dart';
 
@@ -1423,6 +1418,10 @@ class AddOfferProductPage extends StatelessWidget {
                     children: [
                       // OFFER DETAILS SECTION
                       _buildOfferDetailsCard(),
+                      SizedBox(height: 16),
+
+                      // PRODUCT LIMIT INDICATOR
+                      _buildProductLimitIndicator(),
                       SizedBox(height: 16),
 
                       // PRODUCT DETAILS SECTION
@@ -1492,7 +1491,8 @@ class AddOfferProductPage extends StatelessWidget {
         ],
       )),
       floatingActionButton: Obx(() => controller.variants.isNotEmpty &&
-          !controller.isSubmitting.value
+          !controller.isSubmitting.value &&
+          _canAddMoreProducts()
           ? FloatingActionButton.extended(
         onPressed: () => _saveOfferProduct(context),
         backgroundColor: Color(0xFF10B981),
@@ -1505,6 +1505,13 @@ class AddOfferProductPage extends StatelessWidget {
       )
           : SizedBox.shrink()),
     );
+  }
+
+  // Check if more products can be added (max 10 per discount)
+  bool _canAddMoreProducts() {
+    // This should be implemented in your controller
+    // For now, assuming controller has a method to check this
+    return controller.variants.length < 10;
   }
 
   Widget _buildHeader() {
@@ -1534,7 +1541,7 @@ class AddOfferProductPage extends StatelessWidget {
           ),
           SizedBox(height: 8),
           Text(
-            "Add offer details and product with discount",
+            "Add offer details and product with discount (Max 10 products per offer)",
             style: TextStyle(
               fontSize: 14,
               color: Color(0xFF6B7280),
@@ -1543,6 +1550,92 @@ class AddOfferProductPage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  // New widget to show product limit
+  Widget _buildProductLimitIndicator() {
+    return Obx(() {
+      final currentCount = controller.variants.length;
+      final maxCount = 10;
+      final percentage = (currentCount / maxCount);
+      final isNearLimit = currentCount >= 8;
+      final isAtLimit = currentCount >= maxCount;
+
+      Color indicatorColor;
+      Color bgColor;
+      IconData icon;
+      String message;
+
+      if (isAtLimit) {
+        indicatorColor = Color(0xFFEF4444);
+        bgColor = Color(0xFFFEE2E2);
+        icon = Icons.block;
+        message = "Maximum limit reached! Cannot add more products to this offer.";
+      } else if (isNearLimit) {
+        indicatorColor = Color(0xFFF59E0B);
+        bgColor = Color(0xFFFEF3C7);
+        icon = Icons.warning_amber_rounded;
+        message = "Almost at limit! ${maxCount - currentCount} product(s) remaining.";
+      } else {
+        indicatorColor = Color(0xFF10B981);
+        bgColor = Color(0xFFD1FAE5);
+        icon = Icons.check_circle_outline;
+        message = "${currentCount} of ${maxCount} products added";
+      }
+
+      return Container(
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: indicatorColor.withOpacity(0.3)),
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: indicatorColor, size: 24),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Product Limit",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: indicatorColor,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        message,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: indicatorColor.withOpacity(0.8),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 12),
+            // Progress bar
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: percentage,
+                backgroundColor: Colors.white.withOpacity(0.5),
+                valueColor: AlwaysStoppedAnimation(indicatorColor),
+                minHeight: 8,
+              ),
+            ),
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildOfferDetailsCard() {
@@ -2014,26 +2107,66 @@ class AddOfferProductPage extends StatelessWidget {
             );
           }),
 
-          // Generate button
+          // Generate button with limit check
           Obx(() {
-            if (controller.variantTypeConfigurations.isNotEmpty) {
+            final canGenerate = controller.variantTypeConfigurations.isNotEmpty;
+            final currentCount = controller.variants.length;
+            final wouldExceedLimit = currentCount >= 10;
+
+            if (canGenerate) {
               return Column(
                 children: [
                   SizedBox(height: 16),
+
+                  // Warning if at limit
+                  if (wouldExceedLimit)
+                    Container(
+                      margin: EdgeInsets.only(bottom: 12),
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Color(0xFFFEE2E2),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Color(0xFFEF4444).withOpacity(0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.error_outline, color: Color(0xFFEF4444), size: 20),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              "Cannot generate more variants. Maximum 10 products limit reached.",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFFEF4444),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: controller.generateVariantsFromConfiguration,
+                      onPressed: wouldExceedLimit
+                          ? null
+                          : controller.generateVariantsFromConfiguration,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF10B981),
+                        backgroundColor: wouldExceedLimit
+                            ? Colors.grey
+                            : Color(0xFF10B981),
                         padding: EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
+                        disabledBackgroundColor: Colors.grey.shade300,
                       ),
                       icon: Icon(Icons.auto_awesome),
                       label: Text(
-                        "Generate All Variants",
+                        wouldExceedLimit
+                            ? "Limit Reached"
+                            : "Generate All Variants",
                         style: TextStyle(
                             fontWeight: FontWeight.w600, fontSize: 15),
                       ),
@@ -2277,13 +2410,17 @@ class AddOfferProductPage extends StatelessWidget {
                 color: Color(0xFF1A1A1A),
               ),
             ),
-            Text(
-              "${controller.variants.length} variant(s)",
-              style: TextStyle(
-                fontSize: 13,
-                color: Color(0xFF6B7280),
-              ),
-            ),
+            Obx(() {
+              final count = controller.variants.length;
+              return Text(
+                "$count of 10 variant(s)",
+                style: TextStyle(
+                  fontSize: 13,
+                  color: count >= 10 ? Color(0xFFEF4444) : Color(0xFF6B7280),
+                  fontWeight: count >= 10 ? FontWeight.w600 : FontWeight.normal,
+                ),
+              );
+            }),
           ],
         ),
       ],
@@ -2730,6 +2867,31 @@ class AddOfferProductPage extends StatelessWidget {
   }
 
   void _saveOfferProduct(BuildContext context) {
+    // Check if limit is reached
+    if (controller.variants.length >= 10) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.white),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  "Maximum 10 products limit reached for this discount!",
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: Color(0xFFEF4444),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
     if (!controller.validateForm()) return;
     controller.saveOfferProduct();
   }

@@ -1,4 +1,3 @@
-
 import 'package:eshoppy/app/common/style/app_colors.dart';
 import 'package:eshoppy/app/widgets/iconbox.dart';
 import 'package:flutter/material.dart';
@@ -43,7 +42,7 @@ class LoginScreen extends StatelessWidget {
 
   Widget _buildHeader() {
     return Column(children: [
-      IconBox(icon:Icons.shopping_cart,iconColor: Colors.white,backgroundColor: AppColors.kPrimary,),
+      IconBox( imagePath: 'assets/images/logo/ehoppycatlogo.png',iconColor: Colors.white,backgroundColor: AppColors.kPrimary,),
         const SizedBox(height: 24),
         const Text(
           "eShoppy",

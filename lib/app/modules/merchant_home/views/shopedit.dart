@@ -1,5 +1,6 @@
 
 import 'dart:io';
+import 'package:eshoppy/app/common/style/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_text_style.dart';
@@ -15,7 +16,7 @@ class MerchantSettingPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        backgroundColor: Colors.teal,
+        backgroundColor:AppColors.kPrimary,
         elevation: 0,
         automaticallyImplyLeading: true,
         iconTheme: const IconThemeData(
@@ -23,7 +24,7 @@ class MerchantSettingPage extends StatelessWidget {
         ),
         title: Text(
           "Edit Profile",
-          style:  AppTextStyle.rTextNunitoWhite16w600
+          style:  AppTextStyle.rTextNunitoWhite17w700
         ),
       ),
       body: Column(
@@ -331,7 +332,7 @@ class MerchantSettingPage extends StatelessWidget {
                               style: const TextStyle(color: Colors.white),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
+                              backgroundColor:AppColors.kPrimary,
                               minimumSize: const Size(double.infinity, 48),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),

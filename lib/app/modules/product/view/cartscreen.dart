@@ -2,6 +2,7 @@
 import 'package:eshoppy/app/common/style/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../common/style/app_text_style.dart';
 import '../controller/cartcontroller.dart';
 
 class CartScreen extends StatelessWidget {
@@ -14,16 +15,12 @@ class CartScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
+
         backgroundColor:AppColors.kPrimary,
-        title: const Text(
-          "My Cart",
-          style: TextStyle(
-            color: Colors.black87,
-            fontWeight: FontWeight.w600,
-            fontSize: 20,
+        title: Text(
+          "My Cart",style:AppTextStyle.rTextNunitoWhite17w700
           ),
-        ),
-        iconTheme: const IconThemeData(color: Colors.black87),
+        iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
         actions: [
           Obx(() => cartController.cartItems.isNotEmpty

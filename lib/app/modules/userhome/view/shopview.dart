@@ -33,6 +33,7 @@ class ShopDetailPage extends StatelessWidget {
                 floating: false,
                 pinned: true,
                 backgroundColor: AppColors.kPrimary,
+                iconTheme: const IconThemeData(color: Colors.white),
                 elevation: 0,
                 leading: IconButton(
                   icon: const Icon(Icons.arrow_back, color: Colors.white),

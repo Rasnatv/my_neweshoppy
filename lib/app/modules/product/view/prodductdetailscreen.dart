@@ -1,4 +1,5 @@
 
+import 'package:eshoppy/app/common/style/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/cartcontroller.dart';
@@ -441,7 +442,7 @@ class ProductDetailPage extends StatelessWidget {
               Icon(
                 Icons.description_outlined,
                 size: 20,
-                color: Colors.black54,
+                color: AppColors.kPrimary,
               ),
               SizedBox(width: 8),
               Text(
@@ -509,7 +510,7 @@ class ProductDetailPage extends StatelessWidget {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: isOutOfStock
                             ? Colors.grey[400]
-                            : Colors.deepOrangeAccent,
+                            : AppColors.kPrimary,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -549,7 +550,7 @@ class ProductDetailPage extends StatelessWidget {
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor:
-                          isOutOfStock ? Colors.grey[400] : Colors.green,
+                          isOutOfStock ? Colors.grey[400] :Colors.indigoAccent,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),

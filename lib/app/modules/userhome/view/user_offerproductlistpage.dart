@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../common/style/app_colors.dart';
+import '../../../common/style/app_text_style.dart';
 import '../controller/userofferproduct_controller.dart';
 
 class UserOfferProductPage extends StatelessWidget {
@@ -21,7 +22,8 @@ class UserOfferProductPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Offer Products'),
+        title: Text('Offer Products',style:AppTextStyle.rTextNunitoWhite17w700),
+        iconTheme: const IconThemeData(color: Colors.white),
         backgroundColor: AppColors.kPrimary,
       ),
       body: Obx(() {

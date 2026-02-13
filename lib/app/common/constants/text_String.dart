@@ -8,9 +8,6 @@ class AppTexts{
   static const String Title5="Create your account to start managing your store";
   static const String forgotpasswordsubtitle="Enter your registered email to reset the password";
 
-
-
-
    static const String email='E-mail';
    static const String pswd="Password";
    static const String remember="Remember me";
@@ -19,8 +16,8 @@ class AppTexts{
    static const String contin="continue with Google";
    static const String Register="Register";
 
-  static const String create ="Create Account";
-  String verifyemail="Verify your email address";
+   static const String create ="Create Account";
+   String verifyemail="Verify your email address";
 
   //forgot password
    static const String forgotpswd="Forgot Password";

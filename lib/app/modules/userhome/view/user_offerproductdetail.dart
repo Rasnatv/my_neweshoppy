@@ -1,6 +1,8 @@
+import 'package:eshoppy/app/common/style/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import '../../../common/style/app_text_style.dart';
 import '../../../data/models/user_offerdetailmodel.dart';
 import  'package:smooth_page_indicator/smooth_page_indicator.dart';
 import '../controller/user_offerproductdetail_controller.dart';
@@ -76,29 +78,21 @@ class UserOfferProductDetailScreen extends StatelessWidget {
       expandedHeight: 60,
       floating: true,
       pinned: true,
-      backgroundColor: Colors.white,
+      iconTheme: const IconThemeData(color: Colors.white),
+      backgroundColor:AppColors.kPrimary,
       elevation: 0,
-      leading: IconButton(
-        icon: Icon(Icons.arrow_back, color: Colors.black),
-        onPressed: () => Get.back(),
-      ),
       title: Text(
-        "Product Details",
-        style: TextStyle(
-          color: Colors.black,
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-        ),
+        "Product Details",style:AppTextStyle.rTextNunitoWhite17w700
       ),
       actions: [
         IconButton(
-          icon: Icon(Icons.share_outlined, color: Colors.black),
+          icon: Icon(Icons.share_outlined, color: Colors.white),
           onPressed: () {
             // TODO: Implement share
           },
         ),
         IconButton(
-          icon: Icon(Icons.favorite_border, color: Colors.black),
+          icon: Icon(Icons.favorite_border, color: Colors.white),
           onPressed: () {
             // TODO: Implement wishlist
           },
@@ -313,6 +307,7 @@ class UserOfferProductDetailScreen extends StatelessWidget {
     product.variants.first.attributes.keys.toList();
 
     return Container(
+      width: double.infinity,
       margin: EdgeInsets.only(top: 8),
       padding: EdgeInsets.all(20),
       color: Colors.white,

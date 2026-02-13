@@ -2,34 +2,81 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_colors.dart';
+import '../../../common/style/app_text_style.dart';
+import '../controller/merchant_offerbanner_controller.dart';
 import 'addofferproduct.dart';
-import 'offerproductlist.dart';
+import 'merchant_offerproductview.dart';
+
 
 class MerchantOfferViewPage extends StatelessWidget {
-  const MerchantOfferViewPage({super.key});
+  MerchantOfferViewPage({super.key});
+
+  final MerchantOfferBannerController controller =
+  Get.put(MerchantOfferBannerController());
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
-        title: const Text("My Offers"),
         backgroundColor: AppColors.kPrimary,
+        title: Text(
+          "My Offers",
+          style: AppTextStyle.rTextNunitoWhite17w700,
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
-          ElevatedButton(onPressed: ()=>Get.to(()=>AddOfferProductPage()),child:Text("create offers"))
+          InkWell(
+            onTap: () => Get.to(() => AddOfferProductPage()),
+            child: Container(
+              margin: const EdgeInsets.only(right: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.orange,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                children: const [
+                  Icon(Icons.local_offer, color: Colors.white, size: 18),
+                  SizedBox(width: 6),
+                  Text(
+                    "Add Offer",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: 3,
-        itemBuilder: (context, index) {
-          return _offerCard(context);
-        },
-      ),
+
+      /// BODY
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return _loadingView();
+        }
+
+        if (controller.offers.isEmpty) {
+          return _emptyView();
+        }
+
+        return RefreshIndicator(
+          onRefresh: controller.fetchOffers,
+          child: ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: controller.offers.length,
+            itemBuilder: (_, index) {
+              final offer = controller.offers[index];
+              return _offerCard(offer, index);
+            },
+          ),
+        );
+      }),
     );
   }
 
-  Widget _offerCard(BuildContext context) {
+  /// OFFER CARD UI
+  Widget _offerCard(offer, int index) {
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
       decoration: BoxDecoration(
@@ -38,31 +85,43 @@ class MerchantOfferViewPage extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.08),
-            blurRadius: 12,
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// BANNER IMAGE
+          /// IMAGE
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
-            child: Image.asset(
-              "assets/images/offer3.jpg",
+            child: Image.network(
+              offer.banner,
               height: 180,
               width: double.infinity,
               fit: BoxFit.cover,
+              loadingBuilder: (context, child, progress) {
+                if (progress == null) return child;
+                return const SizedBox(
+                  height: 180,
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              },
+              errorBuilder: (_, __, ___) => const SizedBox(
+                height: 180,
+                child: Center(child: Icon(Icons.broken_image, size: 60)),
+              ),
             ),
           ),
 
           const SizedBox(height: 12),
 
-          /// OFFER TEXT
+          /// DISCOUNT TEXT
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
-              "Flat 15% OFF",
+              "Flat ${offer.discount}% OFF",
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -75,21 +134,22 @@ class MerchantOfferViewPage extends StatelessWidget {
 
           /// BUTTONS
           Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(16),
             child: Row(
               children: [
                 /// VIEW PRODUCTS
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () {
-                   Get.to(()=>OfferProductListPage());
+                      Get.to(() => OfferProductScreen() );
                     },
                     icon: const Icon(Icons.visibility),
                     label: const Text("View Products"),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.kPrimary,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding:
+                      const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -98,13 +158,9 @@ class MerchantOfferViewPage extends StatelessWidget {
                 ),
 
                 const SizedBox(width: 12),
-
-                /// DELETE
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () {
-                      _deleteDialog();
-                    },
+                    onPressed: () => _deleteDialog(index),
                     icon: const Icon(Icons.delete_outline, color: Colors.red),
                     label: const Text(
                       "Delete",
@@ -112,7 +168,8 @@ class MerchantOfferViewPage extends StatelessWidget {
                     ),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Colors.red),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding:
+                      const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -127,19 +184,42 @@ class MerchantOfferViewPage extends StatelessWidget {
     );
   }
 
-  void _deleteDialog() {
+  Widget _loadingView() {
+    return const Center(
+      child: CircularProgressIndicator(),
+    );
+  }
+
+  Widget _emptyView() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const [
+          Icon(Icons.local_offer_outlined,
+              size: 70, color: Colors.grey),
+          SizedBox(height: 12),
+          Text(
+            "No offers available",
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+  void _deleteDialog(int index) {
     Get.defaultDialog(
-      title: "Delete Offer?",
-      middleText: "This offer will be permanently removed.",
+      title: "Delete Offer",
+      middleText: "Are you sure you want to delete this offer?",
       textConfirm: "Delete",
       textCancel: "Cancel",
       confirmTextColor: Colors.white,
       buttonColor: Colors.red,
       onConfirm: () {
+        controller.deleteOffer(index);
         Get.back();
         Get.snackbar(
           "Deleted",
-          "Offer removed successfully",
+          "Offer deleted successfully",
           backgroundColor: Colors.green,
           colorText: Colors.white,
         );

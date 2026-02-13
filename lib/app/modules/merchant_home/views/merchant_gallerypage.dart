@@ -1,6 +1,8 @@
 
+import 'package:eshoppy/app/common/style/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../common/style/app_text_style.dart';
 import '../../../data/models/merchant_gallerymode.dart';
 
 import 'merchant_gallerycontroller.dart';
@@ -16,8 +18,11 @@ class MerchantGalleryPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
-        title: const Text("Merchant Gallery"),
-        centerTitle: true,
+        backgroundColor: AppColors.kPrimary,
+          iconTheme: const IconThemeData(
+            color: Colors.white, // back arrow color
+          ),
+        title:  Text("Merchant Gallery",style:AppTextStyle.rTextNunitoWhite17w700),
         elevation: 0,
       ),
       body: Obx(() {
