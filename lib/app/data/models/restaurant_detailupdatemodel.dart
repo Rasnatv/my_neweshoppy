@@ -1,3 +1,4 @@
+
 class RestaurantUpdateRequest {
   final int restaurantId;
   final String? restaurantImage;
@@ -9,6 +10,7 @@ class RestaurantUpdateRequest {
   final String? whatsapp;
   final String? facebook;
   final String? instagram;
+  final String? restaurantname;
 
   RestaurantUpdateRequest({
     required this.restaurantId,
@@ -21,6 +23,7 @@ class RestaurantUpdateRequest {
     this.whatsapp,
     this.facebook,
     this.instagram,
+    this.restaurantname,
   });
 
   Map<String, dynamic> toJson() {
@@ -37,6 +40,7 @@ class RestaurantUpdateRequest {
     if (whatsapp != null) data["whatsapp"] = whatsapp;
     if (facebook != null) data["facebook_link"] = facebook;
     if (instagram != null) data["instagram_link"] = instagram;
+    if (restaurantname != null) data["restaurant_name"] = restaurantname;
 
     return data;
   }

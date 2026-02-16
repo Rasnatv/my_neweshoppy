@@ -10,6 +10,4 @@ abstract class ApiConstants {
   static const String requestOtp = "";
   static const String vertifyOtp = "";
   static const String refreshToken = "";
-
-
 }

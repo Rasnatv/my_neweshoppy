@@ -41,10 +41,21 @@ class AdminRestaurantController extends GetxController {
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
+
+        // ✅ ADD THIS DEBUG CODE HERE
+        print("🔍 ========== API RESPONSE DEBUG ==========");
+        if (body["data"] != null && body["data"].isNotEmpty) {
+          print("🔍 First Restaurant Data: ${body["data"][0]}");
+          print("🔍 restaurant_name: '${body["data"][0]['restaurant_name']}'");
+          print("🔍 name: '${body["data"][0]['name']}'");
+        }
+        print("🔍 ==========================================");
+
         if (body["status"].toString() == "1") {
           restaurants.value = List<Map<String, dynamic>>.from(body["data"]);
         } else {
-          Get.snackbar("Error", body["message"] ?? "Failed to fetch restaurants");
+          Get.snackbar(
+              "Error", body["message"] ?? "Failed to fetch restaurants");
         }
       } else {
         Get.snackbar("Error", "Server returned ${response.statusCode}");
@@ -54,5 +65,4 @@ class AdminRestaurantController extends GetxController {
     } finally {
       isLoading.value = false;
     }
-  }
-}
+  }}

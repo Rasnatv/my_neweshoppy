@@ -7,8 +7,6 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../common/style/app_colors.dart';
 import '../../../../common/style/app_text_style.dart';
 
-/// ================= MODELS =================
-
 class FoodItem {
   final String name;
   final File? image;
@@ -153,9 +151,6 @@ class RestaurantController extends GetxController {
     }
   }
 }
-
-/// ================= MAIN PAGE =================
-
 class MenuManagementPage extends StatelessWidget {
   MenuManagementPage({super.key});
 

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_colors.dart';
 import '../../../common/style/app_text_style.dart';
-import '../../../data/models/restaurantmodel.dart';
+import '../../../data/models/userrestaurantmodel.dart';
 import '../controller/restaurant_controller.dart';
 import 'restaurantdetail_page.dart';
 

@@ -32,8 +32,4 @@ abstract class AppImages {
   static const String offerzone= '$imagePath/Offerzone.jpg';
   static const String banner1="assets/images/offer2.jpg";
 
-
-
-
-
 }

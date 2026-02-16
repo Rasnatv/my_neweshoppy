@@ -2,125 +2,354 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
+
 import '../controller/user_restaurantaboutsection_controller.dart';
+
 class RestaurantAboutTab extends StatelessWidget {
   final String restaurantId;
 
-  RestaurantAboutTab({super.key, required this.restaurantId});
-
-  final controller = Get.put(RestaurantAboutController());
+  const RestaurantAboutTab({super.key, required this.restaurantId});
 
   @override
   Widget build(BuildContext context) {
-    controller.fetchAbout(restaurantId);
+    final RestaurantDetailsController controller = Get.put(
+      RestaurantDetailsController(restaurantId: restaurantId),
+      tag: restaurantId,
+    );
 
     return Obx(() {
       if (controller.isLoading.value) {
-        return const Center(child: CircularProgressIndicator());
+        return const Center(
+          child: CircularProgressIndicator(color: Colors.teal),
+        );
       }
 
-      final data = controller.about.value;
-
-      if (data == null) {
-        return const Center(child: Text("No details available"));
+      if (controller.errorMessage.isNotEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
+              const SizedBox(height: 16),
+              Text(
+                controller.errorMessage.value,
+                style: const TextStyle(fontSize: 16, color: Colors.red),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => controller.fetchRestaurantDetails(),
+                child: const Text("Retry"),
+              ),
+            ],
+          ),
+        );
       }
 
       return SingleChildScrollView(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            infoTile(Icons.location_on, "Address", data.address),
-            infoTile(Icons.phone, "Phone", data.phone),
-            infoTile(Icons.email, "Email", data.email),
-            infoTile(Icons.language, "Website", data.website),
-
-            const SizedBox(height: 20),
-
-            const Text(
-              "Connect With Us",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            /// Restaurant Name
+            _buildSectionTitle("Restaurant Information"),
+            const SizedBox(height: 12),
+            _buildInfoCard(
+              icon: Icons.restaurant,
+              title: "Name",
+              value: controller.restaurantName.value,
             ),
+
+            /// Address
+            if (controller.address.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              _buildInfoCard(
+                icon: Icons.location_on,
+                title: "Address",
+                value: controller.address.value,
+              ),
+            ],
+
+            /// Contact Information
+            const SizedBox(height: 24),
+            _buildSectionTitle("Contact Information"),
             const SizedBox(height: 12),
 
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                socialIcon(
-                  icon: Icons.message,
-                  color: Colors.green,
-                  onTap: () => _launchUrl("https://wa.me/${data.whatsapp}"),
-                ),
-                socialIcon(
-                  icon: Icons.facebook,
-                  color: Colors.blue,
-                  onTap: () => _launchUrl(data.facebook),
-                ),
-                socialIcon(
-                  icon: Icons.camera_alt,
-                  color: Colors.purple,
-                  onTap: () => _launchUrl(data.instagram),
-                ),
-              ],
-            ),
+            /// Phone
+            if (controller.phone.isNotEmpty) ...[
+              _buildClickableCard(
+                icon: Icons.phone,
+                title: "Phone",
+                value: controller.phone.value,
+                onTap: () => _makePhoneCall(controller.phone.value),
+              ),
+              const SizedBox(height: 12),
+            ],
+
+            /// Email
+            if (controller.email.isNotEmpty) ...[
+              _buildClickableCard(
+                icon: Icons.email,
+                title: "Email",
+                value: controller.email.value,
+                onTap: () => _sendEmail(controller.email.value),
+              ),
+              const SizedBox(height: 12),
+            ],
+
+            /// Website
+            if (controller.website.isNotEmpty) ...[
+              _buildClickableCard(
+                icon: Icons.language,
+                title: "Website",
+                value: controller.website.value,
+                onTap: () => _openWebsite(controller.website.value),
+              ),
+              const SizedBox(height: 12),
+            ],
+
+            /// WhatsApp
+            if (controller.whatsapp.isNotEmpty) ...[
+              _buildClickableCard(
+                icon: Icons.chat,
+                title: "WhatsApp",
+                value: controller.whatsapp.value,
+                onTap: () => _openWhatsApp(controller.whatsapp.value),
+                color: Colors.green,
+              ),
+              const SizedBox(height: 12),
+            ],
+
+            /// Social Media
+            if (controller.facebookLink.isNotEmpty ||
+                controller.instagramLink.isNotEmpty) ...[
+              const SizedBox(height: 24),
+              _buildSectionTitle("Social Media"),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  if (controller.facebookLink.isNotEmpty)
+                    Expanded(
+                      child: _buildSocialButton(
+                        icon: Icons.facebook,
+                        label: "Facebook",
+                        color: const Color(0xFF1877F2),
+                        onTap: () => _openUrl(controller.facebookLink.value),
+                      ),
+                    ),
+                  if (controller.facebookLink.isNotEmpty &&
+                      controller.instagramLink.isNotEmpty)
+                    const SizedBox(width: 12),
+                  if (controller.instagramLink.isNotEmpty)
+                    Expanded(
+                      child: _buildSocialButton(
+                        icon: Icons.camera_alt,
+                        label: "Instagram",
+                        color: const Color(0xFFE4405F),
+                        onTap: () => _openUrl(controller.instagramLink.value),
+                      ),
+                    ),
+                ],
+              ),
+            ],
           ],
         ),
       );
     });
   }
-}
-Widget infoTile(IconData icon, String title, String value) {
-  return Container(
-    margin: const EdgeInsets.only(bottom: 12),
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      color: Colors.grey.shade100,
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: Row(
-      children: [
-        Icon(icon, color: Colors.teal, size: 26),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 15)),
-              Text(value.isEmpty ? "-" : value,
-                  style:
-                  const TextStyle(color: Colors.black54, fontSize: 14)),
-            ],
-          ),
-        ),
-      ],
-    ),
-  );
-}
 
-Widget socialIcon({
-  required IconData icon,
-  required Color color,
-  required VoidCallback onTap,
-}) {
-  return GestureDetector(
-    onTap: onTap,
-    child: Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        shape: BoxShape.circle,
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        color: Colors.black87,
       ),
-      child: Icon(icon, color: color, size: 28),
-    ),
-  );
-}
+    );
+  }
 
-Future<void> _launchUrl(String url) async {
-  if (url.isEmpty) return;
-  final uri = Uri.parse(url);
-  if (await canLaunchUrl(uri)) {
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  Widget _buildInfoCard({
+    required IconData icon,
+    required String title,
+    required String value,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.teal.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: Colors.teal, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildClickableCard({
+    required IconData icon,
+    required String title,
+    required String value,
+    required VoidCallback onTap,
+    Color? color,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: (color ?? Colors.teal).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: color ?? Colors.teal, size: 24),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios,
+                size: 16, color: Colors.grey.shade400),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSocialButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return ElevatedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon, size: 20),
+      label: Text(label),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    );
+  }
+
+  /// URL Launchers
+  void _makePhoneCall(String phone) async {
+    final Uri uri = Uri(scheme: 'tel', path: phone);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      Get.snackbar("Error", "Could not launch phone dialer");
+    }
+  }
+
+  void _sendEmail(String email) async {
+    final Uri uri = Uri(scheme: 'mailto', path: email);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      Get.snackbar("Error", "Could not launch email client");
+    }
+  }
+
+  void _openWebsite(String url) async {
+    _openUrl(url);
+  }
+
+  void _openWhatsApp(String phone) async {
+    final Uri uri = Uri.parse("https://wa.me/$phone");
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      Get.snackbar("Error", "Could not launch WhatsApp");
+    }
+  }
+
+  void _openUrl(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      Get.snackbar("Error", "Could not open link");
+    }
   }
 }

@@ -1,338 +1,10 @@
-//
-// import 'package:eshoppy/app/modules/restarunent/view/user_resaturantgallery.dart';
-// import 'package:eshoppy/app/modules/restarunent/view/user_restaurantabouttab.dart';
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-//
-// import '../../../data/models/restaruantcartmodel.dart';
-// import '../../../data/models/restaurantmodel.dart';
-// import '../controller/gallery_controller.dart';
-// import '../controller/restaurantcartcontroller.dart';
-// import 'restaurantcartpage.dart';
-//
-// class RestaurantDetailPage extends StatefulWidget {
-//   final Restaurant restaurant;
-//
-//   const RestaurantDetailPage({super.key, required this.restaurant});
-//
-//   @override
-//   State<RestaurantDetailPage> createState() => _RestaurantDetailPageState();
-// }
-//
-// class _RestaurantDetailPageState extends State<RestaurantDetailPage>
-//     with SingleTickerProviderStateMixin {
-//
-//   late TabController tabController;
-//
-//   late GalleryController galleryController;
-//
-//   final Restaurantcartcontroller cartController =
-//   Get.put(Restaurantcartcontroller());
-//
-//   final List<String> menuTypes = ["Breakfast", "Lunch", "Dinner"];
-//   final RxString selectedMenuType = "Breakfast".obs;
-//
-//   final RxList<Map<String, dynamic>> menuItems = [
-//     {
-//       "name": "Chicken Biryani",
-//       "price": 180,
-//       "img": "assets/images/products/chicken biriyani.jpg",
-//       "type": "Lunch",
-//     },
-//     {
-//       "name": "Paneer Butter Masala",
-//       "price": 150,
-//       "img": "assets/images/products/chicken biriyani.jpg",
-//       "type": "Dinner",
-//     },
-//     {
-//       "name": "Grilled Sandwich",
-//       "price": 90,
-//       "img": "assets/images/products/chicken biriyani.jpg",
-//       "type": "Breakfast",
-//     },
-//     {
-//       "name": "Cold Coffee",
-//       "price": 60,
-//       "img": "assets/images/products/chicken biriyani.jpg",
-//       "type": "Breakfast",
-//     },
-//   ].obs;
-//
-//   @override
-//   void initState() {
-//     super.initState();
-//
-//     tabController = TabController(length: 3, vsync: this);
-//
-//     /// ✅ INIT GALLERY CONTROLLER PROPERLY
-//     galleryController = Get.put(
-//       GalleryController(
-//         restaurantId: widget.restaurant.restaurantId.toString(),
-//       ),
-//       tag: widget.restaurant.restaurantId.toString(),
-//     );
-//   }
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       backgroundColor: Colors.white,
-//
-//       /// ---------------- APP BAR ----------------
-//       appBar: AppBar(
-//         elevation: 0,
-//         backgroundColor: Colors.white,
-//         title: Text(
-//           widget.restaurant.name,
-//           style: const TextStyle(
-//               fontSize: 20,
-//               fontWeight: FontWeight.bold,
-//               color: Colors.black),
-//         ),
-//         actions: [
-//           Stack(
-//             children: [
-//               IconButton(
-//                 icon: const Icon(
-//                     Icons.shopping_cart_outlined,
-//                     color: Colors.teal),
-//                 onPressed: () {
-//                   Get.to(() => Restaurantcartpage());
-//                 },
-//               ),
-//               Positioned(
-//                 right: 6,
-//                 top: 6,
-//                 child: Obx(() {
-//                   if (cartController.cartItems.isEmpty) {
-//                     return const SizedBox();
-//                   }
-//                   return CircleAvatar(
-//                     radius: 10,
-//                     backgroundColor: Colors.red,
-//                     child: Text(
-//                       cartController.cartItems.length.toString(),
-//                       style: const TextStyle(
-//                           color: Colors.white, fontSize: 12),
-//                     ),
-//                   );
-//                 }),
-//               ),
-//             ],
-//           ),
-//         ],
-//       ),
-//
-//       body: Column(
-//         children: [
-//
-//           /// ---------------- RESTAURANT IMAGE (API) ----------------
-//           Obx(() {
-//             if (galleryController.isLoading.value) {
-//               return Container(
-//                 height: 200,
-//                 color: Colors.grey.shade200,
-//               );
-//             }
-//
-//             if (galleryController.restaurantImage.isEmpty) {
-//               return Container(
-//                 height: 200,
-//                 color: Colors.grey.shade300,
-//                 child: const Icon(Icons.image_not_supported),
-//               );
-//             }
-//
-//             return ClipRRect(
-//               borderRadius: const BorderRadius.vertical(
-//                 bottom: Radius.circular(25),
-//               ),
-//               child: Image.network(
-//                 galleryController.restaurantImage.value,
-//                 height: 200,
-//                 width: double.infinity,
-//                 fit: BoxFit.cover,
-//               ),
-//             );
-//           }),
-//
-//           const SizedBox(height: 10),
-//
-//           /// ---------------- TAB BAR ----------------
-//           TabBar(
-//             controller: tabController,
-//             labelColor: Colors.teal,
-//             unselectedLabelColor: Colors.grey,
-//             indicatorColor: Colors.teal,
-//             tabs: const [
-//               Tab(icon: Icon(Icons.restaurant_menu), text: "Menu"),
-//               Tab(icon: Icon(Icons.info), text: "About"),
-//               Tab(icon: Icon(Icons.photo_library), text: "Gallery"),
-//             ],
-//           ),
-//
-//           /// ---------------- TAB BAR VIEW ----------------
-//           Expanded(
-//             child: TabBarView(
-//               controller: tabController,
-//               children: [
-//                 menuTab(),
-//                 RestaurantAboutTab(
-//                   restaurantId:
-//                   widget.restaurant.restaurantId.toString(),
-//                 ),
-//                 GalleryTabPage(
-//                   restaurantId:
-//                   widget.restaurant.restaurantId.toString(),
-//                 ),
-//               ],
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-//
-//   /// ================== MENU TAB ==================
-//   Widget menuTab() {
-//     return Obx(() {
-//       var filteredItems = menuItems
-//           .where((item) =>
-//       item["type"] == selectedMenuType.value)
-//           .toList();
-//
-//       return Column(
-//         children: [
-//
-//           /// CATEGORY BUTTONS
-//           Padding(
-//             padding: const EdgeInsets.symmetric(
-//                 horizontal: 16, vertical: 8),
-//             child: Row(
-//               mainAxisAlignment: MainAxisAlignment.spaceAround,
-//               children: menuTypes.map((type) {
-//                 bool isSelected =
-//                     selectedMenuType.value == type;
-//                 return Expanded(
-//                   child: GestureDetector(
-//                     onTap: () =>
-//                     selectedMenuType.value = type,
-//                     child: Container(
-//                       margin: const EdgeInsets.symmetric(
-//                           horizontal: 4),
-//                       padding: const EdgeInsets.symmetric(
-//                           vertical: 12),
-//                       decoration: BoxDecoration(
-//                         color: isSelected
-//                             ? Colors.teal
-//                             : Colors.grey.shade200,
-//                         borderRadius:
-//                         BorderRadius.circular(12),
-//                       ),
-//                       alignment: Alignment.center,
-//                       child: Text(
-//                         type,
-//                         style: TextStyle(
-//                           color: isSelected
-//                               ? Colors.white
-//                               : Colors.black,
-//                           fontWeight: FontWeight.bold,
-//                         ),
-//                       ),
-//                     ),
-//                   ),
-//                 );
-//               }).toList(),
-//             ),
-//           ),
-//
-//           /// PRODUCT LIST
-//           Expanded(
-//             child: ListView.builder(
-//               padding: const EdgeInsets.all(12),
-//               itemCount: filteredItems.length,
-//               itemBuilder: (context, index) {
-//                 var item = filteredItems[index];
-//                 return Container(
-//                   margin: const EdgeInsets.only(bottom: 15),
-//                   padding: const EdgeInsets.all(10),
-//                   decoration: BoxDecoration(
-//                     color: Colors.white,
-//                     borderRadius:
-//                     BorderRadius.circular(14),
-//                     boxShadow: const [
-//                       BoxShadow(
-//                           color: Colors.black12,
-//                           blurRadius: 6)
-//                     ],
-//                   ),
-//                   child: ListTile(
-//                     leading: ClipRRect(
-//                       borderRadius:
-//                       BorderRadius.circular(10),
-//                       child: Image.asset(
-//                         item["img"],
-//                         width: 55,
-//                         height: 55,
-//                         fit: BoxFit.cover,
-//                       ),
-//                     ),
-//                     title: Text(
-//                       item["name"],
-//                       style: const TextStyle(
-//                           fontSize: 16,
-//                           fontWeight: FontWeight.bold),
-//                     ),
-//                     subtitle:
-//                     Text("₹ ${item["price"]}"),
-//                     trailing: ElevatedButton(
-//                       onPressed: () {
-//                         cartController.addToCart(
-//                           RestaurantCartModel(
-//                             name: item["name"],
-//                             price: item["price"],
-//                             qty: 1,
-//                             img: item["img"],
-//                           ),
-//                         );
-//
-//                         Get.snackbar(
-//                           "Added",
-//                           "${item["name"]} added to cart",
-//                           backgroundColor: Colors.teal,
-//                           colorText: Colors.white,
-//                         );
-//                       },
-//                       style: ElevatedButton.styleFrom(
-//                         backgroundColor: Colors.teal,
-//                         shape: RoundedRectangleBorder(
-//                           borderRadius:
-//                           BorderRadius.circular(10),
-//                         ),
-//                       ),
-//                       child: const Text(
-//                         "Add",
-//                         style:
-//                         TextStyle(color: Colors.white),
-//                       ),
-//                     ),
-//                   ),
-//                 );
-//               },
-//             ),
-//           ),
-//         ],
-//       );
-//     });
-//   }
-// }
+
 import 'package:eshoppy/app/modules/restarunent/view/user_resaturantgallery.dart';
 import 'package:eshoppy/app/modules/restarunent/view/user_restaurantabouttab.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../data/models/restaruantcartmodel.dart';
-import '../../../data/models/restaurantmodel.dart';
+import '../../../data/models/userrestaurantmodel.dart';
 import '../controller/gallery_controller.dart';
 import '../controller/restaurantcartcontroller.dart';
 import 'restaurantcartpage.dart';
@@ -395,12 +67,20 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage>
   void initState() {
     super.initState();
     tabController = TabController(length: 3, vsync: this);
+
+    /// Initialize gallery controller with unique tag
     galleryController = Get.put(
       GalleryController(
         restaurantId: widget.restaurant.restaurantId.toString(),
       ),
       tag: widget.restaurant.restaurantId.toString(),
     );
+  }
+
+  @override
+  void dispose() {
+    tabController.dispose();
+    super.dispose();
   }
 
   @override
@@ -512,7 +192,11 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage>
                     children: [
                       Image.network(
                         galleryController.restaurantImage.value,
-                        fit: BoxFit.cover
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          color: Colors.grey.shade300,
+                          child: const Icon(Icons.image_not_supported, size: 64),
+                        ),
                       ),
                       Container(
                         decoration: BoxDecoration(
@@ -536,7 +220,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage>
                             Text(
                               widget.restaurant.name,
                               style: const TextStyle(
-                                fontSize: 35,
+                                fontSize: 28,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
                                 shadows: [
@@ -549,7 +233,24 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage>
                               ),
                             ),
                             const SizedBox(height: 8),
-
+                            Row(
+                              children: [
+                                const Icon(Icons.location_on,
+                                    color: Colors.white70, size: 16),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    widget.restaurant.address,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.white70,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ],
                         ),
                       ),
@@ -610,7 +311,6 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage>
           ],
         ),
       ),
-
     );
   }
 
@@ -670,7 +370,9 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage>
                       child: Text(
                         type,
                         style: TextStyle(
-                          color: isSelected ? Colors.white : Colors.grey.shade700,
+                          color: isSelected
+                              ? Colors.white
+                              : Colors.grey.shade700,
                           fontWeight:
                           isSelected ? FontWeight.bold : FontWeight.w500,
                           fontSize: 15,

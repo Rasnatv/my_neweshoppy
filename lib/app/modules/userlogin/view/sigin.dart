@@ -42,7 +42,7 @@ class LoginScreen extends StatelessWidget {
 
   Widget _buildHeader() {
     return Column(children: [
-      IconBox( imagePath: 'assets/images/logo/ehoppycatlogo.png',iconColor: Colors.white,backgroundColor: AppColors.kPrimary,),
+      IconBox( imagePath: 'assets/images/logo/eshoppycatlogo.png',iconColor: Colors.white,backgroundColor: AppColors.kPrimary,),
         const SizedBox(height: 24),
         const Text(
           "eShoppy",

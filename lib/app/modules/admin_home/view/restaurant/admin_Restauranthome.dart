@@ -225,8 +225,6 @@ class AdminRestauranthome extends StatelessWidget {
             const SizedBox(height: 20),
             const Text("Manage Restaurant", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 24),
-
-            /// Edit Restaurant Details
             ElevatedButton.icon(
               onPressed: () {
                 Get.back();
@@ -237,6 +235,7 @@ class AdminRestauranthome extends StatelessWidget {
                   controller.fetchRestaurants(); // Refresh after update
                 });
               },
+
               icon: const Icon(Icons.edit),
               label: const Text("Edit Restaurant Details"),
               style: ElevatedButton.styleFrom(
@@ -247,6 +246,8 @@ class AdminRestauranthome extends StatelessWidget {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
+
+
             const SizedBox(height: 12),
 
             /// Edit Menu & Tables

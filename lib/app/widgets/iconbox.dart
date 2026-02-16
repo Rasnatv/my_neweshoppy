@@ -1,61 +1,4 @@
-// import 'package:flutter/material.dart';
-//
-// class IconBox extends StatelessWidget {
-//   final double width;
-//   final double height;
-//   final double borderRadius;
-//
-//   final IconData icon;
-//   final double iconSize;
-//   final Color iconColor;
-//
-//   final List<Color>? gradientColors;
-//   final Color? backgroundColor;
-//
-//   const IconBox({
-//     super.key,
-//     this.width = 80,
-//     this.height = 80,
-//     this.borderRadius = 24,
-//     required this.icon,
-//     this.iconSize = 40,
-//     this.iconColor = Colors.white,
-//     this.gradientColors,
-//     this.backgroundColor,
-//   });
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       width: width,
-//       height: height,
-//       decoration: BoxDecoration(
-//         color: gradientColors == null ? backgroundColor : null,
-//         gradient: gradientColors != null
-//             ? LinearGradient(
-//           colors: gradientColors!,
-//           begin: Alignment.topLeft,
-//           end: Alignment.bottomRight,
-//         )
-//             : null,
-//         borderRadius: BorderRadius.circular(borderRadius),
-//         boxShadow: [
-//           BoxShadow(
-//             color: (gradientColors?.first ?? backgroundColor ?? Colors.black)
-//                 .withOpacity(0.3),
-//             blurRadius: 24,
-//             offset: const Offset(0, 12),
-//           ),
-//         ],
-//       ),
-//       child: Icon(
-//         icon,
-//         size: iconSize,
-//         color: iconColor,
-//       ),
-//     );
-//   }
-// }
+
 import 'package:flutter/material.dart';
 
 class IconBox extends StatelessWidget {
@@ -71,16 +14,20 @@ class IconBox extends StatelessWidget {
   /// IMAGE
   final String? imagePath; // asset or network
   final bool isNetworkImage;
+  final double imageSize;
+
 
   /// BACKGROUND
   final List<Color>? gradientColors;
   final Color? backgroundColor;
 
   const IconBox({
+
     super.key,
-    this.width = 80,
-    this.height = 80,
-    this.borderRadius = 24,
+    this.width = 90,
+    this.height = 90,
+    this.borderRadius = 30,
+    this.imageSize=80,
 
     // icon
     this.icon,
@@ -134,14 +81,14 @@ class IconBox extends StatelessWidget {
       return isNetworkImage
           ? Image.network(
         imagePath!,
-        width: iconSize,
-        height: iconSize,
+        width:imageSize,
+        height: imageSize,
         fit: BoxFit.contain,
       )
           : Image.asset(
         imagePath!,
-        width: iconSize,
-        height: iconSize,
+        width:imageSize,
+        height: imageSize,
         fit: BoxFit.contain,
       );
     }
