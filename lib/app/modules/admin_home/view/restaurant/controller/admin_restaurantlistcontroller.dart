@@ -1,12 +1,13 @@
 
-
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
+import '../../../../../data/models/adminrestmodel.dart';
+
 
 class AdminRestaurantController extends GetxController {
-  var restaurants = <Map<String, dynamic>>[].obs;
+  var restaurants = <NewRestaurantModel>[].obs;
   var isLoading = true.obs;
 
   final box = GetStorage();
@@ -19,6 +20,7 @@ class AdminRestaurantController extends GetxController {
 
   Future<void> fetchRestaurants() async {
     isLoading.value = true;
+
     final token = box.read("auth_token");
     if (token == null) {
       Get.snackbar("Error", "Auth token not found. Please login again.");
@@ -42,20 +44,12 @@ class AdminRestaurantController extends GetxController {
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
 
-        // ✅ ADD THIS DEBUG CODE HERE
-        print("🔍 ========== API RESPONSE DEBUG ==========");
-        if (body["data"] != null && body["data"].isNotEmpty) {
-          print("🔍 First Restaurant Data: ${body["data"][0]}");
-          print("🔍 restaurant_name: '${body["data"][0]['restaurant_name']}'");
-          print("🔍 name: '${body["data"][0]['name']}'");
-        }
-        print("🔍 ==========================================");
-
         if (body["status"].toString() == "1") {
-          restaurants.value = List<Map<String, dynamic>>.from(body["data"]);
+          restaurants.value = (body["data"] as List)
+              .map((e) => NewRestaurantModel.fromJson(e))
+              .toList();
         } else {
-          Get.snackbar(
-              "Error", body["message"] ?? "Failed to fetch restaurants");
+          Get.snackbar("Error", body["message"] ?? "Failed to fetch restaurants");
         }
       } else {
         Get.snackbar("Error", "Server returned ${response.statusCode}");
@@ -65,4 +59,5 @@ class AdminRestaurantController extends GetxController {
     } finally {
       isLoading.value = false;
     }
-  }}
+  }
+}
