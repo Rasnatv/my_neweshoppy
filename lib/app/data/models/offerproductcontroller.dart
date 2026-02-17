@@ -1,5 +1,4 @@
 
-
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -14,8 +13,16 @@ class IntegratedOfferController extends GetxController {
   // API URLs
   final String categoriesUrl =
       "https://rasma.astradevelops.in/e_shoppyy/public/api/merchant/categories";
+  final String createOfferUrl =
+      "https://rasma.astradevelops.in/e_shoppyy/public/api/offers/create";
   final String addOfferProductUrl =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/offers/product";
+      "https://rasma.astradevelops.in/e_shoppyy/public/api/offers/add-products";
+
+  // ============== OFFER STATE ==============
+  var offerCreated = false.obs;
+  var createdOfferId = Rx<int?>(null);
+  var createdOfferBannerUrl = ''.obs;
+  var totalProductsAdded = 0.obs; // tracks successfully saved products
 
   // ============== OFFER DETAILS ==============
   final TextEditingController discountPercentageCtrl = TextEditingController();
@@ -29,6 +36,7 @@ class IntegratedOfferController extends GetxController {
 
   // Loading states
   var isLoadingCategories = false.obs;
+  var isCreatingOffer = false.obs;
   var isSubmitting = false.obs;
 
   // ============== CATEGORY DATA ==============
@@ -45,7 +53,8 @@ class IntegratedOfferController extends GetxController {
   var currentSecondaryValues = <String>[].obs;
 
   final TextEditingController primaryValueController = TextEditingController();
-  final TextEditingController secondaryValueController = TextEditingController();
+  final TextEditingController secondaryValueController =
+  TextEditingController();
 
   // ============== VARIANTS ==============
   var variants = <OfferProductVariant>[].obs;
@@ -68,7 +77,6 @@ class IntegratedOfferController extends GetxController {
         maxHeight: 1920,
         imageQuality: 85,
       );
-
       if (pickedFile != null) {
         bannerImage.value = File(pickedFile.path);
         Get.snackbar(
@@ -95,13 +103,11 @@ class IntegratedOfferController extends GetxController {
     try {
       isLoadingCategories.value = true;
       final token = box.read("auth_token");
-
       if (token == null) {
         Get.snackbar("Error", "Authentication token not found");
         return;
       }
 
-      print("Fetching categories...");
       final response = await http.get(
         Uri.parse(categoriesUrl),
         headers: {
@@ -109,8 +115,6 @@ class IntegratedOfferController extends GetxController {
           "Authorization": "Bearer $token",
         },
       );
-
-      print("Response status: ${response.statusCode}");
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
@@ -160,27 +164,113 @@ class IntegratedOfferController extends GetxController {
                 commonAttributes: commonAttrs,
                 variantAttributes: variantAttrs,
               );
-
-              print(
-                  "✓ Loaded: $name (Common: ${commonAttrs.length}, Variant: ${variantAttrs.length})");
             } catch (e) {
               print("Error parsing category: $e");
             }
           }
-
-          print("✓ Total categories loaded: ${apiCategories.length}");
         } else {
-          Get.snackbar("Error", body['message'] ?? "Failed to fetch categories");
+          Get.snackbar(
+              "Error", body['message'] ?? "Failed to fetch categories");
         }
       } else {
-        Get.snackbar(
-            "Error", "Failed to fetch categories: ${response.statusCode}");
+        Get.snackbar("Error",
+            "Failed to fetch categories: ${response.statusCode}");
       }
     } catch (e) {
       Get.snackbar("Error", "Failed to fetch categories: $e");
-      print("❌ Error fetching categories: $e");
     } finally {
       isLoadingCategories.value = false;
+    }
+  }
+
+  // ============== STEP 1: CREATE OFFER ==============
+  Future<void> createOffer() async {
+    final discountValue =
+    double.tryParse(discountPercentageCtrl.text.trim());
+    if (discountValue == null ||
+        discountValue <= 0 ||
+        discountValue > 100) {
+      Get.snackbar("Validation Error",
+          "Valid discount percentage is required (1-100)");
+      return;
+    }
+    if (bannerImage.value == null) {
+      Get.snackbar("Validation Error", "Offer banner is required");
+      return;
+    }
+
+    try {
+      isCreatingOffer.value = true;
+      final token = box.read("auth_token");
+      if (token == null) {
+        Get.snackbar("Error", "Authentication token not found");
+        return;
+      }
+
+      final bytes = await bannerImage.value!.readAsBytes();
+      final extension =
+      bannerImage.value!.path.split('.').last.toLowerCase();
+      final mimeType =
+      extension == 'png' ? 'image/png' : 'image/jpeg';
+      final offerBannerBase64 =
+          "data:$mimeType;base64,${base64Encode(bytes)}";
+
+      final requestBody = {
+        "discount_percentage":
+        int.parse(discountPercentageCtrl.text.trim()),
+        "offer_banner": offerBannerBase64,
+      };
+
+      print("📤 Creating offer...");
+      final response = await http.post(
+        Uri.parse(createOfferUrl),
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: jsonEncode(requestBody),
+      );
+
+      print("   Status: ${response.statusCode}");
+      print("   Body: ${response.body}");
+
+      final body = jsonDecode(response.body);
+
+      if (response.statusCode == 200 ||
+          response.statusCode == 201 ||
+          body['status'] == 1 ||
+          body['status'] == true) {
+        final data = body['data'];
+        createdOfferId.value = data['offer_id'] is int
+            ? data['offer_id']
+            : int.parse(data['offer_id'].toString());
+        createdOfferBannerUrl.value =
+            data['offer_banner']?.toString() ?? '';
+        offerCreated.value = true;
+        totalProductsAdded.value = 0; // reset counter for new offer
+
+        Get.snackbar(
+          "Offer Created!",
+          "Discount: ${data['discount_percentage']}% | Now add your products below.",
+          backgroundColor: Color(0xFF10B981),
+          colorText: Colors.white,
+          duration: Duration(seconds: 4),
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      } else {
+        String errorMessage =
+            body['message'] ?? "Failed to create offer";
+        if (body['errors'] != null)
+          errorMessage += "\n${body['errors']}";
+        Get.snackbar("Error", errorMessage,
+            backgroundColor: Colors.red, colorText: Colors.white);
+      }
+    } catch (e) {
+      Get.snackbar("Error", "Failed to create offer: $e",
+          backgroundColor: Colors.red, colorText: Colors.white);
+    } finally {
+      isCreatingOffer.value = false;
     }
   }
 
@@ -190,12 +280,11 @@ class IntegratedOfferController extends GetxController {
     final cat = apiCategories.firstWhere(
           (c) => c.name == category,
       orElse: () => OfferCategoryApiModel(
-        id: 0,
-        name: '',
-        image: '',
-        commonAttributes: [],
-        variantAttributes: [],
-      ),
+          id: 0,
+          name: '',
+          image: '',
+          commonAttributes: [],
+          variantAttributes: []),
     );
 
     selectedCategoryId.value = cat.id;
@@ -207,8 +296,6 @@ class IntegratedOfferController extends GetxController {
     variants.clear();
     primaryValueController.clear();
     secondaryValueController.clear();
-
-    print("Category changed to: $category");
   }
 
   bool hasVariantAttributes() {
@@ -230,62 +317,45 @@ class IntegratedOfferController extends GetxController {
     secondaryValueController.clear();
   }
 
-  // ============== PRIMARY VALUE ==============
   void addPrimaryValue(String value) {
     if (value.trim().isEmpty) return;
-
     if (selectedVariantType.value.isEmpty) {
-      Get.snackbar(
-        "Error",
-        "Please select a variant type first",
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      Get.snackbar("Error", "Please select a variant type first",
+          snackPosition: SnackPosition.BOTTOM);
       return;
     }
-
-    if (!variantTypeConfigurations.containsKey(selectedVariantType.value)) {
+    if (!variantTypeConfigurations
+        .containsKey(selectedVariantType.value)) {
       variantTypeConfigurations[selectedVariantType.value] = {};
     }
-
     if (variantTypeConfigurations[selectedVariantType.value]!
         .containsKey(value)) {
-      Get.snackbar(
-        "Duplicate",
-        "$value already exists",
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      Get.snackbar("Duplicate", "$value already exists",
+          snackPosition: SnackPosition.BOTTOM);
       return;
     }
-
     currentPrimaryValue.value = value;
     currentSecondaryValues.clear();
     primaryValueController.clear();
     variantTypeConfigurations.refresh();
   }
 
-  // ============== SECONDARY VALUES ==============
   void addSecondaryValue(String value) {
     if (value.trim().isEmpty) return;
-
     if (currentPrimaryValue.value.isEmpty) {
       Get.snackbar(
-        "Error",
-        "Please add a ${selectedVariantType.value} value first",
-        snackPosition: SnackPosition.BOTTOM,
-      );
+          "Error",
+          "Please add a ${selectedVariantType.value} value first",
+          snackPosition: SnackPosition.BOTTOM);
       return;
     }
-
     if (!currentSecondaryValues.contains(value)) {
       currentSecondaryValues.add(value);
       secondaryValueController.clear();
       currentSecondaryValues.refresh();
     } else {
-      Get.snackbar(
-        "Duplicate",
-        "$value already exists",
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      Get.snackbar("Duplicate", "$value already exists",
+          snackPosition: SnackPosition.BOTTOM);
     }
   }
 
@@ -297,64 +367,51 @@ class IntegratedOfferController extends GetxController {
   void savePrimaryWithSecondary() {
     if (currentPrimaryValue.value.isEmpty) {
       Get.snackbar(
-        "Error",
-        "Please add a ${selectedVariantType.value} value",
-        snackPosition: SnackPosition.BOTTOM,
-      );
+          "Error", "Please add a ${selectedVariantType.value} value",
+          snackPosition: SnackPosition.BOTTOM);
       return;
     }
-
     if (currentSecondaryValues.isEmpty) {
       Get.snackbar(
-        "Error",
-        "Please add at least one secondary attribute",
-        snackPosition: SnackPosition.BOTTOM,
-      );
+          "Error", "Please add at least one secondary attribute",
+          snackPosition: SnackPosition.BOTTOM);
       return;
     }
-
-    variantTypeConfigurations[selectedVariantType.value]!
-    [currentPrimaryValue.value] =
+    variantTypeConfigurations[selectedVariantType
+        .value]![currentPrimaryValue.value] =
         List.from(currentSecondaryValues);
-
     currentPrimaryValue.value = '';
     currentSecondaryValues.clear();
     primaryValueController.clear();
     secondaryValueController.clear();
-
     variantTypeConfigurations.refresh();
 
-    Get.snackbar(
-      "Success",
-      "Configuration saved",
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Color(0xFF10B981),
-      colorText: Colors.white,
-    );
+    Get.snackbar("Success", "Configuration saved",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Color(0xFF10B981),
+        colorText: Colors.white);
   }
 
   void removePrimaryValue(String primaryKey) {
-    variantTypeConfigurations[selectedVariantType.value]?.remove(primaryKey);
-    if (variantTypeConfigurations[selectedVariantType.value]?.isEmpty ?? false) {
+    variantTypeConfigurations[selectedVariantType.value]
+        ?.remove(primaryKey);
+    if (variantTypeConfigurations[selectedVariantType.value]?.isEmpty ??
+        false) {
       variantTypeConfigurations.remove(selectedVariantType.value);
     }
     variantTypeConfigurations.refresh();
   }
 
-  // ============== GENERATE VARIANTS ==============
   void generateVariantsFromConfiguration() {
     if (variantTypeConfigurations.isEmpty) {
       Get.snackbar(
-        "Error",
-        "Please configure at least one variant type",
-        snackPosition: SnackPosition.BOTTOM,
-      );
+          "Error", "Please configure at least one variant type",
+          snackPosition: SnackPosition.BOTTOM);
       return;
     }
-
     variants.clear();
-    List<Map<String, String>> combinations = _generateValidCombinations();
-
+    List<Map<String, String>> combinations =
+    _generateValidCombinations();
     for (var combo in combinations) {
       variants.add(OfferProductVariant(
         attributes: combo,
@@ -363,52 +420,36 @@ class IntegratedOfferController extends GetxController {
         stock: null,
       ));
     }
-
     Get.snackbar(
-      "Success",
-      "${variants.length} variant(s) generated",
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Color(0xFF10B981),
-      colorText: Colors.white,
-    );
+        "Success", "${variants.length} variant(s) generated",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Color(0xFF10B981),
+        colorText: Colors.white);
   }
 
   List<Map<String, String>> _generateValidCombinations() {
     List<Map<String, String>> results = [];
-
     for (var typeEntry in variantTypeConfigurations.entries) {
       String variantType = typeEntry.key;
       Map<String, List<String>> primaryToSecondary = typeEntry.value;
-
       for (var primaryEntry in primaryToSecondary.entries) {
         String primaryValue = primaryEntry.key;
         List<String> secondaryValues = primaryEntry.value;
-
-        if (variantTypeConfigurations.length == 1) {
-          for (var secondaryValue in secondaryValues) {
-            results.add({
-              variantType: primaryValue,
-              _getSecondaryAttributeName(): secondaryValue,
-            });
-          }
-        } else {
-          for (var secondaryValue in secondaryValues) {
-            results.add({
-              variantType: primaryValue,
-              _getSecondaryAttributeName(): secondaryValue,
-            });
-          }
+        for (var secondaryValue in secondaryValues) {
+          results.add({
+            variantType: primaryValue,
+            _getSecondaryAttributeName(): secondaryValue,
+          });
         }
       }
     }
-
     return results;
   }
 
   String _getSecondaryAttributeName() {
     final config = categoryConfigs[selectedCategory.value];
-    if (config == null || config.variantAttributes.length < 2) return "size";
-
+    if (config == null || config.variantAttributes.length < 2)
+      return "size";
     return config.variantAttributes.length > 1
         ? config.variantAttributes[1]
         : "attribute";
@@ -422,21 +463,18 @@ class IntegratedOfferController extends GetxController {
 
   Future<void> pickImage(int index) async {
     if (index < 0 || index >= variants.length) return;
-
     final pickedFile = await picker.pickImage(
       source: ImageSource.gallery,
       maxWidth: 1920,
       maxHeight: 1920,
       imageQuality: 85,
     );
-
     if (pickedFile != null) {
       variants[index].imagePath = pickedFile.path;
       variants.refresh();
     }
   }
 
-  // ============== UPDATE VARIANT PRICE ==============
   void updateVariantPrice(int index, double? price) {
     if (index >= 0 && index < variants.length) {
       variants[index].price = price;
@@ -445,42 +483,27 @@ class IntegratedOfferController extends GetxController {
     }
   }
 
-  // ============== CALCULATE OFFER PRICE ==============
   double? calculateOfferPrice(double? price) {
     if (price == null || price <= 0) return null;
-    final discount = double.tryParse(discountPercentageCtrl.text) ?? 0.0;
+    final discount =
+        double.tryParse(discountPercentageCtrl.text) ?? 0.0;
     if (discount <= 0 || discount > 100) return null;
     return price - (price * discount / 100);
   }
 
-  // ============== VALIDATION ==============
-  bool validateForm() {
-    // Validate offer details
-    final discountValue = double.tryParse(discountPercentageCtrl.text);
-    if (discountValue == null || discountValue <= 0 || discountValue > 100) {
-      Get.snackbar("Validation Error",
-          "Valid discount percentage is required (1-100)");
-      return false;
-    }
-
-    if (bannerImage.value == null) {
-      Get.snackbar("Validation Error", "Offer banner is required");
-      return false;
-    }
-
-    // Validate product details
+  // ============== STEP 2: VALIDATE PRODUCT FORM ==============
+  bool validateProductForm() {
     if (productName.value.trim().isEmpty) {
       Get.snackbar("Validation Error", "Product name is required");
       return false;
     }
-
     if (selectedCategory.value.isEmpty) {
       Get.snackbar("Validation Error", "Category is required");
       return false;
     }
-
     if (productDescription.value.trim().isEmpty) {
-      Get.snackbar("Validation Error", "Product description is required");
+      Get.snackbar(
+          "Validation Error", "Product description is required");
       return false;
     }
 
@@ -495,139 +518,112 @@ class IntegratedOfferController extends GetxController {
     }
 
     if (variants.isEmpty) {
-      Get.snackbar("Validation Error", "At least one variant is required");
+      Get.snackbar(
+          "Validation Error", "At least one variant is required");
       return false;
     }
 
     for (int i = 0; i < variants.length; i++) {
       final variant = variants[i];
-
       if (variant.price == null || variant.price! <= 0) {
-        Get.snackbar(
-          "Validation Error",
-          "Variant ${i + 1}: Valid original price is required",
-        );
+        Get.snackbar("Validation Error",
+            "Variant ${i + 1}: Valid price is required");
         return false;
       }
-
       if (variant.stock == null || variant.stock! < 0) {
-        Get.snackbar(
-          "Validation Error",
-          "Variant ${i + 1}: Valid stock quantity is required",
-        );
+        Get.snackbar("Validation Error",
+            "Variant ${i + 1}: Valid stock is required");
         return false;
       }
-
       if (variant.imagePath == null) {
-        Get.snackbar(
-          "Validation Error",
-          "Variant ${i + 1}: Image is required",
-        );
+        Get.snackbar("Validation Error",
+            "Variant ${i + 1}: Image is required");
         return false;
       }
     }
-
     return true;
   }
 
-  // ============== SUBMIT TO API ==============
+  bool validateForm() => validateProductForm();
+
+  // ============== STEP 2: ADD PRODUCT TO OFFER ==============
   Future<void> saveOfferProduct() async {
-    if (!validateForm()) return;
+    if (createdOfferId.value == null) {
+      Get.snackbar("Error",
+          "Please create the offer first before adding products.");
+      return;
+    }
+    if (!validateProductForm()) return;
+
+    // Check 10-product limit
+    if (totalProductsAdded.value >= 10) {
+      Get.snackbar(
+        "Limit Reached",
+        "Maximum 10 products allowed per offer.",
+        backgroundColor: Color(0xFFEF4444),
+        colorText: Colors.white,
+      );
+      return;
+    }
 
     try {
       isSubmitting.value = true;
       final token = box.read("auth_token");
-
       if (token == null) {
         Get.snackbar("Error", "Authentication token not found");
         return;
       }
 
-      print("📤 Starting offer product submission...");
-
-      // Convert offer banner to base64
-      String? offerBannerBase64;
-      if (bannerImage.value != null) {
-        final bytes = await bannerImage.value!.readAsBytes();
-        final extension =
-        bannerImage.value!.path.split('.').last.toLowerCase();
-        String mimeType = 'image/jpeg';
-        if (extension == 'png') {
-          mimeType = 'image/png';
-        } else if (extension == 'jpg' || extension == 'jpeg') {
-          mimeType = 'image/jpeg';
-        }
-        offerBannerBase64 = "data:$mimeType;base64,${base64Encode(bytes)}";
-        print("✓ Banner converted to base64");
-      }
-
-      // Build variants data for API
       List<Map<String, dynamic>> variantsData = [];
       for (int i = 0; i < variants.length; i++) {
         final variant = variants[i];
-
-        // Convert image to base64
         String? imageBase64;
         if (variant.imagePath != null) {
           final imageFile = File(variant.imagePath!);
           final bytes = await imageFile.readAsBytes();
-          final extension = variant.imagePath!.split('.').last.toLowerCase();
-          String mimeType = 'image/jpeg';
-          if (extension == 'png') {
-            mimeType = 'image/png';
-          } else if (extension == 'jpg' || extension == 'jpeg') {
-            mimeType = 'image/jpeg';
-          }
-          imageBase64 = "data:$mimeType;base64,${base64Encode(bytes)}";
+          final extension =
+          variant.imagePath!.split('.').last.toLowerCase();
+          final mimeType =
+          extension == 'png' ? 'image/png' : 'image/jpeg';
+          imageBase64 =
+          "data:$mimeType;base64,${base64Encode(bytes)}";
         }
 
-        // Calculate offer price
-        // final offerPrice = variant.offerPrice ?? calculateOfferPrice(variant.price);
-        //
-        // variantsData.add({
-        //   "attributes": variant.attributes,
-        //   "price": variant.price,
-        //   "offer_price": offerPrice,
-        //   "stock": variant.stock,
-        //   "image": imageBase64,
-        // });
-
-        // ✅ Calculate offer price ONLY here (final & correct)
         final double discount =
-            double.tryParse(discountPercentageCtrl.text.trim()) ?? 0;
-
+            double.tryParse(discountPercentageCtrl.text.trim()) ??
+                0;
         double? offerPrice;
         if (discount > 0 && variant.price != null) {
-          offerPrice = variant.price! - (variant.price! * discount / 100);
+          offerPrice =
+              variant.price! - (variant.price! * discount / 100);
         }
 
         variantsData.add({
           "attributes": variant.attributes,
           "price": variant.price!.round(),
-          if (offerPrice != null) "offer_price": offerPrice.round(),
+          if (offerPrice != null)
+            "offer_price": offerPrice.round(),
           "stock": variant.stock,
           "image": imageBase64,
         });
-
-
-
       }
-      print("✓ ${variantsData.length} variant(s) prepared");
 
-      // Build request body according to API spec
       final requestBody = {
-        "discount_percentage":
-        int.parse(discountPercentageCtrl.text.trim()),
-        "offer_banner": offerBannerBase64,
-        "product_name": productName.value.trim(),
-        "description": productDescription.value.trim(),
-        "category_id": selectedCategoryId.value,
-        "common_attributes": commonAttributes,
-        "variants": variantsData,
+        "offer_id": createdOfferId.value,
+        "products": [
+          {
+            "product_name": productName.value.trim(),
+            "description": productDescription.value.trim(),
+            "category_id": selectedCategoryId.value,
+            "common_attributes": commonAttributes,
+            "variants": variantsData,
+          }
+        ],
       };
 
-      print("🌐 Sending request to: $addOfferProductUrl");
-      print("📦 Request body: ${jsonEncode(requestBody)}");
+      print(
+          "📤 Adding product to offer ID: ${createdOfferId.value}");
+      print("📦 Request: ${jsonEncode(requestBody)}");
 
       final response = await http.post(
         Uri.parse(addOfferProductUrl),
@@ -639,66 +635,49 @@ class IntegratedOfferController extends GetxController {
         body: jsonEncode(requestBody),
       );
 
-      print("📥 Response received");
-      print("   - Status Code: ${response.statusCode}");
-      print("   - Body: ${response.body}");
+      print("📥 Status: ${response.statusCode}");
+      print("   Body: ${response.body}");
 
       final body = jsonDecode(response.body);
 
-      if (response.statusCode == 201 || response.statusCode == 200 || body['status'] == 1 || body['status'] == true) {
-        print("✅ Success!");
+      if (response.statusCode == 200 ||
+          response.statusCode == 201 ||
+          body['status'] == 1 ||
+          body['status'] == true) {
+        totalProductsAdded.value++; // ← increment saved products count
+
+        final remaining = 10 - totalProductsAdded.value;
         Get.snackbar(
-          "Success",
-          body['message'] ?? "Offer product created successfully",
+          "Product ${totalProductsAdded.value} Added! ✓",
+          remaining > 0
+              ? "${body['message'] ?? 'Product added successfully'} · $remaining slot(s) left"
+              : "All 10 product slots used. Tap Done to finish.",
           backgroundColor: Color(0xFF10B981),
           colorText: Colors.white,
           duration: Duration(seconds: 3),
+          snackPosition: SnackPosition.BOTTOM,
         );
-
-        // Clear form after successful submission
-        _clearForm();
-
-        // Navigate back with success result
-        Get.back(result: {
-          'success': true,
-          'data': body['data'],
-        });
+        _clearProductForm();
       } else {
-        print("❌ Error: ${body['message']}");
-
-        // Check if there are validation errors
-        String errorMessage = body['message'] ?? "Failed to create offer product";
-        if (body['errors'] != null) {
+        String errorMessage =
+            body['message'] ?? "Failed to add product";
+        if (body['errors'] != null)
           errorMessage += "\n${body['errors']}";
-        }
-
-        Get.snackbar(
-          "Error",
-          errorMessage,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-          duration: Duration(seconds: 4),
-        );
+        Get.snackbar("Error", errorMessage,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+            duration: Duration(seconds: 4));
       }
     } catch (e) {
-      print("💥 Exception occurred: $e");
-      Get.snackbar(
-        "Error",
-        "Failed to save offer product: $e",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        duration: Duration(seconds: 4),
-      );
+      print("💥 Exception: $e");
+      Get.snackbar("Error", "Failed to add product: $e",
+          backgroundColor: Colors.red, colorText: Colors.white);
     } finally {
       isSubmitting.value = false;
     }
   }
-  void _clearForm() {
-    // Clear offer details
-    discountPercentageCtrl.clear();
-    bannerImage.value = null;
 
-    // Clear product details
+  void _clearProductForm() {
     productName.value = '';
     selectedCategory.value = '';
     selectedCategoryId.value = 0;
@@ -711,6 +690,25 @@ class IntegratedOfferController extends GetxController {
     commonAttributes.clear();
     primaryValueController.clear();
     secondaryValueController.clear();
+  }
+
+  void _clearForm() {
+    discountPercentageCtrl.clear();
+    bannerImage.value = null;
+    offerCreated.value = false;
+    createdOfferId.value = null;
+    createdOfferBannerUrl.value = '';
+    totalProductsAdded.value = 0; // reset on full clear
+    _clearProductForm();
+  }
+
+  void finishOffer() {
+    Get.back(result: {
+      'success': true,
+      'offer_id': createdOfferId.value,
+      'total_products': totalProductsAdded.value,
+    });
+    _clearForm();
   }
 
   @override
@@ -771,4 +769,3 @@ class OfferProductVariant {
     return attributes.values.join(" - ");
   }
 }
-
