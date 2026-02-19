@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_colors.dart';
 import '../../../common/style/app_text_style.dart';
+import '../../../data/models/merchant_offerbannermodel.dart';
 import '../controller/merchant_offerbanner_controller.dart';
 import 'addofferproduct.dart';
 import 'merchant_offerproductview.dart';
 
-
 class MerchantOfferViewPage extends StatelessWidget {
-  MerchantOfferViewPage({super.key});
+  MerchantOfferViewPage({super.key,});
 
   final MerchantOfferBannerController controller =
   Get.put(MerchantOfferBannerController());
@@ -30,7 +30,8 @@ class MerchantOfferViewPage extends StatelessWidget {
             onTap: () => Get.to(() => AddOfferProductPage()),
             child: Container(
               margin: const EdgeInsets.only(right: 12),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              padding:
+              const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
                 color: Colors.orange,
                 borderRadius: BorderRadius.circular(20),
@@ -49,14 +50,12 @@ class MerchantOfferViewPage extends StatelessWidget {
           ),
         ],
       ),
-
-      /// BODY
       body: Obx(() {
         if (controller.isLoading.value) {
           return _loadingView();
         }
 
-        if (controller.offers.isEmpty) {
+        if (controller.offer.isEmpty) {
           return _emptyView();
         }
 
@@ -64,9 +63,9 @@ class MerchantOfferViewPage extends StatelessWidget {
           onRefresh: controller.fetchOffers,
           child: ListView.builder(
             padding: const EdgeInsets.all(16),
-            itemCount: controller.offers.length,
+            itemCount: controller.offer.length,
             itemBuilder: (_, index) {
-              final offer = controller.offers[index];
+              final offer = controller.offer[index];
               return _offerCard(offer, index);
             },
           ),
@@ -75,7 +74,6 @@ class MerchantOfferViewPage extends StatelessWidget {
     );
   }
 
-  /// OFFER CARD UI
   Widget _offerCard(offer, int index) {
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
@@ -93,11 +91,13 @@ class MerchantOfferViewPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// IMAGE
+
+          /// BANNER IMAGE
           ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+            borderRadius:
+            const BorderRadius.vertical(top: Radius.circular(18)),
             child: Image.network(
-              offer.banner,
+              offer.offerBanner, // ✅ fixed field name
               height: 180,
               width: double.infinity,
               fit: BoxFit.cover,
@@ -108,25 +108,42 @@ class MerchantOfferViewPage extends StatelessWidget {
                   child: Center(child: CircularProgressIndicator()),
                 );
               },
-              errorBuilder: (_, __, ___) => const SizedBox(
+              errorBuilder: (_, __, ___) =>
+              const SizedBox(
                 height: 180,
-                child: Center(child: Icon(Icons.broken_image, size: 60)),
+                child: Center(
+                    child: Icon(Icons.broken_image, size: 60)),
               ),
             ),
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
 
-          /// DISCOUNT TEXT
+          /// OFFER ID + DISCOUNT
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              "Flat ${offer.discount}% OFF",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: AppColors.kPrimary,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.green.shade200),
+                  ),
+                  child: Text(
+                    "Flat ${offer.discountPercentage}% OFF",
+                    // ✅ fixed field name
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.green,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
 
@@ -134,14 +151,14 @@ class MerchantOfferViewPage extends StatelessWidget {
 
           /// BUTTONS
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding:
+            const EdgeInsets.only(left: 16, right: 16, bottom: 16),
             child: Row(
               children: [
-                /// VIEW PRODUCTS
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      Get.to(() => OfferProductScreen() );
+                      Get.to(() =>OfferProductScreen(offerId:offer.offerId));
                     },
                     icon: const Icon(Icons.visibility),
                     label: const Text("View Products"),
@@ -156,18 +173,18 @@ class MerchantOfferViewPage extends StatelessWidget {
                     ),
                   ),
                 ),
-
                 const SizedBox(width: 12),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () => _deleteDialog(index),
-                    icon: const Icon(Icons.delete_outline, color: Colors.red),
+                    onPressed: () {},
+                    icon: const Icon(Icons.update,
+                        color: Colors.blue),
                     label: const Text(
-                      "Delete",
-                      style: TextStyle(color: Colors.red),
+                      "Update",
+                      style: TextStyle(color: Colors.blue),
                     ),
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.red),
+                      side: const BorderSide(color: Colors.blue),
                       padding:
                       const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
@@ -185,9 +202,7 @@ class MerchantOfferViewPage extends StatelessWidget {
   }
 
   Widget _loadingView() {
-    return const Center(
-      child: CircularProgressIndicator(),
-    );
+    return const Center(child: CircularProgressIndicator());
   }
 
   Widget _emptyView() {
@@ -195,8 +210,7 @@ class MerchantOfferViewPage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: const [
-          Icon(Icons.local_offer_outlined,
-              size: 70, color: Colors.grey),
+          Icon(Icons.local_offer_outlined, size: 70, color: Colors.grey),
           SizedBox(height: 12),
           Text(
             "No offers available",
@@ -204,26 +218,6 @@ class MerchantOfferViewPage extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-  void _deleteDialog(int index) {
-    Get.defaultDialog(
-      title: "Delete Offer",
-      middleText: "Are you sure you want to delete this offer?",
-      textConfirm: "Delete",
-      textCancel: "Cancel",
-      confirmTextColor: Colors.white,
-      buttonColor: Colors.red,
-      onConfirm: () {
-        controller.deleteOffer(index);
-        Get.back();
-        Get.snackbar(
-          "Deleted",
-          "Offer deleted successfully",
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
-      },
     );
   }
 }

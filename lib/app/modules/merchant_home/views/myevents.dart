@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 import '../../../common/style/app_text_style.dart';
 import '../controller/merchant_myeventcontroller.dart';
 import 'addevents.dart';
-
 class MerchantEventsPage extends StatelessWidget {
   MerchantEventsPage({super.key});
   final MyEventsController controller = Get.put(MyEventsController());

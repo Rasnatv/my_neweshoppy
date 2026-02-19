@@ -1,19 +1,27 @@
-class MerchantOffer {
-  final String merchantId;
-  final int discount;
-  final String banner;
+class MerchantOffersviewmodel {
+  final int offerId;
+  final int discountPercentage;
+  final String offerBanner;
 
-  MerchantOffer({
-    required this.merchantId,
-    required this.discount,
-    required this.banner,
+  MerchantOffersviewmodel({
+    required this.offerId,
+    required this.discountPercentage,
+    required this.offerBanner,
   });
 
-  factory MerchantOffer.fromJson(Map<String, dynamic> json) {
-    return MerchantOffer(
-      merchantId: json['merchant_id'].toString(),
-      discount: json['discount_percentage'],
-      banner: json['offer_banner'],
+  factory MerchantOffersviewmodel.fromJson(Map<String, dynamic> json) {
+    return MerchantOffersviewmodel(
+      offerId: json['offer_id'] ,
+      discountPercentage: json['discount_percentage'],
+      offerBanner: json['offer_banner'] ?? '',
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'offer_id': offerId,
+      'discount_percentage': discountPercentage,
+      'offer_banner': offerBanner,
+    };
   }
 }

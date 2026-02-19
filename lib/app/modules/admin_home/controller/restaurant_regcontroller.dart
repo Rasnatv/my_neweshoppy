@@ -18,6 +18,7 @@
 //   RxBool isLoading = false.obs;
 //
 //   final ownerCtrl = TextEditingController();
+//   final restaurantNameCtrl = TextEditingController();
 //   final addressCtrl = TextEditingController();
 //   final phoneCtrl = TextEditingController();
 //   final emailCtrl = TextEditingController();
@@ -28,41 +29,38 @@
 //
 //   String get token => box.read('auth_token') ?? '';
 //
-//   // ---------------- PICK MAIN IMAGE ----------------
+//   // PICK MAIN IMAGE
 //   Future<void> pickRestaurantImage() async {
 //     final XFile? image =
 //     await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
-//     if (image != null) {
-//       restaurantImage.value = File(image.path);
-//     }
+//     if (image != null) restaurantImage.value = File(image.path);
 //   }
 //
-//   // ---------------- PICK ADDITIONAL IMAGES ----------------
+//   // PICK ADDITIONAL IMAGES
 //   Future<void> pickAdditionalImages() async {
-//     final List<XFile>? images = await picker.pickMultiImage(imageQuality: 70);
+//     final List<XFile>? images =
+//     await picker.pickMultiImage(imageQuality: 70);
 //     if (images != null) {
 //       additionalImages.addAll(images.map((e) => File(e.path)));
 //     }
 //   }
 //
-//   // ---------------- BASE64 HELPERS ----------------
+//   // FILE → BASE64
 //   Future<String> _fileToBase64(File file) async {
 //     final bytes = await file.readAsBytes();
 //     return "data:image/jpeg;base64,${base64Encode(bytes)}";
 //   }
 //
-//   // ---------------- SUBMIT API ----------------
+//   // SUBMIT
 //   Future<void> submit() async {
-//     final currentToken = token;
-//
-//     if (currentToken.isEmpty) {
+//     if (token.isEmpty) {
 //       Get.snackbar("Session Expired", "Please login again");
-//       print("Token is empty!");
 //       return;
 //     }
 //
 //     if (restaurantImage.value == null ||
 //         ownerCtrl.text.isEmpty ||
+//         restaurantNameCtrl.text.isEmpty ||
 //         addressCtrl.text.isEmpty ||
 //         phoneCtrl.text.isEmpty) {
 //       Get.snackbar("Error", "Please fill mandatory fields");
@@ -74,13 +72,14 @@
 //     try {
 //       final mainImage = await _fileToBase64(restaurantImage.value!);
 //
-//       final List<String> additionalBase64Images = [];
+//       final List<String> additionalBase64 = [];
 //       for (var img in additionalImages) {
-//         additionalBase64Images.add(await _fileToBase64(img));
+//         additionalBase64.add(await _fileToBase64(img));
 //       }
 //
 //       final request = RestaurantRegisterRequest(
 //         ownerName: ownerCtrl.text.trim(),
+//         restaurantName: restaurantNameCtrl.text.trim(),
 //         address: addressCtrl.text.trim(),
 //         phone: phoneCtrl.text.trim(),
 //         email: emailCtrl.text.trim(),
@@ -89,7 +88,7 @@
 //         facebook: facebookCtrl.text.trim(),
 //         instagram: instaCtrl.text.trim(),
 //         restaurantImage: mainImage,
-//         additionalImages: additionalBase64Images,
+//         additionalImages: additionalBase64,
 //       );
 //
 //       final response = await http.post(
@@ -98,13 +97,10 @@
 //         headers: {
 //           "Accept": "application/json",
 //           "Content-Type": "application/json",
-//           "Authorization": "Bearer $currentToken",
+//           "Authorization": "Bearer $token",
 //         },
 //         body: jsonEncode(request.toJson()),
 //       );
-//
-//       print("Status Code: ${response.statusCode}");
-//       print("Response Body: ${response.body}");
 //
 //       final data = jsonDecode(response.body);
 //
@@ -112,9 +108,6 @@
 //           (data['status'] == "1" || data['status'] == true)) {
 //         Get.snackbar("Success", data['message'] ?? "Registered successfully");
 //         Get.off(() => MenuManagementPage());
-//       } else if (response.statusCode == 401) {
-//         Get.snackbar("Unauthorized", "Session expired or invalid token");
-//         print("Unauthorized! Token might be invalid or expired.");
 //       } else {
 //         Get.snackbar("Error", data['message'] ?? "Failed to register restaurant");
 //       }
@@ -129,6 +122,7 @@
 //   @override
 //   void onClose() {
 //     ownerCtrl.dispose();
+//     restaurantNameCtrl.dispose();
 //     addressCtrl.dispose();
 //     phoneCtrl.dispose();
 //     emailCtrl.dispose();
@@ -139,7 +133,6 @@
 //     super.onClose();
 //   }
 // }
-//
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -170,14 +163,16 @@ class RestaurantRegController extends GetxController {
 
   String get token => box.read('auth_token') ?? '';
 
-  // PICK MAIN IMAGE
+  // -------------------- PICK MAIN IMAGE --------------------
   Future<void> pickRestaurantImage() async {
-    final XFile? image =
-    await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    final XFile? image = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 70,
+    );
     if (image != null) restaurantImage.value = File(image.path);
   }
 
-  // PICK ADDITIONAL IMAGES
+  // -------------------- PICK ADDITIONAL IMAGES --------------------
   Future<void> pickAdditionalImages() async {
     final List<XFile>? images =
     await picker.pickMultiImage(imageQuality: 70);
@@ -186,25 +181,37 @@ class RestaurantRegController extends GetxController {
     }
   }
 
-  // FILE → BASE64
+  // -------------------- FILE TO BASE64 --------------------
   Future<String> _fileToBase64(File file) async {
     final bytes = await file.readAsBytes();
     return "data:image/jpeg;base64,${base64Encode(bytes)}";
   }
 
-  // SUBMIT
+  // -------------------- SUBMIT --------------------
   Future<void> submit() async {
     if (token.isEmpty) {
-      Get.snackbar("Session Expired", "Please login again");
+      Get.snackbar(
+        "Session Expired",
+        "Please login again",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
       return;
     }
 
     if (restaurantImage.value == null ||
-        ownerCtrl.text.isEmpty ||
-        restaurantNameCtrl.text.isEmpty ||
-        addressCtrl.text.isEmpty ||
-        phoneCtrl.text.isEmpty) {
-      Get.snackbar("Error", "Please fill mandatory fields");
+        ownerCtrl.text.trim().isEmpty ||
+        restaurantNameCtrl.text.trim().isEmpty ||
+        addressCtrl.text.trim().isEmpty ||
+        phoneCtrl.text.trim().isEmpty) {
+      Get.snackbar(
+        "Error",
+        "Please fill all mandatory fields",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
       return;
     }
 
@@ -243,18 +250,65 @@ class RestaurantRegController extends GetxController {
         body: jsonEncode(request.toJson()),
       );
 
+      debugPrint("Register Status: ${response.statusCode}");
+      debugPrint("Register Body: ${response.body}");
+
       final data = jsonDecode(response.body);
 
       if ((response.statusCode == 200 || response.statusCode == 201) &&
           (data['status'] == "1" || data['status'] == true)) {
-        Get.snackbar("Success", data['message'] ?? "Registered successfully");
-        Get.off(() => MenuManagementPage());
+
+        // ✅ Save restaurant_id to GetStorage so MenuController can use it
+        final dynamic rawId =
+            data['data']?['id'] ?? data['data']?['restaurant_id'];
+        if (rawId != null) {
+          final int? parsedId =
+          rawId is int ? rawId : int.tryParse(rawId.toString());
+          if (parsedId != null) {
+            box.write('restaurant_id', parsedId);
+            debugPrint("✅ restaurant_id saved: $parsedId");
+          }
+        } else {
+          debugPrint("⚠️ No restaurant_id in response: ${data['data']}");
+        }
+
+        Get.snackbar(
+          "Success",
+          data['message'] ?? "Restaurant registered successfully",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+
+        // ✅ Navigate to MenuManagementPage, remove reg page from stack
+        Get.off(() => const MenuManagementPage());
+
+      } else if (response.statusCode == 401) {
+        Get.snackbar(
+          "Unauthorized",
+          "Session expired. Please login again.",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
       } else {
-        Get.snackbar("Error", data['message'] ?? "Failed to register restaurant");
+        Get.snackbar(
+          "Error",
+          data['message'] ?? "Failed to register restaurant",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
       }
     } catch (e) {
-      Get.snackbar("Error", "Something went wrong");
-      print("Submit Exception: $e");
+      Get.snackbar(
+        "Error",
+        "Something went wrong. Please try again.",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      debugPrint("Submit Exception: $e");
     } finally {
       isLoading.value = false;
     }

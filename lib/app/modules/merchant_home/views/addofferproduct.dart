@@ -22,7 +22,6 @@ class AddOfferProductPage extends StatelessWidget {
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
         actions: [
-          // Show total products added count badge in app bar
           Obx(() {
             if (!controller.offerCreated.value) return SizedBox.shrink();
             return Center(
@@ -37,8 +36,8 @@ class AddOfferProductPage extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.inventory_2_outlined,
-                        color: Colors.white, size: 14),
+                    Icon(Icons.inventory_2_outlined, color: Colors.white,
+                        size: 14),
                     SizedBox(width: 4),
                     Text(
                       "${controller.totalProductsAdded.value}/10 products",
@@ -52,15 +51,14 @@ class AddOfferProductPage extends StatelessWidget {
               ),
             );
           }),
-          // Done button
-          Obx(() => controller.offerCreated.value
+          Obx(() =>
+          controller.offerCreated.value
               ? TextButton.icon(
             onPressed: controller.finishOffer,
             icon: Icon(Icons.check_circle, color: Colors.white),
             label: Text("Done",
                 style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600)),
+                    color: Colors.white, fontWeight: FontWeight.w600)),
           )
               : SizedBox.shrink()),
         ],
@@ -75,21 +73,19 @@ class AddOfferProductPage extends StatelessWidget {
                   padding: EdgeInsets.all(16),
                   child: Column(
                     children: [
-                      // STEP 1 badge — reactive on offerCreated
-                      Obx(() => _buildStepBadge(
-                        step: 1,
-                        label: "Create Offer",
-                        done: controller.offerCreated.value,
-                      )),
+                      Obx(() =>
+                          _buildStepBadge(
+                            step: 1,
+                            label: "Create Offer",
+                            done: controller.offerCreated.value,
+                          )),
                       SizedBox(height: 12),
                       _buildOfferDetailsCard(context),
                       SizedBox(height: 24),
-
-                      // STEP 2 section — switches between locked / content
-                      Obx(() => controller.offerCreated.value
+                      Obx(() =>
+                      controller.offerCreated.value
                           ? _buildStep2Content(context)
                           : _buildStep2Locked()),
-
                       SizedBox(height: 120),
                     ],
                   ),
@@ -97,7 +93,6 @@ class AddOfferProductPage extends StatelessWidget {
               ],
             ),
           ),
-          // Full-screen loading overlay
           _buildLoadingOverlay(),
         ],
       ),
@@ -126,8 +121,8 @@ class AddOfferProductPage extends StatelessWidget {
                     controller.isCreatingOffer.value
                         ? "Creating offer..."
                         : "Adding product to offer...",
-                    style: TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w600),
+                    style:
+                    TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
@@ -139,13 +134,15 @@ class AddOfferProductPage extends StatelessWidget {
   }
 
   // ─── FAB ─────────────────────────────────────────────────────────────
+  // ✅ FIX: Only ONE place calls createOffer — the FAB
+  // The card button was REMOVED to prevent double API calls
   Widget _buildFab(BuildContext context) {
     return Obx(() {
-      // Step 1 FAB
       if (!controller.offerCreated.value) {
         if (controller.isCreatingOffer.value) return SizedBox.shrink();
         return FloatingActionButton.extended(
           onPressed: controller.createOffer,
+          // ✅ only called here
           backgroundColor: AppColors.kPrimary,
           icon: Icon(Icons.rocket_launch_outlined),
           label: Text("Create Offer",
@@ -153,7 +150,6 @@ class AddOfferProductPage extends StatelessWidget {
           elevation: 4,
         );
       }
-      // Step 2 FAB — show only when variants exist and not at limit
       if (controller.variants.isNotEmpty &&
           !controller.isSubmitting.value &&
           controller.variants.length <= 10 &&
@@ -220,8 +216,7 @@ class AddOfferProductPage extends StatelessWidget {
                 ? Icon(Icons.check, color: Colors.white, size: 18)
                 : Text("$step",
                 style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700)),
+                    color: Colors.white, fontWeight: FontWeight.w700)),
           ),
         ),
         SizedBox(width: 10),
@@ -266,8 +261,7 @@ class AddOfferProductPage extends StatelessWidget {
           ),
           child: Column(
             children: [
-              Icon(Icons.lock_outline,
-                  color: Color(0xFF9CA3AF), size: 40),
+              Icon(Icons.lock_outline, color: Color(0xFF9CA3AF), size: 40),
               SizedBox(height: 12),
               Text("Create the offer first",
                   style: TextStyle(
@@ -278,8 +272,7 @@ class AddOfferProductPage extends StatelessWidget {
               Text(
                 "Set the discount % and banner above, then tap \"Create Offer\" to unlock product addition.",
                 textAlign: TextAlign.center,
-                style:
-                TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+                style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
               ),
             ],
           ),
@@ -295,13 +288,11 @@ class AddOfferProductPage extends StatelessWidget {
       children: [
         _buildStepBadge(step: 2, label: "Add Products", done: false),
         SizedBox(height: 12),
-        _buildOfferSummaryBanner(),
         SizedBox(height: 16),
         _buildProductLimitIndicator(),
         SizedBox(height: 16),
-
-        // Block adding more products when 10 are saved
-        Obx(() => controller.totalProductsAdded.value >= 10
+        Obx(() =>
+        controller.totalProductsAdded.value >= 10
             ? _buildMaxProductsReachedCard()
             : Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -319,15 +310,16 @@ class AddOfferProductPage extends StatelessWidget {
               SizedBox(height: 24),
             ])
                 : SizedBox.shrink()),
-            Obx(() => (controller.selectedCategory.value
-                .isNotEmpty &&
+            Obx(() =>
+            (controller.selectedCategory.value.isNotEmpty &&
                 controller.hasVariantAttributes())
                 ? Column(children: [
               _buildVariantConfigurationSection(context),
               SizedBox(height: 24),
             ])
                 : SizedBox.shrink()),
-            Obx(() => controller.variants.isNotEmpty
+            Obx(() =>
+            controller.variants.isNotEmpty
                 ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -336,10 +328,9 @@ class AddOfferProductPage extends StatelessWidget {
                 ...controller.variants
                     .asMap()
                     .entries
-                    .map((entry) => _buildVariantCard(
-                    context,
-                    entry.key,
-                    entry.value)),
+                    .map((entry) =>
+                    _buildVariantCard(
+                        context, entry.key, entry.value)),
               ],
             )
                 : SizedBox.shrink()),
@@ -349,7 +340,7 @@ class AddOfferProductPage extends StatelessWidget {
     );
   }
 
-  // ─── MAX PRODUCTS REACHED CARD ───────────────────────────────────────
+  // ─── MAX PRODUCTS REACHED ─────────────────────────────────────────────
   Widget _buildMaxProductsReachedCard() {
     return Container(
       width: double.infinity,
@@ -379,117 +370,15 @@ class AddOfferProductPage extends StatelessWidget {
             onPressed: controller.finishOffer,
             style: ElevatedButton.styleFrom(
               backgroundColor: Color(0xFF10B981),
-              padding:
-              EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
             ),
             icon: Icon(Icons.check_circle),
             label: Text("Finish Offer",
-                style: TextStyle(
-                    fontWeight: FontWeight.w600, fontSize: 15)),
+                style:
+                TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
           ),
-        ],
-      ),
-    );
-  }
-
-  // ─── OFFER SUMMARY BANNER ────────────────────────────────────────────
-  Widget _buildOfferSummaryBanner() {
-    return Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF10B981), Color(0xFF059669)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-              color: Color(0xFF10B981).withOpacity(0.3),
-              blurRadius: 12,
-              offset: Offset(0, 4)),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(Icons.local_offer,
-                color: Colors.white, size: 24),
-          ),
-          SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text("Offer Active ✓",
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15)),
-                SizedBox(height: 4),
-                Obx(() => Text(
-                  "ID: #${controller.createdOfferId.value} · "
-                      "${controller.discountPercentageCtrl.text}% discount",
-                  style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 13),
-                )),
-              ],
-            ),
-          ),
-          // ── Products saved counter (the KEY fix) ──
-          Obx(() {
-            final saved = controller.totalProductsAdded.value;
-            final isDrafting = controller.variants.isNotEmpty;
-            final isAtLimit = saved >= 10;
-            return Column(
-              children: [
-                Text(
-                  "$saved",
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800),
-                ),
-                Text(
-                  "/ 10",
-                  style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 12),
-                ),
-                Text(
-                  isAtLimit ? "full" : "saved",
-                  style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 11),
-                ),
-                if (isDrafting && !isAtLimit)
-                  Container(
-                    margin: EdgeInsets.only(top: 4),
-                    padding: EdgeInsets.symmetric(
-                        horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      "+1 drafting",
-                      style: TextStyle(
-                          color: Colors.white.withOpacity(0.85),
-                          fontSize: 9,
-                          fontStyle: FontStyle.italic),
-                    ),
-                  ),
-              ],
-            );
-          }),
         ],
       ),
     );
@@ -518,8 +407,7 @@ class AddOfferProductPage extends StatelessWidget {
         indicatorColor = Color(0xFFF59E0B);
         bgColor = Color(0xFFFEF3C7);
         icon = Icons.warning_amber_rounded;
-        message =
-        "Almost at limit! ${maxCount - currentCount} remaining.";
+        message = "Almost at limit! ${maxCount - currentCount} remaining.";
       } else {
         indicatorColor = Color(0xFF10B981);
         bgColor = Color(0xFFD1FAE5);
@@ -532,8 +420,7 @@ class AddOfferProductPage extends StatelessWidget {
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(12),
-          border:
-          Border.all(color: indicatorColor.withOpacity(0.3)),
+          border: Border.all(color: indicatorColor.withOpacity(0.3)),
         ),
         child: Column(
           children: [
@@ -554,8 +441,7 @@ class AddOfferProductPage extends StatelessWidget {
                       Text(message,
                           style: TextStyle(
                               fontSize: 13,
-                              color:
-                              indicatorColor.withOpacity(0.8))),
+                              color: indicatorColor.withOpacity(0.8))),
                     ],
                   ),
                 ),
@@ -567,8 +453,7 @@ class AddOfferProductPage extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: percentage,
                 backgroundColor: Colors.white.withOpacity(0.5),
-                valueColor:
-                AlwaysStoppedAnimation(indicatorColor),
+                valueColor: AlwaysStoppedAnimation(indicatorColor),
                 minHeight: 8,
               ),
             ),
@@ -579,13 +464,13 @@ class AddOfferProductPage extends StatelessWidget {
   }
 
   // ─── OFFER DETAILS CARD ──────────────────────────────────────────────
+  // ✅ FIX: Removed duplicate "Create Offer" button from inside the card
   Widget _buildOfferDetailsCard(BuildContext context) {
     return _buildCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionTitle(
-              "Offer Details", Icons.local_offer_outlined),
+          _buildSectionTitle("Offer Details", Icons.local_offer_outlined),
           SizedBox(height: 16),
           Obx(() {
             final locked = controller.offerCreated.value;
@@ -600,16 +485,12 @@ class AddOfferProductPage extends StatelessWidget {
                 SizedBox(height: 8),
                 Container(
                   decoration: BoxDecoration(
-                    color: locked
-                        ? Color(0xFFF3F4F6)
-                        : Color(0xFFF9FAFB),
+                    color: locked ? Color(0xFFF3F4F6) : Color(0xFFF9FAFB),
                     borderRadius: BorderRadius.circular(12),
-                    border:
-                    Border.all(color: Color(0xFFE5E7EB)),
+                    border: Border.all(color: Color(0xFFE5E7EB)),
                   ),
                   child: TextField(
-                    controller:
-                    controller.discountPercentageCtrl,
+                    controller: controller.discountPercentageCtrl,
                     enabled: !locked,
                     keyboardType: TextInputType.number,
                     style: TextStyle(
@@ -624,21 +505,17 @@ class AddOfferProductPage extends StatelessWidget {
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.symmetric(
                           horizontal: 16, vertical: 16),
-                      hintStyle: TextStyle(
-                          color: Color(0xFF9CA3AF),
-                          fontSize: 14),
+                      hintStyle:
+                      TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
                       suffixIcon: locked
                           ? Icon(Icons.lock,
-                          color: Color(0xFF9CA3AF),
-                          size: 18)
+                          color: Color(0xFF9CA3AF), size: 18)
                           : null,
                     ),
                     onChanged: (_) {
-                      for (int i = 0;
-                      i < controller.variants.length;
-                      i++) {
-                        controller.updateVariantPrice(i,
-                            controller.variants[i].price);
+                      for (int i = 0; i < controller.variants.length; i++) {
+                        controller.updateVariantPrice(
+                            i, controller.variants[i].price);
                       }
                     },
                   ),
@@ -651,44 +528,7 @@ class AddOfferProductPage extends StatelessWidget {
                         color: Color(0xFF1A1A1A))),
                 SizedBox(height: 8),
                 _buildBannerPicker(locked),
-                if (!locked) ...[
-                  SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed:
-                      controller.isCreatingOffer.value
-                          ? null
-                          : controller.createOffer,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.kPrimary,
-                        padding: EdgeInsets.symmetric(
-                            vertical: 16),
-                        shape: RoundedRectangleBorder(
-                            borderRadius:
-                            BorderRadius.circular(12)),
-                      ),
-                      icon: controller.isCreatingOffer.value
-                          ? SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor:
-                              AlwaysStoppedAnimation(
-                                  Colors.white)))
-                          : Icon(Icons.rocket_launch_outlined),
-                      label: Text(
-                        controller.isCreatingOffer.value
-                            ? "Creating..."
-                            : "Create Offer & Add Products",
-                        style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 15),
-                      ),
-                    ),
-                  ),
-                ],
+                // ✅ NO button here — FAB is the only trigger for createOffer()
               ],
             );
           }),
@@ -699,112 +539,102 @@ class AddOfferProductPage extends StatelessWidget {
 
   // ─── BANNER PICKER ────────────────────────────────────────────────────
   Widget _buildBannerPicker(bool locked) {
-    return Obx(() => GestureDetector(
-      onTap:
-      locked ? null : () => controller.pickBannerImage(),
-      child: Container(
-        height: 180,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Color(0xFFF9FAFB),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: locked
-                ? Color(0xFF10B981).withOpacity(0.5)
-                : Color(0xFFE5E7EB),
-            width: 2,
-          ),
-        ),
-        child: controller.bannerImage.value == null
-            ? Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.add_photo_alternate_outlined,
-                size: 48, color: Color(0xFF3B82F6)),
-            SizedBox(height: 12),
-            Text("Tap to add offer banner",
-                style: TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF6B7280),
-                    fontWeight: FontWeight.w500)),
-            SizedBox(height: 4),
-            Text("Recommended: 1920 x 1080",
-                style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF9CA3AF))),
-          ],
-        )
-            : Stack(
-          fit: StackFit.expand,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Image.file(
-                  controller.bannerImage.value!,
-                  fit: BoxFit.cover),
+    return Obx(() =>
+        GestureDetector(
+          onTap: locked ? null : () => controller.pickBannerImage(),
+          child: Container(
+            height: 180,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Color(0xFFF9FAFB),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: locked
+                    ? Color(0xFF10B981).withOpacity(0.5)
+                    : Color(0xFFE5E7EB),
+                width: 2,
+              ),
             ),
-            if (locked)
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius:
-                  BorderRadius.circular(10),
-                  color:
-                  Colors.black.withOpacity(0.15),
+            child: controller.bannerImage.value == null
+                ? Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.add_photo_alternate_outlined,
+                    size: 48, color: Color(0xFF3B82F6)),
+                SizedBox(height: 12),
+                Text("Tap to add offer banner",
+                    style: TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF6B7280),
+                        fontWeight: FontWeight.w500)),
+                SizedBox(height: 4),
+                Text("Recommended: 1920 x 1080",
+                    style: TextStyle(
+                        fontSize: 12, color: Color(0xFF9CA3AF))),
+              ],
+            )
+                : Stack(
+              fit: StackFit.expand,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.file(controller.bannerImage.value!,
+                      fit: BoxFit.cover),
                 ),
-                child: Center(
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 6),
+                if (locked)
+                  Container(
                     decoration: BoxDecoration(
-                      color: Color(0xFF10B981),
-                      borderRadius:
-                      BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(10),
+                      color: Colors.black.withOpacity(0.15),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.check_circle,
-                            color: Colors.white,
-                            size: 16),
-                        SizedBox(width: 6),
-                        Text("Banner Set",
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontWeight:
-                                FontWeight.w600,
-                                fontSize: 13)),
-                      ],
+                    child: Center(
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Color(0xFF10B981),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.check_circle,
+                                color: Colors.white, size: 16),
+                            SizedBox(width: 6),
+                            Text("Banner Set",
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13)),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-            if (!locked)
-              Positioned(
-                top: 12,
-                right: 12,
-                child: Container(
-                  decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                            color: Colors.black
-                                .withOpacity(0.2),
-                            blurRadius: 8)
-                      ]),
-                  child: IconButton(
-                    icon: Icon(Icons.edit,
-                        color: Color(0xFF3B82F6),
-                        size: 20),
-                    onPressed: () =>
-                        controller.pickBannerImage(),
+                if (!locked)
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: Container(
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 8)
+                          ]),
+                      child: IconButton(
+                        icon: Icon(Icons.edit,
+                            color: Color(0xFF3B82F6), size: 20),
+                        onPressed: () => controller.pickBannerImage(),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    ));
+              ],
+            ),
+          ),
+        ));
   }
 
   // ─── PRODUCT NAME ────────────────────────────────────────────────────
@@ -813,15 +643,13 @@ class AddOfferProductPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionTitle(
-              "Product Name", Icons.shopping_bag_outlined),
+          _buildSectionTitle("Product Name", Icons.shopping_bag_outlined),
           SizedBox(height: 12),
           _buildTextField(
             label: "Enter product name",
             hint: "e.g., Classic Cotton T-Shirt",
             icon: Icons.label_outline,
-            onChanged: (val) =>
-            controller.productName.value = val,
+            onChanged: (val) => controller.productName.value = val,
           ),
         ],
       ),
@@ -844,10 +672,8 @@ class AddOfferProductPage extends StatelessWidget {
               border: Border.all(color: Color(0xFFE5E7EB)),
             ),
             child: TextField(
-              onChanged: (val) =>
-              controller.productDescription.value = val,
-              style: TextStyle(
-                  fontSize: 15, color: Color(0xFF1A1A1A)),
+              onChanged: (val) => controller.productDescription.value = val,
+              style: TextStyle(fontSize: 15, color: Color(0xFF1A1A1A)),
               maxLines: 4,
               decoration: InputDecoration(
                 hintText: "Describe your product in detail...",
@@ -857,10 +683,10 @@ class AddOfferProductPage extends StatelessWidget {
                       color: Color(0xFF6B7280), size: 20),
                 ),
                 border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 16),
-                hintStyle: TextStyle(
-                    color: Color(0xFF9CA3AF), fontSize: 14),
+                contentPadding:
+                EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                hintStyle:
+                TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
               ),
             ),
           ),
@@ -884,10 +710,8 @@ class AddOfferProductPage extends StatelessWidget {
                 decoration: BoxDecoration(
                     color: Color(0xFFF9FAFB),
                     borderRadius: BorderRadius.circular(12),
-                    border:
-                    Border.all(color: Color(0xFFE5E7EB))),
-                child: Center(
-                    child: CircularProgressIndicator()),
+                    border: Border.all(color: Color(0xFFE5E7EB))),
+                child: Center(child: CircularProgressIndicator()),
               );
             }
             if (controller.apiCategories.isEmpty) {
@@ -896,19 +720,14 @@ class AddOfferProductPage extends StatelessWidget {
                 decoration: BoxDecoration(
                     color: Color(0xFFF9FAFB),
                     borderRadius: BorderRadius.circular(12),
-                    border:
-                    Border.all(color: Color(0xFFE5E7EB))),
+                    border: Border.all(color: Color(0xFFE5E7EB))),
                 child: Row(
                   children: [
-                    Icon(Icons.warning_amber,
-                        color: Colors.orange),
+                    Icon(Icons.warning_amber, color: Colors.orange),
                     SizedBox(width: 12),
-                    Expanded(
-                        child: Text(
-                            "No categories available")),
+                    Expanded(child: Text("No categories available")),
                     TextButton(
-                        onPressed: () =>
-                            controller.fetchCategories(),
+                        onPressed: () => controller.fetchCategories(),
                         child: Text("Retry")),
                   ],
                 ),
@@ -918,8 +737,7 @@ class AddOfferProductPage extends StatelessWidget {
               decoration: BoxDecoration(
                   color: Color(0xFFF9FAFB),
                   borderRadius: BorderRadius.circular(12),
-                  border:
-                  Border.all(color: Color(0xFFE5E7EB))),
+                  border: Border.all(color: Color(0xFFE5E7EB))),
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: DropdownButtonFormField<String>(
                 decoration: InputDecoration(
@@ -928,20 +746,19 @@ class AddOfferProductPage extends StatelessWidget {
                         color: Color(0xFF6B7280), size: 20),
                     hintText: "Choose a category",
                     hintStyle: TextStyle(
-                        color: Color(0xFF9CA3AF),
-                        fontSize: 14)),
+                        color: Color(0xFF9CA3AF), fontSize: 14)),
                 value: controller.selectedCategory.value.isEmpty
                     ? null
                     : controller.selectedCategory.value,
                 items: controller.apiCategories
-                    .map((c) => DropdownMenuItem(
-                    value: c.name,
-                    child: Text(c.name,
-                        style: TextStyle(fontSize: 15))))
+                    .map((c) =>
+                    DropdownMenuItem(
+                        value: c.name,
+                        child: Text(c.name,
+                            style: TextStyle(fontSize: 15))))
                     .toList(),
                 onChanged: (val) {
-                  if (val != null)
-                    controller.onCategoryChanged(val);
+                  if (val != null) controller.onCategoryChanged(val);
                 },
                 dropdownColor: Colors.white,
                 icon: Icon(Icons.keyboard_arrow_down,
@@ -965,17 +782,16 @@ class AddOfferProductPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionTitle(
-              "Common Attributes", Icons.info_outline),
+          _buildSectionTitle("Common Attributes", Icons.info_outline),
           SizedBox(height: 8),
           Text("These attributes apply to all variants",
-              style: TextStyle(
-                  fontSize: 13, color: Color(0xFF6B7280))),
+              style: TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
           SizedBox(height: 16),
-          ...config.commonAttributes.map((attr) => Padding(
-            padding: EdgeInsets.only(bottom: 12),
-            child: _buildCommonAttributeInput(attr),
-          )),
+          ...config.commonAttributes.map((attr) =>
+              Padding(
+                padding: EdgeInsets.only(bottom: 12),
+                child: _buildCommonAttributeInput(attr),
+              )),
         ],
       ),
     );
@@ -997,10 +813,10 @@ class AddOfferProductPage extends StatelessWidget {
           border: InputBorder.none,
           contentPadding:
           EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          labelStyle: TextStyle(
-              fontSize: 13, color: Color(0xFF6B7280)),
-          hintStyle: TextStyle(
-              fontSize: 13, color: Color(0xFF9CA3AF)),
+          labelStyle:
+          TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+          hintStyle:
+          TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
         ),
       ),
     );
@@ -1022,12 +838,9 @@ class AddOfferProductPage extends StatelessWidget {
           SizedBox(height: 8),
           Text(
             "Example: Color 'Green' → sizes 'S'; Color 'Blue' → sizes 'M, L, XL'",
-            style: TextStyle(
-                fontSize: 13, color: Color(0xFF6B7280)),
+            style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
           ),
           SizedBox(height: 16),
-
-          // Configured summary list
           Obx(() {
             if (controller.variantTypeConfigurations.isEmpty) {
               return SizedBox.shrink();
@@ -1041,59 +854,57 @@ class AddOfferProductPage extends StatelessWidget {
                         fontWeight: FontWeight.w600,
                         color: Color(0xFF1A1A1A))),
                 SizedBox(height: 8),
-                ...controller.variantTypeConfigurations.entries
-                    .map(
-                      (typeEntry) => Container(
-                    margin: EdgeInsets.only(bottom: 8),
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                        color: Color(0xFF10B981).withOpacity(0.05),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                            color: Color(0xFF10B981)
-                                .withOpacity(0.3))),
-                    child: Column(
-                      crossAxisAlignment:
-                      CrossAxisAlignment.start,
-                      children: [
-                        Text(typeEntry.key,
-                            style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF10B981))),
-                        SizedBox(height: 8),
-                        ...typeEntry.value.entries.map(
-                              (primaryEntry) => Padding(
-                            padding:
-                            EdgeInsets.only(bottom: 4),
-                            child: Row(children: [
-                              Expanded(
-                                child: Text(
-                                  "• ${primaryEntry.key}: ${primaryEntry.value.join(', ')}",
-                                  style: TextStyle(
-                                      fontSize: 12,
-                                      color:
-                                      Color(0xFF6B7280)),
-                                ),
-                              ),
-                              if (controller.selectedVariantType
-                                  .value ==
-                                  typeEntry.key)
-                                GestureDetector(
-                                  onTap: () => controller
-                                      .removePrimaryValue(
-                                      primaryEntry.key),
-                                  child: Icon(
-                                      Icons.delete_outline,
-                                      size: 16,
-                                      color: Colors.red),
-                                ),
-                            ]),
-                          ),
+                ...controller.variantTypeConfigurations.entries.map(
+                      (typeEntry) =>
+                      Container(
+                        margin: EdgeInsets.only(bottom: 8),
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                            color: Color(0xFF10B981).withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                                color:
+                                Color(0xFF10B981).withOpacity(0.3))),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(typeEntry.key,
+                                style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF10B981))),
+                            SizedBox(height: 8),
+                            ...typeEntry.value.entries.map(
+                                  (primaryEntry) =>
+                                  Padding(
+                                    padding: EdgeInsets.only(bottom: 4),
+                                    child: Row(children: [
+                                      Expanded(
+                                        child: Text(
+                                          "• ${primaryEntry.key}: ${primaryEntry
+                                              .value.join(', ')}",
+                                          style: TextStyle(
+                                              fontSize: 12,
+                                              color: Color(0xFF6B7280)),
+                                        ),
+                                      ),
+                                      if (controller.selectedVariantType
+                                          .value ==
+                                          typeEntry.key)
+                                        GestureDetector(
+                                          onTap: () =>
+                                              controller
+                                                  .removePrimaryValue(
+                                                  primaryEntry.key),
+                                          child: Icon(Icons.delete_outline,
+                                              size: 16, color: Colors.red),
+                                        ),
+                                    ]),
+                                  ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
+                      ),
                 ),
                 SizedBox(height: 16),
                 Divider(),
@@ -1101,48 +912,43 @@ class AddOfferProductPage extends StatelessWidget {
               ],
             );
           }),
-
-          // Variant type dropdown
-          Obx(() => Container(
-            decoration: BoxDecoration(
-                color: Color(0xFFF9FAFB),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                    color: Color(0xFFE5E7EB))),
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: DropdownButtonFormField<String>(
-              isExpanded: true,
-              decoration: InputDecoration(
-                  border: InputBorder.none,
-                  prefixIcon: Icon(Icons.category,
-                      color: Color(0xFF6B7280), size: 20),
-                  hintText:
-                  "Select variant type (e.g., Color, Size)",
-                  hintStyle: TextStyle(
-                      color: Color(0xFF9CA3AF),
-                      fontSize: 14)),
-              value: controller
-                  .selectedVariantType.value.isEmpty
-                  ? null
-                  : controller.selectedVariantType.value,
-              items: config.variantAttributes
-                  .map((attr) => DropdownMenuItem(
-                  value: attr,
-                  child: Text(attr,
-                      style:
-                      TextStyle(fontSize: 15))))
-                  .toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  controller.onVariantTypeSelected(value);
-                }
-              },
-              dropdownColor: Colors.white,
-              icon: Icon(Icons.keyboard_arrow_down,
-                  color: Color(0xFF6B7280)),
-            ),
-          )),
-
+          Obx(() =>
+              Container(
+                decoration: BoxDecoration(
+                    color: Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Color(0xFFE5E7EB))),
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: DropdownButtonFormField<String>(
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                      border: InputBorder.none,
+                      prefixIcon: Icon(Icons.category,
+                          color: Color(0xFF6B7280), size: 20),
+                      hintText:
+                      "Select variant type (e.g., Color, Size)",
+                      hintStyle: TextStyle(
+                          color: Color(0xFF9CA3AF), fontSize: 14)),
+                  value: controller.selectedVariantType.value.isEmpty
+                      ? null
+                      : controller.selectedVariantType.value,
+                  items: config.variantAttributes
+                      .map((attr) =>
+                      DropdownMenuItem(
+                          value: attr,
+                          child: Text(attr,
+                              style: TextStyle(fontSize: 15))))
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      controller.onVariantTypeSelected(value);
+                    }
+                  },
+                  dropdownColor: Colors.white,
+                  icon: Icon(Icons.keyboard_arrow_down,
+                      color: Color(0xFF6B7280)),
+                ),
+              )),
           Obx(() =>
           controller.selectedVariantType.value.isNotEmpty
               ? Column(children: [
@@ -1152,12 +958,10 @@ class AddOfferProductPage extends StatelessWidget {
             _buildVariantValueConfiguration(),
           ])
               : SizedBox.shrink()),
-
           Obx(() {
             final canGenerate =
                 controller.variantTypeConfigurations.isNotEmpty;
-            final isAtLimit =
-                controller.variants.length >= 10;
+            final isAtLimit = controller.variants.length >= 10;
             if (!canGenerate) return SizedBox.shrink();
             return Column(
               children: [
@@ -1168,15 +972,13 @@ class AddOfferProductPage extends StatelessWidget {
                     padding: EdgeInsets.all(12),
                     decoration: BoxDecoration(
                         color: Color(0xFFFEE2E2),
-                        borderRadius:
-                        BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                            color: Color(0xFFEF4444)
-                                .withOpacity(0.3))),
+                            color:
+                            Color(0xFFEF4444).withOpacity(0.3))),
                     child: Row(children: [
                       Icon(Icons.error_outline,
-                          color: Color(0xFFEF4444),
-                          size: 20),
+                          color: Color(0xFFEF4444), size: 20),
                       SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -1184,8 +986,7 @@ class AddOfferProductPage extends StatelessWidget {
                             style: TextStyle(
                                 fontSize: 12,
                                 color: Color(0xFFEF4444),
-                                fontWeight:
-                                FontWeight.w500)),
+                                fontWeight: FontWeight.w500)),
                       ),
                     ]),
                   ),
@@ -1194,19 +995,14 @@ class AddOfferProductPage extends StatelessWidget {
                   child: ElevatedButton.icon(
                     onPressed: isAtLimit
                         ? null
-                        : controller
-                        .generateVariantsFromConfiguration,
+                        : controller.generateVariantsFromConfiguration,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isAtLimit
-                          ? Colors.grey
-                          : Color(0xFF10B981),
-                      padding: EdgeInsets.symmetric(
-                          vertical: 14),
+                      backgroundColor:
+                      isAtLimit ? Colors.grey : Color(0xFF10B981),
+                      padding: EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
-                          borderRadius:
-                          BorderRadius.circular(12)),
-                      disabledBackgroundColor:
-                      Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(12)),
+                      disabledBackgroundColor: Colors.grey.shade300,
                     ),
                     icon: Icon(Icons.auto_awesome),
                     label: Text(
@@ -1214,8 +1010,7 @@ class AddOfferProductPage extends StatelessWidget {
                             ? "Limit Reached"
                             : "Generate All Variants",
                         style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 15)),
+                            fontWeight: FontWeight.w600, fontSize: 15)),
                   ),
                 ),
               ],
@@ -1248,23 +1043,21 @@ class AddOfferProductPage extends StatelessWidget {
                 decoration: BoxDecoration(
                     color: Color(0xFFF9FAFB),
                     borderRadius: BorderRadius.circular(8),
-                    border:
-                    Border.all(color: Color(0xFFE5E7EB))),
+                    border: Border.all(color: Color(0xFFE5E7EB))),
                 child: TextField(
-                  controller:
-                  controller.primaryValueController,
+                  controller: controller.primaryValueController,
                   decoration: InputDecoration(
                       hintText: "e.g., Green, Blue",
                       hintStyle: TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF9CA3AF)),
+                          fontSize: 13, color: Color(0xFF9CA3AF)),
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.symmetric(
                           horizontal: 12, vertical: 12)),
                   onSubmitted: (value) {
-                    if (value.trim().isNotEmpty) {
-                      controller
-                          .addPrimaryValue(value.trim());
+                    if (value
+                        .trim()
+                        .isNotEmpty) {
+                      controller.addPrimaryValue(value.trim());
                     }
                   },
                 ),
@@ -1273,36 +1066,29 @@ class AddOfferProductPage extends StatelessWidget {
             SizedBox(width: 8),
             ElevatedButton(
               onPressed: () {
-                final value = controller
-                    .primaryValueController.text
-                    .trim();
-                if (value.isNotEmpty)
-                  controller.addPrimaryValue(value);
+                final value =
+                controller.primaryValueController.text.trim();
+                if (value.isNotEmpty) controller.addPrimaryValue(value);
               },
               style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFF3B82F6),
                   padding: EdgeInsets.symmetric(
                       horizontal: 20, vertical: 12),
                   shape: RoundedRectangleBorder(
-                      borderRadius:
-                      BorderRadius.circular(8))),
+                      borderRadius: BorderRadius.circular(8))),
               child: Text("Add",
-                  style: TextStyle(
-                      fontWeight: FontWeight.w600)),
+                  style: TextStyle(fontWeight: FontWeight.w600)),
             ),
           ]),
-
           if (primarySelected) ...[
             SizedBox(height: 20),
             Container(
               padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
-                  color:
-                  Color(0xFF3B82F6).withOpacity(0.1),
+                  color: Color(0xFF3B82F6).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                      color: Color(0xFF3B82F6)
-                          .withOpacity(0.3))),
+                      color: Color(0xFF3B82F6).withOpacity(0.3))),
               child: Row(children: [
                 Icon(Icons.check_circle,
                     color: Color(0xFF3B82F6), size: 20),
@@ -1317,7 +1103,8 @@ class AddOfferProductPage extends StatelessWidget {
             ),
             SizedBox(height: 20),
             Text(
-                "Step 2: Add Values for ${controller.currentPrimaryValue.value}",
+                "Step 2: Add Values for ${controller.currentPrimaryValue
+                    .value}",
                 style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -1325,9 +1112,8 @@ class AddOfferProductPage extends StatelessWidget {
             SizedBox(height: 8),
             Text(
                 "e.g., For Green add 'S'; For Blue add 'M', 'L', 'XL'",
-                style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF6B7280))),
+                style:
+                TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
             SizedBox(height: 12),
             if (controller.currentSecondaryValues.isNotEmpty)
               Container(
@@ -1336,24 +1122,23 @@ class AddOfferProductPage extends StatelessWidget {
                 decoration: BoxDecoration(
                     color: Color(0xFFF9FAFB),
                     borderRadius: BorderRadius.circular(8),
-                    border:
-                    Border.all(color: Color(0xFFE5E7EB))),
+                    border: Border.all(color: Color(0xFFE5E7EB))),
                 child: Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: controller.currentSecondaryValues
-                      .map((value) => Chip(
-                    label: Text(value),
-                    deleteIcon:
-                    Icon(Icons.close, size: 18),
-                    onDeleted: () => controller
-                        .removeSecondaryValue(value),
-                    backgroundColor: Color(0xFF3B82F6)
-                        .withOpacity(0.1),
-                    labelStyle: TextStyle(
-                        color: Color(0xFF3B82F6),
-                        fontWeight: FontWeight.w500),
-                  ))
+                      .map((value) =>
+                      Chip(
+                        label: Text(value),
+                        deleteIcon: Icon(Icons.close, size: 18),
+                        onDeleted: () =>
+                            controller.removeSecondaryValue(value),
+                        backgroundColor:
+                        Color(0xFF3B82F6).withOpacity(0.1),
+                        labelStyle: TextStyle(
+                            color: Color(0xFF3B82F6),
+                            fontWeight: FontWeight.w500),
+                      ))
                       .toList(),
                 ),
               ),
@@ -1362,27 +1147,22 @@ class AddOfferProductPage extends StatelessWidget {
                 child: Container(
                   decoration: BoxDecoration(
                       color: Color(0xFFF9FAFB),
-                      borderRadius:
-                      BorderRadius.circular(8),
-                      border: Border.all(
-                          color: Color(0xFFE5E7EB))),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Color(0xFFE5E7EB))),
                   child: TextField(
-                    controller:
-                    controller.secondaryValueController,
+                    controller: controller.secondaryValueController,
                     decoration: InputDecoration(
                         hintText: "e.g., S",
                         hintStyle: TextStyle(
-                            fontSize: 13,
-                            color: Color(0xFF9CA3AF)),
+                            fontSize: 13, color: Color(0xFF9CA3AF)),
                         border: InputBorder.none,
-                        contentPadding:
-                        EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 12)),
+                        contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 12)),
                     onSubmitted: (value) {
-                      if (value.trim().isNotEmpty) {
-                        controller
-                            .addSecondaryValue(value.trim());
+                      if (value
+                          .trim()
+                          .isNotEmpty) {
+                        controller.addSecondaryValue(value.trim());
                       }
                     },
                   ),
@@ -1391,9 +1171,8 @@ class AddOfferProductPage extends StatelessWidget {
               SizedBox(width: 8),
               ElevatedButton(
                 onPressed: () {
-                  final value = controller
-                      .secondaryValueController.text
-                      .trim();
+                  final value =
+                  controller.secondaryValueController.text.trim();
                   if (value.isNotEmpty)
                     controller.addSecondaryValue(value);
                 },
@@ -1402,11 +1181,9 @@ class AddOfferProductPage extends StatelessWidget {
                     padding: EdgeInsets.symmetric(
                         horizontal: 20, vertical: 12),
                     shape: RoundedRectangleBorder(
-                        borderRadius:
-                        BorderRadius.circular(8))),
+                        borderRadius: BorderRadius.circular(8))),
                 child: Text("Add",
-                    style: TextStyle(
-                        fontWeight: FontWeight.w600)),
+                    style: TextStyle(fontWeight: FontWeight.w600)),
               ),
             ]),
             SizedBox(height: 16),
@@ -1414,20 +1191,16 @@ class AddOfferProductPage extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed:
-                  controller.savePrimaryWithSecondary,
+                  onPressed: controller.savePrimaryWithSecondary,
                   style: ElevatedButton.styleFrom(
                       backgroundColor: Color(0xFF10B981),
-                      padding: EdgeInsets.symmetric(
-                          vertical: 14),
+                      padding: EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
-                          borderRadius:
-                          BorderRadius.circular(12))),
+                          borderRadius: BorderRadius.circular(12))),
                   icon: Icon(Icons.save),
                   label: Text("Save Configuration",
                       style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15)),
+                          fontWeight: FontWeight.w600, fontSize: 15)),
                 ),
               ),
           ],
@@ -1514,8 +1287,7 @@ class AddOfferProductPage extends StatelessWidget {
               IconButton(
                 icon: Icon(Icons.delete_outline,
                     color: Color(0xFFEF4444), size: 20),
-                onPressed: () =>
-                    _showDeleteDialog(context, index),
+                onPressed: () => _showDeleteDialog(context, index),
               ),
             ]),
           ),
@@ -1527,12 +1299,9 @@ class AddOfferProductPage extends StatelessWidget {
                 _buildImagePicker(context, index, variant),
                 SizedBox(height: 20),
                 Row(children: [
-                  Expanded(
-                      child:
-                      _buildPriceField(variant, index)),
+                  Expanded(child: _buildPriceField(variant, index)),
                   SizedBox(width: 12),
-                  Expanded(
-                      child: _buildStockField(variant)),
+                  Expanded(child: _buildStockField(variant)),
                 ]),
                 if (variant.attributes.isNotEmpty) ...[
                   SizedBox(height: 16),
@@ -1543,12 +1312,13 @@ class AddOfferProductPage extends StatelessWidget {
                           color: Color(0xFF1A1A1A))),
                   SizedBox(height: 12),
                   ...variant.attributes.entries.map(
-                          (entry) => Padding(
-                        padding:
-                        EdgeInsets.only(bottom: 12),
-                        child: _buildVariantAttributeField(
-                            entry.key, entry.value),
-                      )),
+                        (entry) =>
+                        Padding(
+                          padding: EdgeInsets.only(bottom: 12),
+                          child: _buildVariantAttributeField(
+                              entry.key, entry.value),
+                        ),
+                  ),
                 ],
               ],
             ),
@@ -1559,8 +1329,7 @@ class AddOfferProductPage extends StatelessWidget {
   }
 
   // ─── PRICE FIELD ─────────────────────────────────────────────────────
-  Widget _buildPriceField(
-      OfferProductVariant variant, int index) {
+  Widget _buildPriceField(OfferProductVariant variant, int index) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1569,18 +1338,17 @@ class AddOfferProductPage extends StatelessWidget {
               color: Color(0xFF10B981).withOpacity(0.05),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                  color:
-                  Color(0xFF10B981).withOpacity(0.3))),
+                  color: Color(0xFF10B981).withOpacity(0.3))),
           child: TextField(
             key: Key('price_$index'),
-            controller: TextEditingController(
-                text: variant.price?.toString() ?? ''),
-            onChanged: (val) => controller.updateVariantPrice(
-                index, double.tryParse(val)),
+            controller:
+            TextEditingController(text: variant.price?.toString() ?? ''),
+            onChanged: (val) =>
+                controller.updateVariantPrice(index, double.tryParse(val)),
             keyboardType:
             TextInputType.numberWithOptions(decimal: true),
-            style: TextStyle(
-                fontSize: 14, fontWeight: FontWeight.w600),
+            style:
+            TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
             decoration: InputDecoration(
               labelText: "Original Price (₹)",
               hintText: "0.00",
@@ -1591,10 +1359,10 @@ class AddOfferProductPage extends StatelessWidget {
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide.none),
-              contentPadding: EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 12),
-              labelStyle: TextStyle(
-                  fontSize: 12, color: Color(0xFF10B981)),
+              contentPadding:
+              EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              labelStyle:
+              TextStyle(fontSize: 12, color: Color(0xFF10B981)),
             ),
           ),
         ),
@@ -1602,20 +1370,18 @@ class AddOfferProductPage extends StatelessWidget {
         Obx(() {
           final _ = controller.variants.length;
           final offerPrice = variant.offerPrice;
-          final discount =
-              controller.discountPercentageCtrl.text;
+          final discount = controller.discountPercentageCtrl.text;
           if (offerPrice != null &&
               variant.price != null &&
               variant.price! > 0) {
             return Container(
-              padding: EdgeInsets.symmetric(
-                  horizontal: 8, vertical: 6),
+              padding:
+              EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               decoration: BoxDecoration(
                   color: Color(0xFFFEF3C7),
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(
-                      color: Color(0xFFF59E0B)
-                          .withOpacity(0.3))),
+                      color: Color(0xFFF59E0B).withOpacity(0.3))),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -1648,18 +1414,17 @@ class AddOfferProductPage extends StatelessWidget {
       decoration: BoxDecoration(
           color: Color(0xFF3B82F6).withOpacity(0.05),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-              color: Color(0xFF3B82F6).withOpacity(0.3))),
+          border:
+          Border.all(color: Color(0xFF3B82F6).withOpacity(0.3))),
       child: TextField(
-        controller: TextEditingController(
-            text: variant.stock?.toString() ?? ''),
+        controller:
+        TextEditingController(text: variant.stock?.toString() ?? ''),
         onChanged: (val) {
           variant.stock = int.tryParse(val);
           controller.variants.refresh();
         },
         keyboardType: TextInputType.number,
-        style: TextStyle(
-            fontSize: 14, fontWeight: FontWeight.w600),
+        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
         decoration: InputDecoration(
           labelText: "Stock",
           hintText: "0",
@@ -1670,18 +1435,17 @@ class AddOfferProductPage extends StatelessWidget {
           border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide.none),
-          contentPadding: EdgeInsets.symmetric(
-              horizontal: 12, vertical: 12),
-          labelStyle: TextStyle(
-              fontSize: 12, color: Color(0xFF3B82F6)),
+          contentPadding:
+          EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          labelStyle:
+          TextStyle(fontSize: 12, color: Color(0xFF3B82F6)),
         ),
       ),
     );
   }
 
-  // ─── VARIANT ATTRIBUTE FIELD (read-only) ─────────────────────────────
-  Widget _buildVariantAttributeField(
-      String attribute, String value) {
+  // ─── VARIANT ATTRIBUTE FIELD ──────────────────────────────────────────
+  Widget _buildVariantAttributeField(String attribute, String value) {
     return Container(
       decoration: BoxDecoration(
           color: Color(0xFFF9FAFB),
@@ -1690,15 +1454,14 @@ class AddOfferProductPage extends StatelessWidget {
       child: TextField(
         controller: TextEditingController(text: value),
         enabled: false,
-        style: TextStyle(
-            fontSize: 14, color: Color(0xFF6B7280)),
+        style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
         decoration: InputDecoration(
           labelText: attribute,
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(
-              horizontal: 12, vertical: 12),
-          labelStyle: TextStyle(
-              fontSize: 13, color: Color(0xFF6B7280)),
+          contentPadding:
+          EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          labelStyle:
+          TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
         ),
       ),
     );
@@ -1728,17 +1491,14 @@ class AddOfferProductPage extends StatelessWidget {
               decoration: BoxDecoration(
                   color: Color(0xFFF9FAFB),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                      color: Color(0xFFE5E7EB), width: 2)),
+                  border:
+                  Border.all(color: Color(0xFFE5E7EB), width: 2)),
               child: imagePath == null
                   ? Column(
-                mainAxisAlignment:
-                MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                      Icons.add_photo_alternate_outlined,
-                      size: 40,
-                      color: Color(0xFF3B82F6)),
+                  Icon(Icons.add_photo_alternate_outlined,
+                      size: 40, color: Color(0xFF3B82F6)),
                   SizedBox(height: 8),
                   Text("Tap to add image",
                       style: TextStyle(
@@ -1750,8 +1510,7 @@ class AddOfferProductPage extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   ClipRRect(
-                    borderRadius:
-                    BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(10),
                     child: Image.file(File(imagePath),
                         fit: BoxFit.cover),
                   ),
@@ -1764,14 +1523,13 @@ class AddOfferProductPage extends StatelessWidget {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                                color: Colors.black
-                                    .withOpacity(0.2),
+                                color:
+                                Colors.black.withOpacity(0.2),
                                 blurRadius: 8)
                           ]),
                       child: IconButton(
                         icon: Icon(Icons.edit,
-                            color: Color(0xFF3B82F6),
-                            size: 18),
+                            color: Color(0xFF3B82F6), size: 18),
                         onPressed: () =>
                             controller.pickImage(index),
                       ),
@@ -1838,20 +1596,19 @@ class AddOfferProductPage extends StatelessWidget {
           border: Border.all(color: Color(0xFFE5E7EB))),
       child: TextField(
         onChanged: onChanged,
-        style: TextStyle(
-            fontSize: 15, color: Color(0xFF1A1A1A)),
+        style: TextStyle(fontSize: 15, color: Color(0xFF1A1A1A)),
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
           prefixIcon:
           Icon(icon, color: Color(0xFF6B7280), size: 20),
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(
-              horizontal: 16, vertical: 16),
-          labelStyle: TextStyle(
-              color: Color(0xFF6B7280), fontSize: 14),
-          hintStyle: TextStyle(
-              color: Color(0xFF9CA3AF), fontSize: 14),
+          contentPadding:
+          EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          labelStyle:
+          TextStyle(color: Color(0xFF6B7280), fontSize: 14),
+          hintStyle:
+          TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
         ),
       ),
     );
@@ -1860,34 +1617,33 @@ class AddOfferProductPage extends StatelessWidget {
   void _showDeleteDialog(BuildContext context, int index) {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16)),
-        title: Row(children: [
-          Icon(Icons.warning_amber_rounded,
-              color: Color(0xFFEF4444)),
-          SizedBox(width: 12),
-          Text("Remove Variant?"),
-        ]),
-        content: Text(
-            "Are you sure you want to remove this variant?",
-            style: TextStyle(
-                fontSize: 14, color: Color(0xFF6B7280))),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: Text("Cancel")),
-          ElevatedButton(
-            onPressed: () {
-              controller.removeVariant(index);
-              Navigator.of(ctx).pop();
-            },
-            style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFFEF4444)),
-            child: Text("Remove"),
+      builder: (ctx) =>
+          AlertDialog(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16)),
+            title: Row(children: [
+              Icon(Icons.warning_amber_rounded, color: Color(0xFFEF4444)),
+              SizedBox(width: 12),
+              Text("Remove Variant?"),
+            ]),
+            content: Text("Are you sure you want to remove this variant?",
+                style:
+                TextStyle(fontSize: 14, color: Color(0xFF6B7280))),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: Text("Cancel")),
+              ElevatedButton(
+                onPressed: () {
+                  controller.removeVariant(index);
+                  Navigator.of(ctx).pop();
+                },
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFFEF4444)),
+                child: Text("Remove"),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -1900,8 +1656,8 @@ class AddOfferProductPage extends StatelessWidget {
             SizedBox(width: 12),
             Expanded(
                 child: Text("Maximum 10 products limit reached!",
-                    style: TextStyle(
-                        fontWeight: FontWeight.w500))),
+                    style:
+                    TextStyle(fontWeight: FontWeight.w500))),
           ]),
           backgroundColor: Color(0xFFEF4444),
           behavior: SnackBarBehavior.floating,

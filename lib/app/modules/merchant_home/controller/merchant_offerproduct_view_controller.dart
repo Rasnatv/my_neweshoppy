@@ -4,54 +4,67 @@ import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import '../../../data/models/merchant_offerproductviewmodel.dart';
 
-class MerchantOfferProductViewController extends GetxController {
+class MerchantOfferProductController extends GetxController {
+  final offerProducts = <MerchantOfferProductModel>[].obs;
+  final isLoading = false.obs;
   final box = GetStorage();
+  int? _offerId;
 
-  var isLoading = false.obs;
-  var offerProduct = Rxn<MerchantViewOfferProduct>();
-
-  final String apiUrl =
+  final String offerProductUrl =
       "https://rasma.astradevelops.in/e_shoppyy/public/api/view-offer-product";
 
-  @override
-  void onInit() {
-    fetchOfferProduct(1); // offer_id
-    super.onInit();
+  void init(int offerId) {
+    if (_offerId == offerId) return;
+    _offerId = offerId;
+    fetchOfferProduct(offerId);
   }
 
   Future<void> fetchOfferProduct(int offerId) async {
+    isLoading.value = true;
+    offerProducts.clear();
+    final token = box.read("auth_token") ?? "";
+
+    if (token.isEmpty) {
+      isLoading.value = false;
+      Get.snackbar("Error", "Token missing. Please login again.");
+      return;
+    }
+
     try {
-      isLoading(true);
-
-      String token = box.read('auth_token') ?? "";
-
       final response = await http.post(
-        Uri.parse(apiUrl),
+        Uri.parse(offerProductUrl),
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token', // 🔑 TOKEN ADDED
+          "Accept": "application/json",
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
         },
-        body: jsonEncode({
-          "offer_id": offerId,
-        }),
+        body: jsonEncode({"offer_id": offerId}),
       );
 
       if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body);
-
-        if (jsonData['status'] == 1) {
-          offerProduct.value =
-              MerchantViewOfferProduct.fromJson(jsonData['data']);
+        print("API RESPONSE: ${response.body}"); // ✅ debug — remove after fix
+        final data = jsonDecode(response.body);
+        if (data['status'] == 1) {
+          if (data['data'] is List) {
+            offerProducts.value = (data['data'] as List)
+                .map((e) => MerchantOfferProductModel.fromJson(e))
+                .toList();
+          } else if (data['data'] is Map) {
+            offerProducts.value = [
+              MerchantOfferProductModel.fromJson(
+                  data['data'] as Map<String, dynamic>)
+            ];
+          }
         } else {
-          Get.snackbar("Error", jsonData['message']);
+          Get.snackbar("Error", data['message'] ?? "Failed to load product");
         }
       } else {
-        Get.snackbar("Error", "Server Error ${response.statusCode}");
+        Get.snackbar("Error", "Server error: ${response.statusCode}");
       }
     } catch (e) {
-      Get.snackbar("Exception", e.toString());
+      Get.snackbar("Error", "Something went wrong: $e");
     } finally {
-      isLoading(false);
+      isLoading.value = false;
     }
   }
 }

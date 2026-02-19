@@ -1,3 +1,4 @@
+
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -6,7 +7,7 @@ import 'package:http/http.dart' as http;
 import '../../../data/models/merchant_offerbannermodel.dart';
 
 class MerchantOfferBannerController extends GetxController {
-  final offers = <MerchantOffer>[].obs;
+  final offer= <MerchantOffersviewmodel>[].obs;
   final isLoading = false.obs;
   final box = GetStorage();
 
@@ -43,9 +44,9 @@ class MerchantOfferBannerController extends GetxController {
         final data = jsonDecode(response.body);
 
         if (data['status'] == 1) {
-          offers.value = List.from(data['data'])
-              .map((e) => MerchantOffer.fromJson(e))
-              .toList();
+          final List rawList = data['data'] ?? [];
+          offer.value =
+              rawList.map((e) => MerchantOffersviewmodel.fromJson(e)).toList();
         } else {
           Get.snackbar("Error", data['message'] ?? "Failed to load offers");
         }
@@ -53,13 +54,10 @@ class MerchantOfferBannerController extends GetxController {
         Get.snackbar("Error", "Server error: ${response.statusCode}");
       }
     } catch (e) {
-      Get.snackbar("Error", "Failed to load offers");
+      Get.snackbar("Error", "Something went wrong: $e");
     } finally {
       isLoading.value = false;
     }
   }
 
-  void deleteOffer(int index) {
-    offers.removeAt(index);
-  }
 }

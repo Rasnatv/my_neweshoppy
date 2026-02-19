@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -10,7 +9,6 @@ import 'package:http/http.dart' as http;
 class IntegratedOfferController extends GetxController {
   final box = GetStorage();
 
-  // API URLs
   final String categoriesUrl =
       "https://rasma.astradevelops.in/e_shoppyy/public/api/merchant/categories";
   final String createOfferUrl =
@@ -22,7 +20,7 @@ class IntegratedOfferController extends GetxController {
   var offerCreated = false.obs;
   var createdOfferId = Rx<int?>(null);
   var createdOfferBannerUrl = ''.obs;
-  var totalProductsAdded = 0.obs; // tracks successfully saved products
+  var totalProductsAdded = 0.obs;
 
   // ============== OFFER DETAILS ==============
   final TextEditingController discountPercentageCtrl = TextEditingController();
@@ -34,7 +32,7 @@ class IntegratedOfferController extends GetxController {
   var selectedCategoryId = 0.obs;
   var productDescription = ''.obs;
 
-  // Loading states
+  // ============== LOADING STATES ==============
   var isLoadingCategories = false.obs;
   var isCreatingOffer = false.obs;
   var isSubmitting = false.obs;
@@ -51,15 +49,12 @@ class IntegratedOfferController extends GetxController {
   var selectedVariantType = ''.obs;
   var currentPrimaryValue = ''.obs;
   var currentSecondaryValues = <String>[].obs;
-
   final TextEditingController primaryValueController = TextEditingController();
   final TextEditingController secondaryValueController =
   TextEditingController();
 
   // ============== VARIANTS ==============
   var variants = <OfferProductVariant>[].obs;
-
-  // ============== IMAGE PICKER ==============
   final ImagePicker picker = ImagePicker();
 
   @override
@@ -83,7 +78,7 @@ class IntegratedOfferController extends GetxController {
           "Success",
           "Banner image selected",
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Color(0xFF10B981),
+          backgroundColor: const Color(0xFF10B981),
           colorText: Colors.white,
         );
       }
@@ -165,7 +160,7 @@ class IntegratedOfferController extends GetxController {
                 variantAttributes: variantAttrs,
               );
             } catch (e) {
-              print("Error parsing category: $e");
+              debugPrint("Error parsing category: $e");
             }
           }
         } else {
@@ -173,8 +168,8 @@ class IntegratedOfferController extends GetxController {
               "Error", body['message'] ?? "Failed to fetch categories");
         }
       } else {
-        Get.snackbar("Error",
-            "Failed to fetch categories: ${response.statusCode}");
+        Get.snackbar(
+            "Error", "Failed to fetch categories: ${response.statusCode}");
       }
     } catch (e) {
       Get.snackbar("Error", "Failed to fetch categories: $e");
@@ -184,16 +179,21 @@ class IntegratedOfferController extends GetxController {
   }
 
   // ============== STEP 1: CREATE OFFER ==============
+  // Called ONLY from the FAB — never from inside the card
   Future<void> createOffer() async {
+    // Guard: prevent double-call or re-creating after success
+    if (isCreatingOffer.value || offerCreated.value) return;
+
     final discountValue =
     double.tryParse(discountPercentageCtrl.text.trim());
     if (discountValue == null ||
         discountValue <= 0 ||
         discountValue > 100) {
-      Get.snackbar("Validation Error",
-          "Valid discount percentage is required (1-100)");
+      Get.snackbar(
+          "Validation Error", "Valid discount percentage is required (1-100)");
       return;
     }
+
     if (bannerImage.value == null) {
       Get.snackbar("Validation Error", "Offer banner is required");
       return;
@@ -201,6 +201,7 @@ class IntegratedOfferController extends GetxController {
 
     try {
       isCreatingOffer.value = true;
+
       final token = box.read("auth_token");
       if (token == null) {
         Get.snackbar("Error", "Authentication token not found");
@@ -210,18 +211,16 @@ class IntegratedOfferController extends GetxController {
       final bytes = await bannerImage.value!.readAsBytes();
       final extension =
       bannerImage.value!.path.split('.').last.toLowerCase();
-      final mimeType =
-      extension == 'png' ? 'image/png' : 'image/jpeg';
+      final mimeType = extension == 'png' ? 'image/png' : 'image/jpeg';
       final offerBannerBase64 =
           "data:$mimeType;base64,${base64Encode(bytes)}";
 
+      // Only send discount_percentage + offer_banner here — ONCE
       final requestBody = {
-        "discount_percentage":
-        int.parse(discountPercentageCtrl.text.trim()),
+        "discount_percentage": discountValue.toInt(),
         "offer_banner": offerBannerBase64,
       };
 
-      print("📤 Creating offer...");
       final response = await http.post(
         Uri.parse(createOfferUrl),
         headers: {
@@ -232,9 +231,6 @@ class IntegratedOfferController extends GetxController {
         body: jsonEncode(requestBody),
       );
 
-      print("   Status: ${response.statusCode}");
-      print("   Body: ${response.body}");
-
       final body = jsonDecode(response.body);
 
       if (response.statusCode == 200 ||
@@ -242,27 +238,29 @@ class IntegratedOfferController extends GetxController {
           body['status'] == 1 ||
           body['status'] == true) {
         final data = body['data'];
+
         createdOfferId.value = data['offer_id'] is int
             ? data['offer_id']
             : int.parse(data['offer_id'].toString());
+
         createdOfferBannerUrl.value =
             data['offer_banner']?.toString() ?? '';
+
+        // Lock discount + banner from further edits
         offerCreated.value = true;
-        totalProductsAdded.value = 0; // reset counter for new offer
+        totalProductsAdded.value = 0;
 
         Get.snackbar(
           "Offer Created!",
           "Discount: ${data['discount_percentage']}% | Now add your products below.",
-          backgroundColor: Color(0xFF10B981),
+          backgroundColor: const Color(0xFF10B981),
           colorText: Colors.white,
-          duration: Duration(seconds: 4),
+          duration: const Duration(seconds: 4),
           snackPosition: SnackPosition.BOTTOM,
         );
       } else {
-        String errorMessage =
-            body['message'] ?? "Failed to create offer";
-        if (body['errors'] != null)
-          errorMessage += "\n${body['errors']}";
+        String errorMessage = body['message'] ?? "Failed to create offer";
+        if (body['errors'] != null) errorMessage += "\n${body['errors']}";
         Get.snackbar("Error", errorMessage,
             backgroundColor: Colors.red, colorText: Colors.white);
       }
@@ -277,6 +275,7 @@ class IntegratedOfferController extends GetxController {
   // ============== CATEGORY CHANGE ==============
   void onCategoryChanged(String category) {
     selectedCategory.value = category;
+
     final cat = apiCategories.firstWhere(
           (c) => c.name == category,
       orElse: () => OfferCategoryApiModel(
@@ -303,12 +302,10 @@ class IntegratedOfferController extends GetxController {
     return config != null && config.variantAttributes.isNotEmpty;
   }
 
-  // ============== COMMON ATTRIBUTES ==============
   void setCommonAttribute(String attribute, String value) {
     commonAttributes[attribute] = value;
   }
 
-  // ============== VARIANT TYPE SELECTION ==============
   void onVariantTypeSelected(String variantType) {
     selectedVariantType.value = variantType;
     currentPrimaryValue.value = '';
@@ -319,21 +316,25 @@ class IntegratedOfferController extends GetxController {
 
   void addPrimaryValue(String value) {
     if (value.trim().isEmpty) return;
+
     if (selectedVariantType.value.isEmpty) {
       Get.snackbar("Error", "Please select a variant type first",
           snackPosition: SnackPosition.BOTTOM);
       return;
     }
+
     if (!variantTypeConfigurations
         .containsKey(selectedVariantType.value)) {
       variantTypeConfigurations[selectedVariantType.value] = {};
     }
+
     if (variantTypeConfigurations[selectedVariantType.value]!
         .containsKey(value)) {
       Get.snackbar("Duplicate", "$value already exists",
           snackPosition: SnackPosition.BOTTOM);
       return;
     }
+
     currentPrimaryValue.value = value;
     currentSecondaryValues.clear();
     primaryValueController.clear();
@@ -342,6 +343,7 @@ class IntegratedOfferController extends GetxController {
 
   void addSecondaryValue(String value) {
     if (value.trim().isEmpty) return;
+
     if (currentPrimaryValue.value.isEmpty) {
       Get.snackbar(
           "Error",
@@ -349,6 +351,7 @@ class IntegratedOfferController extends GetxController {
           snackPosition: SnackPosition.BOTTOM);
       return;
     }
+
     if (!currentSecondaryValues.contains(value)) {
       currentSecondaryValues.add(value);
       secondaryValueController.clear();
@@ -371,25 +374,30 @@ class IntegratedOfferController extends GetxController {
           snackPosition: SnackPosition.BOTTOM);
       return;
     }
+
     if (currentSecondaryValues.isEmpty) {
       Get.snackbar(
           "Error", "Please add at least one secondary attribute",
           snackPosition: SnackPosition.BOTTOM);
       return;
     }
-    variantTypeConfigurations[selectedVariantType
-        .value]![currentPrimaryValue.value] =
-        List.from(currentSecondaryValues);
+
+    variantTypeConfigurations[selectedVariantType.value]![
+    currentPrimaryValue.value] = List.from(currentSecondaryValues);
+
     currentPrimaryValue.value = '';
     currentSecondaryValues.clear();
     primaryValueController.clear();
     secondaryValueController.clear();
     variantTypeConfigurations.refresh();
 
-    Get.snackbar("Success", "Configuration saved",
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Color(0xFF10B981),
-        colorText: Colors.white);
+    Get.snackbar(
+      "Success",
+      "Configuration saved",
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: const Color(0xFF10B981),
+      colorText: Colors.white,
+    );
   }
 
   void removePrimaryValue(String primaryKey) {
@@ -409,9 +417,12 @@ class IntegratedOfferController extends GetxController {
           snackPosition: SnackPosition.BOTTOM);
       return;
     }
+
     variants.clear();
-    List<Map<String, String>> combinations =
+
+    final List<Map<String, String>> combinations =
     _generateValidCombinations();
+
     for (var combo in combinations) {
       variants.add(OfferProductVariant(
         attributes: combo,
@@ -420,21 +431,27 @@ class IntegratedOfferController extends GetxController {
         stock: null,
       ));
     }
+
     Get.snackbar(
-        "Success", "${variants.length} variant(s) generated",
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Color(0xFF10B981),
-        colorText: Colors.white);
+      "Success",
+      "${variants.length} variant(s) generated",
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: const Color(0xFF10B981),
+      colorText: Colors.white,
+    );
   }
 
   List<Map<String, String>> _generateValidCombinations() {
-    List<Map<String, String>> results = [];
+    final List<Map<String, String>> results = [];
+
     for (var typeEntry in variantTypeConfigurations.entries) {
-      String variantType = typeEntry.key;
-      Map<String, List<String>> primaryToSecondary = typeEntry.value;
+      final String variantType = typeEntry.key;
+      final Map<String, List<String>> primaryToSecondary = typeEntry.value;
+
       for (var primaryEntry in primaryToSecondary.entries) {
-        String primaryValue = primaryEntry.key;
-        List<String> secondaryValues = primaryEntry.value;
+        final String primaryValue = primaryEntry.key;
+        final List<String> secondaryValues = primaryEntry.value;
+
         for (var secondaryValue in secondaryValues) {
           results.add({
             variantType: primaryValue,
@@ -443,13 +460,13 @@ class IntegratedOfferController extends GetxController {
         }
       }
     }
+
     return results;
   }
 
   String _getSecondaryAttributeName() {
     final config = categoryConfigs[selectedCategory.value];
-    if (config == null || config.variantAttributes.length < 2)
-      return "size";
+    if (config == null || config.variantAttributes.length < 2) return "size";
     return config.variantAttributes.length > 1
         ? config.variantAttributes[1]
         : "attribute";
@@ -463,12 +480,14 @@ class IntegratedOfferController extends GetxController {
 
   Future<void> pickImage(int index) async {
     if (index < 0 || index >= variants.length) return;
+
     final pickedFile = await picker.pickImage(
       source: ImageSource.gallery,
       maxWidth: 1920,
       maxHeight: 1920,
       imageQuality: 85,
     );
+
     if (pickedFile != null) {
       variants[index].imagePath = pickedFile.path;
       variants.refresh();
@@ -491,19 +510,20 @@ class IntegratedOfferController extends GetxController {
     return price - (price * discount / 100);
   }
 
-  // ============== STEP 2: VALIDATE PRODUCT FORM ==============
+  // ============== VALIDATE PRODUCT FORM ==============
   bool validateProductForm() {
     if (productName.value.trim().isEmpty) {
       Get.snackbar("Validation Error", "Product name is required");
       return false;
     }
+
     if (selectedCategory.value.isEmpty) {
       Get.snackbar("Validation Error", "Category is required");
       return false;
     }
+
     if (productDescription.value.trim().isEmpty) {
-      Get.snackbar(
-          "Validation Error", "Product description is required");
+      Get.snackbar("Validation Error", "Product description is required");
       return false;
     }
 
@@ -518,49 +538,51 @@ class IntegratedOfferController extends GetxController {
     }
 
     if (variants.isEmpty) {
-      Get.snackbar(
-          "Validation Error", "At least one variant is required");
+      Get.snackbar("Validation Error", "At least one variant is required");
       return false;
     }
 
     for (int i = 0; i < variants.length; i++) {
       final variant = variants[i];
       if (variant.price == null || variant.price! <= 0) {
-        Get.snackbar("Validation Error",
-            "Variant ${i + 1}: Valid price is required");
+        Get.snackbar(
+            "Validation Error", "Variant ${i + 1}: Valid price is required");
         return false;
       }
       if (variant.stock == null || variant.stock! < 0) {
-        Get.snackbar("Validation Error",
-            "Variant ${i + 1}: Valid stock is required");
+        Get.snackbar(
+            "Validation Error", "Variant ${i + 1}: Valid stock is required");
         return false;
       }
       if (variant.imagePath == null) {
-        Get.snackbar("Validation Error",
-            "Variant ${i + 1}: Image is required");
+        Get.snackbar(
+            "Validation Error", "Variant ${i + 1}: Image is required");
         return false;
       }
     }
+
     return true;
   }
 
-  bool validateForm() => validateProductForm();
-
   // ============== STEP 2: ADD PRODUCT TO OFFER ==============
+  // Only sends product data — discount % and banner are NOT re-sent here
   Future<void> saveOfferProduct() async {
+    // Guard: prevent double submission
+    if (isSubmitting.value) return;
+
     if (createdOfferId.value == null) {
-      Get.snackbar("Error",
-          "Please create the offer first before adding products.");
+      Get.snackbar(
+          "Error", "Please create the offer first before adding products.");
       return;
     }
+
     if (!validateProductForm()) return;
 
-    // Check 10-product limit
     if (totalProductsAdded.value >= 10) {
       Get.snackbar(
         "Limit Reached",
         "Maximum 10 products allowed per offer.",
-        backgroundColor: Color(0xFFEF4444),
+        backgroundColor: const Color(0xFFEF4444),
         colorText: Colors.white,
       );
       return;
@@ -568,15 +590,23 @@ class IntegratedOfferController extends GetxController {
 
     try {
       isSubmitting.value = true;
+
       final token = box.read("auth_token");
       if (token == null) {
         Get.snackbar("Error", "Authentication token not found");
         return;
       }
 
-      List<Map<String, dynamic>> variantsData = [];
+      // Use the already-stored discount from when the offer was created
+      // Do NOT re-read discountPercentageCtrl here — offer is already locked
+      final double discountValue =
+          double.tryParse(discountPercentageCtrl.text.trim()) ?? 0;
+
+      final List<Map<String, dynamic>> variantsData = [];
+
       for (int i = 0; i < variants.length; i++) {
         final variant = variants[i];
+
         String? imageBase64;
         if (variant.imagePath != null) {
           final imageFile = File(variant.imagePath!);
@@ -589,25 +619,22 @@ class IntegratedOfferController extends GetxController {
           "data:$mimeType;base64,${base64Encode(bytes)}";
         }
 
-        final double discount =
-            double.tryParse(discountPercentageCtrl.text.trim()) ??
-                0;
         double? offerPrice;
-        if (discount > 0 && variant.price != null) {
+        if (discountValue > 0 && variant.price != null) {
           offerPrice =
-              variant.price! - (variant.price! * discount / 100);
+              variant.price! - (variant.price! * discountValue / 100);
         }
 
         variantsData.add({
           "attributes": variant.attributes,
           "price": variant.price!.round(),
-          if (offerPrice != null)
-            "offer_price": offerPrice.round(),
+          if (offerPrice != null) "offer_price": offerPrice.round(),
           "stock": variant.stock,
-          "image": imageBase64,
+          if (imageBase64 != null) "image": imageBase64,
         });
       }
 
+      // Only send offer_id + products — no banner, no discount here
       final requestBody = {
         "offer_id": createdOfferId.value,
         "products": [
@@ -621,10 +648,6 @@ class IntegratedOfferController extends GetxController {
         ],
       };
 
-      print(
-          "📤 Adding product to offer ID: ${createdOfferId.value}");
-      print("📦 Request: ${jsonEncode(requestBody)}");
-
       final response = await http.post(
         Uri.parse(addOfferProductUrl),
         headers: {
@@ -635,41 +658,36 @@ class IntegratedOfferController extends GetxController {
         body: jsonEncode(requestBody),
       );
 
-      print("📥 Status: ${response.statusCode}");
-      print("   Body: ${response.body}");
-
       final body = jsonDecode(response.body);
 
       if (response.statusCode == 200 ||
           response.statusCode == 201 ||
           body['status'] == 1 ||
           body['status'] == true) {
-        totalProductsAdded.value++; // ← increment saved products count
-
+        totalProductsAdded.value++;
         final remaining = 10 - totalProductsAdded.value;
+
         Get.snackbar(
           "Product ${totalProductsAdded.value} Added! ✓",
           remaining > 0
               ? "${body['message'] ?? 'Product added successfully'} · $remaining slot(s) left"
               : "All 10 product slots used. Tap Done to finish.",
-          backgroundColor: Color(0xFF10B981),
+          backgroundColor: const Color(0xFF10B981),
           colorText: Colors.white,
-          duration: Duration(seconds: 3),
+          duration: const Duration(seconds: 3),
           snackPosition: SnackPosition.BOTTOM,
         );
+
         _clearProductForm();
       } else {
-        String errorMessage =
-            body['message'] ?? "Failed to add product";
-        if (body['errors'] != null)
-          errorMessage += "\n${body['errors']}";
+        String errorMessage = body['message'] ?? "Failed to add product";
+        if (body['errors'] != null) errorMessage += "\n${body['errors']}";
         Get.snackbar("Error", errorMessage,
             backgroundColor: Colors.red,
             colorText: Colors.white,
-            duration: Duration(seconds: 4));
+            duration: const Duration(seconds: 4));
       }
     } catch (e) {
-      print("💥 Exception: $e");
       Get.snackbar("Error", "Failed to add product: $e",
           backgroundColor: Colors.red, colorText: Colors.white);
     } finally {
@@ -698,17 +716,20 @@ class IntegratedOfferController extends GetxController {
     offerCreated.value = false;
     createdOfferId.value = null;
     createdOfferBannerUrl.value = '';
-    totalProductsAdded.value = 0; // reset on full clear
+    totalProductsAdded.value = 0;
     _clearProductForm();
   }
 
   void finishOffer() {
-    Get.back(result: {
+    final result = {
       'success': true,
       'offer_id': createdOfferId.value,
       'total_products': totalProductsAdded.value,
-    });
+    };
     _clearForm();
+    Get.back(result: result);
+    // Delete controller so next visit starts fresh
+    Get.delete<IntegratedOfferController>();
   }
 
   @override
@@ -721,6 +742,7 @@ class IntegratedOfferController extends GetxController {
 }
 
 // ============== MODELS ==============
+
 class OfferCategoryConfig {
   final int id;
   final List<String> commonAttributes;
