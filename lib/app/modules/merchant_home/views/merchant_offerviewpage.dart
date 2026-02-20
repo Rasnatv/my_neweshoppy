@@ -27,7 +27,8 @@ class MerchantOfferViewPage extends StatelessWidget {
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           InkWell(
-            onTap: () => Get.to(() => AddOfferProductPage()),
+            onTap: () {},
+            //=> Get.to(() => AddOfferProductPage()),
             child: Container(
               margin: const EdgeInsets.only(right: 12),
               padding:

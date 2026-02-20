@@ -2,20 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_colors.dart';
 import '../../../data/models/offer_productdetailmodel.dart';
-import '../controller/merchant_offerproduct_detailcontroller.dart';
 
+import '../controller/merchant_offerproduct_detailcontroller.dart';
 
 class MerchnantOfferProductDetailScreen extends StatelessWidget {
   final int offerId;
 
   MerchnantOfferProductDetailScreen({super.key, required this.offerId});
 
-  late final MerchantOfferProductDetailController controller =
-  Get.put(MerchantOfferProductDetailController());
-
   @override
   Widget build(BuildContext context) {
-    controller.fetchProductDetail(offerId);
+    final controller = Get.put(MerchantOfferProductDetailController());
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.fetchProductDetail(offerId);
+    });
 
     return Scaffold(
       backgroundColor: const Color(0xFFF2F3F7),
@@ -38,12 +39,12 @@ class MerchnantOfferProductDetailScreen extends StatelessWidget {
         if (product == null) {
           return const Center(child: Text("No details available."));
         }
-        return _buildBody(product);
+        return _buildBody(product, controller);
       }),
     );
   }
 
-  Widget _buildBody(MerchantOfferProductDetailModel product) {
+  Widget _buildBody(MerchantOfferProductDetailModel product, MerchantOfferProductDetailController controller) {
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       child: Column(
@@ -54,7 +55,7 @@ class MerchnantOfferProductDetailScreen extends StatelessWidget {
           if (product.productAttributes.commonAttributes.isNotEmpty)
             _attributesCard(product),
           if (product.productAttributes.variants.isNotEmpty)
-            _variantsCard(product),
+            _variantsCard(product, controller),
           const SizedBox(height: 24),
         ],
       ),
@@ -288,7 +289,7 @@ class MerchnantOfferProductDetailScreen extends StatelessWidget {
   }
 
   // ── Variants Card ──────────────────────────────────────────────────────────
-  Widget _variantsCard(MerchantOfferProductDetailModel product) {
+  Widget _variantsCard(MerchantOfferProductDetailModel product, MerchantOfferProductDetailController controller) {
     final variants = product.productAttributes.variants;
     return Container(
       margin: const EdgeInsets.fromLTRB(14, 12, 14, 0),
