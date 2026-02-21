@@ -1,4 +1,5 @@
 
+import 'package:eshoppy/app/modules/admin_home/view/restaurant/resaturant_menu_updatepage.dart';
 import 'package:eshoppy/app/modules/admin_home/view/restaurant/restaurant_menumanagment.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -347,7 +348,7 @@ class AdminRestauranthome extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: () {
                 Get.back();
-                Get.to(() => MenuManagementPage());
+                Get.to(() => MenuUpdatePage(restaurantId: int.parse(restaurant.id)));
               },
               icon: const Icon(Icons.restaurant_menu),
               label: const Text("Edit Menu & Tables"),
