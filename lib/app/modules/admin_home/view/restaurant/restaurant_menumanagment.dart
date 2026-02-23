@@ -100,8 +100,7 @@ InputDecoration _field(String label, {Widget? suffix, String? hint}) =>
       suffixIcon: suffix,
       filled: true,
       fillColor: _DS.surfaceElevated,
-      contentPadding:
-      const EdgeInsets.symmetric(horizontal: _DS.p16),
+      contentPadding: const EdgeInsets.symmetric(horizontal: _DS.p16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
         borderSide: const BorderSide(color: _DS.border),
@@ -160,8 +159,8 @@ class _PrimaryBtn extends StatelessWidget {
             backgroundColor: Colors.transparent,
             shadowColor: Colors.transparent,
             foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)),
+            shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
           icon: loading
               ? const SizedBox(
@@ -279,7 +278,8 @@ class MenuManagementPage extends StatelessWidget {
         color: _DS.amberDim,
         borderRadius: BorderRadius.circular(10),
       ),
-      child: const Icon(Icons.restaurant_menu, color: _DS.amber, size: 20),
+      child:
+      const Icon(Icons.restaurant_menu, color: _DS.amber, size: 20),
     ),
     title: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -362,8 +362,8 @@ class MenuManagementPage extends StatelessWidget {
               TextField(
                 controller: c.tableTypeCtrl,
                 style: const TextStyle(color: _DS.textPrimary),
-                decoration:
-                _field('Table Name', hint: 'e.g. VIP Booth, Family Table'),
+                decoration: _field('Table Name',
+                    hint: 'e.g. VIP Booth, Family Table'),
               ),
               const SizedBox(height: _DS.p12),
               TextField(
@@ -477,6 +477,7 @@ class MenuManagementPage extends StatelessWidget {
   // TAB 2 — TIMINGS
   // ══════════════════════════════════════════════════════════════════
   Widget _buildTimingsTab(BuildContext context) {
+    // ✅ FIX: Time picker formats to 12h AM/PM to match API expectation
     Future<void> pickTime(TextEditingController ctrl) async {
       final picked = await showTimePicker(
         context: context,
@@ -494,8 +495,8 @@ class MenuManagementPage extends StatelessWidget {
         ),
       );
       if (picked != null) {
-        ctrl.text =
-        '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+        // ✅ FIX: Use controller's formatTimeTo12h for correct API format
+        ctrl.text = Get.find<RestaurantmenuController>().formatTimeTo12h(picked);
       }
     }
 
@@ -505,6 +506,34 @@ class MenuManagementPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 4),
+
+          // ✅ NEW: Info banner explaining the meal type restriction
+          Container(
+            margin: const EdgeInsets.only(bottom: _DS.p16),
+            padding: const EdgeInsets.all(_DS.p12),
+            decoration: BoxDecoration(
+              color: _DS.amberDim,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: _DS.amber.withOpacity(0.3)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Icon(Icons.info_outline_rounded,
+                    color: _DS.amber, size: 18),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Each meal period (Breakfast, Lunch, Dinner) can only have one time slot. '
+                        'To change a saved slot, delete it first using the × button below.',
+                    style: TextStyle(
+                        color: _DS.amber, fontSize: 12, height: 1.5),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
           const _SectionHeader(
             'Schedule Meal Slots',
             subtitle: 'Define service windows for each meal period',
@@ -527,6 +556,54 @@ class MenuManagementPage extends StatelessWidget {
                             size: 16, color: _mealColor(m)),
                         const SizedBox(width: 8),
                         Text(m.name.capitalizeFirst!),
+                        // ✅ NEW: Show "saved" badge if slot exists
+                        Obx(() {
+                          final hasSaved = c.timeSlots
+                              .any((s) => s.mealType == m);
+                          final hasQueued = c.pendingSlots
+                              .containsKey(m) &&
+                              c.pendingSlots[m]!.isNotEmpty;
+                          if (hasSaved) {
+                            return Container(
+                              margin:
+                              const EdgeInsets.only(left: 8),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.green.shade100,
+                                borderRadius:
+                                BorderRadius.circular(4),
+                              ),
+                              child: Text('Saved',
+                                  style: TextStyle(
+                                      fontSize: 10,
+                                      color:
+                                      Colors.green.shade700,
+                                      fontWeight:
+                                      FontWeight.w700)),
+                            );
+                          } else if (hasQueued) {
+                            return Container(
+                              margin:
+                              const EdgeInsets.only(left: 8),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.shade100,
+                                borderRadius:
+                                BorderRadius.circular(4),
+                              ),
+                              child: Text('Queued',
+                                  style: TextStyle(
+                                      fontSize: 10,
+                                      color:
+                                      Colors.orange.shade700,
+                                      fontWeight:
+                                      FontWeight.w700)),
+                            );
+                          }
+                          return const SizedBox();
+                        }),
                       ],
                     ),
                   ))
@@ -572,7 +649,8 @@ class MenuManagementPage extends StatelessWidget {
                   child: OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _DS.amber,
-                      side: const BorderSide(color: _DS.amber, width: 1.2),
+                      side:
+                      const BorderSide(color: _DS.amber, width: 1.2),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -580,10 +658,12 @@ class MenuManagementPage extends StatelessWidget {
                     icon: const Icon(Icons.add_alarm_rounded, size: 18),
                     label: const Text('Queue Slot',
                         style: TextStyle(
-                            fontWeight: FontWeight.w700, letterSpacing: 0.5)),
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5)),
                     onPressed: c.addToPendingSlots,
                   ),
                 ),
+
                 // Pending queue
                 Obx(() {
                   final total = c.pendingSlots.values
@@ -594,32 +674,63 @@ class MenuManagementPage extends StatelessWidget {
                     padding: const EdgeInsets.all(_DS.p12),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFFF8EC),
-                      border:
-                      Border.all(color: _DS.amber.withOpacity(0.4)),
+                      border: Border.all(
+                          color: _DS.amber.withOpacity(0.4)),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.pending_actions,
-                            color: _DS.amberSoft, size: 18),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text('$total slot(s) queued',
-                              style: const TextStyle(
-                                  color: _DS.amber, fontSize: 13)),
+                        Row(
+                          children: [
+                            const Icon(Icons.pending_actions,
+                                color: _DS.amberSoft, size: 18),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text('$total slot(s) queued',
+                                  style: const TextStyle(
+                                      color: _DS.amber, fontSize: 13)),
+                            ),
+                            GestureDetector(
+                              onTap: () => c.pendingSlots.clear(),
+                              child: const Text('Clear',
+                                  style: TextStyle(
+                                      color: _DS.danger,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600)),
+                            ),
+                          ],
                         ),
-                        GestureDetector(
-                          onTap: () => c.pendingSlots.clear(),
-                          child: const Text('Clear',
-                              style: TextStyle(
-                                  color: _DS.danger,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600)),
-                        ),
+                        const SizedBox(height: 8),
+                        // ✅ NEW: Show queued slots detail
+                        ...c.pendingSlots.entries.map((entry) {
+                          return Column(
+                            children: entry.value.map((slot) {
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Row(
+                                  children: [
+                                    Icon(_mealIcon(entry.key),
+                                        size: 14,
+                                        color: _mealColor(entry.key)),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      '${entry.key.name.capitalizeFirst}: ${slot.startTime} → ${slot.endTime}',
+                                      style: const TextStyle(
+                                          fontSize: 12,
+                                          color: _DS.textSecondary),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          );
+                        }).toList(),
                       ],
                     ),
                   );
                 }),
+
                 const SizedBox(height: _DS.p16),
                 Obx(() => _PrimaryBtn(
                   label: 'Save Timings',
@@ -636,10 +747,11 @@ class MenuManagementPage extends StatelessWidget {
               ],
             ),
           ),
+
           const SizedBox(height: _DS.p24),
           const _SectionHeader(
             'Saved Timings',
-            subtitle: 'Current service schedule',
+            subtitle: 'Current service schedule — tap × to delete a slot',
           ),
           Obx(() => Column(
             children: MealType.values.map((meal) {
@@ -653,7 +765,8 @@ class MenuManagementPage extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: _mealColor(meal).withOpacity(0.12),
+                            color:
+                            _mealColor(meal).withOpacity(0.12),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Icon(_mealIcon(meal),
@@ -663,8 +776,34 @@ class MenuManagementPage extends StatelessWidget {
                         Text(meal.name.capitalizeFirst!,
                             style: _DS.tsLabel),
                         const Spacer(),
-                        Text('${slots.length} slot(s)',
-                            style: _DS.tsMuted),
+                        // ✅ NEW: Status badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: slots.isNotEmpty
+                                ? Colors.green.shade50
+                                : _DS.surfaceElevated,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: slots.isNotEmpty
+                                  ? Colors.green.shade200
+                                  : _DS.border,
+                            ),
+                          ),
+                          child: Text(
+                            slots.isNotEmpty
+                                ? '✓ Configured'
+                                : 'Not set',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: slots.isNotEmpty
+                                  ? Colors.green.shade700
+                                  : _DS.textMuted,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                     if (slots.isNotEmpty) ...[
@@ -676,13 +815,16 @@ class MenuManagementPage extends StatelessWidget {
                             .map((s) => _TimeChip(
                           label: s.displayTime,
                           color: _mealColor(meal),
-                          onDelete: () => c.removeTimeSlot(s),
+                          // ✅ FIX: onDelete now calls API delete
+                          onDelete: () =>
+                              c.removeTimeSlot(s),
                         ))
                             .toList(),
                       ),
                     ] else ...[
                       const SizedBox(height: 8),
-                      const Text('No slots added', style: _DS.tsMuted),
+                      const Text('No slots added',
+                          style: _DS.tsMuted),
                     ],
                   ],
                 ),
@@ -786,8 +928,10 @@ class MenuManagementPage extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: _mealColor(meal).withOpacity(0.10),
-                          borderRadius: BorderRadius.circular(6),
+                          color: _mealColor(meal)
+                              .withOpacity(0.10),
+                          borderRadius:
+                          BorderRadius.circular(6),
                         ),
                         child: Text(s.displayTime,
                             style: TextStyle(
@@ -808,9 +952,11 @@ class MenuManagementPage extends StatelessWidget {
           icon: Icons.menu_book_outlined,
           title: 'Menu Items',
           child: Obx(() {
-            final hasItems = c.mealMenus.any((m) => m.foodItems.isNotEmpty);
+            final hasItems =
+            c.mealMenus.any((m) => m.foodItems.isNotEmpty);
             if (!hasItems) {
-              return const Text('No menu items added', style: _DS.tsMuted);
+              return const Text('No menu items added',
+                  style: _DS.tsMuted);
             }
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -823,7 +969,8 @@ class MenuManagementPage extends StatelessWidget {
                     children: [
                       Text(menu.mealType.name.capitalizeFirst!,
                           style: _DS.tsLabel.copyWith(
-                              color: _mealColor(menu.mealType), fontSize: 13)),
+                              color: _mealColor(menu.mealType),
+                              fontSize: 13)),
                       const SizedBox(height: 6),
                       ...menu.foodItems.map((food) => Padding(
                         padding: const EdgeInsets.only(bottom: 4),
@@ -833,8 +980,10 @@ class MenuManagementPage extends StatelessWidget {
                                 size: 6, color: _DS.textMuted),
                             const SizedBox(width: 8),
                             Expanded(
-                                child: Text(food.name, style: _DS.tsBody)),
-                            Text('₹${food.price.toStringAsFixed(0)}',
+                                child: Text(food.name,
+                                    style: _DS.tsBody)),
+                            Text(
+                                '₹${food.price.toStringAsFixed(0)}',
                                 style: _DS.tsPrice),
                           ],
                         ),
@@ -1189,7 +1338,8 @@ class _MealTypeCard extends StatelessWidget {
                   children: [
                     Text(
                       'New Item',
-                      style: _DS.tsSectionTitle.copyWith(color: _color),
+                      style:
+                      _DS.tsSectionTitle.copyWith(color: _color),
                     ),
                     const SizedBox(height: _DS.p12),
                     Row(
@@ -1198,8 +1348,8 @@ class _MealTypeCard extends StatelessWidget {
                           flex: 2,
                           child: TextField(
                             controller: c.foodNameCtrls[mealType],
-                            style:
-                            const TextStyle(color: _DS.textPrimary),
+                            style: const TextStyle(
+                                color: _DS.textPrimary),
                             decoration: _field('Food Name'),
                           ),
                         ),
@@ -1207,8 +1357,8 @@ class _MealTypeCard extends StatelessWidget {
                         Expanded(
                           child: TextField(
                             controller: c.foodPriceCtrls[mealType],
-                            style:
-                            const TextStyle(color: _DS.textPrimary),
+                            style: const TextStyle(
+                                color: _DS.textPrimary),
                             keyboardType:
                             const TextInputType.numberWithOptions(
                                 decimal: true),
@@ -1220,9 +1370,11 @@ class _MealTypeCard extends StatelessWidget {
                     const SizedBox(height: 10),
                     TextField(
                       controller: c.descriptionCtrls[mealType],
-                      style: const TextStyle(color: _DS.textPrimary),
+                      style:
+                      const TextStyle(color: _DS.textPrimary),
                       maxLines: 2,
-                      decoration: _field('Description (optional)'),
+                      decoration:
+                      _field('Description (optional)'),
                     ),
                     const SizedBox(height: 10),
                     // Image picker
@@ -1230,7 +1382,8 @@ class _MealTypeCard extends StatelessWidget {
                         ? Stack(
                       children: [
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius:
+                          BorderRadius.circular(12),
                           child: Image.file(
                             pickedImage.value!,
                             height: 110,
@@ -1242,42 +1395,52 @@ class _MealTypeCard extends StatelessWidget {
                           top: 8,
                           right: 8,
                           child: GestureDetector(
-                            onTap: () => pickedImage.value = null,
+                            onTap: () =>
+                            pickedImage.value = null,
                             child: Container(
                               decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.6),
+                                color: Colors.black
+                                    .withOpacity(0.6),
                                 shape: BoxShape.circle,
                               ),
-                              padding: const EdgeInsets.all(4),
-                              child: const Icon(Icons.close_rounded,
-                                  color: Colors.white, size: 16),
+                              padding:
+                              const EdgeInsets.all(4),
+                              child: const Icon(
+                                  Icons.close_rounded,
+                                  color: Colors.white,
+                                  size: 16),
                             ),
                           ),
                         ),
                       ],
                     )
                         : GestureDetector(
-                      onTap: () => c.pickFoodImage(mealType),
+                      onTap: () =>
+                          c.pickFoodImage(mealType),
                       child: Container(
                         height: 80,
                         decoration: BoxDecoration(
                           color: _DS.surfaceElevated,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: _DS.border),
+                          borderRadius:
+                          BorderRadius.circular(12),
+                          border:
+                          Border.all(color: _DS.border),
                         ),
                         child: Row(
                           mainAxisAlignment:
                           MainAxisAlignment.center,
                           children: [
                             Icon(
-                                Icons.add_photo_alternate_outlined,
+                                Icons
+                                    .add_photo_alternate_outlined,
                                 color: _color,
                                 size: 20),
                             const SizedBox(width: 8),
                             Text('Add Photo',
                                 style: TextStyle(
                                     color: _color,
-                                    fontWeight: FontWeight.w600,
+                                    fontWeight:
+                                    FontWeight.w600,
                                     fontSize: 13)),
                           ],
                         ),
@@ -1296,9 +1459,11 @@ class _MealTypeCard extends StatelessWidget {
 
                     // ── Food List ──
                     Obx(() {
-                      if (menu.foodItems.isEmpty) return const SizedBox();
+                      if (menu.foodItems.isEmpty)
+                        return const SizedBox();
                       return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment:
+                        CrossAxisAlignment.start,
                         children: [
                           const SizedBox(height: _DS.p20),
                           Divider(color: _DS.border),
@@ -1307,15 +1472,20 @@ class _MealTypeCard extends StatelessWidget {
                               style: _DS.tsSectionTitle
                                   .copyWith(color: _color)),
                           const SizedBox(height: _DS.p12),
-                          ...List.generate(menu.foodItems.length, (i) {
+                          ...List.generate(
+                              menu.foodItems.length, (i) {
                             final food = menu.foodItems[i];
                             return Container(
-                              margin: const EdgeInsets.only(bottom: 8),
-                              padding: const EdgeInsets.all(12),
+                              margin: const EdgeInsets.only(
+                                  bottom: 8),
+                              padding:
+                              const EdgeInsets.all(12),
                               decoration: BoxDecoration(
                                 color: _DS.surfaceElevated,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: _DS.border),
+                                borderRadius:
+                                BorderRadius.circular(12),
+                                border: Border.all(
+                                    color: _DS.border),
                               ),
                               child: Row(
                                 children: [
@@ -1324,17 +1494,21 @@ class _MealTypeCard extends StatelessWidget {
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                      CrossAxisAlignment
+                                          .start,
                                       children: [
                                         Text(food.name,
                                             style: _DS.tsLabel
-                                                .copyWith(fontSize: 14)),
-                                        if (food.description.isNotEmpty)
+                                                .copyWith(
+                                                fontSize:
+                                                14)),
+                                        if (food.description
+                                            .isNotEmpty)
                                           Text(
                                             food.description,
                                             maxLines: 1,
-                                            overflow:
-                                            TextOverflow.ellipsis,
+                                            overflow: TextOverflow
+                                                .ellipsis,
                                             style: _DS.tsMuted,
                                           ),
                                         const SizedBox(height: 3),
@@ -1345,8 +1519,10 @@ class _MealTypeCard extends StatelessWidget {
                                     ),
                                   ),
                                   IconButton(
-                                    icon: const Icon(Icons.delete_outline,
-                                        color: _DS.danger, size: 18),
+                                    icon: const Icon(
+                                        Icons.delete_outline,
+                                        color: _DS.danger,
+                                        size: 18),
                                     onPressed: () =>
                                         c.removeFoodItemLocally(
                                             mealType, food),

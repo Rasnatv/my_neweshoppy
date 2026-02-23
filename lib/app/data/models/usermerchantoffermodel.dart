@@ -1,6 +1,6 @@
 class UserOfferModel {
   final int merchant_id;
-  final int discountPercentage;
+  final String discountPercentage;
   final String image;
   final String shopName;
 

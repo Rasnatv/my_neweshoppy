@@ -1,27 +1,28 @@
+//
 // import 'package:flutter/material.dart';
 // import 'package:get/get.dart';
 // import '../../../../data/models/admin_restarant_menuupdatemodel.dart';
 // import 'controller/restaurant_menuupdatecontroller.dart';
 //
-// // ─── Design Tokens (mirrored from adding page) ────────────────────────────────
+// // ─── Design Tokens ────────────────────────────────────────────────────────────
 // class _DS {
-//   static const bg             = Color(0xFFF5F6FA);
-//   static const surface        = Color(0xFFFFFFFF);
+//   static const bg              = Color(0xFFF5F6FA);
+//   static const surface         = Color(0xFFFFFFFF);
 //   static const surfaceElevated = Color(0xFFF0F1F8);
-//   static const border         = Color(0xFFE0E3F0);
-//   static const amber          = Color(0xFFE07B00);
-//   static const amberSoft      = Color(0xFFF5A623);
-//   static const amberDim       = Color(0x1AE07B00);
-//   static const textPrimary    = Color(0xFF1A1D2E);
-//   static const textSecondary  = Color(0xFF5C6080);
-//   static const textMuted      = Color(0xFF9BA3C2);
-//   static const success        = Color(0xFF1DA87A);
-//   static const successDim     = Color(0x1A1DA87A);
-//   static const danger         = Color(0xFFE05252);
-//   static const dangerDim      = Color(0x1AE05252);
-//   static const mealBreakfast  = Color(0xFFE07B00);
-//   static const mealLunch      = Color(0xFF0AA0A0);
-//   static const mealDinner     = Color(0xFF7B4FA6);
+//   static const border          = Color(0xFFE0E3F0);
+//   static const amber           = Color(0xFFE07B00);
+//   static const amberSoft       = Color(0xFFF5A623);
+//   static const amberDim        = Color(0x1AE07B00);
+//   static const textPrimary     = Color(0xFF1A1D2E);
+//   static const textSecondary   = Color(0xFF5C6080);
+//   static const textMuted       = Color(0xFF9BA3C2);
+//   static const success         = Color(0xFF1DA87A);
+//   static const successDim      = Color(0x1A1DA87A);
+//   static const danger          = Color(0xFFE05252);
+//   static const dangerDim       = Color(0x1AE05252);
+//   static const mealBreakfast   = Color(0xFFE07B00);
+//   static const mealLunch       = Color(0xFF0AA0A0);
+//   static const mealDinner      = Color(0xFF7B4FA6);
 //
 //   static const p4  = 4.0;
 //   static const p8  = 8.0;
@@ -198,13 +199,22 @@
 // // MAIN PAGE
 // // ═══════════════════════════════════════════════════════════════════════════════
 // class MenuUpdatePage extends StatelessWidget {
-//   const MenuUpdatePage({super.key});
+//   final int restaurantId; // ← dynamic restaurant id passed from home
 //
-//   RestaurantMenuUpdateController get c => Get.find();
+//   const MenuUpdatePage({super.key, required this.restaurantId});
+//
+//   // Use tag so each restaurant has its own isolated controller instance
+//   RestaurantMenuUpdateController get c =>
+//       Get.find<RestaurantMenuUpdateController>(tag: restaurantId.toString());
 //
 //   @override
 //   Widget build(BuildContext context) {
-//     Get.put(RestaurantMenuUpdateController());
+//     // Register controller with tag — safe to call multiple times (Get handles it)
+//     Get.put(
+//       RestaurantMenuUpdateController(restaurantId: restaurantId),
+//       tag: restaurantId.toString(),
+//     );
+//
 //     return Theme(
 //       data: ThemeData.light().copyWith(
 //         scaffoldBackgroundColor: _DS.bg,
@@ -236,9 +246,9 @@
 //       decoration: BoxDecoration(color: _DS.amberDim, borderRadius: BorderRadius.circular(10)),
 //       child: const Icon(Icons.edit_note_rounded, color: _DS.amber, size: 20),
 //     ),
-//     title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: const [
-//       Text('Update Menu', style: _DS.tsPageTitle),
-//       Text('Manage & Edit Restaurant Data', style: _DS.tsMuted),
+//     title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+//       const Text('Update Menu', style: _DS.tsPageTitle),
+//       Text('Restaurant #$restaurantId', style: _DS.tsMuted), // shows which restaurant
 //     ]),
 //     actions: [
 //       Obx(() {
@@ -366,7 +376,7 @@
 //           );
 //         }
 //         return Column(
-//           children: c.tables.map((table) => _TableCard(table: table)).toList(),
+//           children: c.tables.map((table) => _TableCard(table: table, tag: restaurantId.toString())).toList(),
 //         );
 //       }),
 //     ]),
@@ -378,8 +388,11 @@
 //   Widget _buildTimingsTab(BuildContext context) {
 //     Future<void> pickTime(TextEditingController ctrl) async {
 //       final parts = ctrl.text.split(':');
-//       final initial = parts.length == 2
-//           ? TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]))
+//       final initial = parts.length >= 2
+//           ? TimeOfDay(
+//         hour: int.tryParse(parts[0]) ?? 0,
+//         minute: int.tryParse(parts[1]) ?? 0,
+//       )
 //           : TimeOfDay.now();
 //
 //       final picked = await showTimePicker(
@@ -542,24 +555,33 @@
 //               decoration: _field('Description'),
 //             ),
 //             const SizedBox(height: 10),
-//             // Current image + replace option
+//             // Current image preview
 //             if (sel.imageUrl.isNotEmpty) ...[
 //               Text('Current Image', style: _DS.tsMuted),
 //               const SizedBox(height: 6),
 //               ClipRRect(
 //                 borderRadius: BorderRadius.circular(10),
-//                 child: Image.network(sel.imageUrl, height: 90, width: double.infinity,
-//                     fit: BoxFit.cover,
-//                     errorBuilder: (_, __, ___) => const SizedBox()),
+//                 child: Image.network(
+//                   sel.imageUrl,
+//                   height: 90,
+//                   width: double.infinity,
+//                   fit: BoxFit.cover,
+//                   errorBuilder: (_, __, ___) => const SizedBox(),
+//                 ),
 //               ),
 //               const SizedBox(height: 8),
 //             ],
+//             // New image picker
 //             Obx(() => c.pickedMenuImage.value != null
 //                 ? Stack(children: [
 //               ClipRRect(
 //                 borderRadius: BorderRadius.circular(12),
-//                 child: Image.file(c.pickedMenuImage.value!, height: 110,
-//                     width: double.infinity, fit: BoxFit.cover),
+//                 child: Image.file(
+//                   c.pickedMenuImage.value!,
+//                   height: 110,
+//                   width: double.infinity,
+//                   fit: BoxFit.cover,
+//                 ),
 //               ),
 //               Positioned(
 //                 top: 8, right: 8,
@@ -636,12 +658,11 @@
 //             sub: 'Items for this restaurant will appear here',
 //           );
 //         }
-//
 //         return Column(
 //           children: ['breakfast', 'lunch', 'dinner'].map((meal) {
 //             final items = c.getMenuItemsByMeal(meal);
 //             if (items.isEmpty) return const SizedBox();
-//             return _MealSection(mealType: meal, items: items);
+//             return _MealSection(mealType: meal, items: items, tag: restaurantId.toString());
 //           }).toList(),
 //         );
 //       }),
@@ -652,9 +673,11 @@
 // // ─── Table Card ──────────────────────────────────────────────────────────────
 // class _TableCard extends StatelessWidget {
 //   final RestaurantTableModel table;
-//   const _TableCard({required this.table});
+//   final String tag;
+//   const _TableCard({required this.table, required this.tag});
 //
-//   RestaurantMenuUpdateController get c => Get.find();
+//   RestaurantMenuUpdateController get c =>
+//       Get.find<RestaurantMenuUpdateController>(tag: tag);
 //
 //   @override
 //   Widget build(BuildContext context) => Obx(() {
@@ -686,7 +709,7 @@
 //           child: Wrap(spacing: 6, runSpacing: 4, children: [
 //             _InfoChip('${table.capacityRange} seats', Icons.people_outline),
 //             _InfoChip(table.seatingType.capitalizeFirst!, Icons.chair_outlined),
-//             _InfoChip(table.tableIds.join(', '), Icons.grid_view_rounded),
+//             _InfoChip(table.tableName, Icons.grid_view_rounded),
 //           ]),
 //         ),
 //         isThreeLine: true,
@@ -712,9 +735,11 @@
 // class _MealSection extends StatelessWidget {
 //   final String mealType;
 //   final List<MenuItemModel> items;
-//   const _MealSection({required this.mealType, required this.items});
+//   final String tag;
+//   const _MealSection({required this.mealType, required this.items, required this.tag});
 //
-//   RestaurantMenuUpdateController get c => Get.find();
+//   RestaurantMenuUpdateController get c =>
+//       Get.find<RestaurantMenuUpdateController>(tag: tag);
 //
 //   @override
 //   Widget build(BuildContext context) {
@@ -780,7 +805,7 @@
 //           Padding(
 //             padding: const EdgeInsets.all(_DS.p12),
 //             child: Column(
-//               children: items.map((food) => _MenuItemCard(item: food, color: color)).toList(),
+//               children: items.map((food) => _MenuItemCard(item: food, color: color, tag: tag)).toList(),
 //             ),
 //           ),
 //         ],
@@ -793,9 +818,11 @@
 // class _MenuItemCard extends StatelessWidget {
 //   final MenuItemModel item;
 //   final Color color;
-//   const _MenuItemCard({required this.item, required this.color});
+//   final String tag;
+//   const _MenuItemCard({required this.item, required this.color, required this.tag});
 //
-//   RestaurantMenuUpdateController get c => Get.find();
+//   RestaurantMenuUpdateController get c =>
+//       Get.find<RestaurantMenuUpdateController>(tag: tag);
 //
 //   @override
 //   Widget build(BuildContext context) => Obx(() {
@@ -816,7 +843,6 @@
 //           ),
 //         ),
 //         child: Row(children: [
-//           // Image
 //           ClipRRect(
 //             borderRadius: BorderRadius.circular(10),
 //             child: item.imageUrl.isNotEmpty
@@ -1090,7 +1116,9 @@ class _EmptyState extends StatelessWidget {
     child: Column(mainAxisSize: MainAxisSize.min, children: [
       Container(
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(color: _DS.surfaceElevated, shape: BoxShape.circle, border: Border.all(color: _DS.border)),
+        decoration: BoxDecoration(
+          color: _DS.surfaceElevated, shape: BoxShape.circle, border: Border.all(color: _DS.border),
+        ),
         child: Icon(icon, size: 32, color: _DS.textMuted),
       ),
       const SizedBox(height: 16),
@@ -1105,17 +1133,15 @@ class _EmptyState extends StatelessWidget {
 // MAIN PAGE
 // ═══════════════════════════════════════════════════════════════════════════════
 class MenuUpdatePage extends StatelessWidget {
-  final int restaurantId; // ← dynamic restaurant id passed from home
+  final int restaurantId;
 
   const MenuUpdatePage({super.key, required this.restaurantId});
 
-  // Use tag so each restaurant has its own isolated controller instance
   RestaurantMenuUpdateController get c =>
       Get.find<RestaurantMenuUpdateController>(tag: restaurantId.toString());
 
   @override
   Widget build(BuildContext context) {
-    // Register controller with tag — safe to call multiple times (Get handles it)
     Get.put(
       RestaurantMenuUpdateController(restaurantId: restaurantId),
       tag: restaurantId.toString(),
@@ -1154,7 +1180,7 @@ class MenuUpdatePage extends StatelessWidget {
     ),
     title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       const Text('Update Menu', style: _DS.tsPageTitle),
-      Text('Restaurant #$restaurantId', style: _DS.tsMuted), // shows which restaurant
+      Text('Restaurant #$restaurantId', style: _DS.tsMuted),
     ]),
     actions: [
       Obx(() {
@@ -1196,7 +1222,6 @@ class MenuUpdatePage extends StatelessWidget {
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       const SizedBox(height: 4),
 
-      // ── Inline edit form (shown when a table is selected) ──
       Obx(() {
         final sel = c.selectedTable.value;
         if (sel == null) return const SizedBox();
@@ -1228,10 +1253,7 @@ class MenuUpdatePage extends StatelessWidget {
               style: const TextStyle(color: _DS.textPrimary, fontSize: 14),
               decoration: _field('Seating Type'),
               items: SeatingTypeUpdate.values
-                  .map((e) => DropdownMenuItem(
-                value: e,
-                child: Text(e.name.capitalizeFirst!),
-              ))
+                  .map((e) => DropdownMenuItem(value: e, child: Text(e.name.capitalizeFirst!)))
                   .toList(),
               onChanged: (v) => c.seatingTypeEdit.value = v!,
             )),
@@ -1289,17 +1311,19 @@ class MenuUpdatePage extends StatelessWidget {
   );
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // TAB 2 — TIMINGS
+  // TAB 2 — TIMINGS  ✅ FIXED: time picker now outputs "10:30 AM" format
   // ═══════════════════════════════════════════════════════════════════════════
   Widget _buildTimingsTab(BuildContext context) {
+
+    // ✅ FIX: Parse existing "10:30 AM" text → TimeOfDay for picker initial value
+    // Then format the picked time back to "10:30 AM" via controller helper
     Future<void> pickTime(TextEditingController ctrl) async {
-      final parts = ctrl.text.split(':');
-      final initial = parts.length >= 2
-          ? TimeOfDay(
-        hour: int.tryParse(parts[0]) ?? 0,
-        minute: int.tryParse(parts[1]) ?? 0,
-      )
-          : TimeOfDay.now();
+      final controller = Get.find<RestaurantMenuUpdateController>(
+        tag: restaurantId.toString(),
+      );
+
+      // Parse current value (could be "10:30 AM" or "10:30:00" or "10:30")
+      final initial = controller.parseTimeToTimeOfDay(ctrl.text);
 
       final picked = await showTimePicker(
         context: context,
@@ -1307,15 +1331,20 @@ class MenuUpdatePage extends StatelessWidget {
         builder: (ctx, child) => Theme(
           data: ThemeData.light().copyWith(
             colorScheme: const ColorScheme.light(
-              primary: _DS.amber, onPrimary: Colors.white,
-              surface: _DS.surface, onSurface: _DS.textPrimary,
+              primary: _DS.amber,
+              onPrimary: Colors.white,
+              surface: _DS.surface,
+              onSurface: _DS.textPrimary,
             ),
           ),
           child: child!,
         ),
       );
+
       if (picked != null) {
-        ctrl.text = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+        // ✅ FIX: Write "10:30 AM" format — NOT "10:30"
+        ctrl.text = controller.formatTimeTo12h(picked);
+        debugPrint('🕐 Time picked: ${ctrl.text}');
       }
     }
 
@@ -1323,6 +1352,32 @@ class MenuUpdatePage extends StatelessWidget {
       padding: const EdgeInsets.all(_DS.p20),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const SizedBox(height: 4),
+
+        // Info banner
+        Container(
+          margin: const EdgeInsets.only(bottom: _DS.p16),
+          padding: const EdgeInsets.all(_DS.p12),
+          decoration: BoxDecoration(
+            color: _DS.amberDim,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: _DS.amber.withOpacity(0.3)),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Icon(Icons.info_outline_rounded, color: _DS.amber, size: 18),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Times are saved in 12-hour format (e.g. 10:30 AM). '
+                      'Tap the clock icon to pick a time and tap "Save All Timings" to apply.',
+                  style: TextStyle(color: _DS.amber, fontSize: 12, height: 1.5),
+                ),
+              ),
+            ],
+          ),
+        ),
+
         const _SectionHeader('Meal Timings', subtitle: 'Adjust service windows for each meal period'),
 
         Obx(() {
@@ -1350,8 +1405,10 @@ class MenuUpdatePage extends StatelessWidget {
                 if (ctrls == null) return const SizedBox();
 
                 final color = _mealColor(meal);
+
                 return _Card(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    // Meal header row
                     Row(children: [
                       Container(
                         padding: const EdgeInsets.all(8),
@@ -1370,10 +1427,15 @@ class MenuUpdatePage extends StatelessWidget {
                           color: color.withOpacity(0.10),
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: Text('ID: ${timing.id}', style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600)),
+                        child: Text(
+                          'ID: ${timing.id}',
+                          style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600),
+                        ),
                       ),
                     ]),
                     const SizedBox(height: _DS.p16),
+
+                    // ✅ Time pickers — now output "10:30 AM" format
                     Row(children: [
                       Expanded(
                         child: TextField(
@@ -1381,8 +1443,10 @@ class MenuUpdatePage extends StatelessWidget {
                           readOnly: true,
                           style: const TextStyle(color: _DS.textPrimary),
                           onTap: () => pickTime(ctrls['start']!),
-                          decoration: _field('Start Time',
-                              suffix: Icon(Icons.schedule, size: 18, color: color)),
+                          decoration: _field(
+                            'Start Time',
+                            suffix: Icon(Icons.schedule, size: 18, color: color),
+                          ),
                         ),
                       ),
                       Padding(
@@ -1395,8 +1459,10 @@ class MenuUpdatePage extends StatelessWidget {
                           readOnly: true,
                           style: const TextStyle(color: _DS.textPrimary),
                           onTap: () => pickTime(ctrls['end']!),
-                          decoration: _field('End Time',
-                              suffix: Icon(Icons.schedule, size: 18, color: color)),
+                          decoration: _field(
+                            'End Time',
+                            suffix: Icon(Icons.schedule, size: 18, color: color),
+                          ),
                         ),
                       ),
                     ]),
@@ -1425,7 +1491,7 @@ class MenuUpdatePage extends StatelessWidget {
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       const SizedBox(height: 4),
 
-      // ── Inline edit form ──
+      // Inline edit form
       Obx(() {
         final sel = c.selectedMenuItem.value;
         if (sel == null) return const SizedBox();
@@ -1461,7 +1527,8 @@ class MenuUpdatePage extends StatelessWidget {
               decoration: _field('Description'),
             ),
             const SizedBox(height: 10),
-            // Current image preview
+
+            // Current image
             if (sel.imageUrl.isNotEmpty) ...[
               Text('Current Image', style: _DS.tsMuted),
               const SizedBox(height: 6),
@@ -1469,14 +1536,13 @@ class MenuUpdatePage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
                 child: Image.network(
                   sel.imageUrl,
-                  height: 90,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
+                  height: 90, width: double.infinity, fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => const SizedBox(),
                 ),
               ),
               const SizedBox(height: 8),
             ],
+
             // New image picker
             Obx(() => c.pickedMenuImage.value != null
                 ? Stack(children: [
@@ -1484,9 +1550,7 @@ class MenuUpdatePage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 child: Image.file(
                   c.pickedMenuImage.value!,
-                  height: 110,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
+                  height: 110, width: double.infinity, fit: BoxFit.cover,
                 ),
               ),
               Positioned(
@@ -1494,7 +1558,9 @@ class MenuUpdatePage extends StatelessWidget {
                 child: GestureDetector(
                   onTap: () => c.pickedMenuImage.value = null,
                   child: Container(
-                    decoration: BoxDecoration(color: Colors.black.withOpacity(0.6), shape: BoxShape.circle),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.6), shape: BoxShape.circle,
+                    ),
                     padding: const EdgeInsets.all(4),
                     child: const Icon(Icons.close_rounded, color: Colors.white, size: 16),
                   ),
@@ -1513,10 +1579,12 @@ class MenuUpdatePage extends StatelessWidget {
                 child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                   Icon(Icons.add_photo_alternate_outlined, color: color, size: 18),
                   const SizedBox(width: 8),
-                  Text('Replace Photo', style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.w600)),
+                  Text('Replace Photo',
+                      style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.w600)),
                 ]),
               ),
             )),
+
             const SizedBox(height: _DS.p16),
             Row(children: [
               Expanded(
@@ -1607,7 +1675,8 @@ class _TableCard extends StatelessWidget {
             color: isSelected ? _DS.amberDim : _DS.surfaceElevated,
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(Icons.table_restaurant, color: isSelected ? _DS.amber : _DS.textMuted, size: 22),
+          child: Icon(Icons.table_restaurant,
+              color: isSelected ? _DS.amber : _DS.textMuted, size: 22),
         ),
         title: Text(table.tableType, style: _DS.tsLabel),
         subtitle: Padding(
@@ -1637,7 +1706,7 @@ class _TableCard extends StatelessWidget {
   });
 }
 
-// ─── Meal Section (Menu Tab) ─────────────────────────────────────────────────
+// ─── Meal Section ─────────────────────────────────────────────────────────────
 class _MealSection extends StatelessWidget {
   final String mealType;
   final List<MenuItemModel> items;
@@ -1649,7 +1718,7 @@ class _MealSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = _mealColor(mealType);
+    final color    = _mealColor(mealType);
     final expanded = c.expandedMeals[mealType]!;
 
     return Obx(() => Container(
@@ -1664,7 +1733,6 @@ class _MealSection extends StatelessWidget {
         boxShadow: [_DS.cardShadow],
       ),
       child: Column(children: [
-        // Header
         InkWell(
           onTap: () => expanded.value = !expanded.value,
           borderRadius: BorderRadius.circular(16),
@@ -1704,8 +1772,6 @@ class _MealSection extends StatelessWidget {
             ]),
           ),
         ),
-
-        // Items list
         if (expanded.value) ...[
           Divider(color: _DS.border, height: 1),
           Padding(
@@ -1752,8 +1818,10 @@ class _MenuItemCard extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: item.imageUrl.isNotEmpty
-                ? Image.network(item.imageUrl, width: 52, height: 52, fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _placeholder(color))
+                ? Image.network(
+              item.imageUrl, width: 52, height: 52, fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _placeholder(color),
+            )
                 : _placeholder(color),
           ),
           const SizedBox(width: 12),
@@ -1787,7 +1855,9 @@ class _MenuItemCard extends StatelessWidget {
 
   Widget _placeholder(Color color) => Container(
     width: 52, height: 52,
-    decoration: BoxDecoration(color: color.withOpacity(0.10), borderRadius: BorderRadius.circular(10)),
+    decoration: BoxDecoration(
+      color: color.withOpacity(0.10), borderRadius: BorderRadius.circular(10),
+    ),
     child: Icon(Icons.fastfood_rounded, color: color, size: 22),
   );
 }
@@ -1814,7 +1884,7 @@ class _InfoChip extends StatelessWidget {
   );
 }
 
-// ─── Icon Button ─────────────────────────────────────────────────────────────
+
 class _IconBtn extends StatelessWidget {
   final IconData icon;
   final String tooltip;
@@ -1830,7 +1900,9 @@ class _IconBtn extends StatelessWidget {
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(color: _DS.amberDim, borderRadius: BorderRadius.circular(8)),
+          decoration: BoxDecoration(
+            color: _DS.amberDim, borderRadius: BorderRadius.circular(8),
+          ),
           child: Icon(icon, color: _DS.amber, size: 18),
         ),
       ),

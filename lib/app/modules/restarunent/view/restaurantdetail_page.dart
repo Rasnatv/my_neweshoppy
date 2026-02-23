@@ -7,6 +7,7 @@ import '../../../data/models/restaruantcartmodel.dart';
 import '../../../data/models/userrestaurantmodel.dart';
 import '../controller/gallery_controller.dart';
 import '../controller/restaurantcartcontroller.dart';
+import 'menu_tab.dart';
 import 'restaurantcartpage.dart';
 
 class RestaurantDetailPage extends StatefulWidget {
@@ -28,47 +29,11 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage>
   final List<String> menuTypes = ["Breakfast", "Lunch", "Dinner"];
   final RxString selectedMenuType = "Breakfast".obs;
 
-  final RxList<Map<String, dynamic>> menuItems = [
-    {
-      "name": "Chicken Biryani",
-      "price": 180,
-      "img": "assets/images/products/chicken biriyani.jpg",
-      "type": "Lunch",
-      "description": "Aromatic rice with tender chicken",
-      "rating": 4.5,
-    },
-    {
-      "name": "Paneer Butter Masala",
-      "price": 150,
-      "img": "assets/images/products/chicken biriyani.jpg",
-      "type": "Dinner",
-      "description": "Creamy paneer in rich tomato gravy",
-      "rating": 4.3,
-    },
-    {
-      "name": "Grilled Sandwich",
-      "price": 90,
-      "img": "assets/images/products/chicken biriyani.jpg",
-      "type": "Breakfast",
-      "description": "Fresh veggies with melted cheese",
-      "rating": 4.0,
-    },
-    {
-      "name": "Cold Coffee",
-      "price": 60,
-      "img": "assets/images/products/chicken biriyani.jpg",
-      "type": "Breakfast",
-      "description": "Chilled coffee with ice cream",
-      "rating": 4.7,
-    },
-  ].obs;
-
   @override
   void initState() {
     super.initState();
     tabController = TabController(length: 3, vsync: this);
 
-    /// Initialize gallery controller with unique tag
     galleryController = Get.put(
       GalleryController(
         restaurantId: widget.restaurant.restaurantId.toString(),
@@ -298,7 +263,10 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage>
               child: TabBarView(
                 controller: tabController,
                 children: [
-                  menuTab(),
+                  // menuTab(),
+                  RestaurantMenuTab(
+                    restaurantId: widget.restaurant.restaurantId.toString(),
+                  ),
                   RestaurantAboutTab(
                     restaurantId: widget.restaurant.restaurantId.toString(),
                   ),
@@ -314,246 +282,4 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage>
     );
   }
 
-  /// ================== ENHANCED MENU TAB ==================
-  Widget menuTab() {
-    return Obx(() {
-      var filteredItems = menuItems
-          .where((item) => item["type"] == selectedMenuType.value)
-          .toList();
-
-      return Column(
-        children: [
-          /// STYLISH CATEGORY CHIPS
-          Container(
-            height: 60,
-            margin: const EdgeInsets.only(top: 16),
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              scrollDirection: Axis.horizontal,
-              itemCount: menuTypes.length,
-              itemBuilder: (context, index) {
-                String type = menuTypes[index];
-                bool isSelected = selectedMenuType.value == type;
-
-                return GestureDetector(
-                  onTap: () => selectedMenuType.value = type,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    margin: const EdgeInsets.only(right: 12),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      gradient: isSelected
-                          ? const LinearGradient(
-                        colors: [Colors.teal, Color(0xFF00897B)],
-                      )
-                          : null,
-                      color: isSelected ? null : Colors.white,
-                      borderRadius: BorderRadius.circular(25),
-                      border: Border.all(
-                        color: isSelected ? Colors.teal : Colors.grey.shade300,
-                        width: 1.5,
-                      ),
-                      boxShadow: isSelected
-                          ? [
-                        BoxShadow(
-                          color: Colors.teal.withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ]
-                          : [],
-                    ),
-                    child: Center(
-                      child: Text(
-                        type,
-                        style: TextStyle(
-                          color: isSelected
-                              ? Colors.white
-                              : Colors.grey.shade700,
-                          fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.w500,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-
-          /// ELEGANT PRODUCT GRID
-          Expanded(
-            child: filteredItems.isEmpty
-                ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.restaurant,
-                      size: 64, color: Colors.grey.shade300),
-                  const SizedBox(height: 16),
-                  Text(
-                    "No items available",
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                ],
-              ),
-            )
-                : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: filteredItems.length,
-              itemBuilder: (context, index) {
-                var item = filteredItems[index];
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Row(
-                      children: [
-                        /// PRODUCT IMAGE
-                        ClipRRect(
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(16),
-                            bottomLeft: Radius.circular(16),
-                          ),
-                          child: Image.asset(
-                            item["img"],
-                            width: 110,
-                            height: 110,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-
-                        /// PRODUCT DETAILS
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(
-                              crossAxisAlignment:
-                              CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  item["name"],
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  item["description"] ?? "",
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey.shade600,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    Icon(Icons.star,
-                                        color: Colors.amber.shade700,
-                                        size: 16),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      item["rating"].toString(),
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    const Spacer(),
-                                    Text(
-                                      "₹${item["price"]}",
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.teal,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        /// ADD BUTTON
-                        Padding(
-                          padding: const EdgeInsets.only(right: 12),
-                          child: Material(
-                            color: Colors.teal,
-                            borderRadius: BorderRadius.circular(12),
-                            child: InkWell(
-                              onTap: () {
-                                cartController.addToCart(
-                                  RestaurantCartModel(
-                                    name: item["name"],
-                                    price: item["price"],
-                                    qty: 1,
-                                    img: item["img"],
-                                  ),
-                                );
-                                Get.snackbar(
-                                  "Added to Cart",
-                                  "${item["name"]} added successfully",
-                                  backgroundColor: Colors.teal,
-                                  colorText: Colors.white,
-                                  icon: const Icon(Icons.check_circle,
-                                      color: Colors.white),
-                                  snackPosition: SnackPosition.BOTTOM,
-                                  margin: const EdgeInsets.all(16),
-                                  borderRadius: 12,
-                                );
-                              },
-                              borderRadius: BorderRadius.circular(12),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 10,
-                                ),
-                                child: const Text(
-                                  "ADD",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      );
-    });
-  }
 }

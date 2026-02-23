@@ -16,7 +16,7 @@ class UserOfferSection extends StatelessWidget {
       child: SizedBox(
         height: 210,
         child: GetX<UserOfferController>(
-          init: UserOfferController(),
+          // init: UserOfferController(),
           builder: (controller) {
             if (controller.isLoading.value) {
               return const Center(child: CircularProgressIndicator());
