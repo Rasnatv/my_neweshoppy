@@ -4,9 +4,9 @@ import 'package:get/get.dart';
 import '../../../../data/models/adminretaurant_menumodel.dart';
 import 'controller/restaurant_menuaddingcontroller.dart';
 
-// ─── Design Tokens ────────────────────────────────────────────────────────────
+
 class _DS {
-  // Palette — Light Theme
+
   static const bg = Color(0xFFF5F6FA);
   static const surface = Color(0xFFFFFFFF);
   static const surfaceElevated = Color(0xFFF0F1F8);
@@ -185,7 +185,7 @@ class _PrimaryBtn extends StatelessWidget {
   }
 }
 
-// ─── Section Header ───────────────────────────────────────────────────────────
+
 class _SectionHeader extends StatelessWidget {
   final String title;
   final String? subtitle;
@@ -343,9 +343,7 @@ class MenuManagementPage extends StatelessWidget {
     ),
   );
 
-  // ══════════════════════════════════════════════════════════════════
-  // TAB 1 — TABLES
-  // ══════════════════════════════════════════════════════════════════
+
   Widget _buildTablesTab(BuildContext context) => SingleChildScrollView(
     padding: const EdgeInsets.all(_DS.p20),
     child: Column(
@@ -473,9 +471,6 @@ class MenuManagementPage extends StatelessWidget {
     ),
   );
 
-  // ══════════════════════════════════════════════════════════════════
-  // TAB 2 — TIMINGS
-  // ══════════════════════════════════════════════════════════════════
   Widget _buildTimingsTab(BuildContext context) {
     // ✅ FIX: Time picker formats to 12h AM/PM to match API expectation
     Future<void> pickTime(TextEditingController ctrl) async {
@@ -836,9 +831,6 @@ class MenuManagementPage extends StatelessWidget {
     );
   }
 
-  // ══════════════════════════════════════════════════════════════════
-  // TAB 3 — MENU & PREVIEW
-  // ══════════════════════════════════════════════════════════════════
   Widget _buildMenuAndPreviewTab() => SingleChildScrollView(
     padding: const EdgeInsets.all(_DS.p20),
     child: Column(
@@ -1031,7 +1023,6 @@ class MenuManagementPage extends StatelessWidget {
   }
 }
 
-// ─── Preview Card ─────────────────────────────────────────────────────────────
 class _PreviewCard extends StatelessWidget {
   final IconData icon;
   final String title;

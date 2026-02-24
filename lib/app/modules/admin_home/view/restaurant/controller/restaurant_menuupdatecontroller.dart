@@ -1,516 +1,4 @@
-//
-// import 'dart:convert';
-// import 'dart:io';
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-// import 'package:get_storage/get_storage.dart';
-// import 'package:http/http.dart' as http;
-// import 'package:image_picker/image_picker.dart';
-//
-// import '../../../../../data/models/admin_restarant_menuupdatemodel.dart';
-//
-// const _baseUrl = 'https://rasma.astradevelops.in/e_shoppyy/public/api';
-//
-// enum SeatingTypeUpdate { indoor, outdoor }
-//
-// class RestaurantMenuUpdateController extends GetxController {
-//   final int restaurantId;
-//
-//   RestaurantMenuUpdateController({required this.restaurantId});
-//
-//   final _storage = GetStorage();
-//
-//   // ── Loading States ──────────────────────────────────────────────────────────
-//   final isLoadingTables    = false.obs;
-//   final isLoadingTimings   = false.obs;
-//   final isLoadingMenuItems = false.obs;
-//   final isUpdatingTable    = false.obs;
-//   final isUpdatingTimings  = false.obs;
-//   final isUpdatingMenuItem = false.obs;
-//
-//   // ── Data ────────────────────────────────────────────────────────────────────
-//   final tables    = <RestaurantTableModel>[].obs;
-//   final timings   = <MealTimingModel>[].obs;
-//   final menuItems = <MenuItemModel>[].obs;
-//
-//   final selectedTable    = Rxn<RestaurantTableModel>();
-//   final selectedMenuItem = Rxn<MenuItemModel>();
-//
-//   // ── Table edit controllers ──────────────────────────────────────────────────
-//   final tableTypeCtrl     = TextEditingController();
-//   final capacityRangeCtrl = TextEditingController();
-//   final tableNameCtrl     = TextEditingController();
-//   final seatingTypeEdit   = SeatingTypeUpdate.indoor.obs;
-//
-//   // ── Timing controllers ──────────────────────────────────────────────────────
-//   final timingControllers = <String, Map<String, TextEditingController>>{};
-//
-//   // ── Menu item edit controllers ───────────────────────────────────────────────
-//   final menuNameCtrl    = TextEditingController();
-//   final menuPriceCtrl   = TextEditingController();
-//   final menuDescCtrl    = TextEditingController();
-//   final pickedMenuImage = Rxn<File>();
-//
-//   final _picker = ImagePicker();
-//
-//   final expandedMeals = <String, RxBool>{
-//     'breakfast': false.obs,
-//     'lunch':     false.obs,
-//     'dinner':    false.obs,
-//   };
-//
-//   // ── Auth Token ──────────────────────────────────────────────────────────────
-//   String get authToken {
-//     final token = _storage.read('auth_token') ?? '';
-//     if (token.isEmpty) debugPrint('⚠️ auth_token is empty');
-//     return token;
-//   }
-//
-//   Map<String, String> get _jsonHeaders => {
-//     'Content-Type': 'application/json',
-//     'Authorization': 'Bearer $authToken',
-//   };
-//
-//   @override
-//   void onInit() {
-//     super.onInit();
-//     debugPrint('🚀 MenuUpdateController init — restaurantId=$restaurantId');
-//     fetchAll();
-//   }
-//
-//   @override
-//   void onClose() {
-//     tableTypeCtrl.dispose();
-//     capacityRangeCtrl.dispose();
-//     tableNameCtrl.dispose();
-//     menuNameCtrl.dispose();
-//     menuPriceCtrl.dispose();
-//     menuDescCtrl.dispose();
-//     for (final m in timingControllers.values) {
-//       m['start']?.dispose();
-//       m['end']?.dispose();
-//     }
-//     super.onClose();
-//   }
-//
-//   // ═══════════════════════════════════════════════════════════════════════════
-//   // FETCH  (all use POST with restaurant_id body)
-//   // ═══════════════════════════════════════════════════════════════════════════
-//
-//   Future<void> fetchAll() async {
-//     await Future.wait([fetchTables(), fetchTimings(), fetchMenuItems()]);
-//   }
-//
-//   Future<void> fetchTables() async {
-//     try {
-//       isLoadingTables.value = true;
-//       final res = await http.post(
-//         Uri.parse('$_baseUrl/restaurant-tables'),
-//         headers: _jsonHeaders,
-//         body: jsonEncode({'restaurant_id': restaurantId}),
-//       );
-//       debugPrint('📥 Tables [${res.statusCode}]: ${res.body}');
-//       if (res.statusCode == 200 && _isJson(res.body)) {
-//         final raw = (jsonDecode(res.body)['data'] ?? []) as List;
-//         tables.value = raw.map((e) => RestaurantTableModel.fromJson(e)).toList();
-//       } else {
-//         _snack('Error', 'Failed to load tables (${res.statusCode})');
-//       }
-//     } catch (e) {
-//       _snack('Error', 'Tables: $e');
-//     } finally {
-//       isLoadingTables.value = false;
-//     }
-//   }
-//
-//   Future<void> fetchTimings() async {
-//     try {
-//       isLoadingTimings.value = true;
-//       final res = await http.post(
-//         Uri.parse('$_baseUrl/meal-timings'),
-//         headers: _jsonHeaders,
-//         body: jsonEncode({'restaurant_id': restaurantId}),
-//       );
-//       debugPrint('📥 Timings [${res.statusCode}]: ${res.body}');
-//       if (res.statusCode == 200 && _isJson(res.body)) {
-//         final raw = (jsonDecode(res.body)['data'] ?? []) as List;
-//         timings.value = raw.map((e) => MealTimingModel.fromJson(e)).toList();
-//         _initTimingControllers();
-//       } else {
-//         _snack('Error', 'Failed to load timings (${res.statusCode})');
-//       }
-//     } catch (e) {
-//       _snack('Error', 'Timings: $e');
-//     } finally {
-//       isLoadingTimings.value = false;
-//     }
-//   }
-//
-//   Future<void> fetchMenuItems() async {
-//     try {
-//       isLoadingMenuItems.value = true;
-//       final res = await http.post(
-//         Uri.parse('$_baseUrl/menu-items'),
-//         headers: _jsonHeaders,
-//         body: jsonEncode({'restaurant_id': restaurantId}),
-//       );
-//       debugPrint('📥 Menu [${res.statusCode}]: ${res.body}');
-//       if (res.statusCode == 200 && _isJson(res.body)) {
-//         final raw = (jsonDecode(res.body)['data'] ?? []) as List;
-//         menuItems.value = raw.map((e) => MenuItemModel.fromJson(e)).toList();
-//       } else {
-//         _snack('Error', 'Failed to load menu items (${res.statusCode})');
-//       }
-//     } catch (e) {
-//       _snack('Error', 'Menu: $e');
-//     } finally {
-//       isLoadingMenuItems.value = false;
-//     }
-//   }
-//
-//   void _initTimingControllers() {
-//     for (final t in timings) {
-//       if (!timingControllers.containsKey(t.mealType)) {
-//         timingControllers[t.mealType] = {
-//           'start': TextEditingController(text: t.startTime),
-//           'end':   TextEditingController(text: t.endTime),
-//         };
-//       } else {
-//         timingControllers[t.mealType]!['start']!.text = t.startTime;
-//         timingControllers[t.mealType]!['end']!.text   = t.endTime;
-//       }
-//     }
-//   }
-//
-//
-//   void selectTableForEdit(RestaurantTableModel table) {
-//     selectedTable.value    = table;
-//     tableTypeCtrl.text     = table.tableType;
-//     capacityRangeCtrl.text = table.capacityRange;
-//     tableNameCtrl.text     = table.tableName;
-//     seatingTypeEdit.value  = SeatingTypeUpdate.values.firstWhere(
-//           (e) => e.name == table.seatingType,
-//       orElse: () => SeatingTypeUpdate.indoor,
-//     );
-//   }
-//
-//   Future<void> updateTable() async {
-//     final t = selectedTable.value;
-//     if (t == null) return;
-//
-//     if (tableTypeCtrl.text.trim().isEmpty ||
-//         capacityRangeCtrl.text.trim().isEmpty ||
-//         tableNameCtrl.text.trim().isEmpty) {
-//       _snack('Validation', 'Please fill all table fields');
-//       return;
-//     }
-//
-//     try {
-//       isUpdatingTable.value = true;
-//
-//       final payload = {
-//         'table_id':       t.id,           // ← "table_id" as per API spec
-//         'restaurant_id':  restaurantId,
-//         'table_type':     tableTypeCtrl.text.trim(),
-//         'capacity_range': capacityRangeCtrl.text.trim(),
-//         'table_name':     tableNameCtrl.text.trim(),
-//         'seating_type':   seatingTypeEdit.value.name,
-//       };
-//
-//       debugPrint('📡 PUT /edit-restaurant-table: ${jsonEncode(payload)}');
-//
-//       final res = await http.put(
-//         Uri.parse('$_baseUrl/edit-restaurant-table'),
-//         headers: _jsonHeaders,
-//         body: jsonEncode(payload),
-//       );
-//
-//       debugPrint('📥 Table update [${res.statusCode}]: ${res.body}');
-//
-//       if (!_isJson(res.body)) {
-//         _snack('Server Error', 'Unexpected server response (${res.statusCode})');
-//         return;
-//       }
-//
-//       final body = jsonDecode(res.body);
-//       if (res.statusCode == 200 && body['status'] == '1') {
-//         t.tableType     = tableTypeCtrl.text.trim();
-//         t.capacityRange = capacityRangeCtrl.text.trim();
-//         t.tableName     = tableNameCtrl.text.trim();
-//         t.seatingType   = seatingTypeEdit.value.name;
-//         final idx = tables.indexWhere((tb) => tb.id == t.id);
-//         if (idx >= 0) tables[idx] = t;
-//         tables.refresh();
-//         selectedTable.value = null;
-//         _snack('Success', body['message'] ?? 'Table updated', isError: false);
-//       } else {
-//         _snack('Error', body['message'] ?? 'Table update failed');
-//       }
-//     } catch (e, stack) {
-//       debugPrint('❌ Table update: $e\n$stack');
-//       _snack('Error', 'Table update: $e');
-//     } finally {
-//       isUpdatingTable.value = false;
-//     }
-//   }
-//
-//   //
-//   // Future<void> updateTimings() async {
-//   //   if (timings.isEmpty) {
-//   //     _snack('Info', 'No timings to update');
-//   //     return;
-//   //   }
-//   //
-//   //   try {
-//   //     isUpdatingTimings.value = true;
-//   //
-//   //     final payload = timings.map((t) {
-//   //       final ctrlMap = timingControllers[t.mealType];
-//   //       final startRaw = ctrlMap?['start']?.text ?? t.startTime;
-//   //       final endRaw   = ctrlMap?['end']?.text   ?? t.endTime;
-//   //
-//   //       return {
-//   //         'id':         int.tryParse(t.id.toString()) ?? t.id, // int not String
-//   //         'meal_type':  t.mealType,
-//   //         'start_time': _trimTime(startRaw), // "08:00:00" → "08:00"
-//   //         'end_time':   _trimTime(endRaw),   // "08:00:00" → "08:00"
-//   //       };
-//   //     }).toList();
-//   //
-//   //     final body = {
-//   //       'restaurant_id': restaurantId, // already int from constructor
-//   //       'meal_timings':  payload,
-//   //     };
-//   //
-//   //     debugPrint('📤 POST /meal-timings/update body: ${jsonEncode(body)}');
-//   //
-//   //     final res = await http.post(
-//   //       Uri.parse('$_baseUrl/meal-timings/update'),
-//   //       headers: _jsonHeaders,
-//   //       body: jsonEncode(body),
-//   //     );
-//   //
-//   //     debugPrint('📥 Timings update [${res.statusCode}]: ${res.body}');
-//   //
-//   //     if (!_isJson(res.body)) {
-//   //       debugPrint('❌ Non-JSON: ${res.body.substring(0, res.body.length.clamp(0, 300))}');
-//   //       _snack('Server Error', 'Unexpected server response (${res.statusCode})');
-//   //       return;
-//   //     }
-//   //
-//   //     final resBody = jsonDecode(res.body);
-//   //     if (res.statusCode == 200 && resBody['status'] == '1') {
-//   //       _snack('Success', 'Timings updated successfully', isError: false);
-//   //       await fetchTimings();
-//   //     } else {
-//   //       _snack('Error', resBody['message'] ?? 'Timing update failed');
-//   //     }
-//   //   } catch (e, stack) {
-//   //     debugPrint('❌ Timing update: $e\n$stack');
-//   //     _snack('Error', 'Timing update: $e');
-//   //   } finally {
-//   //     isUpdatingTimings.value = false;
-//   //   }
-//   // }
-//   Future<void> updateTimings() async {
-//     if (timings.isEmpty) {
-//       _snack('Info', 'No timings to update');
-//       return;
-//     }
-//
-//     try {
-//       isUpdatingTimings.value = true;
-//
-//       final payload = timings.map((t) {
-//         final ctrlMap  = timingControllers[t.mealType];
-//         final startRaw = ctrlMap?['start']?.text.trim() ?? t.startTime;
-//         final endRaw   = ctrlMap?['end']?.text.trim()   ?? t.endTime;
-//
-//         debugPrint('📝 ${t.mealType}: start=$startRaw end=$endRaw'); // ← add this
-//
-//         return {
-//           'id':         t.id,
-//           'meal_type':  t.mealType,
-//           'start_time': _trimTime(startRaw),
-//           'end_time':   _trimTime(endRaw),
-//         };
-//       }).toList();
-//
-//       final bodyMap = {
-//         'restaurant_id': restaurantId,
-//         'meal_timings':  payload,
-//       };
-//
-//       debugPrint('📤 Sending: ${jsonEncode(bodyMap)}');
-//
-//       final res = await http.post(
-//         Uri.parse('$_baseUrl/meal-timings/update'),
-//         headers: _jsonHeaders,
-//         body: jsonEncode(bodyMap),
-//       );
-//
-//       debugPrint('📥 Timings update [${res.statusCode}]: ${res.body}');
-//
-//       if (!_isJson(res.body)) {
-//         _snack('Server Error', 'Unexpected server response (${res.statusCode})');
-//         return;
-//       }
-//
-//       final resBody = jsonDecode(res.body);
-//       if (res.statusCode == 200 && resBody['status'] == '1') {
-//         // Update local timings from response data
-//         final updatedList = (resBody['data'] as List)
-//             .map((e) => MealTimingModel.fromJson(e))
-//             .toList();
-//         timings.value = updatedList;
-//         _initTimingControllers(); // sync controllers with fresh data
-//         timings.refresh();
-//         _snack('Success', resBody['message'] ?? 'Timings updated', isError: false);
-//       } else {
-//         _snack('Error', resBody['message'] ?? 'Timing update failed');
-//       }
-//     } catch (e, stack) {
-//       debugPrint('❌ Timing update: $e\n$stack');
-//       _snack('Error', 'Timing update: $e');
-//     } finally {
-//       isUpdatingTimings.value = false;
-//     }
-//   }
-//
-//   // Strips seconds from time string: "08:00:00" → "08:00", "08:00" → "08:00"
-//   String _trimTime(String time) {
-//     final parts = time.split(':');
-//     if (parts.length >= 2) {
-//       return '${parts[0].padLeft(2, '0')}:${parts[1].padLeft(2, '0')}';
-//     }
-//     return time;
-//   }
-//
-//   void selectMenuItemForEdit(MenuItemModel item) {
-//     selectedMenuItem.value = item;
-//     menuNameCtrl.text      = item.foodName;
-//     menuPriceCtrl.text     = item.price.toStringAsFixed(2);
-//     menuDescCtrl.text      = item.shortDescription;
-//     pickedMenuImage.value  = null;
-//   }
-//
-//   Future<void> pickMenuImage() async {
-//     final xf = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
-//     if (xf != null) pickedMenuImage.value = File(xf.path);
-//   }
-//
-//   Future<void> updateMenuItem() async {
-//     final item = selectedMenuItem.value;
-//     if (item == null) return;
-//
-//     if (menuNameCtrl.text.trim().isEmpty || menuPriceCtrl.text.trim().isEmpty) {
-//       _snack('Validation', 'Name and price are required');
-//       return;
-//     }
-//
-//     try {
-//       isUpdatingMenuItem.value = true;
-//
-//       final payload = <String, dynamic>{
-//         'id':                item.id,
-//         'restaurant_id':     restaurantId,
-//         'meal_type':         item.mealType,
-//         'food_name':         menuNameCtrl.text.trim(),
-//         'price':             double.tryParse(menuPriceCtrl.text.trim()) ?? item.price,
-//         'short_description': menuDescCtrl.text.trim(),
-//       };
-//
-//       // If image picked, encode as base64 and add to payload
-//       if (pickedMenuImage.value != null) {
-//         final bytes = await pickedMenuImage.value!.readAsBytes();
-//         payload['image'] = base64Encode(bytes);
-//         debugPrint('📡 PUT /restaurant/menu-item/update (with base64 image)');
-//       } else {
-//         debugPrint('📡 PUT /restaurant/menu-item/update (no image)');
-//       }
-//
-//       debugPrint('📦 Payload keys: ${payload.keys.toList()}');
-//
-//       final res = await http.put(
-//         Uri.parse('$_baseUrl/restaurant/menu-item/update'),
-//         headers: _jsonHeaders,
-//         body: jsonEncode(payload),
-//       );
-//
-//       debugPrint('📥 Menu item update [${res.statusCode}]: ${res.body}');
-//
-//       if (!_isJson(res.body)) {
-//         debugPrint('❌ Non-JSON response: ${res.body.substring(0, res.body.length.clamp(0, 300))}');
-//         _snack('Server Error', 'Unexpected server response (${res.statusCode})');
-//         return;
-//       }
-//
-//       final body = jsonDecode(res.body);
-//       if ((res.statusCode == 200 || res.statusCode == 201) && body['status'] == '1') {
-//         // Replace local item with fresh data from response
-//         final updated = MenuItemModel.fromJson(body['data']);
-//         final idx = menuItems.indexWhere((m) => m.id == item.id);
-//         if (idx >= 0) menuItems[idx] = updated;
-//         menuItems.refresh();
-//         selectedMenuItem.value = null;
-//         pickedMenuImage.value  = null;
-//         _snack('Success', body['message'] ?? 'Menu item updated', isError: false);
-//       } else {
-//         _snack('Error', body['message'] ?? 'Menu update failed (${res.statusCode})');
-//       }
-//     } catch (e, stack) {
-//       debugPrint('❌ Menu item update: $e\n$stack');
-//       _snack('Error', 'Menu item update: $e');
-//     } finally {
-//       isUpdatingMenuItem.value = false;
-//     }
-//   }
-//
-//   // ── Clear selections ────────────────────────────────────────────────────────
-//   void clearMenuItemSelection() {
-//     selectedMenuItem.value = null;
-//     pickedMenuImage.value  = null;
-//     menuNameCtrl.clear();
-//     menuPriceCtrl.clear();
-//     menuDescCtrl.clear();
-//   }
-//
-//   void clearTableSelection() {
-//     selectedTable.value = null;
-//     tableTypeCtrl.clear();
-//     capacityRangeCtrl.clear();
-//     tableNameCtrl.clear();
-//   }
-//
-//   // ── Helpers ────────────────────────────────────────────────────────────────
-//   List<MenuItemModel> getMenuItemsByMeal(String mealType) =>
-//       menuItems.where((m) => m.mealType == mealType).toList();
-//
-//   MealTimingModel? getTimingByMeal(String mealType) =>
-//       timings.firstWhereOrNull((t) => t.mealType == mealType);
-//
-//   bool _isJson(String str) {
-//     try {
-//       jsonDecode(str);
-//       return true;
-//     } catch (_) {
-//       return false;
-//     }
-//   }
-//
-//   void _snack(String title, String msg, {bool isError = true}) {
-//     Get.snackbar(
-//       title,
-//       msg,
-//       backgroundColor: isError ? const Color(0xFFE05252) : const Color(0xFF1DA87A),
-//       colorText: Colors.white,
-//       snackPosition: SnackPosition.BOTTOM,
-//       margin: const EdgeInsets.all(16),
-//       borderRadius: 12,
-//       duration: const Duration(seconds: 3),
-//     );
-//   }
-// }
+
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -555,7 +43,6 @@ class RestaurantMenuUpdateController extends GetxController {
   final seatingTypeEdit   = SeatingTypeUpdate.indoor.obs;
 
   // ── Timing controllers ──────────────────────────────────────────────────────
-  // ✅ FIX: Store raw AM/PM strings — do NOT trim or convert
   final timingControllers = <String, Map<String, TextEditingController>>{};
 
   // ── Menu item edit controllers ───────────────────────────────────────────────
@@ -648,7 +135,6 @@ class RestaurantMenuUpdateController extends GetxController {
       if (res.statusCode == 200 && _isJson(res.body)) {
         final raw = (jsonDecode(res.body)['data'] ?? []) as List;
         timings.value = raw.map((e) => MealTimingModel.fromJson(e)).toList();
-        // ✅ FIX: Always reinitialize controllers with fresh data after fetch
         _reinitTimingControllers();
       } else {
         _snack('Error', 'Failed to load timings (${res.statusCode})');
@@ -682,46 +168,47 @@ class RestaurantMenuUpdateController extends GetxController {
     }
   }
 
-  // ✅ FIX: Completely replaced _initTimingControllers with a version that
-  // always updates existing controller text (not just creates new ones)
   void _reinitTimingControllers() {
     for (final t in timings) {
       if (!timingControllers.containsKey(t.mealType)) {
-        // Create fresh controllers with the time as-is from API (e.g. "10:30 AM")
         timingControllers[t.mealType] = {
           'start': TextEditingController(text: t.startTime),
           'end':   TextEditingController(text: t.endTime),
         };
       } else {
-        // ✅ FIX: Always update text even if controllers already exist
         timingControllers[t.mealType]!['start']!.text = t.startTime;
         timingControllers[t.mealType]!['end']!.text   = t.endTime;
       }
     }
     debugPrint('🕐 Timing controllers synced: ${timingControllers.keys.toList()}');
     for (final entry in timingControllers.entries) {
-      debugPrint('   ${entry.key}: start=${entry.value['start']?.text} end=${entry.value['end']?.text}');
+      debugPrint(
+        '   ${entry.key}: start=${entry.value['start']?.text} end=${entry.value['end']?.text}',
+      );
     }
   }
 
-  // ✅ FIX: Convert TimeOfDay → "10:30 AM" format (what the API expects)
+  // ── FIX 1: Converts TimeOfDay → "06:27 AM" format expected by the API ──────
+  /// e.g. TimeOfDay(hour:14, minute:30) → "02:30 PM"
   String formatTimeTo12h(TimeOfDay time) {
-    final hour = time.hour;
-    final minute = time.minute.toString().padLeft(2, '0');
-    final period = hour >= 12 ? 'PM' : 'AM';
+    final hour        = time.hour;
+    final minute      = time.minute.toString().padLeft(2, '0');
+    final period      = hour >= 12 ? 'PM' : 'AM';
     final displayHour = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
     return '${displayHour.toString().padLeft(2, '0')}:$minute $period';
   }
 
-  // ✅ FIX: Parse "10:30 AM" or "10:30" → TimeOfDay for the picker initial value
+  // ── FIX 1: Parses "06:27 AM" or "14:30" → TimeOfDay for the time picker ────
+  /// Handles both 12-hour (with AM/PM) and 24-hour formats gracefully.
   TimeOfDay parseTimeToTimeOfDay(String timeStr) {
     try {
       final cleanStr = timeStr.trim().toUpperCase();
-      final isPM = cleanStr.contains('PM');
-      final isAM = cleanStr.contains('AM');
-      final withoutPeriod = cleanStr.replaceAll('AM', '').replaceAll('PM', '').trim();
-      final parts = withoutPeriod.split(':');
-      int hour = int.tryParse(parts[0]) ?? 0;
+      final isPM     = cleanStr.contains('PM');
+      final isAM     = cleanStr.contains('AM');
+      final withoutPeriod =
+      cleanStr.replaceAll('AM', '').replaceAll('PM', '').trim();
+      final parts  = withoutPeriod.split(':');
+      int   hour   = int.tryParse(parts[0]) ?? 0;
       final minute = parts.length >= 2 ? (int.tryParse(parts[1]) ?? 0) : 0;
 
       if (isPM && hour != 12) hour += 12;
@@ -733,7 +220,7 @@ class RestaurantMenuUpdateController extends GetxController {
     }
   }
 
-  // ── Table CRUD ─────────────────────────────────────────────────────────────
+  // ── Table CRUD ──────────────────────────────────────────────────────────────
 
   void selectTableForEdit(RestaurantTableModel table) {
     selectedTable.value    = table;
@@ -817,8 +304,6 @@ class RestaurantMenuUpdateController extends GetxController {
     try {
       isUpdatingTimings.value = true;
 
-      // ✅ FIX: Send time exactly as stored in controllers (already in "10:30 AM" format)
-      // Do NOT call _trimTime() — that strips AM/PM which breaks the API
       final payload = timings.map((t) {
         final ctrlMap  = timingControllers[t.mealType];
         final startVal = ctrlMap?['start']?.text.trim() ?? t.startTime;
@@ -827,10 +312,11 @@ class RestaurantMenuUpdateController extends GetxController {
         debugPrint('📝 ${t.mealType}: id=${t.id} start="$startVal" end="$endVal"');
 
         return {
-          'id':         t.id,
-          'meal_type':  t.mealType,
-          'start_time': startVal,  // ✅ e.g. "10:30 AM" — passed as-is
-          'end_time':   endVal,    // ✅ e.g. "11:30 AM" — passed as-is
+          'id':            t.id,
+          'restaurant_id': restaurantId,
+          'meal_type':     t.mealType,
+          'start_time':    startVal,
+          'end_time':      endVal,
         };
       }).toList();
 
@@ -841,7 +327,7 @@ class RestaurantMenuUpdateController extends GetxController {
 
       debugPrint('📤 Sending to meal-timings/update: ${jsonEncode(bodyMap)}');
 
-      final res = await http.post(
+      final res = await http.put(
         Uri.parse('$_baseUrl/meal-timings/update'),
         headers: _jsonHeaders,
         body: jsonEncode(bodyMap),
@@ -855,11 +341,39 @@ class RestaurantMenuUpdateController extends GetxController {
       }
 
       final resBody = jsonDecode(res.body);
+
       if (res.statusCode == 200 && resBody['status'] == '1') {
-        // ✅ FIX: Update local timings from response and resync controllers
-        final updatedList = (resBody['data'] as List)
-            .map((e) => MealTimingModel.fromJson(e))
-            .toList();
+        // ── FIX 2: Response shape is { "data": { "restaurant_id": "49",
+        //           "meal_timings": [...] } }  — NOT { "data": [...] }
+        // The old code did: (resBody['data'] as List) which crashed because
+        // resBody['data'] is a Map, not a List.
+        final dataRaw = resBody['data'];
+
+        List<MealTimingModel> updatedList;
+
+        if (dataRaw is Map && dataRaw.containsKey('meal_timings')) {
+          // ✅ Normal path — nested object with meal_timings array
+          updatedList = (dataRaw['meal_timings'] as List).map((e) {
+            final map = Map<String, dynamic>.from(e as Map);
+            // Some items in the nested list may omit restaurant_id — inject it
+            map.putIfAbsent('restaurant_id', () => restaurantId.toString());
+            return MealTimingModel.fromJson(map);
+          }).toList();
+        } else if (dataRaw is List) {
+          // Fallback: in case the API ever returns a flat list directly
+          updatedList = (dataRaw).map((e) {
+            final map = Map<String, dynamic>.from(e as Map);
+            map.putIfAbsent('restaurant_id', () => restaurantId.toString());
+            return MealTimingModel.fromJson(map);
+          }).toList();
+        } else {
+          // Unexpected shape — re-fetch from server to stay in sync
+          debugPrint('⚠️ Unexpected data shape in timing update response, re-fetching');
+          await fetchTimings();
+          _snack('Success', resBody['message'] ?? 'Timings updated', isError: false);
+          return;
+        }
+
         timings.value = updatedList;
         _reinitTimingControllers();
         timings.refresh();
@@ -932,7 +446,9 @@ class RestaurantMenuUpdateController extends GetxController {
       debugPrint('📥 Menu item update [${res.statusCode}]: ${res.body}');
 
       if (!_isJson(res.body)) {
-        debugPrint('❌ Non-JSON response: ${res.body.substring(0, res.body.length.clamp(0, 300))}');
+        debugPrint(
+          '❌ Non-JSON response: ${res.body.substring(0, res.body.length.clamp(0, 300))}',
+        );
         _snack('Server Error', 'Unexpected server response (${res.statusCode})');
         return;
       }
@@ -957,7 +473,6 @@ class RestaurantMenuUpdateController extends GetxController {
     }
   }
 
-  // ── Clear selections ────────────────────────────────────────────────────────
   void clearMenuItemSelection() {
     selectedMenuItem.value = null;
     pickedMenuImage.value  = null;

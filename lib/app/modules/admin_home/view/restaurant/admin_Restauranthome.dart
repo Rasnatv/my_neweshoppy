@@ -348,7 +348,7 @@ class AdminRestauranthome extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: () {
                 Get.back();
-                Get.to(() => MenuUpdatePage(restaurantId: int.parse(restaurant.id)));
+               Get.to(() => MenuUpdatePage(restaurantId: int.parse(restaurant.id)));
               },
               icon: const Icon(Icons.restaurant_menu),
               label: const Text("Edit Menu & Tables"),
