@@ -1,76 +1,31 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../../common/style/app_colors.dart';
 import '../../../../data/models/admin_restarant_menuupdatemodel.dart';
 import 'controller/restaurant_menuupdatecontroller.dart';
 
 class _DS {
-  static const bg              = Color(0xFFF5F6FA);
-  static const surface         = Color(0xFFFFFFFF);
-  static const surfaceElevated = Color(0xFFF0F1F8);
-  static const border          = Color(0xFFE0E3F0);
-  static const amber           = Color(0xFFE07B00);
-  static const amberSoft       = Color(0xFFF5A623);
-  static const amberDim        = Color(0x1AE07B00);
-  static const textPrimary     = Color(0xFF1A1D2E);
-  static const textSecondary   = Color(0xFF5C6080);
-  static const textMuted       = Color(0xFF9BA3C2);
-  static const success         = Color(0xFF1DA87A);
-  static const successDim      = Color(0x1A1DA87A);
-  static const danger          = Color(0xFFE05252);
-  static const dangerDim       = Color(0x1AE05252);
-  static const mealBreakfast   = Color(0xFFE07B00);
-  static const mealLunch       = Color(0xFF0AA0A0);
-  static const mealDinner      = Color(0xFF7B4FA6);
+  static const bg          = Color(0xFFF5F6FA);
+  static const surface     = Colors.white;
+  static const border      = Color(0xFFE8EAF0);
+  static const textPrimary = Color(0xFF1A1D2E);
+  static const textSub     = Color(0xFF5C6080);
+  static const textMuted   = Color(0xFF9BA3C2);
+  static const success     = Color(0xFF1DA87A);
+  static const danger      = Color(0xFFE05252);
 
-  static const p4  = 4.0;
-  static const p8  = 8.0;
-  static const p12 = 12.0;
-  static const p16 = 16.0;
-  static const p20 = 20.0;
-  static const p24 = 24.0;
-  static const p32 = 32.0;
-
-  static final cardShadow = BoxShadow(
-    color: Colors.black.withOpacity(0.06),
-    blurRadius: 16,
-    offset: const Offset(0, 4),
-  );
-
-  static const tsPageTitle = TextStyle(
-    fontFamily: 'Georgia', fontSize: 19, fontWeight: FontWeight.w700,
-    color: textPrimary, letterSpacing: 0.2,
-  );
-  static const tsSectionTitle = TextStyle(
-    fontSize: 13, fontWeight: FontWeight.w700, color: amber, letterSpacing: 2.0,
-  );
-  static const tsLabel = TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary);
-  static const tsBody  = TextStyle(fontSize: 14, color: textSecondary, height: 1.5);
-  static const tsMuted = TextStyle(fontSize: 12, color: textMuted);
-  static const tsPrice = TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: success, letterSpacing: 0.3);
+  static const mealBreakfast = Color(0xFFE07B00);
+  static const mealLunch     = Color(0xFF0AA0A0);
+  static const mealDinner    = Color(0xFF7B4FA6);
 }
-
-// ─── Shared Helpers ──────────────────────────────────────────────────────────
-InputDecoration _field(String label, {Widget? suffix, String? hint}) => InputDecoration(
-  labelText: label,
-  hintText: hint,
-  labelStyle: const TextStyle(color: _DS.textSecondary, fontSize: 13),
-  hintStyle: const TextStyle(color: _DS.textMuted, fontSize: 13),
-  suffixIcon: suffix,
-  filled: true,
-  fillColor: _DS.surfaceElevated,
-  contentPadding: const EdgeInsets.symmetric(horizontal: _DS.p16, vertical: _DS.p12),
-  border:        OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _DS.border)),
-  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _DS.border)),
-  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _DS.amber, width: 1.5)),
-);
 
 Color _mealColor(String m) {
   switch (m) {
     case 'breakfast': return _DS.mealBreakfast;
     case 'lunch':     return _DS.mealLunch;
     case 'dinner':    return _DS.mealDinner;
-    default:          return _DS.amber;
+    default:          return AppColors.kPrimary;
   }
 }
 
@@ -83,120 +38,9 @@ IconData _mealIcon(String m) {
   }
 }
 
-// ─── Primary Button ──────────────────────────────────────────────────────────
-class _PrimaryBtn extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final bool loading;
-  final VoidCallback? onPressed;
-  final Color? color;
-
-  const _PrimaryBtn({
-    required this.label,
-    required this.icon,
-    required this.loading,
-    this.onPressed,
-    this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final c = color ?? _DS.amber;
-    return SizedBox(
-      width: double.infinity,
-      height: 50,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          gradient: LinearGradient(
-            colors: onPressed == null
-                ? [_DS.textMuted, _DS.textMuted]
-                : [c, Color.lerp(c, Colors.white, 0.15)!],
-          ),
-          boxShadow: onPressed != null
-              ? [BoxShadow(color: c.withOpacity(0.25), blurRadius: 14, offset: const Offset(0, 4))]
-              : [],
-        ),
-        child: ElevatedButton.icon(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.transparent,
-            shadowColor: Colors.transparent,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-          icon: loading
-              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-              : Icon(icon, size: 18),
-          label: Text(loading ? 'Saving…' : label,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
-          onPressed: onPressed,
-        ),
-      ),
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  final String? subtitle;
-  const _SectionHeader(this.title, {this.subtitle});
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: _DS.p16),
-    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(title.toUpperCase(), style: _DS.tsSectionTitle),
-      if (subtitle != null) ...[const SizedBox(height: 4), Text(subtitle!, style: _DS.tsBody)],
-    ]),
-  );
-}
-
-class _Card extends StatelessWidget {
-  final Widget child;
-  final EdgeInsetsGeometry? padding;
-  const _Card({required this.child, this.padding});
-
-  @override
-  Widget build(BuildContext context) => Container(
-    margin: const EdgeInsets.symmetric(vertical: _DS.p8),
-    padding: padding ?? const EdgeInsets.all(_DS.p20),
-    decoration: BoxDecoration(
-      color: _DS.surface,
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: _DS.border),
-      boxShadow: [_DS.cardShadow],
-    ),
-    child: child,
-  );
-}
-
-class _EmptyState extends StatelessWidget {
-  final IconData icon;
-  final String message;
-  final String sub;
-  const _EmptyState({required this.icon, required this.message, required this.sub});
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(40),
-    alignment: Alignment.center,
-    child: Column(mainAxisSize: MainAxisSize.min, children: [
-      Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(color: _DS.surfaceElevated, shape: BoxShape.circle, border: Border.all(color: _DS.border)),
-        child: Icon(icon, size: 32, color: _DS.textMuted),
-      ),
-      const SizedBox(height: 16),
-      Text(message, style: _DS.tsLabel.copyWith(color: _DS.textSecondary)),
-      const SizedBox(height: 4),
-      Text(sub, style: _DS.tsMuted),
-    ]),
-  );
-}
-
+// ─── Main Page ────────────────────────────────────────────────────────────────
 class MenuUpdatePage extends StatelessWidget {
   final int restaurantId;
-
   const MenuUpdatePage({super.key, required this.restaurantId});
 
   RestaurantMenuUpdateController get c =>
@@ -209,460 +53,781 @@ class MenuUpdatePage extends StatelessWidget {
       tag: restaurantId.toString(),
     );
 
-    return Theme(
-      data: ThemeData.light().copyWith(
-        scaffoldBackgroundColor: _DS.bg,
-        colorScheme: const ColorScheme.light(primary: _DS.amber, surface: _DS.surface),
-      ),
-      child: DefaultTabController(
-        length: 3,
-        child: Scaffold(
-          backgroundColor: _DS.bg,
-          appBar: _buildAppBar(),
-          body: TabBarView(
-            children: [
-              _buildTablesTab(context),
-              _buildTimingsTab(context),
-              _buildMenuTab(context),
-            ],
-          ),
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
+        backgroundColor: Colors.grey.shade50,
+        appBar: _buildAppBar(),
+        body: TabBarView(
+          children: [
+            _buildTablesTab(context),
+            _buildTimingsTab(context),
+            _buildMenuTab(context),
+          ],
         ),
       ),
     );
   }
 
+  // ── AppBar ──────────────────────────────────────────────────────────────────
   PreferredSizeWidget _buildAppBar() => AppBar(
-    backgroundColor: _DS.surface,
+    automaticallyImplyLeading: true,
+    backgroundColor: AppColors.kPrimary,
     elevation: 0,
-    surfaceTintColor: Colors.transparent,
-    leading: Container(
-      margin: const EdgeInsets.all(8),
-      decoration: BoxDecoration(color: _DS.amberDim, borderRadius: BorderRadius.circular(10)),
-      child: const Icon(Icons.edit_note_rounded, color: _DS.amber, size: 20),
+    title: const Text(
+      'Update Restaurant Menu',
+      style: TextStyle(
+        color: Colors.white,
+        fontSize: 17,
+        fontWeight: FontWeight.w700,
+      ),
     ),
-    title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text('Update Menu', style: _DS.tsPageTitle),
-      Text('Restaurant #$restaurantId', style: _DS.tsMuted),
-    ]),
     actions: [
       Obx(() {
-        final loading = c.isLoadingTables.value || c.isLoadingTimings.value || c.isLoadingMenuItems.value;
-        return loading
-            ? const Padding(
-          padding: EdgeInsets.all(14),
-          child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: _DS.amber, strokeWidth: 2)),
-        )
-            : _IconBtn(icon: Icons.refresh_rounded, tooltip: 'Refresh All', onTap: c.fetchAll);
+        final loading = c.isLoadingTables.value ||
+            c.isLoadingTimings.value ||
+            c.isLoadingMenuItems.value;
+        return Padding(
+          padding: const EdgeInsets.only(right: 12),
+          child: loading
+              ? const Center(
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                  color: Colors.white, strokeWidth: 2),
+            ),
+          )
+              : IconButton(
+            icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+            tooltip: 'Refresh All',
+            onPressed: c.fetchAll,
+          ),
+        );
       }),
     ],
     bottom: PreferredSize(
       preferredSize: const Size.fromHeight(56),
       child: Container(
-        decoration: const BoxDecoration(border: Border(top: BorderSide(color: _DS.border))),
+        color: AppColors.kPrimary,
         child: const TabBar(
-          labelColor: _DS.amber,
-          unselectedLabelColor: _DS.textSecondary,
-          indicatorColor: _DS.amber,
-          indicatorWeight: 2.5,
-          labelStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.8),
-          unselectedLabelStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white60,
+          indicatorColor: Colors.white,
+          indicatorWeight: 3,
+          labelStyle:
+          TextStyle(fontSize: 13, fontWeight: FontWeight.w700, letterSpacing: 0.8),
+          unselectedLabelStyle:
+          TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
           tabs: [
-            Tab(text: 'TABLES'),
-            Tab(text: 'TIMINGS'),
-            Tab(text: 'MENU'),
+            Tab(icon: Icon(Icons.table_restaurant_outlined, size: 18), text: 'TABLES'),
+            Tab(icon: Icon(Icons.schedule_outlined, size: 18), text: 'TIMINGS'),
+            Tab(icon: Icon(Icons.menu_book_outlined, size: 18), text: 'MENU'),
           ],
         ),
       ),
     ),
   );
 
-  // ═══════════════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════════════
   // TAB 1 — TABLES
-  // ═══════════════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════════════
   Widget _buildTablesTab(BuildContext context) => SingleChildScrollView(
-    padding: const EdgeInsets.all(_DS.p20),
-    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const SizedBox(height: 4),
+    child: Column(children: [
+      _gradientStrip(),
+      Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
-      Obx(() {
-        final sel = c.selectedTable.value;
-        if (sel == null) return const SizedBox();
-        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          _SectionHeader('Edit Table', subtitle: 'Updating: ${sel.tableType}'),
-          _Card(child: Column(children: [
-            TextField(
-              controller: c.tableTypeCtrl,
-              style: const TextStyle(color: _DS.textPrimary),
-              decoration: _field('Table Type / Name'),
-            ),
-            const SizedBox(height: _DS.p12),
-            TextField(
-              controller: c.capacityRangeCtrl,
-              style: const TextStyle(color: _DS.textPrimary),
-              decoration: _field('Capacity Range', hint: 'e.g. 2–6'),
-            ),
-            const SizedBox(height: _DS.p12),
-            TextField(
-              controller: c.tableNameCtrl,
-              style: const TextStyle(color: _DS.textPrimary, letterSpacing: 1.0),
-              textCapitalization: TextCapitalization.characters,
-              decoration: _field('Table IDs (comma-separated)', hint: 'T1, T2, T3'),
-            ),
-            const SizedBox(height: _DS.p12),
-            Obx(() => DropdownButtonFormField<SeatingTypeUpdate>(
-              value: c.seatingTypeEdit.value,
-              dropdownColor: _DS.surface,
-              style: const TextStyle(color: _DS.textPrimary, fontSize: 14),
-              decoration: _field('Seating Type'),
-              items: SeatingTypeUpdate.values
-                  .map((e) => DropdownMenuItem(
-                value: e,
-                child: Text(e.name.capitalizeFirst!),
-              ))
-                  .toList(),
-              onChanged: (v) => c.seatingTypeEdit.value = v!,
-            )),
-            const SizedBox(height: _DS.p20),
-            Row(children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: _DS.textSecondary,
-                    side: const BorderSide(color: _DS.border),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+          // Edit Form (shown when a table is selected)
+          Obx(() {
+            final sel = c.selectedTable.value;
+            if (sel == null) return const SizedBox();
+            return Column(children: [
+              _buildCard(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  _sectionHeader(
+                    icon: Icons.edit_rounded,
+                    title: 'Edit Table',
+                    subtitle: 'Updating: ${sel.tableType}',
                   ),
-                  icon: const Icon(Icons.close_rounded, size: 16),
-                  label: const Text('Cancel'),
-                  onPressed: c.clearTableSelection,
-                ),
+                  const SizedBox(height: 20),
+                  _modernTextField(
+                    controller: c.tableTypeCtrl,
+                    label: 'Table Type / Name',
+                    hint: 'e.g. Round Table, VIP Booth',
+                    icon: Icons.table_restaurant_outlined,
+                  ),
+                  const SizedBox(height: 16),
+                  _modernTextField(
+                    controller: c.capacityRangeCtrl,
+                    label: 'Capacity Range',
+                    hint: 'e.g. 2–6',
+                    icon: Icons.people_outline,
+                  ),
+                  const SizedBox(height: 16),
+                  _modernTextField(
+                    controller: c.tableNameCtrl,
+                    label: 'Table IDs (comma-separated)',
+                    hint: 'T1, T2, T3',
+                    icon: Icons.grid_view_rounded,
+                  ),
+                  const SizedBox(height: 16),
+                  Obx(() => _modernDropdown<SeatingTypeUpdate>(
+                    label: 'Seating Type',
+                    icon: Icons.chair_outlined,
+                    value: c.seatingTypeEdit.value,
+                    items: SeatingTypeUpdate.values,
+                    itemLabel: (e) => e.name.capitalizeFirst!,
+                    onChanged: (v) => c.seatingTypeEdit.value = v!,
+                  )),
+                  const SizedBox(height: 24),
+                  Row(children: [
+                    Expanded(child: _outlinedBtn(
+                      label: 'Cancel',
+                      icon: Icons.close_rounded,
+                      onPressed: c.clearTableSelection,
+                    )),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 2,
+                      child: Obx(() => _primaryBtn(
+                        label: 'Save Changes',
+                        icon: Icons.save_rounded,
+                        loading: c.isUpdatingTable.value,
+                        onPressed: c.isUpdatingTable.value ? null : c.updateTable,
+                      )),
+                    ),
+                  ]),
+                ]),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 2,
-                child: Obx(() => _PrimaryBtn(
-                  label: 'Save Changes',
-                  icon: Icons.save_rounded,
-                  loading: c.isUpdatingTable.value,
-                  onPressed: c.isUpdatingTable.value ? null : c.updateTable,
-                )),
-              ),
-            ]),
-          ])),
-          const SizedBox(height: _DS.p8),
-        ]);
-      }),
+              const SizedBox(height: 20),
+            ]);
+          }),
 
-      const _SectionHeader('Restaurant Tables', subtitle: 'Tap a table to edit its details'),
-      Obx(() {
-        if (c.isLoadingTables.value) {
-          return const Center(child: Padding(
-            padding: EdgeInsets.all(40),
-            child: CircularProgressIndicator(color: _DS.amber),
-          ));
-        }
-        if (c.tables.isEmpty) {
-          return const _EmptyState(
-            icon: Icons.table_restaurant_outlined,
-            message: 'No tables found',
-            sub: 'Tables for this restaurant will appear here',
-          );
-        }
-        return Column(
-          children: c.tables.map((table) => _TableCard(table: table, tag: restaurantId.toString())).toList(),
-        );
-      }),
+          // Tables List
+          _buildCard(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              _sectionHeader(
+                icon: Icons.table_restaurant_rounded,
+                title: 'Restaurant Tables',
+                subtitle: 'Tap a table to edit its details',
+              ),
+              const SizedBox(height: 16),
+              Obx(() {
+                if (c.isLoadingTables.value) return _loadingIndicator();
+                if (c.tables.isEmpty) return _emptyState(
+                  icon: Icons.table_restaurant_outlined,
+                  message: 'No tables found',
+                );
+                return Column(
+                  children: c.tables
+                      .map((t) => _TableCard(table: t, tag: restaurantId.toString()))
+                      .toList(),
+                );
+              }),
+            ]),
+          ),
+        ]),
+      ),
     ]),
   );
 
-  // ═══════════════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════════════
   // TAB 2 — TIMINGS
-  // ═══════════════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════════════
   Widget _buildTimingsTab(BuildContext context) {
-
-    // ── FIX 3: Use controller's parser for initial TimeOfDay,
-    //           and formatter to write back API-compatible "06:27 AM" strings ──
     Future<void> pickTime(TextEditingController ctrl) async {
-      // ✅ Use parseTimeToTimeOfDay to correctly handle "06:27 AM" format
       final initial = c.parseTimeToTimeOfDay(ctrl.text);
-
       final picked = await showTimePicker(
         context: context,
         initialTime: initial,
         builder: (ctx, child) => Theme(
           data: ThemeData.light().copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: _DS.amber, onPrimary: Colors.white,
-              surface: _DS.surface, onSurface: _DS.textPrimary,
+            colorScheme: ColorScheme.light(
+              primary: AppColors.kPrimary,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: _DS.textPrimary,
             ),
           ),
           child: child!,
         ),
       );
-
-      if (picked != null) {
-        // ✅ FIX: Write "02:30 PM" format (what the API expects),
-        //         NOT raw "14:30" (what the old code wrote → caused 500 error)
-        ctrl.text = c.formatTimeTo12h(picked);
-        debugPrint('⏰ Time picked → "${ctrl.text}"');
-      }
+      if (picked != null) ctrl.text = c.formatTimeTo12h(picked);
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(_DS.p20),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const SizedBox(height: 4),
-        const _SectionHeader('Meal Timings', subtitle: 'Adjust service windows for each meal period'),
-
-        Obx(() {
-          if (c.isLoadingTimings.value) {
-            return const Center(child: Padding(
-              padding: EdgeInsets.all(40),
-              child: CircularProgressIndicator(color: _DS.amber),
-            ));
-          }
-          if (c.timings.isEmpty) {
-            return const _EmptyState(
-              icon: Icons.schedule_outlined,
-              message: 'No timings found',
-              sub: 'Add timings from the Menu Management page',
-            );
-          }
-
-          return Column(
-            children: [
-              ...['breakfast', 'lunch', 'dinner'].map((meal) {
-                final timing = c.getTimingByMeal(meal);
-                if (timing == null) return const SizedBox();
-
-                final ctrls = c.timingControllers[meal];
-                if (ctrls == null) return const SizedBox();
-
-                final color = _mealColor(meal);
-                return _Card(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Row(children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: color.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(_mealIcon(meal), color: color, size: 18),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(meal.capitalizeFirst!, style: _DS.tsLabel),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: color.withOpacity(0.10),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text('ID: ${timing.id}', style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600)),
-                      ),
-                    ]),
-                    const SizedBox(height: _DS.p16),
-                    Row(children: [
-                      Expanded(
-                        child: TextField(
-                          controller: ctrls['start'],
-                          readOnly: true,
-                          style: const TextStyle(color: _DS.textPrimary),
-                          onTap: () => pickTime(ctrls['start']!),
-                          decoration: _field('Start Time',
-                              suffix: Icon(Icons.schedule, size: 18, color: color)),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: Icon(Icons.arrow_forward, color: _DS.textMuted, size: 18),
-                      ),
-                      Expanded(
-                        child: TextField(
-                          controller: ctrls['end'],
-                          readOnly: true,
-                          style: const TextStyle(color: _DS.textPrimary),
-                          onTap: () => pickTime(ctrls['end']!),
-                          decoration: _field('End Time',
-                              suffix: Icon(Icons.schedule, size: 18, color: color)),
-                        ),
-                      ),
-                    ]),
-                  ]),
+      child: Column(children: [
+        _gradientStrip(),
+        Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Obx(() {
+              if (c.isLoadingTimings.value) {
+                return _buildCard(child: _loadingIndicator());
+              }
+              if (c.timings.isEmpty) {
+                return _buildCard(
+                  child: _emptyState(
+                    icon: Icons.schedule_outlined,
+                    message: 'No timings found',
+                  ),
                 );
-              }),
-              const SizedBox(height: _DS.p16),
-              Obx(() => _PrimaryBtn(
-                label: 'Save All Timings',
-                icon: Icons.save_rounded,
-                loading: c.isUpdatingTimings.value,
-                onPressed: c.isUpdatingTimings.value ? null : c.updateTimings,
-              )),
-            ],
-          );
-        }),
+              }
+              return Column(children: [
+                ...['breakfast', 'lunch', 'dinner'].map((meal) {
+                  final timing = c.getTimingByMeal(meal);
+                  if (timing == null) return const SizedBox();
+                  final ctrls = c.timingControllers[meal];
+                  if (ctrls == null) return const SizedBox();
+                  final color = _mealColor(meal);
+
+                  return _buildCard(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      _sectionHeader(
+                        icon: _mealIcon(meal),
+                        title: meal.capitalizeFirst!,
+                        subtitle: 'Set service window for ${meal.capitalizeFirst}',
+                        iconColor: color,
+                      ),
+                      const SizedBox(height: 20),
+                      Row(children: [
+                        Expanded(child: _pickerField(
+                          label: 'Start Time',
+                          value: ctrls['start']!.text.obs,
+                          icon: Icons.access_time_outlined,
+                          onTap: () => pickTime(ctrls['start']!),
+                          accentColor: color,
+                        )),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: Icon(Icons.arrow_forward_rounded,
+                              color: Colors.grey.shade400, size: 18),
+                        ),
+                        Expanded(child: _pickerField(
+                          label: 'End Time',
+                          value: ctrls['end']!.text.obs,
+                          icon: Icons.access_time_rounded,
+                          onTap: () => pickTime(ctrls['end']!),
+                          accentColor: color,
+                        )),
+                      ]),
+                    ]),
+                  );
+                }),
+                const SizedBox(height: 8),
+                Obx(() => _primaryBtn(
+                  label: 'Save All Timings',
+                  icon: Icons.save_rounded,
+                  loading: c.isUpdatingTimings.value,
+                  onPressed: c.isUpdatingTimings.value ? null : c.updateTimings,
+                )),
+              ]);
+            }),
+          ]),
+        ),
       ]),
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════════════
   // TAB 3 — MENU
-  // ═══════════════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════════════
   Widget _buildMenuTab(BuildContext context) => SingleChildScrollView(
-    padding: const EdgeInsets.all(_DS.p20),
-    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const SizedBox(height: 4),
+    child: Column(children: [
+      _gradientStrip(),
+      Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
-      Obx(() {
-        final sel = c.selectedMenuItem.value;
-        if (sel == null) return const SizedBox();
-        final color = _mealColor(sel.mealType);
-        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          _SectionHeader('Edit Menu Item',
-              subtitle: 'Updating: ${sel.foodName} (${sel.mealType.capitalizeFirst})'),
-          _Card(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              Expanded(
-                flex: 2,
-                child: TextField(
-                  controller: c.menuNameCtrl,
-                  style: const TextStyle(color: _DS.textPrimary),
-                  decoration: _field('Food Name'),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: TextField(
-                  controller: c.menuPriceCtrl,
-                  style: const TextStyle(color: _DS.textPrimary),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  decoration: _field('Price ₹'),
-                ),
-              ),
-            ]),
-            const SizedBox(height: 10),
-            TextField(
-              controller: c.menuDescCtrl,
-              style: const TextStyle(color: _DS.textPrimary),
-              maxLines: 2,
-              decoration: _field('Description'),
-            ),
-            const SizedBox(height: 10),
-            if (sel.imageUrl.isNotEmpty) ...[
-              Text('Current Image', style: _DS.tsMuted),
-              const SizedBox(height: 6),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.network(
-                  sel.imageUrl,
-                  height: 90,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const SizedBox(),
-                ),
-              ),
-              const SizedBox(height: 8),
-            ],
-            Obx(() => c.pickedMenuImage.value != null
-                ? Stack(children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.file(
-                  c.pickedMenuImage.value!,
-                  height: 110,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                ),
-              ),
-              Positioned(
-                top: 8, right: 8,
-                child: GestureDetector(
-                  onTap: () => c.pickedMenuImage.value = null,
-                  child: Container(
-                    decoration: BoxDecoration(color: Colors.black.withOpacity(0.6), shape: BoxShape.circle),
-                    padding: const EdgeInsets.all(4),
-                    child: const Icon(Icons.close_rounded, color: Colors.white, size: 16),
+          // Edit Form (shown when a menu item is selected)
+          Obx(() {
+            final sel = c.selectedMenuItem.value;
+            if (sel == null) return const SizedBox();
+            final color = _mealColor(sel.mealType);
+            return Column(children: [
+              _buildCard(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  _sectionHeader(
+                    icon: Icons.edit_rounded,
+                    title: 'Edit Menu Item',
+                    subtitle: '${sel.foodName} · ${sel.mealType.capitalizeFirst}',
+                    iconColor: color,
                   ),
-                ),
-              ),
-            ])
-                : GestureDetector(
-              onTap: c.pickMenuImage,
-              child: Container(
-                height: 60,
-                decoration: BoxDecoration(
-                  color: _DS.surfaceElevated,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: _DS.border),
-                ),
-                child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Icon(Icons.add_photo_alternate_outlined, color: color, size: 18),
-                  const SizedBox(width: 8),
-                  Text('Replace Photo', style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 20),
+                  _modernTextField(
+                    controller: c.menuNameCtrl,
+                    label: 'Food Name',
+                    hint: 'Enter food name',
+                    icon: Icons.fastfood_outlined,
+                  ),
+                  const SizedBox(height: 16),
+                  _modernTextField(
+                    controller: c.menuPriceCtrl,
+                    label: 'Price (₹)',
+                    hint: 'e.g. 299.00',
+                    icon: Icons.currency_rupee_outlined,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  ),
+                  const SizedBox(height: 16),
+                  _modernTextField(
+                    controller: c.menuDescCtrl,
+                    label: 'Description',
+                    hint: 'Short description of the dish',
+                    icon: Icons.notes_outlined,
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Image section
+                  _sectionHeader(
+                    icon: Icons.image_rounded,
+                    title: 'Food Image',
+                  ),
+                  const SizedBox(height: 12),
+                  if (sel.imageUrl.isNotEmpty) ...[
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(
+                        sel.imageUrl,
+                        height: 120,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const SizedBox(),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                  Obx(() => c.pickedMenuImage.value != null
+                      ? Stack(children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.file(
+                        c.pickedMenuImage.value!,
+                        height: 130,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    Positioned(
+                      top: 8, right: 8,
+                      child: GestureDetector(
+                        onTap: () => c.pickedMenuImage.value = null,
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(Icons.close_rounded,
+                              color: Colors.white, size: 18),
+                        ),
+                      ),
+                    ),
+                  ])
+                      : InkWell(
+                    onTap: c.pickMenuImage,
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      height: 70,
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: color.withOpacity(0.3),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.add_photo_alternate_outlined,
+                              color: color, size: 20),
+                          const SizedBox(width: 10),
+                          Text(
+                            'Replace Photo',
+                            style: TextStyle(
+                              color: color,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )),
+
+                  const SizedBox(height: 24),
+                  Row(children: [
+                    Expanded(child: _outlinedBtn(
+                      label: 'Cancel',
+                      icon: Icons.close_rounded,
+                      onPressed: c.clearMenuItemSelection,
+                    )),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 2,
+                      child: Obx(() => _primaryBtn(
+                        label: 'Update Item',
+                        icon: Icons.save_rounded,
+                        loading: c.isUpdatingMenuItem.value,
+                        onPressed:
+                        c.isUpdatingMenuItem.value ? null : c.updateMenuItem,
+                        color: color,
+                      )),
+                    ),
+                  ]),
                 ]),
               ),
-            )),
-            const SizedBox(height: _DS.p16),
-            Row(children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: _DS.textSecondary,
-                    side: const BorderSide(color: _DS.border),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  icon: const Icon(Icons.close_rounded, size: 16),
-                  label: const Text('Cancel'),
-                  onPressed: c.clearMenuItemSelection,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 2,
-                child: Obx(() => _PrimaryBtn(
-                  label: 'Update Item',
-                  icon: Icons.save_rounded,
-                  loading: c.isUpdatingMenuItem.value,
-                  color: color,
-                  onPressed: c.isUpdatingMenuItem.value ? null : c.updateMenuItem,
-                )),
-              ),
-            ]),
-          ])),
-          const SizedBox(height: _DS.p8),
-        ]);
-      }),
+              const SizedBox(height: 20),
+            ]);
+          }),
 
-      const _SectionHeader('Menu Items', subtitle: 'Tap an item to edit it'),
-      Obx(() {
-        if (c.isLoadingMenuItems.value) {
-          return const Center(child: Padding(
-            padding: EdgeInsets.all(40),
-            child: CircularProgressIndicator(color: _DS.amber),
-          ));
-        }
-        if (c.menuItems.isEmpty) {
-          return const _EmptyState(
-            icon: Icons.menu_book_outlined,
-            message: 'No menu items found',
-            sub: 'Items for this restaurant will appear here',
-          );
-        }
-        return Column(
-          children: ['breakfast', 'lunch', 'dinner'].map((meal) {
-            final items = c.getMenuItemsByMeal(meal);
-            if (items.isEmpty) return const SizedBox();
-            return _MealSection(mealType: meal, items: items, tag: restaurantId.toString());
-          }).toList(),
-        );
-      }),
+          // Menu Items List
+          _buildCard(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              _sectionHeader(
+                icon: Icons.menu_book_rounded,
+                title: 'Menu Items',
+                subtitle: 'Tap an item to edit it',
+              ),
+              const SizedBox(height: 16),
+              Obx(() {
+                if (c.isLoadingMenuItems.value) return _loadingIndicator();
+                if (c.menuItems.isEmpty) return _emptyState(
+                  icon: Icons.menu_book_outlined,
+                  message: 'No menu items found',
+                );
+                return Column(
+                  children: ['breakfast', 'lunch', 'dinner'].map((meal) {
+                    final items = c.getMenuItemsByMeal(meal);
+                    if (items.isEmpty) return const SizedBox();
+                    return _MealSection(
+                        mealType: meal, items: items, tag: restaurantId.toString());
+                  }).toList(),
+                );
+              }),
+            ]),
+          ),
+        ]),
+      ),
     ]),
   );
 }
 
-// ─── Table Card ──────────────────────────────────────────────────────────────
+// ─── Shared UI Helpers ────────────────────────────────────────────────────────
+
+/// Gradient strip below AppBar (mirrors AdminAddEventPage decoration)
+Widget _gradientStrip() => Container(
+  height: 8,
+  decoration: BoxDecoration(
+    gradient: LinearGradient(
+      colors: [AppColors.kPrimary, AppColors.kPrimary.withOpacity(0.6)],
+    ),
+  ),
+);
+
+/// White elevated card
+Widget _buildCard({required Widget child}) => Container(
+  width: double.infinity,
+  padding: const EdgeInsets.all(20),
+  margin: const EdgeInsets.only(bottom: 20),
+  decoration: BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(16),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withOpacity(0.04),
+        blurRadius: 10,
+        offset: const Offset(0, 2),
+      ),
+    ],
+  ),
+  child: child,
+);
+
+/// Section header row with icon badge
+Widget _sectionHeader({
+  required IconData icon,
+  required String title,
+  String? subtitle,
+  Color? iconColor,
+}) =>
+    Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: (iconColor ?? AppColors.kPrimary).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: iconColor ?? AppColors.kPrimary, size: 20),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+            color: Colors.black87,
+          ),
+        ),
+      ]),
+      if (subtitle != null) ...[
+        const SizedBox(height: 6),
+        Padding(
+          padding: const EdgeInsets.only(left: 44),
+          child: Text(
+            subtitle,
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+          ),
+        ),
+      ],
+    ]);
+
+/// Modern text field matching AdminAddEventPage style
+Widget _modernTextField({
+  required TextEditingController controller,
+  required String label,
+  required String hint,
+  required IconData icon,
+  String? Function(String?)? validator,
+  TextInputType? keyboardType,
+  int maxLines = 1,
+}) =>
+    TextFormField(
+      controller: controller,
+      validator: validator,
+      keyboardType: keyboardType,
+      maxLines: maxLines,
+      style: const TextStyle(fontSize: 15),
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        prefixIcon: Icon(icon, size: 22),
+        filled: true,
+        fillColor: Colors.grey.shade50,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.kPrimary, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.red.shade300, width: 2),
+        ),
+        contentPadding:
+        const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      ),
+    );
+
+/// Dropdown styled to match text fields
+Widget _modernDropdown<T>({
+  required String label,
+  required IconData icon,
+  required T value,
+  required List<T> items,
+  required String Function(T) itemLabel,
+  required ValueChanged<T?> onChanged,
+}) =>
+    DropdownButtonFormField<T>(
+      value: value,
+      dropdownColor: Colors.white,
+      style: const TextStyle(color: _DS.textPrimary, fontSize: 15),
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, size: 22),
+        filled: true,
+        fillColor: Colors.grey.shade50,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.kPrimary, width: 2),
+        ),
+        contentPadding:
+        const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      ),
+      items: items
+          .map((e) => DropdownMenuItem(value: e, child: Text(itemLabel(e))))
+          .toList(),
+      onChanged: onChanged,
+    );
+
+/// Tappable picker field (date / time)
+Widget _pickerField({
+  required String label,
+  required RxString value,
+  required IconData icon,
+  required VoidCallback onTap,
+  Color? accentColor,
+}) =>
+    Obx(() => InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon, size: 22,
+              color: accentColor ?? AppColors.kPrimary),
+          suffixIcon: Icon(Icons.arrow_drop_down,
+              size: 28, color: accentColor ?? AppColors.kPrimary),
+          filled: true,
+          fillColor: Colors.grey.shade50,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide:
+            BorderSide(color: accentColor ?? AppColors.kPrimary, width: 2),
+          ),
+          contentPadding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        ),
+        child: Text(
+          value.value.isEmpty ? 'Select $label' : value.value,
+          style: TextStyle(
+            fontSize: 15,
+            color: value.value.isEmpty
+                ? Colors.grey.shade500
+                : Colors.black87,
+            fontWeight:
+            value.value.isEmpty ? FontWeight.w400 : FontWeight.w500,
+          ),
+        ),
+      ),
+    ));
+
+/// Primary gradient button
+Widget _primaryBtn({
+  required String label,
+  required IconData icon,
+  required bool loading,
+  VoidCallback? onPressed,
+  Color? color,
+}) {
+  final c = color ?? AppColors.kPrimary;
+  return Container(
+    width: double.infinity,
+    height: 54,
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(12),
+      gradient: LinearGradient(
+        colors: onPressed == null
+            ? [Colors.grey.shade400, Colors.grey.shade300]
+            : [c, c.withOpacity(0.8)],
+      ),
+      boxShadow: onPressed != null
+          ? [
+        BoxShadow(
+          color: c.withOpacity(0.3),
+          blurRadius: 12,
+          offset: const Offset(0, 6),
+        )
+      ]
+          : [],
+    ),
+    child: ElevatedButton.icon(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        foregroundColor: Colors.white,
+        shape:
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      icon: loading
+          ? const SizedBox(
+        width: 20,
+        height: 20,
+        child: CircularProgressIndicator(
+            color: Colors.white, strokeWidth: 2.5),
+      )
+          : Icon(icon, size: 20),
+      label: Text(
+        loading ? 'Saving…' : label,
+        style: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.5,
+        ),
+      ),
+      onPressed: onPressed,
+    ),
+  );
+}
+
+/// Outlined secondary button
+Widget _outlinedBtn({
+  required String label,
+  required IconData icon,
+  required VoidCallback onPressed,
+}) =>
+    OutlinedButton.icon(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: Colors.grey.shade600,
+        side: BorderSide(color: Colors.grey.shade300, width: 1.5),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        padding: const EdgeInsets.symmetric(vertical: 14),
+      ),
+      icon: Icon(icon, size: 18),
+      label: Text(label,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+      onPressed: onPressed,
+    );
+
+/// Centered loading spinner
+Widget _loadingIndicator() => const Center(
+  child: Padding(
+    padding: EdgeInsets.all(32),
+    child: CircularProgressIndicator(color: AppColors.kPrimary),
+  ),
+);
+
+/// Empty state widget
+Widget _emptyState({required IconData icon, required String message}) =>
+    Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 32),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 32, color: Colors.grey.shade400),
+          ),
+          const SizedBox(height: 16),
+          Text(message,
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade500)),
+        ]),
+      ),
+    );
+
+// ─── Table Card ───────────────────────────────────────────────────────────────
 class _TableCard extends StatelessWidget {
   final RestaurantTableModel table;
   final String tag;
@@ -675,60 +840,92 @@ class _TableCard extends StatelessWidget {
   Widget build(BuildContext context) => Obx(() {
     final isSelected = c.selectedTable.value?.id == table.id;
     return Container(
-      margin: const EdgeInsets.only(bottom: _DS.p8),
+      margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: _DS.surface,
+        color: isSelected
+            ? AppColors.kPrimary.withOpacity(0.04)
+            : Colors.grey.shade50,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isSelected ? _DS.amber.withOpacity(0.5) : _DS.border,
+          color: isSelected
+              ? AppColors.kPrimary.withOpacity(0.4)
+              : Colors.grey.shade200,
           width: isSelected ? 1.5 : 1.0,
         ),
-        boxShadow: [_DS.cardShadow],
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: _DS.p16, vertical: _DS.p8),
+        contentPadding:
+        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: Container(
           width: 48, height: 48,
           decoration: BoxDecoration(
-            color: isSelected ? _DS.amberDim : _DS.surfaceElevated,
+            color: isSelected
+                ? AppColors.kPrimary.withOpacity(0.12)
+                : Colors.grey.shade100,
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(Icons.table_restaurant, color: isSelected ? _DS.amber : _DS.textMuted, size: 22),
+          child: Icon(
+            Icons.table_restaurant,
+            color: isSelected ? AppColors.kPrimary : Colors.grey.shade400,
+            size: 22,
+          ),
         ),
-        title: Text(table.tableType, style: _DS.tsLabel),
+        title: Text(table.tableType,
+            style: const TextStyle(
+                fontSize: 14, fontWeight: FontWeight.w700, color: _DS.textPrimary)),
         subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4),
+          padding: const EdgeInsets.only(top: 6),
           child: Wrap(spacing: 6, runSpacing: 4, children: [
-            _InfoChip('${table.capacityRange} seats', Icons.people_outline),
-            _InfoChip(table.seatingType.capitalizeFirst!, Icons.chair_outlined),
-            _InfoChip(table.tableName, Icons.grid_view_rounded),
+            _chip('${table.capacityRange} seats', Icons.people_outline),
+            _chip(table.seatingType.capitalizeFirst!, Icons.chair_outlined),
+            _chip(table.tableName, Icons.grid_view_rounded),
           ]),
         ),
         isThreeLine: true,
         trailing: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: isSelected ? _DS.amberDim : _DS.surfaceElevated,
+            color: isSelected
+                ? AppColors.kPrimary.withOpacity(0.12)
+                : Colors.grey.shade100,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
             isSelected ? Icons.edit_rounded : Icons.edit_outlined,
-            color: isSelected ? _DS.amber : _DS.textMuted,
+            color: isSelected ? AppColors.kPrimary : Colors.grey.shade400,
             size: 18,
           ),
         ),
-        onTap: () => isSelected ? c.clearTableSelection() : c.selectTableForEdit(table),
+        onTap: () => isSelected
+            ? c.clearTableSelection()
+            : c.selectTableForEdit(table),
       ),
     );
   });
+
+  Widget _chip(String label, IconData icon) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+    decoration: BoxDecoration(
+      color: Colors.grey.shade100,
+      borderRadius: BorderRadius.circular(6),
+      border: Border.all(color: Colors.grey.shade200),
+    ),
+    child: Row(mainAxisSize: MainAxisSize.min, children: [
+      Icon(icon, size: 11, color: Colors.grey.shade500),
+      const SizedBox(width: 4),
+      Text(label,
+          style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+    ]),
+  );
 }
 
-// ─── Meal Section (Menu Tab) ─────────────────────────────────────────────────
+// ─── Meal Section ─────────────────────────────────────────────────────────────
 class _MealSection extends StatelessWidget {
   final String mealType;
   final List<MenuItemModel> items;
   final String tag;
-  const _MealSection({required this.mealType, required this.items, required this.tag});
+  const _MealSection(
+      {required this.mealType, required this.items, required this.tag});
 
   RestaurantMenuUpdateController get c =>
       Get.find<RestaurantMenuUpdateController>(tag: tag);
@@ -739,28 +936,30 @@ class _MealSection extends StatelessWidget {
     final expanded = c.expandedMeals[mealType]!;
 
     return Obx(() => Container(
-      margin: const EdgeInsets.only(bottom: _DS.p12),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: _DS.surface,
-        borderRadius: BorderRadius.circular(16),
+        color: expanded.value ? color.withOpacity(0.02) : Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: expanded.value ? color.withOpacity(0.4) : _DS.border,
+          color: expanded.value
+              ? color.withOpacity(0.3)
+              : Colors.grey.shade200,
           width: expanded.value ? 1.5 : 1.0,
         ),
-        boxShadow: [_DS.cardShadow],
       ),
       child: Column(children: [
         InkWell(
           onTap: () => expanded.value = !expanded.value,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           child: Padding(
-            padding: const EdgeInsets.all(_DS.p16),
+            padding: const EdgeInsets.all(14),
             child: Row(children: [
               Container(
                 width: 44, height: 44,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    begin: Alignment.topLeft, end: Alignment.bottomRight,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                     colors: [color, Color.lerp(color, Colors.black, 0.25)!],
                   ),
                   borderRadius: BorderRadius.circular(10),
@@ -771,8 +970,14 @@ class _MealSection extends StatelessWidget {
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(mealType.capitalizeFirst!,
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: color)),
-                  Text('${items.length} item${items.length != 1 ? 's' : ''}', style: _DS.tsMuted),
+                      style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: color)),
+                  Text(
+                    '${items.length} item${items.length != 1 ? 's' : ''}',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                  ),
                 ]),
               ),
               AnimatedRotation(
@@ -781,7 +986,8 @@ class _MealSection extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.10), borderRadius: BorderRadius.circular(8),
+                    color: color.withOpacity(0.10),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(Icons.expand_more_rounded, color: color, size: 20),
                 ),
@@ -789,13 +995,15 @@ class _MealSection extends StatelessWidget {
             ]),
           ),
         ),
-
         if (expanded.value) ...[
-          Divider(color: _DS.border, height: 1),
+          Divider(height: 1, color: color.withOpacity(0.2)),
           Padding(
-            padding: const EdgeInsets.all(_DS.p12),
+            padding: const EdgeInsets.all(12),
             child: Column(
-              children: items.map((food) => _MenuItemCard(item: food, color: color, tag: tag)).toList(),
+              children: items
+                  .map((f) =>
+                  _MenuItemCard(item: f, color: color, tag: tag))
+                  .toList(),
             ),
           ),
         ],
@@ -804,12 +1012,13 @@ class _MealSection extends StatelessWidget {
   }
 }
 
-// ─── Menu Item Card ──────────────────────────────────────────────────────────
+// ─── Menu Item Card ───────────────────────────────────────────────────────────
 class _MenuItemCard extends StatelessWidget {
   final MenuItemModel item;
   final Color color;
   final String tag;
-  const _MenuItemCard({required this.item, required this.color, required this.tag});
+  const _MenuItemCard(
+      {required this.item, required this.color, required this.tag});
 
   RestaurantMenuUpdateController get c =>
       Get.find<RestaurantMenuUpdateController>(tag: tag);
@@ -822,13 +1031,17 @@ class _MenuItemCard extends StatelessWidget {
           ? c.clearMenuItemSelection()
           : c.selectMenuItemForEdit(item),
       child: Container(
-        margin: const EdgeInsets.only(bottom: _DS.p8),
+        margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isSelected ? color.withOpacity(0.04) : _DS.surfaceElevated,
+          color: isSelected
+              ? color.withOpacity(0.04)
+              : Colors.grey.shade50,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? color.withOpacity(0.35) : _DS.border,
+            color: isSelected
+                ? color.withOpacity(0.35)
+                : Colors.grey.shade200,
             width: isSelected ? 1.5 : 1.0,
           ),
         ),
@@ -836,32 +1049,54 @@ class _MenuItemCard extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: item.imageUrl.isNotEmpty
-                ? Image.network(item.imageUrl, width: 52, height: 52, fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _placeholder(color))
-                : _placeholder(color),
+                ? Image.network(item.imageUrl,
+                width: 52, height: 52, fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _placeholder())
+                : _placeholder(),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(item.foodName, style: _DS.tsLabel.copyWith(fontSize: 14)),
+              Text(item.foodName,
+                  style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: _DS.textPrimary)),
               if (item.shortDescription.isNotEmpty)
                 Text(item.shortDescription,
-                    maxLines: 1, overflow: TextOverflow.ellipsis, style: _DS.tsMuted),
-              const SizedBox(height: 3),
-              Text('₹ ${item.price.toStringAsFixed(2)}', style: _DS.tsPrice),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        fontSize: 12, color: Colors.grey.shade500)),
+              const SizedBox(height: 4),
+              Text(
+                '₹ ${item.price.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: _DS.success,
+                  letterSpacing: 0.3,
+                ),
+              ),
             ]),
           ),
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: isSelected ? color.withOpacity(0.12) : _DS.surfaceElevated,
+              color: isSelected
+                  ? color.withOpacity(0.12)
+                  : Colors.grey.shade100,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: isSelected ? color.withOpacity(0.3) : _DS.border),
+              border: Border.all(
+                color: isSelected
+                    ? color.withOpacity(0.3)
+                    : Colors.grey.shade200,
+              ),
             ),
             child: Icon(
               isSelected ? Icons.edit_rounded : Icons.edit_outlined,
               size: 16,
-              color: isSelected ? color : _DS.textMuted,
+              color: isSelected ? color : Colors.grey.shade400,
             ),
           ),
         ]),
@@ -869,54 +1104,12 @@ class _MenuItemCard extends StatelessWidget {
     );
   });
 
-  Widget _placeholder(Color color) => Container(
+  Widget _placeholder() => Container(
     width: 52, height: 52,
-    decoration: BoxDecoration(color: color.withOpacity(0.10), borderRadius: BorderRadius.circular(10)),
-    child: Icon(Icons.fastfood_rounded, color: color, size: 22),
-  );
-}
-
-class _InfoChip extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  const _InfoChip(this.label, this.icon);
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
     decoration: BoxDecoration(
-      color: _DS.surfaceElevated,
-      borderRadius: BorderRadius.circular(6),
-      border: Border.all(color: _DS.border),
+      color: color.withOpacity(0.10),
+      borderRadius: BorderRadius.circular(10),
     ),
-    child: Row(mainAxisSize: MainAxisSize.min, children: [
-      Icon(icon, size: 11, color: _DS.textSecondary),
-      const SizedBox(width: 4),
-      Text(label, style: _DS.tsMuted.copyWith(fontSize: 11)),
-    ]),
-  );
-}
-
-// ─── Icon Button ─────────────────────────────────────────────────────────────
-class _IconBtn extends StatelessWidget {
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onTap;
-  const _IconBtn({required this.icon, required this.tooltip, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(right: 8),
-    child: Tooltip(
-      message: tooltip,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(color: _DS.amberDim, borderRadius: BorderRadius.circular(8)),
-          child: Icon(icon, color: _DS.amber, size: 18),
-        ),
-      ),
-    ),
+    child: Icon(Icons.fastfood_rounded, color: color, size: 22),
   );
 }
