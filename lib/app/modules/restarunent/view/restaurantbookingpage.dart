@@ -52,7 +52,6 @@ class RestaurantBookingPage extends StatelessWidget {
             )),
             const SizedBox(height: 16),
 
-            /// ---------------- Number of Guests ----------------
             const Text("Number of Guests", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Obx(() => Row(
@@ -154,8 +153,6 @@ class RestaurantBookingPage extends StatelessWidget {
               );
             }),
             const SizedBox(height: 24),
-
-
           ],
         ),
       ),
@@ -172,10 +169,6 @@ class RestaurantBookingPage extends StatelessWidget {
                 "Table ${controller.selectedTable.value} booked for ${controller.guests.value} guests on ${controller.selectedDate.value.toLocal().toString().split(' ')[0]} at ${controller.selectedTimeSlot.value}",
                 backgroundColor: Colors.teal, colorText: Colors.white);
           },
-          // style: ElevatedButton.styleFrom(
-          //     padding: const EdgeInsets.symmetric(vertical: 14),
-          //    // backgroundColor: Colors.teal,
-          //     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
           child: const Text("Confirm Booking", style: TextStyle(color: Colors.white, fontSize: 16)),
         ),),
       ),

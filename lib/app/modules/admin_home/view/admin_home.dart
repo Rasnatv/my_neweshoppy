@@ -3,24 +3,26 @@ import 'package:eshoppy/app/modules/admin_home/view/restaurant/admin_Restauranth
 import 'package:eshoppy/app/modules/admin_home/view/restaurant/admin_merchanthome.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../../../common/style/app_colors.dart';
 import '../../../common/style/app_text_style.dart';
 import '../../../core/utils/auth_service.dart';
 import '../admin_shoppage.dart';
+import '../controller/admin_dashboardcontroller.dart';
 import '../event/view/admin_event.dart';
 import '../categories/views/Admin_catgorypage.dart';
 import '../locations/views/admin_locationmanagement.dart';
-
-import '../offer/views/admin_merchantofferspage.dart';
 import '../users/views/admin_registereduserlist.dart';
 import '../banners/views/adminadvertisment.dart';
+
 
 class AdminDashboard extends StatelessWidget {
   const AdminDashboard({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Initialize the controller
+    final controller = Get.put(AdminDashboardController());
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -31,11 +33,26 @@ class AdminDashboard extends StatelessWidget {
           style: AppTextStyle.rTextNunitoWhite17w700,
         ),
         actions: [
+          // Refresh button
+          Obx(() => controller.isLoading.value
+              ? const Padding(
+            padding: EdgeInsets.all(14),
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                color: Colors.white,
+                strokeWidth: 2,
+              ),
+            ),
+          )
+              : IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            onPressed: controller.fetchDashboardCounts,
+          )),
           IconButton(
             icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-            onPressed: () {
-              // Handle notifications
-            },
+            onPressed: () {},
           ),
           const SizedBox(width: 8),
         ],
@@ -45,21 +62,14 @@ class AdminDashboard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Welcome Card
             _buildWelcomeCard(),
             const SizedBox(height: 24),
-
-            // Quick Stats
-            _buildQuickStats(),
+            _buildQuickStats(controller), // 👈 Pass controller
             const SizedBox(height: 24),
-
-            // Section Header
             _buildSectionHeader("Management Menu"),
             const SizedBox(height: 12),
-
-            // Menu Grid
             _buildMenuGrid(context),
-            const SizedBox(height: 80), // Space for logout button
+            const SizedBox(height: 80),
           ],
         ),
       ),
@@ -90,62 +100,57 @@ class AdminDashboard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.admin_panel_settings,
+              color: Colors.white,
+              size: 28,
+            ),
+          ),
+          const SizedBox(width: 16),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Welcome !",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-                child: const Icon(
-                  Icons.admin_panel_settings,
-                  color: Colors.white,
-                  size: 28,
+                SizedBox(height: 4),
+                Text(
+                  "Manage your platform efficiently",
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 13,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Welcome !",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      "Manage your platform efficiently",
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  // ----------- Quick Stats -----------
-  Widget _buildQuickStats() {
-    return Row(
+  // ----------- Quick Stats (now uses controller) -----------
+  Widget _buildQuickStats(AdminDashboardController controller) {
+    return Obx(() => Row(
       children: [
         Expanded(
           child: _buildStatCard(
             icon: Icons.store_outlined,
-            value: "0",
+            value: controller.totalMerchants.value,
             label: "Merchants",
             color: const Color(0xFF6366F1),
           ),
@@ -154,7 +159,7 @@ class AdminDashboard extends StatelessWidget {
         Expanded(
           child: _buildStatCard(
             icon: Icons.people_outline,
-            value: "0",
+            value: controller.totalUsers.value,
             label: "Users",
             color: const Color(0xFF10B981),
           ),
@@ -163,13 +168,13 @@ class AdminDashboard extends StatelessWidget {
         Expanded(
           child: _buildStatCard(
             icon: Icons.shopping_bag_outlined,
-            value: "0",
+            value: controller.totalProducts.value,
             label: "Products",
             color: const Color(0xFFF59E0B),
           ),
         ),
       ],
-    );
+    ));
   }
 
   Widget _buildStatCard({
@@ -243,15 +248,14 @@ class AdminDashboard extends StatelessWidget {
         title: "Merchants",
         subtitle: "Manage merchants",
         color: const Color(0xFF6366F1),
-       // onTap: (){}
-       onTap: () => Get.to(() => AdminMerchantHomePageUI()),
+        onTap: () => Get.to(() => AdminMerchantHomePageUI()),
       ),
       MenuItemData(
         icon: Icons.category_rounded,
         title: "Categories",
         subtitle: "Products & categories",
         color: const Color(0xFF8B5CF6),
-        onTap: () => Get.to(() =>  AddCategoryPage()),
+        onTap: () => Get.to(() => AddCategoryPage()),
       ),
       MenuItemData(
         icon: Icons.event_rounded,
@@ -300,8 +304,7 @@ class AdminDashboard extends StatelessWidget {
         title: "Offers",
         subtitle: "Merchant offers",
         color: const Color(0xFFF97316),
-        onTap:(){}
-        //onTap: () => Get.to(() => AdminMerchantofferspage()),
+        onTap: () {},
       ),
     ];
 
@@ -350,11 +353,7 @@ class AdminDashboard extends StatelessWidget {
                     color: item.color.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Icon(
-                    item.icon,
-                    color: item.color,
-                    size: 32,
-                  ),
+                  child: Icon(item.icon, color: item.color, size: 32),
                 ),
                 const SizedBox(height: 12),
                 Text(
@@ -371,10 +370,7 @@ class AdminDashboard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   item.subtitle,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 11, color: Colors.grey[600]),
                   textAlign: TextAlign.center,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -402,9 +398,7 @@ class AdminDashboard extends StatelessWidget {
       ),
       child: SafeArea(
         child: ElevatedButton(
-          onPressed: () {
-            AuthService.showLogoutDialog();
-          },
+          onPressed: () => AuthService.showLogoutDialog(),
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.red,
             foregroundColor: Colors.white,
@@ -414,25 +408,22 @@ class AdminDashboard extends StatelessWidget {
             ),
             elevation: 0,
           ),
-          child: Row(
+          child: const Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
+            children: [
               Icon(Icons.logout_rounded, size: 20),
               SizedBox(width: 8),
               Text(
                 "Logout",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
             ],
           ),
         ),
       ),
     );
-  }}
-
+  }
+}
 
 // ----------- Menu Item Data Model -----------
 class MenuItemData {

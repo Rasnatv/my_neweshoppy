@@ -42,7 +42,7 @@ class ProductAttributes {
 }
 
 class MerchantOfferProductDetailModel {
-  final int offerProductId;
+  final int ProductId;
   final String productName;
   final String description;
   final String categoryId;
@@ -55,7 +55,7 @@ class MerchantOfferProductDetailModel {
   final List<dynamic> features;
 
   MerchantOfferProductDetailModel({
-    required this.offerProductId,
+    required this.ProductId,
     required this.productName,
     required this.description,
     required this.categoryId,
@@ -70,25 +70,32 @@ class MerchantOfferProductDetailModel {
 
   double get savedAmount => price - offerPrice;
 
+
   factory MerchantOfferProductDetailModel.fromJson(
       Map<String, dynamic> json) {
     return MerchantOfferProductDetailModel(
-      offerProductId:
-      int.tryParse(json['offer_product_id'].toString()) ?? 0,
+      ProductId: int.tryParse(json['product_id'].toString()) ?? 0,
+
       productName: json['product_name']?.toString() ?? '',
       description: json['description']?.toString() ?? '',
       categoryId: json['category_id']?.toString() ?? '',
+
       price: double.tryParse(json['price'].toString()) ?? 0.0,
-      offerPrice: double.tryParse(json['offer_price'].toString()) ?? 0.0,
+      offerPrice:
+      double.tryParse(json['offer_price'].toString()) ?? 0.0,
       discountPercentage:
       double.tryParse(json['discount_percentage'].toString()) ?? 0.0,
-      stockQty: int.tryParse(json['stock_qty'].toString()) ?? 0,
+
+      stockQty:
+      int.tryParse(json['stock_qty'].toString()) ?? 0,
+
       productImages: (json['product_images'] as List? ?? [])
           .map((e) => e.toString())
           .toList(),
+
       productAttributes: ProductAttributes.fromJson(
-          json['product_attributes'] as Map<String, dynamic>? ?? {}),
-      features: json['features'] as List? ?? [],
+          json['product_attributes'] ?? {}),
+
+      features: json['features'] ?? [],
     );
-  }
-}
+  }}

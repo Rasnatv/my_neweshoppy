@@ -3,7 +3,7 @@ class UserOfferProductModel {
   final String productName;
   final String productImage;
   final String originalPrice;
-  final int offerPrice;
+  final String offerPrice;
 
   UserOfferProductModel({
     required this.id,

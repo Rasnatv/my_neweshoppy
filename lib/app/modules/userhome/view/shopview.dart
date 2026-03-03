@@ -1,6 +1,7 @@
 
 
 import 'package:eshoppy/app/modules/userhome/view/user_shopabotus.dart';
+import 'package:eshoppy/app/modules/userhome/view/user_viewmerchantgallery.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_colors.dart';
@@ -245,55 +246,7 @@ class ShopDetailPage extends StatelessWidget {
                   );
                 }),
 
-                /// 🖼️ GALLERY TAB
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(32),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(32),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 20,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Icon(
-                            Icons.photo_library_outlined,
-                            size: 72,
-                            color: Colors.grey[400],
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        Text(
-                          "Gallery Coming Soon",
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.grey[800],
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          "We're working hard to bring you\nthis feature soon!",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 14,
-                            height: 1.5,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                UserMerchantGalleryViewPage(merchantId: merchantId),
 
                 /// ℹ️ ABOUT TAB
                 MerchantAboutPage(merchantId: merchantId),

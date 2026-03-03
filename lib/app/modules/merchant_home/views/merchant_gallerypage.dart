@@ -203,24 +203,44 @@ class MerchantGalleryPage extends StatelessWidget {
                         ),
                       ),
 
-                      /// DELETE BUTTON
                       Positioned(
                         top: 6,
                         right: 6,
-                        child: GestureDetector(
-                          onTap: () =>
-                              _showDeleteDialog(i),
-                          child: const CircleAvatar(
+                        child: Obx(() => GestureDetector(
+                          onTap: controller.deletingIndex.value == i  // ✅ correct condition
+                              ? null
+                              : () {
+                            Get.defaultDialog(
+                              title: "Delete Image",
+                              middleText: "Are you sure you want to delete this image?",
+                              textCancel: "Cancel",
+                              textConfirm: "Delete",
+                              confirmTextColor: Colors.white,
+                              onConfirm: () {
+                                Get.back();
+                                controller.deleteImage(i);  // ✅ API delete for gallery
+                              },
+                            );
+                          },
+                          child: CircleAvatar(
                             radius: 14,
-                            backgroundColor:
-                            Colors.black54,
-                            child: Icon(
+                            backgroundColor: Colors.black54,
+                            child: controller.deletingIndex.value == i
+                                ? const SizedBox(
+                              height: 14,
+                              width: 14,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                                : const Icon(
                               Icons.delete,
                               size: 16,
                               color: Colors.white,
                             ),
                           ),
-                        ),
+                        )),
                       )
                     ],
                   );

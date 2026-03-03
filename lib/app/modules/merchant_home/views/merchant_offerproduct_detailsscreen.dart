@@ -6,16 +6,16 @@ import '../../../data/models/offer_productdetailmodel.dart';
 import '../controller/merchant_offerproduct_detailcontroller.dart';
 
 class MerchnantOfferProductDetailScreen extends StatelessWidget {
-  final int offerId;
+  final int productId;
 
-  MerchnantOfferProductDetailScreen({super.key, required this.offerId});
+  MerchnantOfferProductDetailScreen({super.key, required this.productId});
 
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(MerchantOfferProductDetailController());
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      controller.fetchProductDetail(offerId);
+      controller.fetchProductDetail(productId);
     });
 
     return Scaffold(

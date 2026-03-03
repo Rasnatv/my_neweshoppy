@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:eshoppy/app/modules/merchant_home/controller/manageproduct_controller.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
@@ -13,7 +14,7 @@ class MerchantOfferProductDetailController extends GetxController {
   final String detailUrl =
       "https://rasma.astradevelops.in/e_shoppyy/public/api/offer-product-details";
 
-  Future<void> fetchProductDetail(int offerId) async {
+  Future<void> fetchProductDetail(int productId) async {
     isLoading.value = true;
     productDetail.value = null;
 
@@ -32,7 +33,8 @@ class MerchantOfferProductDetailController extends GetxController {
           "Authorization": "Bearer $token",
           "Content-Type": "application/json",
         },
-        body: jsonEncode({"offer_id": offerId}),
+        body: jsonEncode({ "product_id":productId })
+
       );
 
       if (response.statusCode == 200) {

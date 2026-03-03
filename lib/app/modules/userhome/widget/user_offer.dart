@@ -148,7 +148,7 @@ class UserOfferSection extends StatelessWidget {
                                 GestureDetector(
                                   onTap: () {
                                     Get.to(() => UserOfferProductPage(
-                                      merchant_id:offer.merchant_id.toString()
+                                        offer_id:offer.offer_id.toString()
                                     ));
                                   },
                                   child:Container(

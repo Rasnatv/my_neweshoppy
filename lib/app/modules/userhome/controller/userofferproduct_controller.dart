@@ -7,9 +7,9 @@ import 'package:http/http.dart' as http;
 import '../../../data/models/userofferproductmodel.dart';
 
 class UserOfferProductController extends GetxController {
-  final String merchant_id;
+  final String offer_id;
 
-  UserOfferProductController(this.merchant_id);
+  UserOfferProductController(this.offer_id);
 
   var isLoading = false.obs;
   var productList = <UserOfferProductModel>[].obs;
@@ -19,7 +19,7 @@ class UserOfferProductController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    print('🔵 Controller initialized with merchant_id: $merchant_id');
+    print('🔵 Controller initialized with merchant_id: $offer_id');
     fetchOfferProducts();
   }
 
@@ -29,7 +29,7 @@ class UserOfferProductController extends GetxController {
 
       final token = box.read('auth_token');
       print('🔑 Token: $token');
-      print('📦 Merchant ID being sent: $merchant_id');
+      print('📦 Merchant ID being sent: $offer_id');
 
       final response = await http.post(
         Uri.parse(
@@ -41,7 +41,7 @@ class UserOfferProductController extends GetxController {
           'Content-Type': 'application/x-www-form-urlencoded', // ← Added
         },
         body: {
-          'merchant_id': merchant_id,
+          'offer_id': offer_id,
         },
       );
 

@@ -1,15 +1,13 @@
-// ============== MODELS ==============
 
 class UserOfferProductDetail {
   final int id;
   final String merchantId;
-  final String offerName;
-  final String offerBanner;
   final String productName;
   final String categoryId;
+  final String description;
   final double price;
   final double offerPrice;
-  final int discountPercentage;
+  final double discountPercentage;
   final int stockQty;
   final List<String> productImages;
   final Map<String, String> commonAttributes;
@@ -18,10 +16,9 @@ class UserOfferProductDetail {
   UserOfferProductDetail({
     required this.id,
     required this.merchantId,
-    required this.offerName,
-    required this.offerBanner,
     required this.productName,
     required this.categoryId,
+    required this.description,
     required this.price,
     required this.offerPrice,
     required this.discountPercentage,
@@ -32,42 +29,55 @@ class UserOfferProductDetail {
   });
 
   factory UserOfferProductDetail.fromJson(Map<String, dynamic> json) {
-    // Parse common attributes
+
+    /// ---------- COMMON ATTRIBUTES ----------
     Map<String, String> commonAttrs = {};
-    if (json['product_attributes'] != null &&
-        json['product_attributes']['common_attributes'] != null) {
-      final commonData = json['product_attributes']['common_attributes'];
-      commonData.forEach((key, value) {
+
+    if (json['product_attributes']?['common_attributes'] != null) {
+      final data = json['product_attributes']['common_attributes'];
+
+      data.forEach((key, value) {
         commonAttrs[key.toString()] = value.toString();
       });
     }
 
-    // Parse variants
+    /// ---------- VARIANTS ----------
     List<ProductVariant> variantsList = [];
-    if (json['product_attributes'] != null &&
-        json['product_attributes']['variants'] != null) {
-      final variantsData = json['product_attributes']['variants'] as List;
-      variantsList = variantsData.map((v) => ProductVariant.fromJson(v)).toList();
+
+    if (json['product_attributes']?['variants'] != null) {
+      variantsList =
+          (json['product_attributes']['variants'] as List)
+              .map((e) => ProductVariant.fromJson(e))
+              .toList();
     }
 
     return UserOfferProductDetail(
-      id: json['id'] ?? 0,
+      id: int.tryParse(json['id'].toString()) ?? 0,
       merchantId: json['merchant_id']?.toString() ?? '',
-      offerName: json['offer_name'] ?? '',
-      offerBanner: json['offer_banner'] ?? '',
       productName: json['product_name'] ?? '',
       categoryId: json['category_id']?.toString() ?? '',
-      price: double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
-      offerPrice: double.tryParse(json['offer_price']?.toString() ?? '0') ?? 0.0,
-      discountPercentage: json['discount_percentage'] ?? 0,
-      stockQty: json['stock_qty'] ?? 0,
-      productImages: List<String>.from(json['product_images'] ?? []),
+      description: json['description'] ?? '',
+
+      price:
+      double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
+
+      offerPrice:
+      double.tryParse(json['offer_price']?.toString() ?? '0') ?? 0.0,
+
+      discountPercentage:
+      double.tryParse(json['discount_percentage']?.toString() ?? '0') ?? 0.0,
+
+      stockQty:
+      int.tryParse(json['stock_qty']?.toString() ?? '0') ?? 0,
+
+      productImages:
+      List<String>.from(json['product_images'] ?? []),
+
       commonAttributes: commonAttrs,
       variants: variantsList,
     );
   }
 }
-
 class ProductVariant {
   final Map<String, String> attributes;
   final double price;
@@ -80,18 +90,23 @@ class ProductVariant {
   });
 
   factory ProductVariant.fromJson(Map<String, dynamic> json) {
+
     Map<String, String> attrs = {};
+
     if (json['attributes'] != null) {
-      final attrsData = json['attributes'];
-      attrsData.forEach((key, value) {
+      json['attributes'].forEach((key, value) {
         attrs[key.toString()] = value.toString();
       });
     }
 
     return ProductVariant(
       attributes: attrs,
-      price: double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
-      stock: json['stock'] ?? 0,
+
+      price:
+      double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
+
+      stock:
+      int.tryParse(json['stock']?.toString() ?? '0') ?? 0,
     );
   }
 

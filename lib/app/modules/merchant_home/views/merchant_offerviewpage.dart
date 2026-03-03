@@ -1,15 +1,16 @@
 
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_colors.dart';
 import '../../../common/style/app_text_style.dart';
 import '../../../data/models/merchant_offerbannermodel.dart';
 import '../controller/merchant_offerbanner_controller.dart';
-import 'addofferproduct.dart';
+import 'merchant_createoffer.dart';
 import 'merchant_offerproductview.dart';
 
 class MerchantOfferViewPage extends StatelessWidget {
-  MerchantOfferViewPage({super.key,});
+  MerchantOfferViewPage({super.key});
 
   final MerchantOfferBannerController controller =
   Get.put(MerchantOfferBannerController());
@@ -27,8 +28,7 @@ class MerchantOfferViewPage extends StatelessWidget {
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           InkWell(
-            onTap: () {},
-            //=> Get.to(() => AddOfferProductPage()),
+            onTap: () => Get.to(() => CreateOfferPage()),
             child: Container(
               margin: const EdgeInsets.only(right: 12),
               padding:
@@ -37,8 +37,8 @@ class MerchantOfferViewPage extends StatelessWidget {
                 color: Colors.orange,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: Row(
-                children: const [
+              child: const Row(
+                children: [
                   Icon(Icons.local_offer, color: Colors.white, size: 18),
                   SizedBox(width: 6),
                   Text(
@@ -75,7 +75,7 @@ class MerchantOfferViewPage extends StatelessWidget {
     );
   }
 
-  Widget _offerCard(offer, int index) {
+  Widget _offerCard(MerchantOffersviewmodel offer, int index) {
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
       decoration: BoxDecoration(
@@ -92,13 +92,13 @@ class MerchantOfferViewPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
           /// BANNER IMAGE
           ClipRRect(
             borderRadius:
             const BorderRadius.vertical(top: Radius.circular(18)),
-            child: Image.network(
-              offer.offerBanner, // ✅ fixed field name
+            child: offer.offerBanner.isNotEmpty
+                ? Image.network(
+              offer.offerBanner,
               height: 180,
               width: double.infinity,
               fit: BoxFit.cover,
@@ -109,22 +109,27 @@ class MerchantOfferViewPage extends StatelessWidget {
                   child: Center(child: CircularProgressIndicator()),
                 );
               },
-              errorBuilder: (_, __, ___) =>
-              const SizedBox(
+              errorBuilder: (_, __, ___) => const SizedBox(
                 height: 180,
                 child: Center(
                     child: Icon(Icons.broken_image, size: 60)),
               ),
+            )
+                : const SizedBox(
+              height: 180,
+              child: Center(
+                  child: Icon(Icons.image_not_supported,
+                      size: 60, color: Colors.grey)),
             ),
           ),
 
           const SizedBox(height: 10),
 
-          /// OFFER ID + DISCOUNT
+          /// OFFER ID + DISCOUNT BADGE
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -135,9 +140,9 @@ class MerchantOfferViewPage extends StatelessWidget {
                     border: Border.all(color: Colors.green.shade200),
                   ),
                   child: Text(
-                    "Flat ${offer.discountPercentage}% OFF",
-                    // ✅ fixed field name
-                    style: TextStyle(
+                    // toStringAsFixed(0) removes ".00" → shows "25%" not "25.0%"
+                    "Flat ${offer.discountPercentage.toStringAsFixed(0)}% OFF",
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: Colors.green,
@@ -159,15 +164,15 @@ class MerchantOfferViewPage extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      Get.to(() =>OfferProductScreen(offerId:offer.offerId));
+                      // offerId is now int — pass directly
+                      Get.to(() => OfferProductScreen(offerId: offer.offerId));
                     },
                     icon: const Icon(Icons.visibility),
                     label: const Text("View Products"),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.kPrimary,
                       foregroundColor: Colors.white,
-                      padding:
-                      const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -178,16 +183,14 @@ class MerchantOfferViewPage extends StatelessWidget {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () {},
-                    icon: const Icon(Icons.update,
-                        color: Colors.blue),
+                    icon: const Icon(Icons.update, color: Colors.blue),
                     label: const Text(
                       "Update",
                       style: TextStyle(color: Colors.blue),
                     ),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Colors.blue),
-                      padding:
-                      const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -201,7 +204,6 @@ class MerchantOfferViewPage extends StatelessWidget {
       ),
     );
   }
-
   Widget _loadingView() {
     return const Center(child: CircularProgressIndicator());
   }

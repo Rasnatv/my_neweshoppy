@@ -222,7 +222,7 @@ class UserOfferProductDetailScreen extends StatelessWidget {
               Icon(Icons.local_offer, size: 16, color: Color(0xFF10B981)),
               SizedBox(width: 6),
               Text(
-                product.offerName,
+                product.productName,
                 style: TextStyle(
                   fontSize: 14,
                   color: Color(0xFF10B981),

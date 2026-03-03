@@ -8,16 +8,16 @@ import '../../../common/style/app_text_style.dart';
 import '../controller/userofferproduct_controller.dart';
 
 class UserOfferProductPage extends StatelessWidget {
-  final String merchant_id;
+  final String offer_id;
 
-  const UserOfferProductPage({super.key, required this.merchant_id});
+  const UserOfferProductPage({super.key, required this.offer_id});
 
   @override
   Widget build(BuildContext context) {
     // Use Get.put with a unique tag to avoid conflicts
     final controller = Get.put(
-      UserOfferProductController(merchant_id),
-      tag: merchant_id.toString(), // ← Unique tag for each merchant
+      UserOfferProductController(offer_id),
+      tag:offer_id.toString(), // ← Unique tag for each merchant
     );
 
     return Scaffold(

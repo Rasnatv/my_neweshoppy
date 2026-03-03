@@ -2,17 +2,29 @@
 import 'package:eshoppy/app/modules/restarunent/view/user_resaturantgallery.dart';
 import 'package:eshoppy/app/modules/restarunent/view/user_restaurantabouttab.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import '../../../data/models/restaruantcartmodel.dart';
 import '../../../data/models/userrestaurantmodel.dart';
 import '../controller/gallery_controller.dart';
 import '../controller/restaurantcartcontroller.dart';
 import 'menu_tab.dart';
 import 'restaurantcartpage.dart';
 
+// ── Premium Palette ────────────────────────────────────────────────────────
+class _P {
+  static const bg          = Color(0xFFF5F0EB);
+  static const appBar      = Color(0xFF0F5151);
+  static const appBarLight = Color(0xFF701221);
+  static const gold        = Color(0xFFC9A96E);
+  static const goldLight   = Color(0xFFE8D5A3);
+  static const text        = Color(0xFF1C1008);
+  static const textSub     = Color(0xFF7A7169);
+  static const cardBg      = Color(0xFFFFFFFF);
+  static const border      = Color(0xFFEAE2D6);
+}
+
 class RestaurantDetailPage extends StatefulWidget {
   final Restaurant restaurant;
-
   const RestaurantDetailPage({super.key, required this.restaurant});
 
   @override
@@ -23,22 +35,32 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage>
     with SingleTickerProviderStateMixin {
   late TabController tabController;
   late GalleryController galleryController;
-  final Restaurantcartcontroller cartController =
-  Get.put(Restaurantcartcontroller());
 
-  final List<String> menuTypes = ["Breakfast", "Lunch", "Dinner"];
-  final RxString selectedMenuType = "Breakfast".obs;
+  Restaurantcartcontroller get cartController {
+    if (Get.isRegistered<Restaurantcartcontroller>()) {
+      return Get.find<Restaurantcartcontroller>();
+    }
+    return Get.put(Restaurantcartcontroller(), permanent: true);
+  }
+
+  int get rid => int.tryParse(widget.restaurant.restaurantId) ?? 0;
+  String get ridStr => widget.restaurant.restaurantId;
 
   @override
   void initState() {
     super.initState();
     tabController = TabController(length: 3, vsync: this);
-
     galleryController = Get.put(
-      GalleryController(
-        restaurantId: widget.restaurant.restaurantId.toString(),
+      GalleryController(restaurantId: ridStr),
+      tag: ridStr,
+    );
+    cartController.setRestaurant(rid);
+
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
       ),
-      tag: widget.restaurant.restaurantId.toString(),
     );
   }
 
@@ -51,228 +73,142 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: _P.bg,
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) {
           return [
-            /// ---------------- SLIVER APP BAR WITH IMAGE ----------------
             SliverAppBar(
-              expandedHeight: 280,
+              expandedHeight: 320,
               floating: false,
               pinned: true,
               elevation: 0,
-              backgroundColor: Colors.white,
-              leading: Container(
-                margin: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.black87),
-                  onPressed: () => Get.back(),
+              backgroundColor: _P.appBar,
+
+              // ── BACK BUTTON ──────────────────────────────────────────────
+              leading: Padding(
+                padding: const EdgeInsets.all(9),
+                child: _GlassActionButton(
+                  icon: Icons.arrow_back_ios_new_rounded,
+                  onTap: () => Get.back(),
                 ),
               ),
+
+              // ── CART BUTTON ──────────────────────────────────────────────
               actions: [
-                Container(
-                  margin: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
+                Padding(
+                  padding: const EdgeInsets.all(9),
                   child: Stack(
+                    clipBehavior: Clip.none,
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.shopping_bag_outlined,
-                            color: Colors.teal),
-                        onPressed: () => Get.to(() => Restaurantcartpage()),
+                      _GlassActionButton(
+                        icon: Icons.shopping_bag_outlined,
+                        onTap: () => Get.to(
+                                () => RestaurantCartPage(restaurantId: rid)),
                       ),
-                      Positioned(
-                        right: 6,
-                        top: 6,
-                        child: Obx(() {
-                          if (cartController.cartItems.isEmpty) {
-                            return const SizedBox();
-                          }
-                          return Container(
+                      Obx(() {
+                        final count =
+                        cartController.totalItemsForRestaurant(rid);
+                        if (count == 0) return const SizedBox();
+                        return Positioned(
+                          right: -2,
+                          top: -2,
+                          child: Container(
                             padding: const EdgeInsets.all(4),
                             decoration: BoxDecoration(
-                              color: Colors.red,
+                              gradient: const LinearGradient(
+                                colors: [_P.gold, _P.goldLight],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
                               shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 2),
+                              border: Border.all(
+                                  color: Colors.white, width: 1.5),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: _P.gold.withOpacity(0.45),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                             ),
                             constraints: const BoxConstraints(
-                              minWidth: 18,
-                              minHeight: 18,
-                            ),
-                            child: Center(
-                              child: Text(
-                                cartController.cartItems.length.toString(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                minWidth: 18, minHeight: 18),
+                            child: Text(
+                              count > 99 ? '99+' : '$count',
+                              style: const TextStyle(
+                                color: Color(0xFF3A0A10),
+                                fontSize: 9,
+                                fontWeight: FontWeight.w900,
                               ),
+                              textAlign: TextAlign.center,
                             ),
-                          );
-                        }),
-                      ),
+                          ),
+                        );
+                      }),
                     ],
                   ),
                 ),
+                const SizedBox(width: 4),
               ],
+
+              // Pinned gold separator line
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(1),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  height: innerBoxIsScrolled ? 1.5 : 0,
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.transparent,
+                        _P.gold,
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // ── HERO IMAGE ─────────────────────────────────────────────
               flexibleSpace: FlexibleSpaceBar(
+                collapseMode: CollapseMode.parallax,
                 background: Obx(() {
                   if (galleryController.isLoading.value) {
                     return Container(
-                      color: Colors.grey.shade200,
+                      color: _P.appBar,
                       child: const Center(
-                        child: CircularProgressIndicator(color: Colors.teal),
+                        child: CircularProgressIndicator(
+                            color: _P.gold, strokeWidth: 2),
                       ),
                     );
                   }
                   if (galleryController.restaurantImage.isEmpty) {
-                    return Container(
-                      color: Colors.grey.shade300,
-                      child: const Icon(Icons.image_not_supported, size: 64),
-                    );
+                    return _HeroPlaceholder();
                   }
-                  return Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      Image.network(
-                        galleryController.restaurantImage.value,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
-                          color: Colors.grey.shade300,
-                          child: const Icon(Icons.image_not_supported, size: 64),
-                        ),
-                      ),
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              Colors.black.withOpacity(0.7),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        bottom: 20,
-                        left: 16,
-                        right: 16,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.restaurant.name,
-                              style: const TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                shadows: [
-                                  Shadow(
-                                    color: Colors.black45,
-                                    offset: Offset(0, 2),
-                                    blurRadius: 4,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                const Icon(Icons.location_on,
-                                    color: Colors.white70, size: 16),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: Text(
-                                    widget.restaurant.address,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.white70,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                  return _HeroImage(
+                    imageUrl: galleryController.restaurantImage.value,
+                    name: widget.restaurant.name,
+                    address: widget.restaurant.address,
                   );
                 }),
               ),
             ),
           ];
         },
+
         body: Column(
           children: [
-            /// ---------------- MODERN TAB BAR ----------------
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: TabBar(
-                controller: tabController,
-                labelColor: Colors.teal,
-                unselectedLabelColor: Colors.grey.shade600,
-                indicatorColor: Colors.teal,
-                indicatorWeight: 3,
-                labelStyle: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-                tabs: const [
-                  Tab(icon: Icon(Icons.restaurant_menu), text: "Menu"),
-                  Tab(icon: Icon(Icons.info_outline), text: "About"),
-                  Tab(icon: Icon(Icons.photo_library_outlined), text: "Gallery"),
-                ],
-              ),
-            ),
+            // ── PREMIUM TAB BAR ───────────────────────────────────────────
+            _PremiumTabBar(controller: tabController),
 
-            /// ---------------- TAB BAR VIEW ----------------
+            // ── TAB VIEWS ────────────────────────────────────────────────
             Expanded(
               child: TabBarView(
                 controller: tabController,
                 children: [
-                  // menuTab(),
-                  RestaurantMenuTab(
-                    restaurantId: widget.restaurant.restaurantId.toString(),
-                  ),
-                  RestaurantAboutTab(
-                    restaurantId: widget.restaurant.restaurantId.toString(),
-                  ),
-                  GalleryTabPage(
-                    restaurantId: widget.restaurant.restaurantId.toString(),
-                  ),
+                  RestaurantMenuTab(restaurantId: ridStr),
+                  RestaurantAboutTab(restaurantId: ridStr),
+                  GalleryTabPage(restaurantId: ridStr),
                 ],
               ),
             ),
@@ -281,5 +217,327 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage>
       ),
     );
   }
+}
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Hero Image
+// ─────────────────────────────────────────────────────────────────────────────
+class _HeroImage extends StatelessWidget {
+  final String imageUrl;
+  final String name;
+  final String address;
+
+  const _HeroImage({
+    required this.imageUrl,
+    required this.name,
+    required this.address,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Image.network(
+          imageUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _HeroPlaceholder(),
+        ),
+
+        // Deep layered gradient overlay
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.black.withOpacity(0.22),
+                Colors.transparent,
+                Colors.black.withOpacity(0.25),
+                _P.appBar.withOpacity(0.94),
+              ],
+              stops: const [0.0, 0.3, 0.58, 1.0],
+            ),
+          ),
+        ),
+
+        // Bottom info section
+        Positioned(
+          bottom: 0,
+          left: 0,
+          right: 0,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(22, 0, 22, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Gold decorative accent
+                Row(
+                  children: [
+                    Container(
+                      width: 30,
+                      height: 2.5,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                            colors: [_P.gold, _P.goldLight]),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(width: 7),
+                    Container(
+                      width: 5,
+                      height: 5,
+                      decoration: const BoxDecoration(
+                        color: _P.gold,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 11),
+
+                // Restaurant name
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 27,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    letterSpacing: -0.7,
+                    height: 1.1,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black45,
+                        offset: Offset(0, 2),
+                        blurRadius: 12,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 11),
+
+                // Address pill badge
+                IntrinsicWidth(
+                  child: Container(
+                    padding:
+                    const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.28),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                          color: Colors.white.withOpacity(0.18), width: 1),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.location_on_rounded,
+                            color: _P.gold, size: 13),
+                        const SizedBox(width: 5),
+                        Flexible(
+                          child: Text(
+                            address,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white.withOpacity(0.9),
+                              letterSpacing: 0.1,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Hero Placeholder
+// ─────────────────────────────────────────────────────────────────────────────
+class _HeroPlaceholder extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [_P.appBar, _P.appBarLight],
+        ),
+      ),
+      child: Center(
+        child: Icon(Icons.restaurant,
+            size: 64, color: _P.gold.withOpacity(0.3)),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Premium Tab Bar with custom gold indicator
+// ─────────────────────────────────────────────────────────────────────────────
+class _PremiumTabBar extends StatelessWidget {
+  final TabController controller;
+  const _PremiumTabBar({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: _P.cardBg,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.07),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          TabBar(
+            controller: controller,
+            labelColor: _P.appBar,
+            unselectedLabelColor: _P.textSub,
+            indicatorSize: TabBarIndicatorSize.tab,
+            dividerColor: Colors.transparent,
+            indicator: const _GoldTabIndicator(),
+            labelStyle: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.2,
+            ),
+            unselectedLabelStyle: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+            tabs: const [
+              _PremiumTab(icon: Icons.restaurant_menu_rounded, label: "Menu"),
+              _PremiumTab(icon: Icons.info_outline_rounded, label: "About"),
+              _PremiumTab(icon: Icons.photo_library_outlined, label: "Gallery"),
+            ],
+          ),
+          Container(
+            height: 1,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.transparent,
+                  _P.border,
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PremiumTab extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  const _PremiumTab({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Tab(
+      height: 58,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 20),
+          const SizedBox(height: 4),
+          Text(label),
+        ],
+      ),
+    );
+  }
+}
+
+// Custom gold gradient tab indicator with rounded ends
+class _GoldTabIndicator extends Decoration {
+  const _GoldTabIndicator();
+
+  @override
+  BoxPainter createBoxPainter([VoidCallback? onChanged]) {
+    return _GoldTabPainter();
+  }
+}
+
+class _GoldTabPainter extends BoxPainter {
+  @override
+  void paint(Canvas canvas, Offset offset, ImageConfiguration configuration) {
+    final rect = offset & configuration.size!;
+    const barHeight = 3.0;
+    const hPad = 22.0;
+    final barRect = Rect.fromLTWH(
+      rect.left + hPad,
+      rect.bottom - barHeight,
+      rect.width - hPad * 2,
+      barHeight,
+    );
+
+    final paint = Paint()
+      ..shader = LinearGradient(
+        colors: [
+          _P.gold.withOpacity(0.7),
+          _P.gold,
+          _P.goldLight,
+          _P.gold,
+          _P.gold.withOpacity(0.7),
+        ],
+      ).createShader(barRect)
+      ..style = PaintingStyle.fill;
+
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(barRect, const Radius.circular(3)),
+      paint,
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Glass Action Button
+// ─────────────────────────────────────────────────────────────────────────────
+class _GlassActionButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _GlassActionButton({
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.92),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 14,
+              offset: const Offset(0, 3),
+              spreadRadius: -2,
+            ),
+          ],
+        ),
+        child: Icon(icon, color: _P.appBar, size: 17),
+      ),
+    );
+  }
 }

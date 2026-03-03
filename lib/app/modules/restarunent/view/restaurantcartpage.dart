@@ -1,174 +1,384 @@
 
+
 import 'package:eshoppy/app/modules/restarunent/view/restaurantbookingpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../common/style/app_colors.dart';
-import '../../../common/style/app_text_style.dart';
-import '../../product/controller/cartcontroller.dart';
-import '../../product/view/cartscreen.dart';
+import '../../../data/models/restaruantcartmodel.dart';
 import '../controller/restaurantcartcontroller.dart';
 
-class Restaurantcartpage extends StatelessWidget {
-  Restaurantcartpage ({super.key});
 
-  final Restaurantcartcontroller cartController = Get.find<Restaurantcartcontroller>();
+class RestaurantCartPage extends StatelessWidget {
+  /// Pass the restaurantId so this page shows ONLY that restaurant's items
+  final int restaurantId;
+
+  const RestaurantCartPage({super.key, required this.restaurantId});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      // bottomNavigationBar: Padding(padding: EdgeInsets.all(20),child:SizedBox(width: double.infinity,child:ElevatedButton(onPressed:(){}, child: Text("Confirmbooking"))),
-      // ),
-      appBar: AppBar(
-        title: Text("Cart",style:AppTextStyle.rTextNunitoWhite17w700),
-        backgroundColor: AppColors.kPrimary,
-        elevation: 0,
-      ),
+    final Restaurantcartcontroller cartController =
+    Get.find<Restaurantcartcontroller>();
 
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios,
+              color: Colors.black87, size: 20),
+          onPressed: () => Get.back(),
+        ),
+        title: const Text(
+          'Your Cart',
+          style: TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
+        actions: [
+          IconButton(
+            onPressed: () => cartController.fetchCart(),
+            icon: const Icon(Icons.refresh, color: Colors.teal),
+            tooltip: 'Refresh',
+          ),
+        ],
+      ),
       body: Obx(() {
-        if (cartController.cartItems.isEmpty) {
+        if (cartController.isLoading.value) {
           return const Center(
-            child: Text("Your cart is empty",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            child: CircularProgressIndicator(color: Colors.teal),
           );
         }
 
+        // ✅ Only items belonging to THIS restaurant
+        final items = cartController.itemsForRestaurant(restaurantId);
+
+        if (items.isEmpty) {
+          return _EmptyCartView();
+        }
+
+        final subTotal =
+        cartController.grandTotalForRestaurant(restaurantId);
+
         return Column(
           children: [
-            /// ---------------- CART LIST ----------------
+            // ── CART ITEMS LIST ──────────────────────────────────────
             Expanded(
               child: ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                itemCount: cartController.cartItems.length,
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                itemCount: items.length,
                 itemBuilder: (context, index) {
-                  var item = cartController.cartItems[index];
-
-                  return Container(
-                    margin: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                            color: Colors.black12.withOpacity(0.05),
-                            blurRadius: 6)
-                      ],
-                    ),
-
-                    child: ListTile(
-                      leading: ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.asset(
-                          item.img ?? "assets/noimg.png",
-                          width: 60,
-                          height: 60,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-
-                      title: Text(item.name,
-                          style: const TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w600)),
-
-                      subtitle: Padding(
-                        padding: const EdgeInsets.only(top: 5),
-                        child: Text(
-                          "₹ ${item.price} x ${item.qty} = ₹ ${item.price * item.qty}",
-                          style: const TextStyle(
-                              fontSize: 14, color: Colors.black87),
-                        ),
-                      ),
-
-                      /// ----- QTY BUTTONS -----
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _qtyButton(
-                            Icons.remove,
-                                () => cartController.decreaseQty(index),
-                          ),
-
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            child: Text(item.qty.toString(),
-                                style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold)),
-                          ),
-
-                          _qtyButton(
-                            Icons.add,
-                                () => cartController.increaseQty(index),
-                          ),
-                        ],
-                      ),
-                    ),
+                  final item = items[index];
+                  return _CartItemCard(
+                    item: item,
+                    cartController: cartController,
                   );
                 },
               ),
             ),
 
-            /// ---------------- BOTTOM TOTAL + BOOK NOW ----------------
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: const BoxDecoration(
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(color: Colors.black12, blurRadius: 10)
-                  ]),
+
+          ],
+        );
+      }),
+
+      // ── PLACE ORDER BUTTON ───────────────────────────────────────────
+      bottomNavigationBar: Obx(() {
+        final items = cartController.itemsForRestaurant(restaurantId);
+        if (items.isEmpty) return const SizedBox();
+        final subTotal =
+        cartController.grandTotalForRestaurant(restaurantId);
+        return _PlaceOrderBar(subTotal: subTotal, cartController: cartController, restaurantId: restaurantId);
+      }),
+    );
+  }
+}
+
+// ── CART ITEM CARD ────────────────────────────────────────────────────────────
+class _CartItemCard extends StatelessWidget {
+  final RestaurantCartModel item;
+  final Restaurantcartcontroller cartController;
+
+  const _CartItemCard({required this.item, required this.cartController});
+
+  @override
+  Widget build(BuildContext context) {
+    final priceDisplay = item.price % 1 == 0
+        ? item.price.toInt().toString()
+        : item.price.toStringAsFixed(2);
+    final totalDisplay = item.totalPrice % 1 == 0
+        ? item.totalPrice.toInt().toString()
+        : item.totalPrice.toStringAsFixed(2);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            // ── IMAGE ────────────────────────────────────────────────
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(
+                item.image,
+                width: 80,
+                height: 80,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  width: 80,
+                  height: 80,
+                  color: Colors.grey.shade200,
+                  child: Icon(Icons.fastfood,
+                      size: 36, color: Colors.grey.shade400),
+                ),
+                loadingBuilder: (context, child, progress) {
+                  if (progress == null) return child;
+                  return Container(
+                    width: 80,
+                    height: 80,
+                    color: Colors.grey.shade100,
+                    child: const Center(
+                      child: CircularProgressIndicator(
+                          color: Colors.teal, strokeWidth: 2),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            // ── NAME + PRICE ─────────────────────────────────────────
+            Expanded(
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text("Total Amount",
-                          style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.w600)),
-                      Obx(() => Text(
-                        "₹ ${cartController.totalPrice}",
-                        style: const TextStyle(
-                            fontSize: 20,
-                            color: Colors.teal,
-                            fontWeight: FontWeight.bold),
-                      )),
-                    ],
+                  Text(
+                    item.itemName,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-
-                  const SizedBox(height: 14),
-
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Get.to(()=>RestaurantBookingPage());// <-- your page route
-                      },
-
-                      child: const Text("BOOK NOW",
-                          style:
-                          TextStyle(color: Colors.white, fontSize: 18)),
+                  const SizedBox(height: 4),
+                  Text(
+                    '₹$priceDisplay / item',
+                    style:
+                    TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '₹$totalDisplay',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.teal,
                     ),
                   ),
                 ],
               ),
             ),
+
+            // ── QTY CONTROLS ─────────────────────────────────────────
+            Obx(() {
+              final isUpdating = cartController.isUpdating.value;
+              return Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.teal, width: 1.5),
+                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.white,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    InkWell(
+                      onTap: isUpdating
+                          ? null
+                          : () => cartController.updateQuantity(
+                          item.menuId, 'decrement'),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(10),
+                        bottomLeft: Radius.circular(10),
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 8),
+                        child: Icon(
+                          item.quantity == 1
+                              ? Icons.delete_outline
+                              : Icons.remove,
+                          size: 16,
+                          color: item.quantity == 1
+                              ? Colors.red.shade400
+                              : Colors.teal,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      width: 28,
+                      alignment: Alignment.center,
+                      child: isUpdating
+                          ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(
+                            color: Colors.teal, strokeWidth: 2),
+                      )
+                          : Text(
+                        '${item.quantity}',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.teal,
+                        ),
+                      ),
+                    ),
+                    InkWell(
+                      onTap: isUpdating
+                          ? null
+                          : () => cartController.updateQuantity(
+                          item.menuId, 'increment'),
+                      borderRadius: const BorderRadius.only(
+                        topRight: Radius.circular(10),
+                        bottomRight: Radius.circular(10),
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 8),
+                        child: const Icon(Icons.add,
+                            size: 16, color: Colors.teal),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
           ],
-        );
-      }),
+        ),
+      ),
     );
   }
+}
 
-  /// ================== WIDGET FOR [+] [-] BUTTON ==================
-  Widget _qtyButton(IconData icon, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(6),
-        decoration: BoxDecoration(
-          color: Colors.teal.withOpacity(0.1),
-          shape: BoxShape.circle,
+// ── PLACE ORDER BAR ───────────────────────────────────────────────────────────
+class _PlaceOrderBar extends StatelessWidget {
+  final double subTotal;
+  final Restaurantcartcontroller cartController;
+  final int restaurantId;
+
+  const _PlaceOrderBar({
+    required this.subTotal,
+    required this.cartController,
+    required this.restaurantId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final totalDisplay = subTotal % 1 == 0
+        ? subTotal.toInt().toString()
+        : subTotal.toStringAsFixed(2);
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          width: double.infinity,
+          child: Material(
+            color: Colors.teal,
+            borderRadius: BorderRadius.circular(16),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () {
+               Get.to(()=>RestaurantBookingPage());
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Text(
+                  'Place Order  •  ₹$totalDisplay',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          ),
         ),
-        child: Icon(icon, size: 18, color: Colors.teal),
+      ),
+    );
+  }
+}
+
+// ── EMPTY CART VIEW ───────────────────────────────────────────────────────────
+class _EmptyCartView extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.shopping_cart_outlined,
+              size: 90, color: Colors.grey.shade300),
+          const SizedBox(height: 20),
+          Text(
+            'Your cart is empty',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey.shade600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Add items from the menu to get started',
+            style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+          ),
+          const SizedBox(height: 32),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.teal,
+              padding:
+              const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () => Get.back(),
+            child: const Text(
+              'Browse Menu',
+              style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 import 'dart:io';
 import 'package:get/get.dart';
@@ -17,6 +16,7 @@ class MerchantGalleryController extends GetxController {
 
   RxBool isUploading = false.obs;
   RxBool isLoading = false.obs;
+  RxInt deletingIndex = (-1).obs;
 
   String get token => box.read("auth_token") ?? "";
 
@@ -37,19 +37,26 @@ class MerchantGalleryController extends GetxController {
     }
   }
 
+  // ================= REMOVE SELECTED (local only, no API) =================
+  void removeSelectedImage(int index) {
+    if (index >= 0 && index < selectedImages.length) {
+      selectedImages.removeAt(index);
+    }
+  }
+
   // ================= BASE64 =================
   String _toBase64(File file) {
     final bytes = file.readAsBytesSync();
     return "data:image/jpeg;base64,${base64Encode(bytes)}";
   }
 
-  // ================= GET GALLERY =================
+  // ================= LOAD GALLERY =================
   Future<void> loadGallery() async {
     if (token.isEmpty) return;
 
-    isLoading.value = true;
-
     try {
+      isLoading(true);
+
       final response = await http.get(
         Uri.parse("$baseUrl/images"),
         headers: {
@@ -63,22 +70,24 @@ class MerchantGalleryController extends GetxController {
         uploadedImages.value = (data["data"] as List)
             .map((e) => MerchantImage.fromJson(e))
             .toList();
+      } else {
+        Get.snackbar("Error", data["message"] ?? "Failed to load images");
       }
     } catch (e) {
+      Get.snackbar("Error", "Gallery load failed");
       print("Load gallery error: $e");
     } finally {
-      isLoading.value = false;
+      isLoading(false);
     }
   }
-
 
   // ================= UPLOAD IMAGES =================
   Future<void> uploadImages() async {
     if (selectedImages.isEmpty || token.isEmpty) return;
 
-    isUploading.value = true;
-
     try {
+      isUploading(true);
+
       final response = await http.post(
         Uri.parse("$baseUrl/upload-images"),
         headers: {
@@ -94,35 +103,58 @@ class MerchantGalleryController extends GetxController {
 
       if (response.statusCode == 200 && data["status"] == 1) {
         selectedImages.clear();
-        loadGallery();
+        await loadGallery();
         Get.snackbar("Success", data["message"]);
+      } else {
+        Get.snackbar("Error", data["message"]);
       }
+    } catch (e) {
+      Get.snackbar("Error", "Upload failed");
+      print(e);
     } finally {
-      isUploading.value = false;
+      isUploading(false);
     }
   }
 
-
-  // ================= DELETE IMAGE =================
+  // ================= DELETE UPLOADED IMAGE (API call) =================
   Future<void> deleteImage(int index) async {
-    final imageId = uploadedImages[index].id;
-
-    final response = await http.post(
-      Uri.parse("$baseUrl/image/delete"),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer $token",
-      },
-      body: jsonEncode({
-        "id": imageId, // ✅ EXACT API KEY
-      }),
-    );
-
-    final data = jsonDecode(response.body);
-
-    if (data["status"] == 1) {
-      uploadedImages.removeAt(index);
-      Get.snackbar("Success", data["message"]);
+    // ✅ Re-read token at delete time + show message if missing
+    final String currentToken = box.read("auth_token") ?? "";
+    if (currentToken.isEmpty) {
+      Get.snackbar("Error", "Auth token missing. Please login again.");
+      return;
     }
-  }
-}
+
+    if (index < 0 || index >= uploadedImages.length) return;
+
+    final imageId = uploadedImages[index].id;
+    deletingIndex.value = index;
+
+    try {
+      final response = await http.delete(
+        Uri.parse("$baseUrl/image/delete"),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $currentToken",  // ✅ uses fresh token
+        },
+        body: jsonEncode({
+          "id": imageId,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+      print("DELETE RESPONSE => $data");
+
+      if (response.statusCode == 200 && data["status"] == 1) {
+        uploadedImages.removeAt(index);
+        Get.snackbar("Success", data["message"]);
+      } else {
+        Get.snackbar("Error", data["message"] ?? "Delete failed");
+      }
+    } catch (e) {
+      print("Delete error => $e");
+      Get.snackbar("Error", "Delete failed");
+    } finally {
+      deletingIndex.value = -1;
+    }
+  }}
