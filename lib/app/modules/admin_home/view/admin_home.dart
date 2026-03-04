@@ -11,6 +11,7 @@ import '../controller/admin_dashboardcontroller.dart';
 import '../event/view/admin_event.dart';
 import '../categories/views/Admin_catgorypage.dart';
 import '../locations/views/admin_locationmanagement.dart';
+import '../offer/views/AdminView_offerpage.dart';
 import '../users/views/admin_registereduserlist.dart';
 import '../banners/views/adminadvertisment.dart';
 
@@ -304,7 +305,7 @@ class AdminDashboard extends StatelessWidget {
         title: "Offers",
         subtitle: "Merchant offers",
         color: const Color(0xFFF97316),
-        onTap: () {},
+        onTap: () =>Get.to(()=>OffersListingScreen()),
       ),
     ];
 
@@ -400,7 +401,7 @@ class AdminDashboard extends StatelessWidget {
         child: ElevatedButton(
           onPressed: () => AuthService.showLogoutDialog(),
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.teal,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(

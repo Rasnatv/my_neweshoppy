@@ -1,6 +1,8 @@
 
 import 'package:eshoppy/app/modules/profile/view/profile_view.dart';
 import 'package:get/get.dart';
+import '../modules/admin_home/offer/views/Admin_productdetailscreen.dart';
+import '../modules/admin_home/offer/views/admin_viewofferproduct.dart';
 import '../modules/forgotpassowrd/binding/checkemailotp_binding.dart';
 import '../modules/forgotpassowrd/binding/forgotpswd_binding.dart';
 import '../modules/forgotpassowrd/binding/newpswd_bindings.dart';
@@ -75,6 +77,18 @@ class AppPages {
       name: _Paths.USERHOME,
       page: () =>  Userhome(),
       //binding: CartBinding(),
+    ),
+    // In your GetPages / AppPages:
+    GetPage(
+      name: '/offer-products',
+      page: () => const AdminOfferProductScreen(),
+      // binding: BindingsBuilder(() {
+      //   Get.lazyPut(() => OfferProductsController());
+      //}),
+    ),
+    GetPage(
+      name: '/offer-product-detail',
+      page: () => const AdminSingleOfferProductScreen(),
     ),
     // GetPage(
     //   name: _Paths.PROFILE,

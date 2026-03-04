@@ -14,10 +14,13 @@ import '../view/selectlocationpage.dart';
 import '../view/user_eventsection.dart';
 import '../widget/user_offer.dart';
 
-const kPurplePrimary   = Color(0xFF00796B); // deep purple
-const kPurpleMid       = Color(0xFF00796B); // violet
-const kPurpleLight     = Color(0xFF00796B); // softer violet accent
+// const kPurplePrimary = Color(0xFF00796B);
+// const kPurpleMid     = Color(0xFF00796B);
+// const kPurpleLight   = Color(0xFF00796B);
 
+// ─────────────────────────────────────────────
+//  SHIMMER BOX
+// ─────────────────────────────────────────────
 class ShimmerBox extends StatefulWidget {
   final double width;
   final double height;
@@ -85,7 +88,7 @@ class _ShimmerBoxState extends State<ShimmerBox>
 }
 
 // ─────────────────────────────────────────────
-//  SHIMMER SKELETON: Home Page Loading State
+//  SHIMMER SKELETON — Full Page
 // ─────────────────────────────────────────────
 class HomeShimmerSkeleton extends StatelessWidget {
   const HomeShimmerSkeleton({super.key});
@@ -95,12 +98,12 @@ class HomeShimmerSkeleton extends StatelessWidget {
     return CustomScrollView(
       physics: const NeverScrollableScrollPhysics(),
       slivers: [
-        // Header shimmer — purple, height is dynamic (SafeArea + content)
+
+        // ── 1. HEADER ──────────────────────────────────────────────────────
         SliverToBoxAdapter(
           child: Container(
-            // No fixed height — let SafeArea + content define it naturally
-            decoration: const BoxDecoration(
-              color: kPurplePrimary,
+            decoration:  BoxDecoration(
+              color:Colors.teal,
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(28),
                 bottomRight: Radius.circular(28),
@@ -114,7 +117,6 @@ class HomeShimmerSkeleton extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Row 1: location label shimmer + icon buttons
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
@@ -123,19 +125,16 @@ class HomeShimmerSkeleton extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              _whiteShimmer(60, 11, radius: 4),
-                              const SizedBox(height: 5),
-                              _whiteShimmer(150, 16, radius: 6),
+                              _whiteShimmer(80, 20, radius: 6),
+                              const SizedBox(height: 6),
+                              _whiteShimmer(150, 14, radius: 5),
                             ],
                           ),
                         ),
                         _whiteShimmer(40, 40, radius: 12),
-                        const SizedBox(width: 10),
-                        _whiteShimmer(40, 40, radius: 12),
                       ],
                     ),
                     const SizedBox(height: 16),
-                    // Row 2: search bar shimmer
                     _whiteShimmer(double.infinity, 46, radius: 12),
                   ],
                 ),
@@ -143,27 +142,41 @@ class HomeShimmerSkeleton extends StatelessWidget {
             ),
           ),
         ),
+
         const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+        // ── 2. CAROUSEL ────────────────────────────────────────────────────
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: ShimmerBox(width: double.infinity, height: 170, borderRadius: 20),
+            child: ShimmerBox(
+                width: double.infinity, height: 170, borderRadius: 20),
           ),
         ),
+
         const SliverToBoxAdapter(child: SizedBox(height: 20)),
+
+        // ── 3. CATEGORIES SECTION HEADER ───────────────────────────────────
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                ShimmerBox(width: 130, height: 22, borderRadius: 6),
-                ShimmerBox(width: 70, height: 16, borderRadius: 6),
+                Row(children: [
+                  ShimmerBox(width: 32, height: 32, borderRadius: 10),
+                  const SizedBox(width: 10),
+                  ShimmerBox(width: 100, height: 18, borderRadius: 6),
+                ]),
+                ShimmerBox(width: 55, height: 14, borderRadius: 6),
               ],
             ),
           ),
         ),
+
         const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+        // ── 4. CATEGORIES GRID ─────────────────────────────────────────────
         SliverToBoxAdapter(
           child: SizedBox(
             height: 110,
@@ -175,16 +188,104 @@ class HomeShimmerSkeleton extends StatelessWidget {
                 padding: const EdgeInsets.only(right: 14),
                 child: Column(
                   children: [
-                    ShimmerBox(width: 64, height: 64, borderRadius: 16),
+                    ShimmerBox(width: 62, height: 62, borderRadius: 18),
                     const SizedBox(height: 8),
-                    ShimmerBox(width: 52, height: 12, borderRadius: 4),
+                    ShimmerBox(width: 50, height: 11, borderRadius: 4),
                   ],
                 ),
               ),
             ),
           ),
         ),
-        const SliverToBoxAdapter(child: SizedBox(height: 60)),
+
+        const SliverToBoxAdapter(child: SizedBox(height: 20)),
+
+        // ── 5. RESTAURANT BANNER ───────────────────────────────────────────
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: ShimmerBox(
+                width: double.infinity, height: 165, borderRadius: 24),
+          ),
+        ),
+
+        const SliverToBoxAdapter(child: SizedBox(height: 28)),
+
+        // ── 6. EVENTS SECTION HEADER ───────────────────────────────────────
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(children: [
+                  ShimmerBox(width: 32, height: 32, borderRadius: 10),
+                  const SizedBox(width: 10),
+                  ShimmerBox(width: 130, height: 18, borderRadius: 6),
+                ]),
+                ShimmerBox(width: 55, height: 14, borderRadius: 6),
+              ],
+            ),
+          ),
+        ),
+
+        const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+        // ── 7. EVENTS HORIZONTAL LIST ──────────────────────────────────────
+        SliverToBoxAdapter(
+          child: SizedBox(
+            height: 140,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              itemCount: 4,
+              itemBuilder: (_, i) => Padding(
+                padding: const EdgeInsets.only(right: 14),
+                child: ShimmerBox(width: 200, height: 140, borderRadius: 16),
+              ),
+            ),
+          ),
+        ),
+
+        const SliverToBoxAdapter(child: SizedBox(height: 28)),
+
+        // ── 8. HOT OFFERS SECTION HEADER ───────────────────────────────────
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(children: [
+                  ShimmerBox(width: 32, height: 32, borderRadius: 10),
+                  const SizedBox(width: 10),
+                  ShimmerBox(width: 100, height: 18, borderRadius: 6),
+                ]),
+                ShimmerBox(width: 60, height: 14, borderRadius: 6),
+              ],
+            ),
+          ),
+        ),
+
+        const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+        // ── 9. HOT OFFERS HORIZONTAL LIST ─────────────────────────────────
+        SliverToBoxAdapter(
+          child: SizedBox(
+            height: 210,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              itemCount: 3,
+              itemBuilder: (_, i) => Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: ShimmerBox(width: 300, height: 210, borderRadius: 22),
+              ),
+            ),
+          ),
+        ),
+
+        const SliverToBoxAdapter(child: SizedBox(height: 80)),
       ],
     );
   }
@@ -251,7 +352,6 @@ class _UserhomeState extends State<Userhome> with TickerProviderStateMixin {
       backgroundColor: const Color(0xFFF4F6F9),
       body: AnnotatedRegion<SystemUiOverlayStyle>(
         value: const SystemUiOverlayStyle(
-          // statusBarIconBrightness: Brightness.light,
           statusBarColor: Colors.transparent,
         ),
         child: AnimatedSwitcher(
@@ -275,9 +375,6 @@ class _UserhomeState extends State<Userhome> with TickerProviderStateMixin {
       ) {
     return CustomScrollView(
       slivers: [
-        // ══════════════════════════════════════
-        //  PURPLE HEADER
-        // ══════════════════════════════════════
         SliverAppBar(
           pinned: true,
           expandedHeight: 160,
@@ -297,13 +394,9 @@ class _UserhomeState extends State<Userhome> with TickerProviderStateMixin {
         ),
 
         const SliverToBoxAdapter(child: SizedBox(height: 28)),
-
-        /// CAROUSEL
         SliverToBoxAdapter(child: HomeCarouselSlider()),
-
         const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
-        /// SECTION: CATEGORIES
         SliverToBoxAdapter(
           child: _SectionHeader(
             icon: Icons.category_sharp,
@@ -313,17 +406,13 @@ class _UserhomeState extends State<Userhome> with TickerProviderStateMixin {
             actionLabel: "See All",
           ),
         ),
-        const SliverToBoxAdapter(child: SizedBox(height: 12)),
+        const SliverToBoxAdapter(child: SizedBox(height: 5)),
         SliverToBoxAdapter(child: CategorySection()),
+        const SliverToBoxAdapter(child: SizedBox(height: 5)),
 
-        const SliverToBoxAdapter(child: SizedBox(height: 20)),
-
-        /// RESTAURANT BANNER
         SliverToBoxAdapter(child: _RestaurantBanner()),
-
         const SliverToBoxAdapter(child: SizedBox(height: 28)),
 
-        /// SECTION: UPCOMING EVENTS
         SliverToBoxAdapter(
           child: _SectionHeader(
             icon: Icons.event_rounded,
@@ -335,10 +424,8 @@ class _UserhomeState extends State<Userhome> with TickerProviderStateMixin {
         ),
         const SliverToBoxAdapter(child: SizedBox(height: 12)),
         SliverToBoxAdapter(child: UpcomingEventsSection()),
-
         const SliverToBoxAdapter(child: SizedBox(height: 28)),
 
-        /// SECTION: HOT OFFERS
         SliverToBoxAdapter(
           child: _SectionHeader(
             icon: Icons.local_fire_department_rounded,
@@ -358,7 +445,7 @@ class _UserhomeState extends State<Userhome> with TickerProviderStateMixin {
 }
 
 // ─────────────────────────────────────────────
-//  PURPLE HEADER WIDGET  (matches reference UI)
+//  HEADER
 // ─────────────────────────────────────────────
 class _PurpleHeader extends StatelessWidget {
   final UserLocationController locationController;
@@ -378,7 +465,6 @@ class _PurpleHeader extends StatelessWidget {
       ),
       child: Container(
         decoration: const BoxDecoration(
-          // Solid purple — matching the reference screenshot
           color: Colors.teal,
           borderRadius: BorderRadius.only(
             bottomLeft: Radius.circular(28),
@@ -393,11 +479,9 @@ class _PurpleHeader extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Row 1: Location + Cart + Notification ──
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Location
                     Expanded(
                       child: InkWell(
                         onTap: () => Get.to(() => SelectLocationPage()),
@@ -408,7 +492,7 @@ class _PurpleHeader extends StatelessWidget {
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
+                              const Text(
                                 "eShoppy",
                                 style: TextStyle(
                                   color: Colors.white,
@@ -437,8 +521,10 @@ class _PurpleHeader extends StatelessWidget {
                                       ),
                                     ),
                                   ),
-                                  const Icon(Icons.keyboard_arrow_down_rounded,
-                                      color: Colors.white70, size: 16),
+                                  const Icon(
+                                      Icons.keyboard_arrow_down_rounded,
+                                      color: Colors.white70,
+                                      size: 16),
                                 ],
                               ),
                             ],
@@ -446,21 +532,15 @@ class _PurpleHeader extends StatelessWidget {
                         }),
                       ),
                     ),
-
-                    // Cart icon button
                     Obx(() => _HeaderIconButton(
                       icon: Icons.shopping_cart_outlined,
                       badgeCount: cartController.cartItems.length,
                       onTap: () => Get.to(() => CartScreen()),
                     )),
                     const SizedBox(width: 5),
-
                   ],
                 ),
-
                 const SizedBox(height: 14),
-
-                // ── Row 2: Search bar ──
                 Container(
                   height: 46,
                   decoration: BoxDecoration(
@@ -494,7 +574,6 @@ class _PurpleHeader extends StatelessWidget {
                           ),
                         ),
                       ),
-                      // Filter button
                       _SearchActionIcon(
                         icon: Icons.tune_rounded,
                         onTap: () {},
@@ -513,7 +592,6 @@ class _PurpleHeader extends StatelessWidget {
   }
 }
 
-/// Small square icon inside the search bar
 class _SearchActionIcon extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;

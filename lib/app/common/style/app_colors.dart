@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 abstract class AppColors {
-  static const kPrimary = Color(0xFF00897B);
-   static const kcard = Color(0xFF00897B);
+  static const kPrimary = Colors.teal;
+ // static const kPrimary = Color(0xFF00A693);
+  //static const kPrimary = Colors.teal;
+   static const kcard = Color(0xFF00A693);
    static const bagecolor= Color(0xFF7998EA);
    static const kcard1 = Color(0xFF42BCB7);
   static const kPrimary1 = Color(0xff4de6d2);
@@ -19,8 +21,8 @@ abstract class AppColors {
   static const grayButton = Color(0xFFC8C2C2);
   static const grayText = Color(0xFF4B7AE8);
 
-  
-  
+
+
 
   static const MaterialColor kPrimarySwatch = MaterialColor(
     0xffD9E4FF,
