@@ -6,6 +6,7 @@ abstract class AppColors {
   //static const kPrimary = Colors.teal;
    static const kcard = Color(0xFF00A693);
    static const bagecolor= Color(0xFF7998EA);
+   static const restaurantclr=Color(0xFF0F5151);
    static const kcard1 = Color(0xFF42BCB7);
   static const kPrimary1 = Color(0xff4de6d2);
   static const kbackground=Color(0xff0745d5);

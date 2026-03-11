@@ -2,8 +2,6 @@
 import 'dart:io';
 import 'package:get/get.dart';
 
-// ==================== MODELS ====================
-
 class FoodItem {
   final int? id;
   final String name;
@@ -87,21 +85,21 @@ class TimeSlot {
   final MealType mealType;
   final String startTime;
   final String endTime;
+  final int breakDuration; // ← ADDED
 
   TimeSlot({
     this.id,
     required this.mealType,
     required this.startTime,
     required this.endTime,
+    this.breakDuration = 0, // ← ADDED (defaults to 0 = no break)
   });
 
   String get displayTime => '$startTime - $endTime';
 
   factory TimeSlot.fromJson(Map<String, dynamic> json) {
-    String safeTime(dynamic val) {
-      final s = (val ?? '').toString();
-      return s.length >= 5 ? s.substring(0, 5) : s;
-    }
+    // API returns times like "10:00 AM" — keep as-is (no trimming to 5 chars)
+    String safeTime(dynamic val) => (val ?? '').toString().trim();
 
     return TimeSlot(
       id: json['id'] is int
@@ -113,6 +111,9 @@ class TimeSlot {
       ),
       startTime: safeTime(json['start_time']),
       endTime: safeTime(json['end_time']),
+      // ← ADDED: API returns break_duration as a string (e.g. "20"), parse safely
+      breakDuration:
+      int.tryParse(json['break_duration']?.toString() ?? '0') ?? 0,
     );
   }
 }

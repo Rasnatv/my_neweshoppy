@@ -26,6 +26,88 @@ class UsersignupController extends GetxController {
     isPasswordVisible.toggle();
   }
 
+  // ─── Styled Snackbar Helpers ──────────────────────────────────────────────
+
+  void _showSuccessSnackbar(String message) {
+    Get.snackbar(
+      "",
+      "",
+      titleText: Row(
+        children: const [
+          Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+          SizedBox(width: 8),
+          Text(
+            "Success",
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              fontSize: 15,
+            ),
+          ),
+        ],
+      ),
+      messageText: Text(
+        message,
+        style: const TextStyle(color: Colors.white70, fontSize: 13),
+      ),
+      backgroundColor: const Color(0xFF009788),
+      borderRadius: 14,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      snackPosition: SnackPosition.TOP,
+      duration: const Duration(seconds: 3),
+      animationDuration: const Duration(milliseconds: 400),
+      boxShadows: [
+        BoxShadow(
+          color: const Color(0xFF009788).withOpacity(0.4),
+          blurRadius: 12,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    );
+  }
+
+  void _showErrorSnackbar(String message) {
+    Get.snackbar(
+      "",
+      "",
+      titleText: Row(
+        children: const [
+          Icon(Icons.error_rounded, color: Colors.white, size: 20),
+          SizedBox(width: 8),
+          Text(
+            "Error",
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              fontSize: 15,
+            ),
+          ),
+        ],
+      ),
+      messageText: Text(
+        message,
+        style: const TextStyle(color: Colors.white70, fontSize: 13),
+      ),
+      backgroundColor: const Color(0xFFD32F2F),
+      borderRadius: 14,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      snackPosition: SnackPosition.TOP,
+      duration: const Duration(seconds: 3),
+      animationDuration: const Duration(milliseconds: 400),
+      boxShadows: [
+        BoxShadow(
+          color: const Color(0xFFD32F2F).withOpacity(0.4),
+          blurRadius: 12,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    );
+  }
+
+  // ─── Register ─────────────────────────────────────────────────────────────
+
   Future<void> register() async {
     if (!formKey.currentState!.validate()) return;
 
@@ -49,49 +131,28 @@ class UsersignupController extends GetxController {
       final decodedData = jsonDecode(response.body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        // final token = decodedData["data"]["auth_token"];
         final token = decodedData["data"]["auth_token"];
 
-        /// 🔑 SAVE FULL AUTH STATE (MANDATORY)
         await box.write("auth_token", token);
         await box.write("is_logged_in", true);
-        await box.write("role", 1); // user role
+        await box.write("role", 1);
         await box.write("user_data", decodedData["data"]);
 
-
-        /// 🔑 Save token
-        // await box.write("auth_token", token);
-
-        /// 🔥 FORCE load locations (FIX)
         if (Get.isRegistered<UserLocationController>()) {
           Get.find<UserLocationController>().fetchLocations();
         }
 
-        Get.snackbar(
-          "Success",
-          "Signup Successful",
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
+        _showSuccessSnackbar("Welcome! Your account has been created.");
 
         Get.offAll(() => LandingView());
       } else {
-        Get.snackbar(
-          "Error",
-          decodedData["message"] ?? "Signup failed",
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        _showErrorSnackbar(decodedData["message"] ?? "Signup failed. Please try again.");
       }
     } catch (e) {
-      Get.snackbar(
-        "Error",
-        "Something went wrong",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      _showErrorSnackbar("Something went wrong. Check your connection.");
     } finally {
       isLoading.value = false;
     }
   }
 }
+

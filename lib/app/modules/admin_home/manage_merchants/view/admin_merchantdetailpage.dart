@@ -200,9 +200,6 @@ class AdminMerchantDetailPageUI extends StatelessWidget {
                 ),
               ),
 
-              /// ACTION BUTTONS (APPROVE/REJECT)
-              if (m.approvalStatus == "pending")
-                _buildActionButtons(context, m),
             ],
           ),
         );
@@ -282,21 +279,9 @@ class AdminMerchantDetailPageUI extends StatelessWidget {
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 4),
-
-          /// OWNER NAME
-          Text(
-            merchant.ownerName,
-            style: TextStyle(
-              fontSize: 15,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
-            ),
-          ),
           const SizedBox(height: 12),
 
-          /// STATUS BADGE
-          _buildStatusBadge(merchant.approvalStatus),
+
         ],
       ),
     );
@@ -570,155 +555,4 @@ class AdminMerchantDetailPageUI extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButtons(BuildContext context, dynamic merchant) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: Row(
-          children: [
-            Expanded(
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF10B981),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 0,
-                ),
-                onPressed: () => _showConfirmDialog(
-                  context,
-                  title: "Approve Merchant",
-                  message:
-                  "Are you sure you want to approve this merchant? They will be able to access the platform.",
-                  confirmText: "Approve",
-                  confirmColor: const Color(0xFF10B981),
-                  onConfirm: () => controller.updateApproval(
-                    merchantId: merchant.id,
-                    status: "approved",
-                  ),
-                ),
-                icon: const Icon(Icons.check_circle_outline, size: 20),
-                label: const Text(
-                  "APPROVE",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFEF4444),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 0,
-                ),
-                onPressed: () => _showConfirmDialog(
-                  context,
-                  title: "Reject Merchant",
-                  message:
-                  "Are you sure you want to reject this merchant? This action will notify them of the rejection.",
-                  confirmText: "Reject",
-                  confirmColor: const Color(0xFFEF4444),
-                  onConfirm: () => controller.updateApproval(
-                    merchantId: merchant.id,
-                    status: "rejected",
-                  ),
-                ),
-                icon: const Icon(Icons.cancel_outlined, size: 20),
-                label: const Text(
-                  "REJECT",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showConfirmDialog(
-      BuildContext context, {
-        required String title,
-        required String message,
-        required String confirmText,
-        required Color confirmColor,
-        required VoidCallback onConfirm,
-      }) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Icon(
-              confirmText == "Approve"
-                  ? Icons.check_circle_outline
-                  : Icons.warning_amber_rounded,
-              color: confirmColor,
-            ),
-            const SizedBox(width: 12),
-            Text(
-              title,
-              style: const TextStyle(fontSize: 18),
-            ),
-          ],
-        ),
-        content: Text(
-          message,
-          style: TextStyle(color: Colors.grey[700], fontSize: 15),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: Text(
-              "Cancel",
-              style: TextStyle(color: Colors.grey[600], fontSize: 15),
-            ),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: confirmColor,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              elevation: 0,
-            ),
-            onPressed: () {
-              Get.back();
-              onConfirm();
-            },
-            child: Text(
-              confirmText,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

@@ -57,7 +57,6 @@ class AdminMerchantHomePageUI extends StatelessWidget {
                   leading: const Icon(Icons.storefront),
                   title: Text(merchant.shopName),
                   subtitle: Text(merchant.email),
-                  trailing: _statusChip(merchant.approvalStatus),
                   onTap: () {
                     Get.to(
                           () => AdminMerchantDetailPageUI(
@@ -75,23 +74,4 @@ class AdminMerchantHomePageUI extends StatelessWidget {
     );
   }
 
-  Widget _statusChip(String status) {
-    Color color;
-    switch (status.toLowerCase()) {
-      case "approved":
-        color = Colors.green;
-        break;
-      case "rejected":
-        color = Colors.red;
-        break;
-      default:
-        color = Colors.orange;
-    }
-
-    return Chip(
-      label: Text(status.toUpperCase()),
-      backgroundColor: color.withOpacity(0.15),
-      labelStyle: TextStyle(color: color),
-    );
-  }
 }

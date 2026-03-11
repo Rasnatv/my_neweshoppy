@@ -21,17 +21,19 @@ class RestaurantCartPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Color(0xFF0F5151),
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios,
-              color: Colors.black87, size: 20),
-          onPressed: () => Get.back(),
-        ),
+        automaticallyImplyLeading: true,
+        foregroundColor: Colors.white,
+        // leading: IconButton(
+        //   icon: const Icon(Icons.arrow_back_ios,
+        //       color: Colors.black87, size: 20),
+        //   onPressed: () => Get.back(),
+        // ),
         title: const Text(
-          'Your Cart',
+          'Purchased items',
           style: TextStyle(
-            color: Colors.black87,
+            color: Colors.white,
             fontWeight: FontWeight.bold,
             fontSize: 20,
           ),
@@ -274,7 +276,6 @@ class _CartItemCard extends StatelessWidget {
   }
 }
 
-// ── PLACE ORDER BAR ───────────────────────────────────────────────────────────
 class _PlaceOrderBar extends StatelessWidget {
   final double subTotal;
   final Restaurantcartcontroller cartController;
@@ -306,36 +307,69 @@ class _PlaceOrderBar extends StatelessWidget {
       ),
       child: SafeArea(
         top: false,
-        child: SizedBox(
-          width: double.infinity,
-          child: Material(
-            color: Colors.teal,
-            borderRadius: BorderRadius.circular(16),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(16),
-              onTap: () {
-               Get.to(()=>RestaurantBookingPage());
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Text(
-                  'Place Order  •  ₹$totalDisplay',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // ✅ Total shown separately above the button
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Total Amount',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
                   ),
-                  textAlign: TextAlign.center,
+                  Text(
+                    '₹$totalDisplay',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0F5151),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const Divider(height: 16),
+
+            // ✅ Book Slot button — no price inside
+            SizedBox(
+              width: double.infinity,
+              child: Material(
+                color: const Color(0xFF0F5151),
+                borderRadius: BorderRadius.circular(16),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () {
+                 Get.to(() => RestaurantBookingPage(), arguments: {"restaurant_id": restaurantId});
+                  },
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Text(
+                      'Book Slot',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
   }
 }
-
 // ── EMPTY CART VIEW ───────────────────────────────────────────────────────────
 class _EmptyCartView extends StatelessWidget {
   @override
@@ -363,7 +397,7 @@ class _EmptyCartView extends StatelessWidget {
           const SizedBox(height: 32),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.teal,
+              backgroundColor: Color(0xFF0D1F1A),
               padding:
               const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
               shape: RoundedRectangleBorder(

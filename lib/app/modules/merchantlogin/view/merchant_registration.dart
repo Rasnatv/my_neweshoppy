@@ -57,6 +57,7 @@ class _MerchantRegisterScreenState extends State<MerchantRegisterScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+
       backgroundColor: const Color(0xFFF8F9FA),
       body: Stack(
         children: [

@@ -1,4 +1,5 @@
 
+import 'package:eshoppy/app/modules/restarunent/view/Restaurant_mainCart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -104,11 +105,11 @@ class RestaurantListPage extends StatelessWidget {
               children: [
                 IconButton(
                   icon: const Icon(
-                    Icons.notifications_outlined,
+                    Icons.shopping_cart,
                     color: _P.textDark,
                     size: 24,
                   ),
-                  onPressed: () {},
+                  onPressed: ()=>Get.to(RestaurantMainCart()),
                 ),
                 Positioned(
                   top: 10,

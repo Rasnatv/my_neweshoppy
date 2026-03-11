@@ -4,7 +4,7 @@
 //   final int restaurantId;
 //   String tableType;
 //   String capacityRange;
-//   String tableName; // comma-separated IDs
+//   String tableName;
 //   String seatingType;
 //
 //   RestaurantTableModel({
@@ -58,7 +58,8 @@
 //   factory MealTimingModel.fromJson(Map<String, dynamic> json) =>
 //       MealTimingModel(
 //         id: int.parse(json['id'].toString()),
-//         restaurantId: int.parse(json['restaurant_id'].toString()),
+//         // ✅ FIX: update response omits restaurant_id in nested items → was crashing
+//         restaurantId: int.tryParse(json['restaurant_id']?.toString() ?? '0') ?? 0,
 //         mealType: json['meal_type'] ?? '',
 //         startTime: _trimSeconds(json['start_time'] ?? ''),
 //         endTime: _trimSeconds(json['end_time'] ?? ''),
@@ -72,7 +73,6 @@
 //       final period   = match.group(2) ?? '';
 //       return '$timePart$period'.trim();
 //     }
-//
 //     return trimmed;
 //   }
 //
@@ -87,6 +87,7 @@
 //       '${mealType[0].toUpperCase()}${mealType.substring(1)}: $startTime – $endTime';
 // }
 //
+// // ── Menu Item Model ───────────────────────────────────────────────────────────
 // class MenuItemModel {
 //   final int id;
 //   final int restaurantId;
@@ -95,8 +96,8 @@
 //   double price;
 //   String shortDescription;
 //   String imageUrl;
-//
 //   dynamic imageFile;
+//
 //   MenuItemModel({
 //     required this.id,
 //     required this.restaurantId,
@@ -127,6 +128,7 @@
 //     'short_description': shortDescription,
 //   };
 // }
+// ── Restaurant Table Model ────────────────────────────────────────────────────
 class RestaurantTableModel {
   final int id;
   final int restaurantId;
@@ -174,6 +176,7 @@ class MealTimingModel {
   final String mealType;
   String startTime;
   String endTime;
+  int breakDuration; // ← ADDED
 
   MealTimingModel({
     required this.id,
@@ -181,24 +184,30 @@ class MealTimingModel {
     required this.mealType,
     required this.startTime,
     required this.endTime,
+    this.breakDuration = 0, // ← ADDED (defaults to 0)
   });
 
   factory MealTimingModel.fromJson(Map<String, dynamic> json) =>
       MealTimingModel(
         id: int.parse(json['id'].toString()),
-        // ✅ FIX: update response omits restaurant_id in nested items → was crashing
-        restaurantId: int.tryParse(json['restaurant_id']?.toString() ?? '0') ?? 0,
+        // ✅ update response omits restaurant_id in nested items → safe parse
+        restaurantId:
+        int.tryParse(json['restaurant_id']?.toString() ?? '0') ?? 0,
         mealType: json['meal_type'] ?? '',
         startTime: _trimSeconds(json['start_time'] ?? ''),
         endTime: _trimSeconds(json['end_time'] ?? ''),
+        // ← ADDED: API returns break_duration as a string ("20") → parse safely
+        breakDuration:
+        int.tryParse(json['break_duration']?.toString() ?? '0') ?? 0,
       );
 
   static String _trimSeconds(String t) {
     final trimmed = t.trim();
-    final match = RegExp(r'^(\d{1,2}:\d{2}):\d{2}(\s*[APap][Mm])?$').firstMatch(trimmed);
+    final match =
+    RegExp(r'^(\d{1,2}:\d{2}):\d{2}(\s*[APap][Mm])?$').firstMatch(trimmed);
     if (match != null) {
       final timePart = match.group(1)!;
-      final period   = match.group(2) ?? '';
+      final period = match.group(2) ?? '';
       return '$timePart$period'.trim();
     }
     return trimmed;
@@ -209,6 +218,7 @@ class MealTimingModel {
     'meal_type': mealType,
     'start_time': startTime,
     'end_time': endTime,
+    'break_duration': breakDuration, // ← ADDED
   };
 
   String get displayLabel =>

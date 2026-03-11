@@ -626,3 +626,4 @@ class MerchantRegController extends GetxController {
     super.onClose();
   }
 }
+

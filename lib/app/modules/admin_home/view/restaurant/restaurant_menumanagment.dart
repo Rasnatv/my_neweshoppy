@@ -127,7 +127,7 @@ class MenuManagementPage extends StatelessWidget {
               _modernTextField(
                 controller: c.tableTypeCtrl,
                 label: 'Table Name',
-                hint: 'e.g. 6 seater,4 seater',
+                hint: 'e.g. 6 seater, 4 seater',
                 icon: Icons.table_restaurant_outlined,
               ),
               const SizedBox(height: 16),
@@ -340,6 +340,17 @@ class MenuManagementPage extends StatelessWidget {
                 ]),
                 const SizedBox(height: 16),
 
+                // ── BREAK DURATION FIELD (editable number input) ──
+                _modernTextField(
+                  controller: c.breakDurationCtrl,
+                  label: 'Break Duration (mins)',
+                  hint: 'e.g. 20',
+                  icon: Icons.coffee_outlined,
+                  type: TextInputType.number,
+                ),
+
+                const SizedBox(height: 16),
+
                 // Queue button
                 SizedBox(
                   width: double.infinity,
@@ -408,12 +419,15 @@ class MenuManagementPage extends StatelessWidget {
                                         size: 14,
                                         color: _mealColor(entry.key)),
                                     const SizedBox(width: 8),
-                                    Text(
-                                      '${entry.key.name.capitalizeFirst}: '
-                                          '${slot.startTime} → ${slot.endTime}',
-                                      style: const TextStyle(
-                                          fontSize: 12,
-                                          color: Color(0xFF5C6080)),
+                                    Expanded(
+                                      child: Text(
+                                        '${entry.key.name.capitalizeFirst}: '
+                                            '${slot.startTime} → ${slot.endTime}'
+                                            '${slot.breakDuration > 0 ? '  (${slot.breakDuration} min break)' : ''}',
+                                        style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Color(0xFF5C6080)),
+                                      ),
                                     ),
                                   ]),
                                 )).toList())),
@@ -526,11 +540,24 @@ class MenuManagementPage extends StatelessWidget {
                                       color: color.withOpacity(0.3)),
                                 ),
                                 child: Row(mainAxisSize: MainAxisSize.min, children: [
-                                  Text(s.displayTime,
-                                      style: TextStyle(
-                                          fontSize: 12,
-                                          color: color,
-                                          fontWeight: FontWeight.w600)),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(s.displayTime,
+                                          style: TextStyle(
+                                              fontSize: 12,
+                                              color: color,
+                                              fontWeight: FontWeight.w600)),
+                                      if (s.breakDuration > 0)
+                                        Text(
+                                          '${s.breakDuration} min break',
+                                          style: TextStyle(
+                                              fontSize: 10,
+                                              color: color.withOpacity(0.7)),
+                                        ),
+                                    ],
+                                  ),
                                   const SizedBox(width: 6),
                                   GestureDetector(
                                     onTap: () => c.removeTimeSlot(s),
@@ -650,16 +677,29 @@ class MenuManagementPage extends StatelessWidget {
                             runSpacing: 4,
                             children: slots.map((s) => Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 3),
+                                  horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
                                 color: color.withOpacity(0.10),
                                 borderRadius: BorderRadius.circular(6),
                               ),
-                              child: Text(s.displayTime,
-                                  style: TextStyle(
-                                      fontSize: 11,
-                                      color: color,
-                                      fontWeight: FontWeight.w600)),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(s.displayTime,
+                                      style: TextStyle(
+                                          fontSize: 11,
+                                          color: color,
+                                          fontWeight: FontWeight.w600)),
+                                  if (s.breakDuration > 0)
+                                    Text(
+                                      '${s.breakDuration} min break',
+                                      style: TextStyle(
+                                          fontSize: 10,
+                                          color: color.withOpacity(0.7)),
+                                    ),
+                                ],
+                              ),
                             )).toList(),
                           ),
                         ],
@@ -847,7 +887,8 @@ Widget _pickerTextField({
   required TextEditingController controller,
   required String label,
   required IconData icon,
-  required VoidCallback onTap,
+  required VoidCallback? onTap,
+  bool showDropdownArrow = false,
 }) =>
     TextField(
       controller: controller,
@@ -857,8 +898,9 @@ Widget _pickerTextField({
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, size: 22, color: AppColors.kPrimary),
-        suffixIcon:
-        Icon(Icons.arrow_drop_down, color: AppColors.kPrimary, size: 28),
+        suffixIcon: showDropdownArrow
+            ? Icon(Icons.arrow_drop_down, color: AppColors.kPrimary, size: 28)
+            : null,
         filled: true,
         fillColor: Colors.grey.shade50,
         border: OutlineInputBorder(
@@ -1017,7 +1059,6 @@ Widget _chip(String label, IconData icon) => Container(
   ]),
 );
 
-/// Preview section box
 Widget _previewSection({
   required IconData icon,
   required String title,

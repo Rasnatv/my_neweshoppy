@@ -14,9 +14,9 @@ import '../view/selectlocationpage.dart';
 import '../view/user_eventsection.dart';
 import '../widget/user_offer.dart';
 
-// const kPurplePrimary = Color(0xFF00796B);
-// const kPurpleMid     = Color(0xFF00796B);
-// const kPurpleLight   = Color(0xFF00796B);
+const kPurplePrimary = Color(0xFF00796B);
+const kPurpleMid     = Color(0xFF00796B);
+const kPurpleLight   = Color(0xFF00796B);
 
 // ─────────────────────────────────────────────
 //  SHIMMER BOX
@@ -417,7 +417,7 @@ class _UserhomeState extends State<Userhome> with TickerProviderStateMixin {
           child: _SectionHeader(
             icon: Icons.event_rounded,
             iconBg: Colors.purple.shade50,
-            iconColor: kPurplePrimary,
+            iconColor: Colors.teal,
             title: "Upcoming Events",
             actionLabel: "See All",
           ),

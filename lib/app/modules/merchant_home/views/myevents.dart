@@ -1,10 +1,11 @@
 
+import 'package:eshoppy/app/common/style/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../common/style/app_text_style.dart';
 import '../controller/merchant_myeventcontroller.dart';
 import 'addevents.dart';
+
 class MerchantEventsPage extends StatelessWidget {
   MerchantEventsPage({super.key});
   final MyEventsController controller = Get.put(MyEventsController());
@@ -12,192 +13,226 @@ class MerchantEventsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: const Color(0xFFF4F6FA),
       appBar: AppBar(
-        elevation: 0,
-        automaticallyImplyLeading: true,
-        iconTheme: const IconThemeData(
-          color: Colors.white, // back arrow color
+        backgroundColor: AppColors.kPrimary,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back,
+              color: Colors.white, size: 20),
+          onPressed: () => Get.back(),
         ),
-        title: Text(
-          "My Events",
-          style: AppTextStyle.rTextNunitoWhite17w700,
-        ),
-        backgroundColor: Colors.teal,
+        title: Text("My Events"),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(30),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+            padding: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
+            child: TextButton.icon(
+              onPressed: () {
+                Get.to(() => AddEventPage())
+                    ?.then((_) => controller.fetchEvents());
+              },
+              icon: const Icon(Icons.add_rounded,
+                  color:Colors.white, size: 20),
+              label: const Text(
+                "Add Event",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                ),
+              ),
+              style: TextButton.styleFrom(
+                backgroundColor: const Color(0xFF00BFA5).withOpacity(0.10),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  side: BorderSide(
+                      color: const Color(0xFF00BFA5).withOpacity(0.3),
+                      width: 1),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return SizedBox(
+            height: MediaQuery.of(context).size.height * 0.6,
+            child: const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    color: Color(0xFF00BFA5),
+                    strokeWidth: 3,
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    "Loading your events...",
+                    style: TextStyle(
+                      color: Color(0xFF8A95A3),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
               ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(30),
-                  onTap: () {
-                    Get.to(() => AddEventPage())?.then((_) => controller.fetchEvents());
+            ),
+          );
+        }
+
+        if (controller.events.isEmpty) {
+          return _buildEmptyState();
+        }
+
+        return RefreshIndicator(
+          onRefresh: () async => controller.fetchEvents(),
+          color: const Color(0xFF00BFA5),
+          child: ListView.builder(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            itemCount: controller.events.length,
+            itemBuilder: (context, index) {
+              final event = controller.events[index];
+              return _buildEventCard(event, index);
+            },
+          ),
+        );
+      }),
+    );
+  }
+
+  // ── EVENT CARD (Ticket Style) ─────────────────────────────────────────
+  Widget _buildEventCard(dynamic event, int index) {
+    final List<Color> accentColors = [
+      const Color(0xFF00BFA5),
+      const Color(0xFF7C4DFF),
+      const Color(0xFFFF6D00),
+      const Color(0xFF2979FF),
+      const Color(0xFFE91E63),
+    ];
+    final Color accent = accentColors[index % accentColors.length];
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.07),
+            blurRadius: 20,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Banner Image ──────────────────────────────────────────
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(20)),
+                child: Image.network(
+                  event.bannerImage,
+                  width: double.infinity,
+                  height: 190,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (ctx, child, progress) {
+                    if (progress == null) return child;
+                    return _imagePlaceholder(isLoading: true);
                   },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(
-                          Icons.add_circle_outline,
-                          size: 20,
-                          color: Colors.teal,
-                        ),
-                        SizedBox(width: 6),
-                        Text(
-                          "Add Event",
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.teal,
-                          ),
-                        ),
+                  errorBuilder: (ctx, _, __) =>
+                      _imagePlaceholder(isLoading: false),
+                ),
+              ),
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  height: 80,
+                  decoration: BoxDecoration(
+                    borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(20)),
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [
+                        Colors.black.withOpacity(0.65),
+                        Colors.transparent,
                       ],
                     ),
                   ),
                 ),
               ),
-            ),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Header gradient
-
-
-          // Content
-          Expanded(
-            child: Obx(() {
-              if (controller.isLoading.value) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const CircularProgressIndicator(
-                        color: Colors.teal,
-                        strokeWidth: 3,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        "Loading events...",
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
+              Positioned(
+                top: 12,
+                right: 12,
+                child: _deleteButton(event),
+              ),
+              Positioned(
+                top: 12,
+                left: 12,
+                child: Container(
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: accent,
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                );
-              }
-
-              if (controller.events.isEmpty) {
-                return _buildEmptyState();
-              }
-
-              return RefreshIndicator(
-                onRefresh: () async {
-                  await controller.fetchEvents();
-                },
-                color: Colors.teal,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header Info
-                    _buildHeaderInfo(),
-
-                    // Events List
-                    Expanded(
-                      child: ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                        itemCount: controller.events.length,
-                        itemBuilder: (context, index) {
-                          final event = controller.events[index];
-                          return _buildEventCard(event, index);
-                        },
-                      ),
+                  child: Text(
+                    "EVENT ${index + 1}",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.5,
                     ),
-                  ],
+                  ),
                 ),
-              );
-            }),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
-  }
-
-  // ----------- HEADER INFO -----------
-  Widget _buildHeaderInfo() {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF00897B), Color(0xFF009688)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.teal.withOpacity(0.25),
-            blurRadius: 15,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(
-              Icons.event_available_rounded,
-              color: Colors.white,
-              size: 30,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
+          _TicketDivider(color: accent),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Obx(() => Text(
-                  "${controller.events.length} Active Events",
+                Text(
+                  event.eventName,
                   style: const TextStyle(
-                    fontSize: 19,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                    letterSpacing: 0.3,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0D1B2A),
+                    letterSpacing: 0.2,
+                    height: 1.3,
                   ),
-                )),
-                const SizedBox(height: 4),
-                const Text(
-                  "Manage your events here",
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.white70,
-                    fontWeight: FontWeight.w400,
-                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _InfoPill(
+                      icon: Icons.calendar_today_rounded,
+                      label: "${event.startDate} – ${event.endDate}",
+                      color: accent,
+                    ),
+                    _InfoPill(
+                      icon: Icons.schedule_rounded,
+                      label: event.time,
+                      color: const Color(0xFF7C4DFF),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                _LocationRow(location: event.location),
               ],
             ),
           ),
@@ -206,197 +241,104 @@ class MerchantEventsPage extends StatelessWidget {
     );
   }
 
-  // ----------- EVENT CARD -----------
-  Widget _buildEventCard(dynamic event, int index) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 15,
-            offset: const Offset(0, 4),
-          ),
-        ],
+  Widget _deleteButton(dynamic event) {
+    return GestureDetector(
+      onTap: () => _showDeleteConfirmation(event),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.55),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
+        ),
+        child: const Icon(Icons.delete_outline_rounded,
+            color: Colors.white, size: 20),
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: () {
-            // Navigate to event details page
-          },
+    );
+  }
+
+  Widget _imagePlaceholder({required bool isLoading}) {
+    return Container(
+      height: 190,
+      decoration: const BoxDecoration(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        color: Color(0xFFECEFF4),
+      ),
+      child: Center(
+        child: isLoading
+            ? const CircularProgressIndicator(
+            color: Color(0xFF00BFA5), strokeWidth: 2)
+            : Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.image_not_supported_rounded,
+                size: 42, color: Colors.grey[400]),
+            const SizedBox(height: 8),
+            Text("Image unavailable",
+                style: TextStyle(
+                    color: Colors.grey[400],
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return SizedBox(
+      height: MediaQuery.of(Get.context!).size.height * 0.65,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Banner Image with Stack
-              Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(20),
-                    ),
-                    child: Image.network(
-                      event.bannerImage,
-                      width: double.infinity,
-                      height: 200,
-                      fit: BoxFit.cover,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Container(
-                          height: 200,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.grey.shade200,
-                                Colors.grey.shade300,
-                              ],
-                            ),
-                          ),
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              value: loadingProgress.expectedTotalBytes != null
-                                  ? loadingProgress.cumulativeBytesLoaded /
-                                  loadingProgress.expectedTotalBytes!
-                                  : null,
-                              color: Colors.teal,
-                              strokeWidth: 3,
-                            ),
-                          ),
-                        );
-                      },
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          height: 200,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.grey.shade200,
-                                Colors.grey.shade300,
-                              ],
-                            ),
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.broken_image_rounded,
-                                size: 50,
-                                color: Colors.grey[500],
-                              ),
-                              const SizedBox(height: 10),
-                              Text(
-                                "Image not available",
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  // Gradient Overlay
-                  Container(
-                    height: 200,
-                    decoration: BoxDecoration(
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(20),
-                      ),
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withOpacity(0.7),
-                        ],
-                      ),
-                    ),
-                  ),
-                  // Delete button overlay
-                  Positioned(
-                    top: 12,
-                    right: 12,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.9),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(50),
-                          onTap: () => _showDeleteConfirmation(event),
-                          child: const Padding(
-                            padding: EdgeInsets.all(10),
-                            child: Icon(
-                              Icons.delete_outline_rounded,
-                              color: Colors.white,
-                              size: 22,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFECEFF4),
+                  borderRadius: BorderRadius.circular(32),
+                ),
+                child: const Icon(Icons.event_note_rounded,
+                    size: 56, color: Color(0xFF90A4AE)),
               ),
-
-              // Event Details
-              Padding(
-                padding: const EdgeInsets.all(18),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Event Name
-                    Text(
-                      event.eventName,
-                      style: const TextStyle(
-                        fontSize: 19,
+              const SizedBox(height: 28),
+              const Text(
+                "No Events Yet",
+                style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0D1B2A)),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                "Create your first event to start\nengaging with your customers.",
+                textAlign: TextAlign.center,
+                style:
+                TextStyle(fontSize: 15, color: Colors.grey[500], height: 1.6),
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Get.to(() => AddEventPage())
+                      ?.then((_) => controller.fetchEvents());
+                },
+                icon: const Icon(Icons.add_rounded, size: 22),
+                label: const Text("Create Event",
+                    style: TextStyle(
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF1A202C),
-                        letterSpacing: 0.2,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 14),
-
-                    // Date Range
-                    _buildInfoRow(
-                      Icons.calendar_month_rounded,
-                      "${event.startDate} to ${event.endDate}",
-                      Colors.teal,
-                    ),
-                    const SizedBox(height: 10),
-
-                    // Time
-                    _buildInfoRow(
-                      Icons.access_time_rounded,
-                      event.time,
-                      const Color(0xFF6366F1),
-                    ),
-                    const SizedBox(height: 10),
-
-                    // Location
-                    _buildInfoRow(
-                      Icons.location_on_rounded,
-                      event.location,
-                      const Color(0xFFEC4899),
-                    ),
-                  ],
+                        fontSize: 16,
+                        letterSpacing: 0.3)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0D1B2A),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 32, vertical: 16),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
+                  elevation: 0,
                 ),
               ),
             ],
@@ -406,116 +348,10 @@ class MerchantEventsPage extends StatelessWidget {
     );
   }
 
-  // ----------- INFO ROW -----------
-  Widget _buildInfoRow(IconData icon, String text, Color color) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.12),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, size: 18, color: color),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[700],
-              fontWeight: FontWeight.w500,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ----------- EMPTY STATE -----------
-  Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(26),
-              decoration: BoxDecoration(
-                color: Colors.teal.withOpacity(0.12),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.event_busy_rounded,
-                size: 70,
-                color: Colors.teal.withOpacity(0.65),
-              ),
-            ),
-            const SizedBox(height: 28),
-            const Text(
-              "No Events Yet",
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF1A202C),
-                letterSpacing: 0.3,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              "Start creating events to engage with\nyour customers and grow your business.",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 15,
-                color: Colors.grey[600],
-                height: 1.6,
-              ),
-            ),
-            const SizedBox(height: 36),
-            ElevatedButton.icon(
-              onPressed: () {
-                Get.to(() => AddEventPage())?.then((_) => controller.fetchEvents());
-              },
-              icon: const Icon(Icons.add_rounded, size: 22),
-              label: const Text(
-                "Create Your First Event",
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                  letterSpacing: 0.2,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.teal,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 28,
-                  vertical: 16,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                elevation: 3,
-                shadowColor: Colors.teal.withOpacity(0.4),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ----------- DELETE CONFIRMATION -----------
   void _showDeleteConfirmation(dynamic event) {
     Get.dialog(
       Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         child: Padding(
           padding: const EdgeInsets.all(28),
           child: Column(
@@ -524,81 +360,64 @@ class MerchantEventsPage extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.12),
+                  color: Colors.red.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.warning_rounded,
-                  color: Colors.red,
-                  size: 44,
-                ),
+                child: const Icon(Icons.delete_outline_rounded,
+                    color: Colors.red, size: 38),
               ),
-              const SizedBox(height: 22),
-              const Text(
-                "Delete Event?",
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF1A202C),
-                  letterSpacing: 0.2,
-                ),
-              ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 20),
+              const Text("Delete Event?",
+                  style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0D1B2A))),
+              const SizedBox(height: 10),
               Text(
-                "Are you sure you want to delete \"${event.eventName}\"? This action cannot be undone.",
+                '"${event.eventName}" will be permanently removed.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Colors.grey[600],
-                  height: 1.5,
-                ),
+                style:
+                TextStyle(fontSize: 14, color: Colors.grey[600], height: 1.5),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 26),
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => Get.back(),
                       style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        side: BorderSide(color: Colors.grey[300]!, width: 1.5),
+                            borderRadius: BorderRadius.circular(12)),
+                        side: const BorderSide(
+                            color: Color(0xFFDDE1E7), width: 1.5),
                       ),
-                      child: Text(
-                        "Cancel",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey[700],
-                          fontSize: 15,
-                        ),
-                      ),
+                      child: Text("Cancel",
+                          style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey[700],
+                              fontSize: 15)),
                     ),
                   ),
-                  const SizedBox(width: 14),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
                         Get.back();
-                       // controller.deleteEvent(event.id ?? event.sId);
+                        // controller.deleteEvent(event.id ?? event.sId);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        backgroundColor: Colors.red[600],
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
+                            borderRadius: BorderRadius.circular(12)),
                         elevation: 0,
                       ),
-                      child: const Text(
-                        "Delete",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                          fontSize: 15,
-                        ),
-                      ),
+                      child: const Text("Delete",
+                          style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              fontSize: 15)),
                     ),
                   ),
                 ],
@@ -609,4 +428,134 @@ class MerchantEventsPage extends StatelessWidget {
       ),
     );
   }
+}
+
+// ── Info Pill Widget ───────────────────────────────────────────────────────
+class _InfoPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _InfoPill(
+      {required this.icon, required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.2), width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: color),
+          const SizedBox(width: 5),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 12, fontWeight: FontWeight.w600, color: color)),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Location Row ───────────────────────────────────────────────────────────
+class _LocationRow extends StatelessWidget {
+  final String location;
+  const _LocationRow({required this.location});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Icon(Icons.location_on_rounded,
+            size: 15, color: Color(0xFF90A4AE)),
+        const SizedBox(width: 5),
+        Expanded(
+          child: Text(location,
+              style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF90A4AE),
+                  fontWeight: FontWeight.w500),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Ticket Notch Divider ───────────────────────────────────────────────────
+class _TicketDivider extends StatelessWidget {
+  final Color color;
+  const _TicketDivider({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 24,
+      child: Row(
+        children: [
+          Transform.translate(
+            offset: const Offset(-12, 0),
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF4F6FA),
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFFECEFF4), width: 1),
+              ),
+            ),
+          ),
+          Expanded(
+            child: CustomPaint(
+              painter: _DashedLinePainter(color: color.withOpacity(0.25)),
+            ),
+          ),
+          Transform.translate(
+            offset: const Offset(12, 0),
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF4F6FA),
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFFECEFF4), width: 1),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DashedLinePainter extends CustomPainter {
+  final Color color;
+  _DashedLinePainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+
+    const dashWidth = 6.0;
+    const dashSpace = 4.0;
+    double x = 0;
+    final y = size.height / 2;
+
+    while (x < size.width) {
+      canvas.drawLine(Offset(x, y), Offset(x + dashWidth, y), paint);
+      x += dashWidth + dashSpace;
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedLinePainter old) => false;
 }

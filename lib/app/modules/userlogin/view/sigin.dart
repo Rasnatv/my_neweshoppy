@@ -12,9 +12,9 @@ import '../controller/userlogin_controller.dart';
 
 class _T {
 
-  static const primary      = AppColors.kPrimary;
-  static const primaryDark  = AppColors.kPrimary;
-  static const primaryDeep  = AppColors.kPrimary;
+  // static const primary      = AppColors.kPrimary;
+  // static const primaryDark  = AppColors.kPrimary;
+  // static const primaryDeep  = AppColors.kPrimary;
   static const surface      = Color(0xFFFFFFFF);
   static const bg           = Color(0xFFF5F7F9);
   static const divider      = Color(0xFFEAEDF1);
@@ -156,26 +156,21 @@ class _LoginScreenState extends State<LoginScreen>
 
   // ─── Logo ─────────────────────────────────────────────────────────────────
   Widget _buildLogo() {
-    return Container(
-      width: 88,
-      height: 88,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        color: AppColors.kPrimary,           // ← was gradient
-
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(28),
+      child: Container(
+        width: 88,
+        height: 88,
+        color: Colors.teal,
+        child: Padding(
+          padding: const EdgeInsets.all(12), // controls image size — increase to shrink
+          child: Center(child:Image.asset(
+            'assets/images/logo/eshoppycatlogo.png',
+            fit: BoxFit.contain,
+          )),
+        ),
       ),
-
-       child:Center(
-              child: IconBox(
-                imagePath: 'assets/images/logo/eshoppycatlogo.png',
-                iconColor: Colors.white,
-                // backgroundColor: Colors.transparent,
-              ),
-
-    //       ],
-    //     ),
-       ),
-     );
+    );
   }
 
   // ─── Title block ──────────────────────────────────────────────────────────
@@ -335,7 +330,7 @@ class _LoginScreenState extends State<LoginScreen>
         child: const Text(
           "Forgot password?",
           style: TextStyle(
-            color: AppColors.kPrimary,         // ← was _T.primaryDark
+            color: Colors.teal,         // ← was _T.primaryDark
             fontSize: 13,
             fontWeight: FontWeight.w600,
           ),

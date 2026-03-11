@@ -1,14 +1,12 @@
 
 class CartItem {
-  final int id;
   final String productId;
   final String productName;
   final String productImage;
   final double price;
-  int quantity;
+  final int quantity;
 
   CartItem({
-    required this.id,
     required this.productId,
     required this.productName,
     required this.productImage,
@@ -18,12 +16,28 @@ class CartItem {
 
   factory CartItem.fromJson(Map<String, dynamic> json) {
     return CartItem(
-      id: int.parse(json['id'].toString()),
       productId: json['product_id'].toString(),
-      productName: json['product_name'].toString(),
-      productImage: json['product_image'].toString(),
-      price: double.parse(json['price'].toString()),
-      quantity: int.parse(json['quantity'].toString()),
+      productName: json['product_name'] ?? '',
+      productImage: json['product_image'] ?? '',
+      price: double.tryParse(json['price'].toString()) ?? 0.0,
+      quantity: int.tryParse(json['quantity'].toString()) ?? 1,
+    );
+  }
+
+  /// Required for optimistic UI updates in CartController
+  CartItem copyWith({
+    String? productId,
+    String? productName,
+    String? productImage,
+    double? price,
+    int? quantity,
+  }) {
+    return CartItem(
+      productId: productId ?? this.productId,
+      productName: productName ?? this.productName,
+      productImage: productImage ?? this.productImage,
+      price: price ?? this.price,
+      quantity: quantity ?? this.quantity,
     );
   }
 }
