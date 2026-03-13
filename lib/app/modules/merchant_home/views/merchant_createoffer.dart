@@ -1,9 +1,10 @@
-// lib/features/create_offer/view/create_offer_page.dart
+
 
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../common/style/app_colors.dart';
 import '../controller/merchant_createoffercontroller.dart';
 
 
@@ -18,7 +19,7 @@ class CreateOfferPage extends StatelessWidget {
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: const Color(0xFF6366F1),
+        backgroundColor: AppColors.kPrimary,
         foregroundColor: Colors.white,
         title: const Text(
           'Create New Offer',

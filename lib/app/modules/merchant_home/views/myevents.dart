@@ -2,7 +2,6 @@
 import 'package:eshoppy/app/common/style/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../controller/merchant_myeventcontroller.dart';
 import 'addevents.dart';
 
@@ -21,7 +20,7 @@ class MerchantEventsPage extends StatelessWidget {
               color: Colors.white, size: 20),
           onPressed: () => Get.back(),
         ),
-        title: Text("My Events"),
+        title: Text("My Events",style:TextStyle(color:AppColors.white),),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
@@ -47,7 +46,7 @@ class MerchantEventsPage extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                   side: BorderSide(
-                      color: const Color(0xFF00BFA5).withOpacity(0.3),
+                      color: const Color(0xF0FFFFFF).withOpacity(0.3),
                       width: 1),
                 ),
               ),
@@ -555,7 +554,6 @@ class _DashedLinePainter extends CustomPainter {
       x += dashWidth + dashSpace;
     }
   }
-
   @override
   bool shouldRepaint(_DashedLinePainter old) => false;
 }

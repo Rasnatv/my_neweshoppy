@@ -581,8 +581,7 @@
 //     );
 //   }
 // }
-import 'dart:io';
-import 'package:eshoppy/app/common/style/app_colors.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -611,7 +610,7 @@ class AddEventPage extends StatelessWidget {
           backgroundColor: _teal,
           surfaceTintColor: Colors.transparent,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded,
+            icon: const Icon(Icons.arrow_back,
                 size: 18, color: Colors.white),
             onPressed: () => Get.back(),
           ),

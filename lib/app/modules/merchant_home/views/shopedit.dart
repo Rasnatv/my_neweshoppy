@@ -1,1535 +1,5 @@
-// //
-// // import 'dart:io';
-// // import 'package:eshoppy/app/common/style/app_colors.dart';
-// // import 'package:flutter/material.dart';
-// // import 'package:get/get.dart';
-// // import '../../../common/style/app_text_style.dart';
-// // import '../../merchantlogin/view/merchantmap.dart';
-// // import '../controller/merchantsetting_controller.dart';
-// //
-// //
-// // class MerchantSettingPage extends StatelessWidget {
-// //   final MerchantUpdateController controller = Get.put(MerchantUpdateController());
-// //
-// //   @override
-// //   Widget build(BuildContext context) {
-// //     return Scaffold(
-// //       backgroundColor: Colors.grey.shade50,
-// //       appBar: AppBar(
-// //         backgroundColor:AppColors.kPrimary,
-// //         elevation: 0,
-// //         automaticallyImplyLeading: true,
-// //         iconTheme: const IconThemeData(
-// //           color: Colors.white, // back arrow color
-// //         ),
-// //         title: Text(
-// //           "Edit Profile",
-// //           style:  AppTextStyle.rTextNunitoWhite17w700
-// //         ),
-// //       ),
-// //       body: Column(
-// //         children: [
-// //           Expanded(
-// //             child: Obx(() {
-// //               if (controller.isLoading.value) {
-// //                 return Center(
-// //                   child: Column(
-// //                     mainAxisAlignment: MainAxisAlignment.center,
-// //                     children: [
-// //                       const CircularProgressIndicator(
-// //                         color: Colors.teal,
-// //                         strokeWidth: 3,
-// //                       ),
-// //                       const SizedBox(height: 16),
-// //                       Text(
-// //                         "Loading profile...",
-// //                         style: TextStyle(
-// //                           color: Colors.grey.shade600,
-// //                           fontSize: 14,
-// //                         ),
-// //                       ),
-// //                     ],
-// //                   ),
-// //                 );
-// //               }
-// //
-// //               return SingleChildScrollView(
-// //                 padding: const EdgeInsets.all(20),
-// //                 child: Column(
-// //                   crossAxisAlignment: CrossAxisAlignment.start,
-// //                   children: [
-// //                     // Store Image Section
-// //                     Text(
-// //                       "Store Image",
-// //                       style: TextStyle(
-// //                         fontSize: 16,
-// //                         fontWeight: FontWeight.w600,
-// //                         color: Colors.grey.shade800,
-// //                       ),
-// //                     ),
-// //                     const SizedBox(height: 12),
-// //                     GetBuilder<MerchantUpdateController>(
-// //                       builder: (c) {
-// //                         return GestureDetector(
-// //                           onTap: () => controller.pickImage(),
-// //                           child: Container(
-// //                             height: 180,
-// //                             width: double.infinity,
-// //                             decoration: BoxDecoration(
-// //                               color: Colors.white,
-// //                               borderRadius: BorderRadius.circular(16),
-// //                               border: Border.all(
-// //                                 color: Colors.grey.shade300,
-// //                                 width: 2,
-// //                               ),
-// //                               boxShadow: [
-// //                                 BoxShadow(
-// //                                   color: Colors.black.withOpacity(0.05),
-// //                                   blurRadius: 10,
-// //                                   offset: const Offset(0, 4),
-// //                                 ),
-// //                               ],
-// //                             ),
-// //                             child: c.pickedImage != null
-// //                                 ? Stack(
-// //                               children: [
-// //                                 ClipRRect(
-// //                                   borderRadius: BorderRadius.circular(14),
-// //                                   child: Image.file(
-// //                                     c.pickedImage!,
-// //                                     fit: BoxFit.cover,
-// //                                     width: double.infinity,
-// //                                     height: double.infinity,
-// //                                   ),
-// //                                 ),
-// //                                 Positioned(
-// //                                   top: 12,
-// //                                   right: 12,
-// //                                   child: Container(
-// //                                     decoration: BoxDecoration(
-// //                                       color: Colors.black.withOpacity(0.6),
-// //                                       shape: BoxShape.circle,
-// //                                     ),
-// //                                     child: IconButton(
-// //                                       icon: const Icon(
-// //                                         Icons.edit,
-// //                                         color: Colors.white,
-// //                                         size: 20,
-// //                                       ),
-// //                                       onPressed: () => controller.pickImage(),
-// //                                     ),
-// //                                   ),
-// //                                 ),
-// //                               ],
-// //                             )
-// //                                 : c.networkImage.isNotEmpty
-// //                                 ? Stack(
-// //                               children: [
-// //                                 ClipRRect(
-// //                                   borderRadius: BorderRadius.circular(14),
-// //                                   child: Image.network(
-// //                                     c.networkImage,
-// //                                     fit: BoxFit.cover,
-// //                                     width: double.infinity,
-// //                                     height: double.infinity,
-// //                                   ),
-// //                                 ),
-// //                                 Positioned(
-// //                                   top: 12,
-// //                                   right: 12,
-// //                                   child: Container(
-// //                                     decoration: BoxDecoration(
-// //                                       color: Colors.black.withOpacity(0.6),
-// //                                       shape: BoxShape.circle,
-// //                                     ),
-// //                                     child: IconButton(
-// //                                       icon: const Icon(
-// //                                         Icons.edit,
-// //                                         color: Colors.white,
-// //                                         size: 20,
-// //                                       ),
-// //                                       onPressed: () => controller.pickImage(),
-// //                                     ),
-// //                                   ),
-// //                                 ),
-// //                               ],
-// //                             )
-// //                                 : Column(
-// //                               mainAxisAlignment: MainAxisAlignment.center,
-// //                               children: [
-// //                                 Container(
-// //                                   padding: const EdgeInsets.all(16),
-// //                                   decoration: BoxDecoration(
-// //                                     color: Colors.teal.withOpacity(0.1),
-// //                                     shape: BoxShape.circle,
-// //                                   ),
-// //                                   child: const Icon(
-// //                                     Icons.add_a_photo,
-// //                                     size: 48,
-// //                                     color: Colors.teal,
-// //                                   ),
-// //                                 ),
-// //                                 const SizedBox(height: 16),
-// //                                 Text(
-// //                                   "Tap to upload store image",
-// //                                   style: TextStyle(
-// //                                     fontSize: 14,
-// //                                     color: Colors.grey.shade600,
-// //                                   ),
-// //                                 ),
-// //                               ],
-// //                             ),
-// //                           ),
-// //                         );
-// //                       },
-// //                     ),
-// //                     const SizedBox(height: 32),
-// //
-// //                     // Basic Details Section
-// //                     Text(
-// //                       "Basic Details",
-// //                       style: TextStyle(
-// //                         fontSize: 16,
-// //                         fontWeight: FontWeight.w600,
-// //                         color: Colors.grey.shade800,
-// //                       ),
-// //                     ),
-// //                     const SizedBox(height: 16),
-// //                     _buildTextField("Owner Name", controller.ownerCtrl, Icons.person_outline),
-// //                     const SizedBox(height: 16),
-// //                     _buildTextField("Shop Name", controller.shopCtrl, Icons.storefront_outlined),
-// //                     const SizedBox(height: 16),
-// //                     _buildTextField("Email", controller.emailCtrl, Icons.email_outlined),
-// //                     const SizedBox(height: 16),
-// //                     _buildTextField("Phone Number 1", controller.phone1Ctrl, Icons.phone_outlined),
-// //                     const SizedBox(height: 16),
-// //                     _buildTextField("Phone Number 2", controller.phone2Ctrl, Icons.phone_outlined),
-// //                     const SizedBox(height: 32),
-// //
-// //                     // Location Section
-// //                     Text(
-// //                       "Location Details",
-// //                       style: TextStyle(
-// //                         fontSize: 16,
-// //                         fontWeight: FontWeight.w600,
-// //                         color: Colors.grey.shade800,
-// //                       ),
-// //                     ),
-// //                     const SizedBox(height: 16),
-// //
-// //                     // State Dropdown
-// //                     Obx(() => _buildDropdown(
-// //                       "State",
-// //                       controller.selectedState.value.isEmpty ? null : controller.selectedState.value,
-// //                       controller.states,
-// //                           (value) {
-// //                         if (value != null) {
-// //                           controller.selectedState.value = value;
-// //                           controller.fetchDistricts(value);
-// //                         }
-// //                       },
-// //                       Icons.flag_outlined,
-// //                       controller.isLoadingStates.value,
-// //                     )),
-// //                     const SizedBox(height: 16),
-// //
-// //                     // District Dropdown
-// //                     Obx(() {
-// //                       if (controller.selectedState.value.isEmpty) {
-// //                         return const SizedBox();
-// //                       }
-// //                       return _buildDropdown(
-// //                         "District",
-// //                         controller.selectedDistrict.value.isEmpty ? null : controller.selectedDistrict.value,
-// //                         controller.districts,
-// //                             (value) {
-// //                           if (value != null) {
-// //                             controller.selectedDistrict.value = value;
-// //                             controller.fetchLocations(
-// //                               controller.selectedState.value,
-// //                               value,
-// //                             );
-// //                           }
-// //                         },
-// //                         Icons.location_city_outlined,
-// //                         controller.isLoadingDistricts.value,
-// //                       );
-// //                     }),
-// //                     const SizedBox(height: 16),
-// //
-// //                     // Location Dropdown
-// //                     Obx(() {
-// //                       if (controller.selectedDistrict.value.isEmpty) {
-// //                         return const SizedBox();
-// //                       }
-// //                       return _buildDropdown(
-// //                         "Main Location",
-// //                         controller.selectedLocation.value.isEmpty ? null : controller.selectedLocation.value,
-// //                         controller.locations,
-// //                             (value) {
-// //                           if (value != null) {
-// //                             controller.selectedLocation.value = value;
-// //                           }
-// //                         },
-// //                         Icons.place_outlined,
-// //                         controller.isLoadingLocations.value,
-// //                       );
-// //                     }),
-// //                     const SizedBox(height: 24),
-// //
-// //                     // Shop Location Section
-// //                     Container(
-// //                       padding: const EdgeInsets.all(20),
-// //                       decoration: BoxDecoration(
-// //                         color: Colors.white,
-// //                         borderRadius: BorderRadius.circular(16),
-// //                         boxShadow: [
-// //                           BoxShadow(
-// //                             color: Colors.black.withOpacity(0.05),
-// //                             blurRadius: 10,
-// //                             offset: const Offset(0, 4),
-// //                           ),
-// //                         ],
-// //                       ),
-// //                       child: Column(
-// //                         crossAxisAlignment: CrossAxisAlignment.start,
-// //                         children: [
-// //                           Row(
-// //                             children: [
-// //                               Icon(Icons.location_on, color: Colors.teal, size: 24),
-// //                               const SizedBox(width: 8),
-// //                               Text(
-// //                                 "Shop Location",
-// //                                 style: TextStyle(
-// //                                   fontSize: 16,
-// //                                   fontWeight: FontWeight.w600,
-// //                                   color: Colors.grey.shade800,
-// //                                 ),
-// //                               ),
-// //                             ],
-// //                           ),
-// //                           const SizedBox(height: 16),
-// //
-// //                           // Current Location Button
-// //                           Obx(() => ElevatedButton.icon(
-// //                             onPressed: controller.isGettingCurrentLocation.value
-// //                                 ? null
-// //                                 : () => controller.getCurrentLocation(),
-// //                             icon: controller.isGettingCurrentLocation.value
-// //                                 ? const SizedBox(
-// //                               width: 16,
-// //                               height: 16,
-// //                               child: CircularProgressIndicator(
-// //                                 strokeWidth: 2,
-// //                                 color: Colors.white,
-// //                               ),
-// //                             )
-// //                                 : const Icon(Icons.my_location, color: Colors.white),
-// //                             label: Text(
-// //                               controller.isGettingCurrentLocation.value
-// //                                   ? "Getting Location..."
-// //                                   : "Use Current Location",
-// //                               style: const TextStyle(color: Colors.white),
-// //                             ),
-// //                             style: ElevatedButton.styleFrom(
-// //                               backgroundColor:AppColors.kPrimary,
-// //                               minimumSize: const Size(double.infinity, 48),
-// //                               shape: RoundedRectangleBorder(
-// //                                 borderRadius: BorderRadius.circular(12),
-// //                               ),
-// //                             ),
-// //                           )),
-// //                           const SizedBox(height: 12),
-// //
-// //                           const Row(
-// //                             children: [
-// //                               Expanded(child: Divider(color: Colors.grey)),
-// //                               Padding(
-// //                                 padding: EdgeInsets.symmetric(horizontal: 12),
-// //                                 child: Text(
-// //                                   "OR",
-// //                                   style: TextStyle(color: Colors.grey),
-// //                                 ),
-// //                               ),
-// //                               Expanded(child: Divider(color: Colors.grey)),
-// //                             ],
-// //                           ),
-// //                           const SizedBox(height: 12),
-// //
-// //                           // Map Picker Button
-// //                           Obx(() => InkWell(
-// //                             onTap: () => _pickShopLocation(),
-// //                             child: Container(
-// //                               padding: const EdgeInsets.all(16),
-// //                               decoration: BoxDecoration(
-// //                                 color: Colors.teal.withOpacity(0.1),
-// //                                 borderRadius: BorderRadius.circular(12),
-// //                                 border: Border.all(color: Colors.teal.withOpacity(0.3)),
-// //                               ),
-// //                               child: Row(
-// //                                 children: [
-// //                                   Container(
-// //                                     padding: const EdgeInsets.all(10),
-// //                                     decoration: BoxDecoration(
-// //                                       color: Colors.teal,
-// //                                       borderRadius: BorderRadius.circular(10),
-// //                                     ),
-// //                                     child: const Icon(
-// //                                       Icons.map,
-// //                                       size: 24,
-// //                                       color: Colors.white,
-// //                                     ),
-// //                                   ),
-// //                                   const SizedBox(width: 12),
-// //                                   Expanded(
-// //                                     child: Column(
-// //                                       crossAxisAlignment: CrossAxisAlignment.start,
-// //                                       children: [
-// //                                         const Text(
-// //                                           "Pick Location on Map",
-// //                                           style: TextStyle(
-// //                                             fontWeight: FontWeight.w600,
-// //                                             fontSize: 14,
-// //                                           ),
-// //                                         ),
-// //                                         const SizedBox(height: 4),
-// //                                         Text(
-// //                                           controller.pickedLocation.value,
-// //                                           style: TextStyle(
-// //                                             color: Colors.grey.shade600,
-// //                                             fontSize: 12,
-// //                                           ),
-// //                                           maxLines: 2,
-// //                                           overflow: TextOverflow.ellipsis,
-// //                                         ),
-// //                                       ],
-// //                                     ),
-// //                                   ),
-// //                                   Icon(
-// //                                     Icons.arrow_forward_ios,
-// //                                     color: Colors.grey.shade400,
-// //                                     size: 16,
-// //                                   ),
-// //                                 ],
-// //                               ),
-// //                             ),
-// //                           )),
-// //
-// //                           // Display coordinates
-// //                           Obx(() {
-// //                             if (controller.latitude.value != 0.0 && controller.longitude.value != 0.0) {
-// //                               return Padding(
-// //                                 padding: const EdgeInsets.only(top: 12),
-// //                                 child: Container(
-// //                                   padding: const EdgeInsets.all(12),
-// //                                   decoration: BoxDecoration(
-// //                                     color: Colors.green.withOpacity(0.1),
-// //                                     borderRadius: BorderRadius.circular(8),
-// //                                     border: Border.all(color: Colors.green.withOpacity(0.3)),
-// //                                   ),
-// //                                   child: Row(
-// //                                     children: [
-// //                                       const Icon(Icons.check_circle, color: Colors.green, size: 20),
-// //                                       const SizedBox(width: 8),
-// //                                       Expanded(
-// //                                         child: Text(
-// //                                           "Lat: ${controller.latitude.value.toStringAsFixed(6)}, Lng: ${controller.longitude.value.toStringAsFixed(6)}",
-// //                                           style: const TextStyle(
-// //                                             color: Colors.green,
-// //                                             fontSize: 12,
-// //                                             fontWeight: FontWeight.w500,
-// //                                           ),
-// //                                         ),
-// //                                       ),
-// //                                     ],
-// //                                   ),
-// //                                 ),
-// //                               );
-// //                             }
-// //                             return const SizedBox();
-// //                           }),
-// //                         ],
-// //                       ),
-// //                     ),
-// //                     const SizedBox(height: 32),
-// //
-// //                     // Social Links Section
-// //                     Text(
-// //                       "Social Links (Optional)",
-// //                       style: TextStyle(
-// //                         fontSize: 16,
-// //                         fontWeight: FontWeight.w600,
-// //                         color: Colors.grey.shade800,
-// //                       ),
-// //                     ),
-// //                     const SizedBox(height: 16),
-// //                     _buildTextField("WhatsApp Number", controller.whatsappCtrl, Icons.phone_outlined),
-// //                     const SizedBox(height: 16),
-// //                     _buildTextField("Facebook Link", controller.facebookCtrl, Icons.facebook_outlined),
-// //                     const SizedBox(height: 16),
-// //                     _buildTextField("Instagram Link", controller.instagramCtrl, Icons.camera_alt_outlined),
-// //                     const SizedBox(height: 16),
-// //                     _buildTextField("Website Link", controller.websiteCtrl, Icons.language_outlined),
-// //                     const SizedBox(height: 40),
-// //
-// //                     // Update Button
-// //                     Obx(() => Container(
-// //                       width: double.infinity,
-// //                       height: 56,
-// //                       decoration: BoxDecoration(
-// //                         borderRadius: BorderRadius.circular(16),
-// //                         gradient: LinearGradient(
-// //                           colors: controller.isUpdating.value
-// //                               ? [
-// //                             Colors.grey.shade400,
-// //                             Colors.grey.shade400,
-// //                           ]
-// //                               : [
-// //                             Colors.teal,
-// //                             Colors.teal.shade700,
-// //                           ],
-// //                         ),
-// //                         boxShadow: controller.isUpdating.value
-// //                             ? []
-// //                             : [
-// //                           BoxShadow(
-// //                             color: Colors.teal.withOpacity(0.3),
-// //                             blurRadius: 12,
-// //                             offset: const Offset(0, 6),
-// //                           ),
-// //                         ],
-// //                       ),
-// //                       child: ElevatedButton(
-// //                         onPressed: controller.isUpdating.value ? null : () => controller.updateMerchant(),
-// //                         style: ElevatedButton.styleFrom(
-// //                           backgroundColor: Colors.transparent,
-// //                           shadowColor: Colors.transparent,
-// //                           shape: RoundedRectangleBorder(
-// //                             borderRadius: BorderRadius.circular(16),
-// //                           ),
-// //                         ),
-// //                         child: controller.isUpdating.value
-// //                             ? const SizedBox(
-// //                           height: 24,
-// //                           width: 24,
-// //                           child: CircularProgressIndicator(
-// //                             color: Colors.white,
-// //                             strokeWidth: 2.5,
-// //                           ),
-// //                         )
-// //                             : Row(
-// //                           mainAxisAlignment: MainAxisAlignment.center,
-// //                           children: const [
-// //                             Icon(Icons.check_circle_outline, color: Colors.white),
-// //                             SizedBox(width: 8),
-// //                             Text(
-// //                               "Update Profile",
-// //                               style: TextStyle(
-// //                                 fontSize: 16,
-// //                                 fontWeight: FontWeight.w600,
-// //                                 color: Colors.white,
-// //                               ),
-// //                             ),
-// //                           ],
-// //                         ),
-// //                       ),
-// //                     )),
-// //                     const SizedBox(height: 20),
-// //                   ],
-// //                 ),
-// //               );
-// //             }),
-// //           ),
-// //         ],
-// //       ),
-// //     );
-// //   }
-// //
-// //   // Pick shop location from map
-// //   Future<void> _pickShopLocation() async {
-// //     final result = await Get.to(() => ShopMapPicker(
-// //       initialLat: controller.latitude.value,
-// //       initialLng: controller.longitude.value,
-// //       initialAddress: controller.pickedLocation.value,
-// //     ));
-// //
-// //     if (result != null) {
-// //       controller.updateLocation(
-// //         result["lat"],
-// //         result["lng"],
-// //         result["address"],
-// //       );
-// //     }
-// //   }
-// //
-// //   Widget _buildTextField(String label, TextEditingController ctrl, IconData icon) {
-// //     return Container(
-// //       decoration: BoxDecoration(
-// //         color: Colors.white,
-// //         borderRadius: BorderRadius.circular(16),
-// //         boxShadow: [
-// //           BoxShadow(
-// //             color: Colors.black.withOpacity(0.05),
-// //             blurRadius: 10,
-// //             offset: const Offset(0, 4),
-// //           ),
-// //         ],
-// //       ),
-// //       child: TextField(
-// //         controller: ctrl,
-// //         style: const TextStyle(fontSize: 15),
-// //         decoration: InputDecoration(
-// //           labelText: label,
-// //           labelStyle: TextStyle(color: Colors.grey.shade600),
-// //           prefixIcon: Icon(icon, color: Colors.teal),
-// //           border: OutlineInputBorder(
-// //             borderRadius: BorderRadius.circular(16),
-// //             borderSide: BorderSide.none,
-// //           ),
-// //           enabledBorder: OutlineInputBorder(
-// //             borderRadius: BorderRadius.circular(16),
-// //             borderSide: BorderSide.none,
-// //           ),
-// //           focusedBorder: OutlineInputBorder(
-// //             borderRadius: BorderRadius.circular(16),
-// //             borderSide: const BorderSide(
-// //               color: Colors.teal,
-// //               width: 2,
-// //             ),
-// //           ),
-// //           filled: true,
-// //           fillColor: Colors.white,
-// //           contentPadding: const EdgeInsets.symmetric(
-// //             horizontal: 20,
-// //             vertical: 18,
-// //           ),
-// //         ),
-// //       ),
-// //     );
-// //   }
-// //
-// //   Widget _buildDropdown(
-// //       String label,
-// //       String? value,
-// //       List<String> items,
-// //       Function(String?) onChanged,
-// //       IconData icon,
-// //       bool isLoading,
-// //       ) {
-// //     if (isLoading) {
-// //       return Container(
-// //         padding: const EdgeInsets.all(16),
-// //         decoration: BoxDecoration(
-// //           color: Colors.white,
-// //           borderRadius: BorderRadius.circular(16),
-// //           boxShadow: [
-// //             BoxShadow(
-// //               color: Colors.black.withOpacity(0.05),
-// //               blurRadius: 10,
-// //               offset: const Offset(0, 4),
-// //             ),
-// //           ],
-// //         ),
-// //         child: Row(
-// //           children: [
-// //             const SizedBox(
-// //               width: 20,
-// //               height: 20,
-// //               child: CircularProgressIndicator(
-// //                 strokeWidth: 2,
-// //                 color: Colors.teal,
-// //               ),
-// //             ),
-// //             const SizedBox(width: 12),
-// //             Text(
-// //               "Loading $label...",
-// //               style: TextStyle(color: Colors.grey.shade600),
-// //             ),
-// //           ],
-// //         ),
-// //       );
-// //     }
-// //
-// //     if (items.isEmpty) {
-// //       return Container(
-// //         padding: const EdgeInsets.all(16),
-// //         decoration: BoxDecoration(
-// //           color: Colors.white,
-// //           borderRadius: BorderRadius.circular(16),
-// //           border: Border.all(color: Colors.orange),
-// //           boxShadow: [
-// //             BoxShadow(
-// //               color: Colors.black.withOpacity(0.05),
-// //               blurRadius: 10,
-// //               offset: const Offset(0, 4),
-// //             ),
-// //           ],
-// //         ),
-// //         child: Text(
-// //           "No $label available",
-// //           style: TextStyle(color: Colors.grey.shade600),
-// //         ),
-// //       );
-// //     }
-// //
-// //     return Container(
-// //       decoration: BoxDecoration(
-// //         color: Colors.white,
-// //         borderRadius: BorderRadius.circular(16),
-// //         boxShadow: [
-// //           BoxShadow(
-// //             color: Colors.black.withOpacity(0.05),
-// //             blurRadius: 10,
-// //             offset: const Offset(0, 4),
-// //           ),
-// //         ],
-// //       ),
-// //       child: DropdownButtonFormField<String>(
-// //         value: value,
-// //         decoration: InputDecoration(
-// //           labelText: label,
-// //           labelStyle: TextStyle(color: Colors.grey.shade600),
-// //           prefixIcon: Icon(icon, color: Colors.teal),
-// //           border: OutlineInputBorder(
-// //             borderRadius: BorderRadius.circular(16),
-// //             borderSide: BorderSide.none,
-// //           ),
-// //           enabledBorder: OutlineInputBorder(
-// //             borderRadius: BorderRadius.circular(16),
-// //             borderSide: BorderSide.none,
-// //           ),
-// //           focusedBorder: OutlineInputBorder(
-// //             borderRadius: BorderRadius.circular(16),
-// //             borderSide: const BorderSide(
-// //               color: Colors.teal,
-// //               width: 2,
-// //             ),
-// //           ),
-// //           filled: true,
-// //           fillColor: Colors.white,
-// //           contentPadding: const EdgeInsets.symmetric(
-// //             horizontal: 20,
-// //             vertical: 18,
-// //           ),
-// //         ),
-// //         dropdownColor: Colors.white,
-// //         style: const TextStyle(color: Colors.black87, fontSize: 15),
-// //         items: items
-// //             .map((item) => DropdownMenuItem<String>(
-// //           value: item,
-// //           child: Text(item),
-// //         ))
-// //             .toList(),
-// //         onChanged: onChanged,
-// //       ),
-// //     );
-// //   }
-// // }
-// import 'dart:io';
-// import 'package:eshoppy/app/common/style/app_colors.dart';
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-// import '../../../common/style/app_text_style.dart';
-// import '../../merchantlogin/view/merchantmap.dart';
-// import '../controller/merchantsetting_controller.dart';
-//
-// class MerchantSettingPage extends StatelessWidget {
-//   final MerchantUpdateController controller =
-//   Get.put(MerchantUpdateController());
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       backgroundColor: const Color(0xFFF5F7FA),
-//       appBar: AppBar(
-//         backgroundColor: AppColors.kPrimary,
-//         elevation: 0,
-//         automaticallyImplyLeading: true,
-//         iconTheme: const IconThemeData(color: Colors.white),
-//         title: const Text(
-//           "Edit Profile",
-//           style: TextStyle(
-//             color: Colors.white,
-//             fontSize: 18,
-//             fontWeight: FontWeight.w600,
-//             letterSpacing: 0.3,
-//           ),
-//         ),
-//         bottom: PreferredSize(
-//           preferredSize: const Size.fromHeight(1),
-//           child: Container(
-//             height: 1,
-//             color: Colors.white.withOpacity(0.15),
-//           ),
-//         ),
-//       ),
-//       body: Column(
-//         children: [
-//           Expanded(
-//             child: Obx(() {
-//               if (controller.isLoading.value) {
-//                 return Center(
-//                   child: Column(
-//                     mainAxisAlignment: MainAxisAlignment.center,
-//                     children: [
-//                       CircularProgressIndicator(
-//                         color: AppColors.kPrimary,
-//                         strokeWidth: 2.5,
-//                       ),
-//                       const SizedBox(height: 20),
-//                       Text(
-//                         "Loading profile...",
-//                         style: TextStyle(
-//                           color: Colors.grey.shade500,
-//                           fontSize: 14,
-//                           fontWeight: FontWeight.w400,
-//                           letterSpacing: 0.2,
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                 );
-//               }
-//
-//               return SingleChildScrollView(
-//                 padding: const EdgeInsets.symmetric(
-//                     horizontal: 20, vertical: 24),
-//                 child: Column(
-//                   crossAxisAlignment: CrossAxisAlignment.start,
-//                   children: [
-//                     // ── Store Image ──────────────────────────────────
-//                     _SectionLabel(label: "Store Image"),
-//                     const SizedBox(height: 12),
-//                     GetBuilder<MerchantUpdateController>(
-//                       builder: (c) {
-//                         return GestureDetector(
-//                           onTap: () => controller.pickImage(),
-//                           child: Container(
-//                             height: 190,
-//                             width: double.infinity,
-//                             decoration: BoxDecoration(
-//                               color: Colors.white,
-//                               borderRadius: BorderRadius.circular(14),
-//                               border: Border.all(
-//                                 color: const Color(0xFFE2E8F0),
-//                                 width: 1.5,
-//                               ),
-//                               boxShadow: [
-//                                 BoxShadow(
-//                                   color: Colors.black.withOpacity(0.04),
-//                                   blurRadius: 8,
-//                                   offset: const Offset(0, 3),
-//                                 ),
-//                               ],
-//                             ),
-//                             child: c.pickedImage != null
-//                                 ? _ImageWithEditOverlay(
-//                               child: Image.file(
-//                                 c.pickedImage!,
-//                                 fit: BoxFit.cover,
-//                                 width: double.infinity,
-//                                 height: double.infinity,
-//                               ),
-//                               onEdit: () => controller.pickImage(),
-//                             )
-//                                 : c.networkImage.isNotEmpty
-//                                 ? _ImageWithEditOverlay(
-//                               child: Image.network(
-//                                 c.networkImage,
-//                                 fit: BoxFit.cover,
-//                                 width: double.infinity,
-//                                 height: double.infinity,
-//                               ),
-//                               onEdit: () => controller.pickImage(),
-//                             )
-//                                 : Column(
-//                               mainAxisAlignment:
-//                               MainAxisAlignment.center,
-//                               children: [
-//                                 Container(
-//                                   padding: const EdgeInsets.all(18),
-//                                   decoration: BoxDecoration(
-//                                     color: AppColors.kPrimary
-//                                         .withOpacity(0.07),
-//                                     shape: BoxShape.circle,
-//                                   ),
-//                                   child: Icon(
-//                                     Icons.add_a_photo_outlined,
-//                                     size: 36,
-//                                     color: AppColors.kPrimary,
-//                                   ),
-//                                 ),
-//                                 const SizedBox(height: 14),
-//                                 Text(
-//                                   "Tap to upload store image",
-//                                   style: TextStyle(
-//                                     fontSize: 13,
-//                                     fontWeight: FontWeight.w500,
-//                                     color: Colors.grey.shade500,
-//                                     letterSpacing: 0.2,
-//                                   ),
-//                                 ),
-//                                 const SizedBox(height: 4),
-//                                 Text(
-//                                   "JPG, PNG recommended",
-//                                   style: TextStyle(
-//                                     fontSize: 11,
-//                                     color: Colors.grey.shade400,
-//                                   ),
-//                                 ),
-//                               ],
-//                             ),
-//                           ),
-//                         );
-//                       },
-//                     ),
-//
-//                     const SizedBox(height: 32),
-//
-//                     // ── Basic Details ───────────────────────────────
-//                     _SectionLabel(label: "Basic Details"),
-//                     const SizedBox(height: 14),
-//                     _buildTextField(
-//                         "Owner Name", controller.ownerCtrl, Icons.person_outline),
-//                     const SizedBox(height: 14),
-//                     _buildTextField(
-//                         "Shop Name", controller.shopCtrl, Icons.storefront_outlined),
-//                     const SizedBox(height: 14),
-//                     _buildTextField(
-//                         "Email", controller.emailCtrl, Icons.email_outlined),
-//                     const SizedBox(height: 14),
-//                     _buildTextField("Phone Number 1", controller.phone1Ctrl,
-//                         Icons.phone_outlined),
-//                     const SizedBox(height: 14),
-//                     _buildTextField("Phone Number 2", controller.phone2Ctrl,
-//                         Icons.phone_outlined),
-//
-//                     const SizedBox(height: 32),
-//
-//                     // ── Location Details ────────────────────────────
-//                     _SectionLabel(label: "Location Details"),
-//                     const SizedBox(height: 14),
-//
-//                     Obx(() => _buildDropdown(
-//                       "State",
-//                       controller.selectedState.value.isEmpty
-//                           ? null
-//                           : controller.selectedState.value,
-//                       controller.states,
-//                           (value) {
-//                         if (value != null) {
-//                           controller.selectedState.value = value;
-//                           controller.fetchDistricts(value);
-//                         }
-//                       },
-//                       Icons.flag_outlined,
-//                       controller.isLoadingStates.value,
-//                     )),
-//                     const SizedBox(height: 14),
-//
-//                     Obx(() {
-//                       if (controller.selectedState.value.isEmpty) {
-//                         return const SizedBox();
-//                       }
-//                       return Column(
-//                         children: [
-//                           _buildDropdown(
-//                             "District",
-//                             controller.selectedDistrict.value.isEmpty
-//                                 ? null
-//                                 : controller.selectedDistrict.value,
-//                             controller.districts,
-//                                 (value) {
-//                               if (value != null) {
-//                                 controller.selectedDistrict.value = value;
-//                                 controller.fetchLocations(
-//                                   controller.selectedState.value,
-//                                   value,
-//                                 );
-//                               }
-//                             },
-//                             Icons.location_city_outlined,
-//                             controller.isLoadingDistricts.value,
-//                           ),
-//                           const SizedBox(height: 14),
-//                         ],
-//                       );
-//                     }),
-//
-//                     Obx(() {
-//                       if (controller.selectedDistrict.value.isEmpty) {
-//                         return const SizedBox();
-//                       }
-//                       return Column(
-//                         children: [
-//                           _buildDropdown(
-//                             "Main Location",
-//                             controller.selectedLocation.value.isEmpty
-//                                 ? null
-//                                 : controller.selectedLocation.value,
-//                             controller.locations,
-//                                 (value) {
-//                               if (value != null) {
-//                                 controller.selectedLocation.value = value;
-//                               }
-//                             },
-//                             Icons.place_outlined,
-//                             controller.isLoadingLocations.value,
-//                           ),
-//                           const SizedBox(height: 14),
-//                         ],
-//                       );
-//                     }),
-//
-//                     const SizedBox(height: 8),
-//
-//                     // ── Shop Location Card ──────────────────────────
-//                     _SectionLabel(label: "Shop Location"),
-//                     const SizedBox(height: 14),
-//                     Container(
-//                       padding: const EdgeInsets.all(20),
-//                       decoration: BoxDecoration(
-//                         color: Colors.white,
-//                         borderRadius: BorderRadius.circular(14),
-//                         border: Border.all(
-//                           color: const Color(0xFFE2E8F0),
-//                           width: 1,
-//                         ),
-//                         boxShadow: [
-//                           BoxShadow(
-//                             color: Colors.black.withOpacity(0.04),
-//                             blurRadius: 8,
-//                             offset: const Offset(0, 3),
-//                           ),
-//                         ],
-//                       ),
-//                       child: Column(
-//                         children: [
-//                           // Use Current Location
-//                           Obx(() => SizedBox(
-//                             width: double.infinity,
-//                             height: 48,
-//                             child: ElevatedButton.icon(
-//                               onPressed:
-//                               controller.isGettingCurrentLocation.value
-//                                   ? null
-//                                   : () =>
-//                                   controller.getCurrentLocation(),
-//                               icon: controller
-//                                   .isGettingCurrentLocation.value
-//                                   ? const SizedBox(
-//                                 width: 16,
-//                                 height: 16,
-//                                 child: CircularProgressIndicator(
-//                                   strokeWidth: 2,
-//                                   color: Colors.white,
-//                                 ),
-//                               )
-//                                   : const Icon(Icons.my_location,
-//                                   color: Colors.white, size: 18),
-//                               label: Text(
-//                                 controller.isGettingCurrentLocation.value
-//                                     ? "Detecting Location..."
-//                                     : "Use Current Location",
-//                                 style: const TextStyle(
-//                                   color: Colors.white,
-//                                   fontSize: 14,
-//                                   fontWeight: FontWeight.w500,
-//                                 ),
-//                               ),
-//                               style: ElevatedButton.styleFrom(
-//                                 backgroundColor: AppColors.kPrimary,
-//                                 elevation: 0,
-//                                 shape: RoundedRectangleBorder(
-//                                   borderRadius: BorderRadius.circular(10),
-//                                 ),
-//                               ),
-//                             ),
-//                           )),
-//
-//                           const SizedBox(height: 16),
-//                           Row(
-//                             children: [
-//                               Expanded(
-//                                   child: Divider(
-//                                       color: Colors.grey.shade200,
-//                                       thickness: 1)),
-//                               Padding(
-//                                 padding: const EdgeInsets.symmetric(
-//                                     horizontal: 14),
-//                                 child: Text(
-//                                   "OR",
-//                                   style: TextStyle(
-//                                     color: Colors.grey.shade400,
-//                                     fontSize: 11,
-//                                     fontWeight: FontWeight.w600,
-//                                     letterSpacing: 1.2,
-//                                   ),
-//                                 ),
-//                               ),
-//                               Expanded(
-//                                   child: Divider(
-//                                       color: Colors.grey.shade200,
-//                                       thickness: 1)),
-//                             ],
-//                           ),
-//                           const SizedBox(height: 16),
-//
-//                           // Map Picker
-//                           Obx(() => InkWell(
-//                             onTap: () => _pickShopLocation(),
-//                             borderRadius: BorderRadius.circular(10),
-//                             child: Container(
-//                               padding: const EdgeInsets.symmetric(
-//                                   horizontal: 16, vertical: 14),
-//                               decoration: BoxDecoration(
-//                                 color: const Color(0xFFF8FAFB),
-//                                 borderRadius: BorderRadius.circular(10),
-//                                 border: Border.all(
-//                                   color: const Color(0xFFDDE3EA),
-//                                   width: 1,
-//                                 ),
-//                               ),
-//                               child: Row(
-//                                 children: [
-//                                   Container(
-//                                     padding: const EdgeInsets.all(8),
-//                                     decoration: BoxDecoration(
-//                                       color: AppColors.kPrimary
-//                                           .withOpacity(0.1),
-//                                       borderRadius:
-//                                       BorderRadius.circular(8),
-//                                     ),
-//                                     child: Icon(
-//                                       Icons.map_outlined,
-//                                       size: 20,
-//                                       color: AppColors.kPrimary,
-//                                     ),
-//                                   ),
-//                                   const SizedBox(width: 14),
-//                                   Expanded(
-//                                     child: Column(
-//                                       crossAxisAlignment:
-//                                       CrossAxisAlignment.start,
-//                                       children: [
-//                                         const Text(
-//                                           "Pick Location on Map",
-//                                           style: TextStyle(
-//                                             fontWeight: FontWeight.w600,
-//                                             fontSize: 13,
-//                                             color: Color(0xFF1A202C),
-//                                           ),
-//                                         ),
-//                                         const SizedBox(height: 3),
-//                                         Text(
-//                                           controller.pickedLocation.value
-//                                               .isEmpty
-//                                               ? "No location selected yet"
-//                                               : controller
-//                                               .pickedLocation.value,
-//                                           style: TextStyle(
-//                                             color: Colors.grey.shade500,
-//                                             fontSize: 12,
-//                                           ),
-//                                           maxLines: 2,
-//                                           overflow: TextOverflow.ellipsis,
-//                                         ),
-//                                       ],
-//                                     ),
-//                                   ),
-//                                   Icon(
-//                                     Icons.chevron_right_rounded,
-//                                     color: Colors.grey.shade400,
-//                                     size: 20,
-//                                   ),
-//                                 ],
-//                               ),
-//                             ),
-//                           )),
-//
-//                           // Coordinates badge
-//                           Obx(() {
-//                             if (controller.latitude.value != 0.0 &&
-//                                 controller.longitude.value != 0.0) {
-//                               return Padding(
-//                                 padding: const EdgeInsets.only(top: 12),
-//                                 child: Container(
-//                                   padding: const EdgeInsets.symmetric(
-//                                       horizontal: 14, vertical: 10),
-//                                   decoration: BoxDecoration(
-//                                     color: const Color(0xFFF0FDF4),
-//                                     borderRadius: BorderRadius.circular(8),
-//                                     border: Border.all(
-//                                       color: const Color(0xFFBBF7D0),
-//                                       width: 1,
-//                                     ),
-//                                   ),
-//                                   child: Row(
-//                                     children: [
-//                                       const Icon(
-//                                         Icons.check_circle_rounded,
-//                                         color: Color(0xFF16A34A),
-//                                         size: 16,
-//                                       ),
-//                                       const SizedBox(width: 8),
-//                                       Expanded(
-//                                         child: Text(
-//                                           "Lat: ${controller.latitude.value.toStringAsFixed(6)}, "
-//                                               "Lng: ${controller.longitude.value.toStringAsFixed(6)}",
-//                                           style: const TextStyle(
-//                                             color: Color(0xFF15803D),
-//                                             fontSize: 12,
-//                                             fontWeight: FontWeight.w500,
-//                                           ),
-//                                         ),
-//                                       ),
-//                                     ],
-//                                   ),
-//                                 ),
-//                               );
-//                             }
-//                             return const SizedBox();
-//                           }),
-//                         ],
-//                       ),
-//                     ),
-//
-//                     const SizedBox(height: 32),
-//
-//                     // ── Social Links ────────────────────────────────
-//                     _SectionLabel(
-//                       label: "Social Links",
-//                       badge: "Optional",
-//                     ),
-//                     const SizedBox(height: 14),
-//                     _buildTextField("WhatsApp Number", controller.whatsappCtrl,
-//                         Icons.facebook_outlined),
-//                     const SizedBox(height: 14),
-//                     _buildTextField("Facebook Link", controller.facebookCtrl,
-//                         Icons.facebook_outlined),
-//                     const SizedBox(height: 14),
-//                     _buildTextField("Instagram Link",
-//                         controller.instagramCtrl, Icons.camera_alt_outlined),
-//                     const SizedBox(height: 14),
-//                     _buildTextField("Website Link", controller.websiteCtrl,
-//                         Icons.language_outlined),
-//
-//                     const SizedBox(height: 36),
-//
-//                     // ── Update Button ───────────────────────────────
-//                     Obx(() => SizedBox(
-//                       width: double.infinity,
-//                       height: 52,
-//                       child: ElevatedButton(
-//                         onPressed: controller.isUpdating.value
-//                             ? null
-//                             : () => controller.updateMerchant(),
-//                         style: ElevatedButton.styleFrom(
-//                           backgroundColor: controller.isUpdating.value
-//                               ? Colors.grey.shade300
-//                               : AppColors.kPrimary,
-//                           elevation: controller.isUpdating.value ? 0 : 2,
-//                           shadowColor:
-//                           AppColors.kPrimary.withOpacity(0.3),
-//                           shape: RoundedRectangleBorder(
-//                             borderRadius: BorderRadius.circular(12),
-//                           ),
-//                         ),
-//                         child: controller.isUpdating.value
-//                             ? const SizedBox(
-//                           height: 20,
-//                           width: 20,
-//                           child: CircularProgressIndicator(
-//                             color: Colors.white,
-//                             strokeWidth: 2.5,
-//                           ),
-//                         )
-//                             : const Row(
-//                           mainAxisAlignment:
-//                           MainAxisAlignment.center,
-//                           children: [
-//                             Icon(
-//                               Icons.check_rounded,
-//                               color: Colors.white,
-//                               size: 20,
-//                             ),
-//                             SizedBox(width: 8),
-//                             Text(
-//                               "Save Changes",
-//                               style: TextStyle(
-//                                 fontSize: 15,
-//                                 fontWeight: FontWeight.w600,
-//                                 color: Colors.white,
-//                                 letterSpacing: 0.3,
-//                               ),
-//                             ),
-//                           ],
-//                         ),
-//                       ),
-//                     )),
-//
-//                     const SizedBox(height: 28),
-//                   ],
-//                 ),
-//               );
-//             }),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-//
-//   Future<void> _pickShopLocation() async {
-//     final result = await Get.to(() => ShopMapPicker(
-//       initialLat: controller.latitude.value,
-//       initialLng: controller.longitude.value,
-//       initialAddress: controller.pickedLocation.value,
-//     ));
-//
-//     if (result != null) {
-//       controller.updateLocation(
-//         result["lat"],
-//         result["lng"],
-//         result["address"],
-//       );
-//     }
-//   }
-//
-//   Widget _buildTextField(
-//       String label, TextEditingController ctrl, IconData icon) {
-//     return TextField(
-//       controller: ctrl,
-//       style: const TextStyle(
-//         fontSize: 14,
-//         color: Color(0xFF1A202C),
-//         fontWeight: FontWeight.w400,
-//       ),
-//       decoration: InputDecoration(
-//         labelText: label,
-//         labelStyle: TextStyle(
-//           color: Colors.grey.shade500,
-//           fontSize: 13,
-//           fontWeight: FontWeight.w400,
-//         ),
-//         prefixIcon: Icon(icon, color: Colors.grey.shade400, size: 20),
-//         filled: true,
-//         fillColor: Colors.white,
-//         contentPadding: const EdgeInsets.symmetric(
-//           horizontal: 16,
-//           vertical: 16,
-//         ),
-//         border: OutlineInputBorder(
-//           borderRadius: BorderRadius.circular(12),
-//           borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
-//         ),
-//         enabledBorder: OutlineInputBorder(
-//           borderRadius: BorderRadius.circular(12),
-//           borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
-//         ),
-//         focusedBorder: OutlineInputBorder(
-//           borderRadius: BorderRadius.circular(12),
-//           borderSide: BorderSide(color: AppColors.kPrimary, width: 1.5),
-//         ),
-//       ),
-//     );
-//   }
-//
-//   Widget _buildDropdown(
-//       String label,
-//       String? value,
-//       List<String> items,
-//       Function(String?) onChanged,
-//       IconData icon,
-//       bool isLoading,
-//       ) {
-//     if (isLoading) {
-//       return Container(
-//         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-//         decoration: BoxDecoration(
-//           color: Colors.white,
-//           borderRadius: BorderRadius.circular(12),
-//           border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
-//         ),
-//         child: Row(
-//           children: [
-//             SizedBox(
-//               width: 16,
-//               height: 16,
-//               child: CircularProgressIndicator(
-//                 strokeWidth: 2,
-//                 color: AppColors.kPrimary,
-//               ),
-//             ),
-//             const SizedBox(width: 12),
-//             Text(
-//               "Loading $label...",
-//               style: TextStyle(
-//                 color: Colors.grey.shade500,
-//                 fontSize: 13,
-//               ),
-//             ),
-//           ],
-//         ),
-//       );
-//     }
-//
-//     if (items.isEmpty) {
-//       return Container(
-//         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-//         decoration: BoxDecoration(
-//           color: Colors.white,
-//           borderRadius: BorderRadius.circular(12),
-//           border: Border.all(color: Colors.orange.shade200, width: 1),
-//         ),
-//         child: Row(
-//           children: [
-//             Icon(Icons.info_outline, color: Colors.orange.shade400, size: 18),
-//             const SizedBox(width: 10),
-//             Text(
-//               "No $label available",
-//               style: TextStyle(
-//                 color: Colors.grey.shade500,
-//                 fontSize: 13,
-//               ),
-//             ),
-//           ],
-//         ),
-//       );
-//     }
-//
-//     return DropdownButtonFormField<String>(
-//       value: value,
-//       style: const TextStyle(
-//         color: Color(0xFF1A202C),
-//         fontSize: 14,
-//       ),
-//       dropdownColor: Colors.white,
-//       decoration: InputDecoration(
-//         labelText: label,
-//         labelStyle: TextStyle(
-//           color: Colors.grey.shade500,
-//           fontSize: 13,
-//           fontWeight: FontWeight.w400,
-//         ),
-//         prefixIcon: Icon(icon, color: Colors.grey.shade400, size: 20),
-//         filled: true,
-//         fillColor: Colors.white,
-//         contentPadding: const EdgeInsets.symmetric(
-//           horizontal: 16,
-//           vertical: 16,
-//         ),
-//         border: OutlineInputBorder(
-//           borderRadius: BorderRadius.circular(12),
-//           borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
-//         ),
-//         enabledBorder: OutlineInputBorder(
-//           borderRadius: BorderRadius.circular(12),
-//           borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
-//         ),
-//         focusedBorder: OutlineInputBorder(
-//           borderRadius: BorderRadius.circular(12),
-//           borderSide: BorderSide(color: AppColors.kPrimary, width: 1.5),
-//         ),
-//       ),
-//       items: items
-//           .map((item) => DropdownMenuItem<String>(
-//         value: item,
-//         child: Text(item),
-//       ))
-//           .toList(),
-//       onChanged: onChanged,
-//     );
-//   }
-// }
-//
-// // ────────────────────────────────────────────────
-// // Supporting Widgets
-// // ────────────────────────────────────────────────
-//
-// class _SectionLabel extends StatelessWidget {
-//   final String label;
-//   final String? badge;
-//
-//   const _SectionLabel({required this.label, this.badge});
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Row(
-//       children: [
-//         Text(
-//           label,
-//           style: const TextStyle(
-//             fontSize: 13,
-//             fontWeight: FontWeight.w700,
-//             color: Color(0xFF64748B),
-//             letterSpacing: 0.8,
-//           ),
-//         ),
-//         if (badge != null) ...[
-//           const SizedBox(width: 8),
-//           Container(
-//             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-//             decoration: BoxDecoration(
-//               color: const Color(0xFFF1F5F9),
-//               borderRadius: BorderRadius.circular(20),
-//             ),
-//             child: Text(
-//               badge!,
-//               style: const TextStyle(
-//                 fontSize: 10,
-//                 fontWeight: FontWeight.w600,
-//                 color: Color(0xFF94A3B8),
-//                 letterSpacing: 0.4,
-//               ),
-//             ),
-//           ),
-//         ],
-//       ],
-//     );
-//   }
-// }
-//
-// class _ImageWithEditOverlay extends StatelessWidget {
-//   final Widget child;
-//   final VoidCallback onEdit;
-//
-//   const _ImageWithEditOverlay({required this.child, required this.onEdit});
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Stack(
-//       children: [
-//         ClipRRect(
-//           borderRadius: BorderRadius.circular(12),
-//           child: SizedBox(
-//             width: double.infinity,
-//             height: double.infinity,
-//             child: child,
-//           ),
-//         ),
-//         Positioned(
-//           top: 10,
-//           right: 10,
-//           child: GestureDetector(
-//             onTap: onEdit,
-//             child: Container(
-//               padding: const EdgeInsets.all(8),
-//               decoration: BoxDecoration(
-//                 color: Colors.black.withOpacity(0.55),
-//                 borderRadius: BorderRadius.circular(8),
-//               ),
-//               child: const Icon(
-//                 Icons.edit_outlined,
-//                 color: Colors.white,
-//                 size: 16,
-//               ),
-//             ),
-//           ),
-//         ),
-//       ],
-//     );
-//   }
-// }
+
+
 import 'dart:io';
 import 'package:eshoppy/app/common/style/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -1542,21 +12,65 @@ import '../controller/merchantsetting_controller.dart';
 //  Design Tokens
 // ─────────────────────────────────────────────────────────────────────────────
 class _C {
-  static const primary      = Color(0xFF0A6E5C);
-  static const primaryLight = Color(0xFF0D8A72);
-  static const primaryUltra = Color(0xFFE6F4F1);
-  static const surface      = Colors.white;
-  static const bg           = Color(0xFFF0F4F3);
-  static const border       = Color(0xFFDDE5E3);
-  static const divider      = Color(0xFFF1F5F4);
-  static const textPrimary  = Color(0xFF111827);
-  static const textSecond   = Color(0xFF6B7280);
-  static const textMuted    = Color(0xFF9CA3AF);
-  static const success      = Color(0xFF059669);
-  static const successBg    = Color(0xFFECFDF5);
-  static const locked       = Color(0xFFF8FAFB);
-  static const lockedBorder = Color(0xFFE5E7EB);
-  static const lockedText   = Color(0xFF9CA3AF);
+  // ── Teal – AppBar & Save button ONLY ────────────────────────────────────
+  static const teal           = Color(0xFF0A6E5C);
+
+  // ── Surface / Background ─────────────────────────────────────────────────
+  static const surface        = Colors.white;
+  static const bg             = Color(0xFFF0F4F3);
+  static const border         = Color(0xFFDDE5E3);
+  static const divider        = Color(0xFFF1F5F4);
+
+  // ── Text ──────────────────────────────────────────────────────────────────
+  static const textPrimary    = Color(0xFF111827);
+  static const textSecond     = Color(0xFF6B7280);
+  static const textMuted      = Color(0xFF9CA3AF);
+
+  // ── Status ────────────────────────────────────────────────────────────────
+  static const success        = Color(0xFF059669);
+  static const successBg      = Color(0xFFECFDF5);
+
+  // ── Locked row ───────────────────────────────────────────────────────────
+  static const locked         = Color(0xFFF8FAFB);
+  static const lockedBorder   = Color(0xFFE5E7EB);
+  static const lockedText     = Color(0xFF9CA3AF);
+
+  // ── Focus accent (left-bar, chevron, edit icon) ───────────────────────
+  static const focusAccent    = Color(0xFF6366F1);   // indigo
+  static const focusBg        = Color(0xFFFAFAFF);
+
+  // ── Per-icon professional palettes ───────────────────────────────────────
+  // Owner Name  – indigo
+  static const ownerIcon      = Color(0xFF6366F1);
+  static const ownerIconBg    = Color(0xFFEEF2FF);
+
+  // Shop Name – violet
+  static const shopIcon       = Color(0xFF8B5CF6);
+  static const shopIconBg     = Color(0xFFF5F3FF);
+
+  // Phone – amber
+  static const phoneIcon      = Color(0xFFD97706);
+  static const phoneIconBg    = Color(0xFFFFFBEB);
+
+  // State – blue
+  static const stateIcon      = Color(0xFF2563EB);
+  static const stateIconBg    = Color(0xFFEFF6FF);
+
+  // District – cyan
+  static const districtIcon   = Color(0xFF0891B2);
+  static const districtIconBg = Color(0xFFECFEFF);
+
+  // Location pin – rose
+  static const pinIcon        = Color(0xFFE11D48);
+  static const pinIconBg      = Color(0xFFFFF1F2);
+
+  // GPS button – blue
+  static const gpsBtnFg       = Color(0xFF2563EB);
+  static const gpsBtnBg       = Color(0xFFEFF6FF);
+
+  // Map pin button – violet
+  static const mapBtnFg       = Color(0xFF8B5CF6);
+  static const mapBtnBg       = Color(0xFFF5F3FF);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1580,9 +94,9 @@ class MerchantSettingPage extends StatelessWidget {
     );
   }
 
-  // ── AppBar ────────────────────────────────────────────────────────────────
+  // ── AppBar (teal) ─────────────────────────────────────────────────────────
   PreferredSizeWidget _appBar() => AppBar(
-    backgroundColor: _C.primary,
+    backgroundColor: AppColors.kPrimary,   // teal
     elevation: 0,
     systemOverlayStyle: SystemUiOverlayStyle.light,
     automaticallyImplyLeading: true,
@@ -1613,13 +127,13 @@ class MerchantSettingPage extends StatelessWidget {
                   ? const SizedBox(
                 width: 14, height: 14,
                 child: CircularProgressIndicator(
-                  strokeWidth: 2, color: _C.primary,
+                  strokeWidth: 2, color: AppColors.kPrimary,
                 ),
               )
                   : const Text(
                 "Save",
                 style: TextStyle(
-                  color: _C.primary, fontSize: 13,
+                  color: AppColors.kPrimary, fontSize: 13,
                   fontWeight: FontWeight.w700, letterSpacing: 0.2,
                 ),
               ),
@@ -1635,7 +149,7 @@ class MerchantSettingPage extends StatelessWidget {
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: const [
-        CircularProgressIndicator(color: _C.primary, strokeWidth: 2.5),
+        CircularProgressIndicator(color: AppColors.kPrimary, strokeWidth: 2.5),
         SizedBox(height: 18),
         Text(
           "Loading profile…",
@@ -1708,19 +222,13 @@ class MerchantSettingPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Green banner
+          // Teal banner
           Stack(
             clipBehavior: Clip.none,
             children: [
               Container(
                 height: 90,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF085E4E), Color(0xFF0A6E5C), Color(0xFF0F8870)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
+                color: AppColors.kPrimary,
                 child: CustomPaint(
                   size: const Size(double.infinity, 90),
                   painter: _BannerPatternPainter(),
@@ -1754,6 +262,8 @@ class MerchantSettingPage extends StatelessWidget {
                         icon: Icons.storefront_outlined,
                         label: c.shopCtrl.text.isNotEmpty
                             ? c.shopCtrl.text : "Shop Name",
+                        color: _C.shopIcon,
+                        bgColor: _C.shopIconBg,
                       ),
                       const SizedBox(width: 8),
                       _activeDot(),
@@ -1778,7 +288,7 @@ class MerchantSettingPage extends StatelessWidget {
             Container(
               width: 70, height: 70,
               decoration: BoxDecoration(
-                color: _C.primaryUltra,
+                color: _C.shopIconBg,
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(color: Colors.white, width: 3),
                 boxShadow: [
@@ -1794,19 +304,19 @@ class MerchantSettingPage extends StatelessWidget {
                   : c.networkImage.isNotEmpty
                   ? Image.network(c.networkImage, fit: BoxFit.cover)
                   : const Icon(Icons.storefront_outlined,
-                  size: 32, color: _C.primary),
+                  size: 32, color: _C.shopIcon),
             ),
             Positioned(
               bottom: -3, right: -3,
               child: Container(
                 width: 24, height: 24,
                 decoration: BoxDecoration(
-                  color: _C.primary,
+                  color: AppColors.kPrimary,         // teal camera badge
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 2),
                   boxShadow: [
                     BoxShadow(
-                      color: _C.primary.withOpacity(0.3),
+                      color: AppColors.kPrimary.withOpacity(0.3),
                       blurRadius: 4, offset: const Offset(0, 2),
                     ),
                   ],
@@ -1820,22 +330,27 @@ class MerchantSettingPage extends StatelessWidget {
     );
   }
 
-  Widget _chip({required IconData icon, required String label}) {
+  Widget _chip({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required Color bgColor,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: _C.primaryUltra,
+        color: bgColor,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: _C.primary),
+          Icon(icon, size: 12, color: color),
           const SizedBox(width: 4),
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 12, fontWeight: FontWeight.w600, color: _C.primary,
+            style: TextStyle(
+              fontSize: 12, fontWeight: FontWeight.w600, color: color,
             ),
           ),
         ],
@@ -1879,31 +394,33 @@ class MerchantSettingPage extends StatelessWidget {
         _EditableRow(
           label: "Owner Name",
           ctrl: controller.ownerCtrl,
-          iconWidget: _iconBox(Icons.person_outline, _C.primary, _C.primaryUltra),
+          iconWidget: _iconBox(Icons.person_outline, _C.ownerIcon, _C.ownerIconBg),
           keyboardType: TextInputType.name,
         ),
         _EditableRow(
           label: "Shop Name",
           ctrl: controller.shopCtrl,
-          iconWidget: _iconBox(Icons.storefront_outlined, _C.primary, _C.primaryUltra),
+          iconWidget: _iconBox(Icons.storefront_outlined, _C.shopIcon, _C.shopIconBg),
           keyboardType: TextInputType.text,
         ),
-        // Email – read-only, non-editable
+        // Email – read-only
         _LockedRow(
           label: "Email Address",
           ctrl: controller.emailCtrl,
-          iconWidget: _iconBox(Icons.email_outlined, _C.textMuted, const Color(0xFFF3F4F6)),
+          iconWidget: _iconBox(
+            Icons.email_outlined, _C.textMuted, const Color(0xFFF3F4F6),
+          ),
         ),
         _EditableRow(
           label: "Phone Number 1",
           ctrl: controller.phone1Ctrl,
-          iconWidget: _iconBox(Icons.phone_outlined, _C.primary, _C.primaryUltra),
+          iconWidget: _iconBox(Icons.phone_outlined, _C.phoneIcon, _C.phoneIconBg),
           keyboardType: TextInputType.phone,
         ),
         _EditableRow(
           label: "Phone Number 2",
           ctrl: controller.phone2Ctrl,
-          iconWidget: _iconBox(Icons.phone_outlined, _C.primary, _C.primaryUltra),
+          iconWidget: _iconBox(Icons.phone_outlined, _C.phoneIcon, _C.phoneIconBg),
           keyboardType: TextInputType.phone,
           isLast: true,
         ),
@@ -1936,7 +453,7 @@ class MerchantSettingPage extends StatelessWidget {
               controller.fetchDistricts(v);
             }
           },
-          iconWidget: _iconBox(Icons.flag_outlined, _C.primary, _C.primaryUltra),
+          iconWidget: _iconBox(Icons.flag_outlined, _C.stateIcon, _C.stateIconBg),
           isLoading: controller.isLoadingStates.value,
         )),
         Obx(() {
@@ -1949,10 +466,14 @@ class MerchantSettingPage extends StatelessWidget {
             onChanged: (v) {
               if (v != null) {
                 controller.selectedDistrict.value = v;
-                controller.fetchLocations(controller.selectedState.value, v);
+                controller.fetchLocations(
+                    controller.selectedState.value, v);
               }
             },
-            iconWidget: _iconBox(Icons.location_city_outlined, _C.primary, _C.primaryUltra),
+            iconWidget: _iconBox(
+              Icons.location_city_outlined,
+              _C.districtIcon, _C.districtIconBg,
+            ),
             isLoading: controller.isLoadingDistricts.value,
           );
         }),
@@ -1966,7 +487,9 @@ class MerchantSettingPage extends StatelessWidget {
             onChanged: (v) {
               if (v != null) controller.selectedLocation.value = v;
             },
-            iconWidget: _iconBox(Icons.place_outlined, _C.primary, _C.primaryUltra),
+            iconWidget: _iconBox(
+              Icons.place_outlined, _C.pinIcon, _C.pinIconBg,
+            ),
             isLoading: controller.isLoadingLocations.value,
             isLast: true,
           );
@@ -1992,7 +515,6 @@ class MerchantSettingPage extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
-          // Map preview
           Stack(
             children: [
               _MapPreview(),
@@ -2001,7 +523,8 @@ class MerchantSettingPage extends StatelessWidget {
                 child: GestureDetector(
                   onTap: _pickShopLocation,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 7),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(8),
@@ -2015,12 +538,13 @@ class MerchantSettingPage extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: const [
-                        Icon(Icons.edit_outlined, size: 12, color: _C.primary),
+                        Icon(Icons.edit_outlined, size: 12, color: _C.mapBtnFg),
                         SizedBox(width: 4),
                         Text(
                           "Change",
                           style: TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.w600, color: _C.primary,
+                            fontSize: 12, fontWeight: FontWeight.w600,
+                            color: _C.mapBtnFg,
                           ),
                         ),
                       ],
@@ -2042,13 +566,15 @@ class MerchantSettingPage extends StatelessWidget {
                       Container(
                         width: 32, height: 32,
                         decoration: BoxDecoration(
-                          color: hasLoc ? _C.successBg : _C.primaryUltra,
+                          color: hasLoc ? _C.successBg : _C.pinIconBg,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Icon(
-                          hasLoc ? Icons.check_circle_outline : Icons.location_on_outlined,
+                          hasLoc
+                              ? Icons.check_circle_outline
+                              : Icons.location_on_outlined,
                           size: 16,
-                          color: hasLoc ? _C.success : _C.primary,
+                          color: hasLoc ? _C.success : _C.pinIcon,
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -2071,8 +597,10 @@ class MerchantSettingPage extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 13, fontWeight: FontWeight.w500,
                                 height: 1.4,
-                                color: controller.pickedLocation.value.isNotEmpty
-                                    ? _C.textPrimary : _C.textMuted,
+                                color: controller.pickedLocation.value
+                                    .isNotEmpty
+                                    ? _C.textPrimary
+                                    : _C.textMuted,
                               ),
                             ),
                           ],
@@ -2087,15 +615,11 @@ class MerchantSettingPage extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 12),
                     child: Row(
                       children: [
-                        _coordChip(
-                          "LAT",
-                          controller.latitude.value.toStringAsFixed(6),
-                        ),
+                        _coordChip("LAT",
+                            controller.latitude.value.toStringAsFixed(6)),
                         const SizedBox(width: 8),
-                        _coordChip(
-                          "LNG",
-                          controller.longitude.value.toStringAsFixed(6),
-                        ),
+                        _coordChip("LNG",
+                            controller.longitude.value.toStringAsFixed(6)),
                       ],
                     ),
                   );
@@ -2108,10 +632,13 @@ class MerchantSettingPage extends StatelessWidget {
                         label: controller.isGettingCurrentLocation.value
                             ? "Detecting…" : "Use GPS",
                         icon: Icons.my_location,
+                        fgColor: _C.gpsBtnFg,
+                        bgColor: _C.gpsBtnBg,
                         isPrimary: false,
                         isLoading: controller.isGettingCurrentLocation.value,
                         onTap: controller.isGettingCurrentLocation.value
-                            ? null : controller.getCurrentLocation,
+                            ? null
+                            : controller.getCurrentLocation,
                       )),
                     ),
                     const SizedBox(width: 8),
@@ -2119,6 +646,8 @@ class MerchantSettingPage extends StatelessWidget {
                       child: _locBtn(
                         label: "Pin on Map",
                         icon: Icons.map_outlined,
+                        fgColor: Colors.white,
+                        bgColor: _C.mapBtnFg,
                         isPrimary: true,
                         onTap: _pickShopLocation,
                       ),
@@ -2147,22 +676,26 @@ class MerchantSettingPage extends StatelessWidget {
           "$axis  ",
           style: const TextStyle(
             fontSize: 9, fontWeight: FontWeight.w800,
-            color: _C.primary, letterSpacing: 0.4,
+            color: _C.stateIcon, letterSpacing: 0.4,
           ),
         ),
         Text(
           val,
           style: const TextStyle(
-            fontSize: 11, fontWeight: FontWeight.w500, color: _C.textSecond,
+            fontSize: 11, fontWeight: FontWeight.w500,
+            color: _C.textSecond,
           ),
         ),
       ],
     ),
   );
 
+  /// [isPrimary] = solid fill button; otherwise outline/tinted
   Widget _locBtn({
     required String label,
     required IconData icon,
+    required Color fgColor,
+    required Color bgColor,
     required bool isPrimary,
     bool isLoading = false,
     VoidCallback? onTap,
@@ -2171,29 +704,29 @@ class MerchantSettingPage extends StatelessWidget {
     child: Container(
       height: 40,
       decoration: BoxDecoration(
-        color: isPrimary ? _C.primary : _C.primaryUltra,
+        color: bgColor,
         borderRadius: BorderRadius.circular(10),
-        border: isPrimary ? null
-            : Border.all(color: _C.primary.withOpacity(0.15)),
+        border: isPrimary
+            ? null
+            : Border.all(color: fgColor.withOpacity(0.25)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           if (isLoading)
-            const SizedBox(
+            SizedBox(
               width: 13, height: 13,
               child: CircularProgressIndicator(
-                strokeWidth: 2, color: _C.primary,
+                strokeWidth: 2, color: fgColor,
               ),
             )
           else
-            Icon(icon, size: 14, color: isPrimary ? Colors.white : _C.primary),
+            Icon(icon, size: 14, color: fgColor),
           const SizedBox(width: 6),
           Text(
             label,
             style: TextStyle(
-              fontSize: 12, fontWeight: FontWeight.w600,
-              color: isPrimary ? Colors.white : _C.primary,
+              fontSize: 12, fontWeight: FontWeight.w600, color: fgColor,
             ),
           ),
         ],
@@ -2242,7 +775,7 @@ class MerchantSettingPage extends StatelessWidget {
     );
   }
 
-  // ── Save Button ───────────────────────────────────────────────────────────
+  // ── Save Button (teal) ────────────────────────────────────────────────────
   Widget _saveButton() => Obx(() => SizedBox(
     width: double.infinity,
     height: 54,
@@ -2250,7 +783,7 @@ class MerchantSettingPage extends StatelessWidget {
       onPressed: controller.isUpdating.value
           ? null : () => controller.updateMerchant(),
       style: ElevatedButton.styleFrom(
-        backgroundColor: _C.primary,
+        backgroundColor: AppColors.kPrimary,   // teal
         disabledBackgroundColor: _C.textMuted,
         elevation: 0,
         shadowColor: Colors.transparent,
@@ -2289,7 +822,8 @@ class MerchantSettingPage extends StatelessWidget {
       initialAddress: controller.pickedLocation.value,
     ));
     if (result != null) {
-      controller.updateLocation(result["lat"], result["lng"], result["address"]);
+      controller.updateLocation(
+          result["lat"], result["lng"], result["address"]);
     }
   }
 }
@@ -2298,7 +832,6 @@ class MerchantSettingPage extends StatelessWidget {
 //  Reusable Widgets
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Wraps rows in a grouped card
 class _CardGroup extends StatelessWidget {
   final List<Widget> children;
   const _CardGroup({required this.children});
@@ -2323,7 +856,6 @@ class _CardGroup extends StatelessWidget {
   }
 }
 
-/// Editable text row inside a card group
 class _EditableRow extends StatefulWidget {
   final String label;
   final TextEditingController ctrl;
@@ -2354,14 +886,15 @@ class _EditableRowState extends State<_EditableRow> {
           onFocusChange: (f) => setState(() => _focused = f),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 160),
-            color: _focused ? const Color(0xFFFAFCFC) : _C.surface,
+            color: _focused ? _C.focusBg : _C.surface,
             child: Row(
               children: [
+                // Indigo left accent bar
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 160),
                   width: 3, height: 58,
                   decoration: BoxDecoration(
-                    color: _focused ? _C.primary : Colors.transparent,
+                    color: _focused ? _C.focusAccent : Colors.transparent,
                     borderRadius: const BorderRadius.only(
                       topRight: Radius.circular(2),
                       bottomRight: Radius.circular(2),
@@ -2377,7 +910,7 @@ class _EditableRowState extends State<_EditableRow> {
                         ? Container(
                       width: 34, height: 34,
                       decoration: BoxDecoration(
-                        color: _C.primary,
+                        color: _C.focusAccent,
                         borderRadius: BorderRadius.circular(9),
                       ),
                       child: const Icon(
@@ -2398,10 +931,12 @@ class _EditableRowState extends State<_EditableRow> {
                     decoration: InputDecoration(
                       labelText: widget.label,
                       labelStyle: const TextStyle(
-                        fontSize: 11, color: _C.textMuted, fontWeight: FontWeight.w500,
+                        fontSize: 11, color: _C.textMuted,
+                        fontWeight: FontWeight.w500,
                       ),
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                      contentPadding:
+                      const EdgeInsets.symmetric(vertical: 16),
                     ),
                   ),
                 ),
@@ -2410,7 +945,7 @@ class _EditableRowState extends State<_EditableRow> {
                   child: Icon(
                     Icons.chevron_right_rounded,
                     size: 15,
-                    color: _focused ? _C.primary : _C.border,
+                    color: _focused ? _C.focusAccent : _C.border,
                   ),
                 ),
               ],
@@ -2418,13 +953,13 @@ class _EditableRowState extends State<_EditableRow> {
           ),
         ),
         if (!widget.isLast)
-          const Divider(height: 1, thickness: 1, color: _C.divider, indent: 62),
+          const Divider(
+              height: 1, thickness: 1, color: _C.divider, indent: 62),
       ],
     );
   }
 }
 
-/// Read-only locked row (email)
 class _LockedRow extends StatelessWidget {
   final String label;
   final TextEditingController ctrl;
@@ -2446,7 +981,8 @@ class _LockedRow extends StatelessWidget {
             children: [
               const SizedBox(width: 3),
               Padding(
-                padding: const EdgeInsets.only(left: 13, right: 12),
+                padding: const EdgeInsets.only(
+                    left: 13, right: 12, top: 14, bottom: 14),
                 child: iconWidget,
               ),
               Expanded(
@@ -2456,7 +992,8 @@ class _LockedRow extends StatelessWidget {
                     Text(
                       label,
                       style: const TextStyle(
-                        fontSize: 11, color: _C.textMuted, fontWeight: FontWeight.w500,
+                        fontSize: 11, color: _C.textMuted,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                     const SizedBox(height: 1),
@@ -2473,7 +1010,8 @@ class _LockedRow extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(right: 14),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF3F4F6),
                     borderRadius: BorderRadius.circular(6),
@@ -2499,13 +1037,13 @@ class _LockedRow extends StatelessWidget {
             ],
           ),
         ),
-        const Divider(height: 1, thickness: 1, color: _C.divider, indent: 62),
+        const Divider(
+            height: 1, thickness: 1, color: _C.divider, indent: 62),
       ],
     );
   }
 }
 
-/// Social row with real SVG icon and editable text
 class _SocialRow extends StatefulWidget {
   final String label;
   final TextEditingController ctrl;
@@ -2540,14 +1078,14 @@ class _SocialRowState extends State<_SocialRow> {
           onFocusChange: (f) => setState(() => _focused = f),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 160),
-            color: _focused ? const Color(0xFFFAFCFC) : _C.surface,
+            color: _focused ? _C.focusBg : _C.surface,
             child: Row(
               children: [
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 160),
                   width: 3, height: 60,
                   decoration: BoxDecoration(
-                    color: _focused ? _C.primary : Colors.transparent,
+                    color: _focused ? _C.focusAccent : Colors.transparent,
                     borderRadius: const BorderRadius.only(
                       topRight: Radius.circular(2),
                       bottomRight: Radius.circular(2),
@@ -2559,12 +1097,13 @@ class _SocialRowState extends State<_SocialRow> {
                   child: Container(
                     width: 36, height: 36,
                     decoration: BoxDecoration(
-                      color: _focused ? _C.primaryUltra : widget.iconBg,
+                      // keep brand bg; just slightly brighten on focus
+                      color: _focused
+                          ? widget.iconBg.withOpacity(0.7)
+                          : widget.iconBg,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: CustomPaint(
-                      painter: widget.iconPainter,
-                    ),
+                    child: CustomPaint(painter: widget.iconPainter),
                   ),
                 ),
                 Expanded(
@@ -2579,13 +1118,15 @@ class _SocialRowState extends State<_SocialRow> {
                       labelText: widget.label,
                       hintText: widget.hint,
                       labelStyle: const TextStyle(
-                        fontSize: 11, color: _C.textMuted, fontWeight: FontWeight.w500,
+                        fontSize: 11, color: _C.textMuted,
+                        fontWeight: FontWeight.w500,
                       ),
                       hintStyle: const TextStyle(
                         fontSize: 12, color: _C.textMuted,
                       ),
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                      contentPadding:
+                      const EdgeInsets.symmetric(vertical: 16),
                     ),
                   ),
                 ),
@@ -2594,7 +1135,7 @@ class _SocialRowState extends State<_SocialRow> {
                   child: Icon(
                     Icons.chevron_right_rounded,
                     size: 15,
-                    color: _focused ? _C.primary : _C.border,
+                    color: _focused ? _C.focusAccent : _C.border,
                   ),
                 ),
               ],
@@ -2602,13 +1143,13 @@ class _SocialRowState extends State<_SocialRow> {
           ),
         ),
         if (!widget.isLast)
-          const Divider(height: 1, thickness: 1, color: _C.divider, indent: 62),
+          const Divider(
+              height: 1, thickness: 1, color: _C.divider, indent: 62),
       ],
     );
   }
 }
 
-/// Dropdown row
 class _DropdownRow extends StatelessWidget {
   final String label;
   final String? value;
@@ -2637,7 +1178,8 @@ class _DropdownRow extends StatelessWidget {
           children: [
             const SizedBox(
               width: 14, height: 14,
-              child: CircularProgressIndicator(strokeWidth: 2, color: _C.primary),
+              child: CircularProgressIndicator(
+                  strokeWidth: 2, color: _C.stateIcon),
             ),
             const SizedBox(width: 12),
             Text(
@@ -2673,10 +1215,12 @@ class _DropdownRow extends StatelessWidget {
                   decoration: InputDecoration(
                     labelText: label,
                     labelStyle: const TextStyle(
-                      fontSize: 11, color: _C.textMuted, fontWeight: FontWeight.w500,
+                      fontSize: 11, color: _C.textMuted,
+                      fontWeight: FontWeight.w500,
                     ),
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                    contentPadding:
+                    const EdgeInsets.symmetric(vertical: 16),
                   ),
                   items: items
                       .map((e) => DropdownMenuItem(value: e, child: Text(e)))
@@ -2689,7 +1233,8 @@ class _DropdownRow extends StatelessWidget {
           ),
         ),
         if (!isLast)
-          const Divider(height: 1, thickness: 1, color: _C.divider, indent: 62),
+          const Divider(
+              height: 1, thickness: 1, color: _C.divider, indent: 62),
       ],
     );
   }
@@ -2727,9 +1272,9 @@ class _MapPreview extends StatelessWidget {
               width: 64, height: 64,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: _C.primary.withOpacity(0.06),
+                color: _C.pinIcon.withOpacity(0.06),
                 border: Border.all(
-                  color: _C.primary.withOpacity(0.2), width: 1.5,
+                  color: _C.pinIcon.withOpacity(0.2), width: 1.5,
                 ),
               ),
             ),
@@ -2741,7 +1286,7 @@ class _MapPreview extends StatelessWidget {
                 Container(
                   width: 36, height: 36,
                   decoration: BoxDecoration(
-                    color: _C.primary,
+                    color: _C.pinIcon,
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(18),
                       topRight: Radius.circular(18),
@@ -2750,7 +1295,7 @@ class _MapPreview extends StatelessWidget {
                     border: Border.all(color: Colors.white, width: 2.5),
                     boxShadow: [
                       BoxShadow(
-                        color: _C.primary.withOpacity(0.4),
+                        color: _C.pinIcon.withOpacity(0.4),
                         blurRadius: 8, offset: const Offset(0, 4),
                       ),
                     ],
@@ -2840,177 +1385,154 @@ class _BannerPatternPainter extends CustomPainter {
       ..strokeWidth = 1;
     for (int i = 0; i < 5; i++) {
       final r = 30.0 + i * 22;
-      canvas.drawCircle(Offset(size.width * 0.85, size.height * 0.3), r, p);
+      canvas.drawCircle(
+          Offset(size.width * 0.85, size.height * 0.3), r, p);
     }
   }
   @override bool shouldRepaint(_) => false;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  SVG-style Icon Painters (brand accurate paths)
+//  Brand Icon Painters  (unchanged – each uses its own brand color)
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// WhatsApp logo painter
 class _WhatsAppPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = const Color(0xFF16A34A)
       ..style = PaintingStyle.fill;
-
     final s = size.width / 24;
-    final path = Path();
-    // Outer circle body
-    path.addOval(Rect.fromCenter(
-      center: Offset(12 * s, 12 * s), width: 20 * s, height: 20 * s,
-    ));
-    canvas.drawPath(path, paint);
-
-    // White phone shape inside
-    final phonePaint = Paint()..color = Colors.white..style = PaintingStyle.fill;
-    final wp = Path();
-    wp.moveTo(16.75 * s, 14.39 * s);
-    wp.cubicTo(16.50 * s, 14.27 * s, 15.26 * s, 13.67 * s, 15.04 * s, 13.59 * s);
-    wp.cubicTo(14.82 * s, 13.51 * s, 14.66 * s, 13.47 * s, 14.50 * s, 13.72 * s);
-    wp.cubicTo(14.34 * s, 13.97 * s, 13.86 * s, 14.53 * s, 13.72 * s, 14.70 * s);
-    wp.cubicTo(13.58 * s, 14.87 * s, 13.44 * s, 14.89 * s, 13.19 * s, 14.77 * s);
-    wp.cubicTo(12.94 * s, 14.65 * s, 12.13 * s, 14.38 * s, 11.17 * s, 13.53 * s);
-    wp.cubicTo(10.42 * s, 12.86 * s, 9.92 * s, 12.03 * s, 9.78 * s, 11.78 * s);
-    wp.cubicTo(9.64 * s, 11.53 * s, 9.77 * s, 11.40 * s, 9.89 * s, 11.28 * s);
-    wp.cubicTo(10.00 * s, 11.17 * s, 10.14 * s, 10.99 * s, 10.26 * s, 10.85 * s);
-    wp.cubicTo(10.38 * s, 10.71 * s, 10.42 * s, 10.61 * s, 10.50 * s, 10.45 * s);
-    wp.cubicTo(10.58 * s, 10.29 * s, 10.54 * s, 10.15 * s, 10.48 * s, 10.03 * s);
-    wp.cubicTo(10.42 * s, 9.91 * s, 9.94 * s, 8.72 * s, 9.74 * s, 8.26 * s);
-    wp.cubicTo(9.55 * s, 7.81 * s, 9.35 * s, 7.87 * s, 9.20 * s, 7.86 * s);
-    wp.cubicTo(9.06 * s, 7.85 * s, 8.90 * s, 7.85 * s, 8.74 * s, 7.85 * s);
-    wp.cubicTo(8.58 * s, 7.85 * s, 8.31 * s, 7.91 * s, 8.09 * s, 8.16 * s);
-    wp.cubicTo(7.87 * s, 8.41 * s, 7.25 * s, 8.99 * s, 7.25 * s, 10.19 * s);
-    wp.cubicTo(7.25 * s, 11.39 * s, 8.11 * s, 12.55 * s, 8.23 * s, 12.71 * s);
-    wp.cubicTo(8.35 * s, 12.87 * s, 9.92 * s, 15.27 * s, 12.33 * s, 16.32 * s);
-    wp.cubicTo(13.02 * s, 16.62 * s, 13.56 * s, 16.78 * s, 13.99 * s, 16.90 * s);
-    wp.cubicTo(14.67 * s, 17.09 * s, 15.29 * s, 17.07 * s, 15.78 * s, 17.00 * s);
-    wp.cubicTo(16.33 * s, 16.92 * s, 17.50 * s, 16.39 * s, 17.72 * s, 15.81 * s);
-    wp.cubicTo(17.94 * s, 15.23 * s, 17.94 * s, 14.73 * s, 17.87 * s, 14.62 * s);
-    wp.cubicTo(17.80 * s, 14.51 * s, 17.00 * s, 14.51 * s, 16.75 * s, 14.39 * s);
-    wp.close();
-    canvas.drawPath(wp, phonePaint);
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(12 * s, 12 * s), width: 20 * s, height: 20 * s,
+      ),
+      paint,
+    );
+    final wp = Paint()..color = Colors.white..style = PaintingStyle.fill;
+    final path = Path()
+      ..moveTo(16.75 * s, 14.39 * s)
+      ..cubicTo(16.50 * s, 14.27 * s, 15.26 * s, 13.67 * s, 15.04 * s, 13.59 * s)
+      ..cubicTo(14.82 * s, 13.51 * s, 14.66 * s, 13.47 * s, 14.50 * s, 13.72 * s)
+      ..cubicTo(14.34 * s, 13.97 * s, 13.86 * s, 14.53 * s, 13.72 * s, 14.70 * s)
+      ..cubicTo(13.58 * s, 14.87 * s, 13.44 * s, 14.89 * s, 13.19 * s, 14.77 * s)
+      ..cubicTo(12.94 * s, 14.65 * s, 12.13 * s, 14.38 * s, 11.17 * s, 13.53 * s)
+      ..cubicTo(10.42 * s, 12.86 * s, 9.92 * s, 12.03 * s, 9.78 * s, 11.78 * s)
+      ..cubicTo(9.64 * s, 11.53 * s, 9.77 * s, 11.40 * s, 9.89 * s, 11.28 * s)
+      ..cubicTo(10.00 * s, 11.17 * s, 10.14 * s, 10.99 * s, 10.26 * s, 10.85 * s)
+      ..cubicTo(10.38 * s, 10.71 * s, 10.42 * s, 10.61 * s, 10.50 * s, 10.45 * s)
+      ..cubicTo(10.58 * s, 10.29 * s, 10.54 * s, 10.15 * s, 10.48 * s, 10.03 * s)
+      ..cubicTo(10.42 * s, 9.91 * s, 9.94 * s, 8.72 * s, 9.74 * s, 8.26 * s)
+      ..cubicTo(9.55 * s, 7.81 * s, 9.35 * s, 7.87 * s, 9.20 * s, 7.86 * s)
+      ..cubicTo(9.06 * s, 7.85 * s, 8.90 * s, 7.85 * s, 8.74 * s, 7.85 * s)
+      ..cubicTo(8.58 * s, 7.85 * s, 8.31 * s, 7.91 * s, 8.09 * s, 8.16 * s)
+      ..cubicTo(7.87 * s, 8.41 * s, 7.25 * s, 8.99 * s, 7.25 * s, 10.19 * s)
+      ..cubicTo(7.25 * s, 11.39 * s, 8.11 * s, 12.55 * s, 8.23 * s, 12.71 * s)
+      ..cubicTo(8.35 * s, 12.87 * s, 9.92 * s, 15.27 * s, 12.33 * s, 16.32 * s)
+      ..cubicTo(13.02 * s, 16.62 * s, 13.56 * s, 16.78 * s, 13.99 * s, 16.90 * s)
+      ..cubicTo(14.67 * s, 17.09 * s, 15.29 * s, 17.07 * s, 15.78 * s, 17.00 * s)
+      ..cubicTo(16.33 * s, 16.92 * s, 17.50 * s, 16.39 * s, 17.72 * s, 15.81 * s)
+      ..cubicTo(17.94 * s, 15.23 * s, 17.94 * s, 14.73 * s, 17.87 * s, 14.62 * s)
+      ..cubicTo(17.80 * s, 14.51 * s, 17.00 * s, 14.51 * s, 16.75 * s, 14.39 * s)
+      ..close();
+    canvas.drawPath(path, wp);
   }
   @override bool shouldRepaint(_) => false;
 }
 
-/// Facebook "f" painter
 class _FacebookPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final bg = Paint()
-      ..color = const Color(0xFF1877F2)
-      ..style = PaintingStyle.fill;
     final s = size.width;
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromLTWH(s * 0.08, s * 0.08, s * 0.84, s * 0.84),
         Radius.circular(s * 0.22),
       ),
-      bg,
+      Paint()..color = const Color(0xFF1877F2),
     );
-    final f = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
-    // Draw "f" letterform
-    final fPath = Path();
-    fPath.moveTo(s * 0.615, s * 0.25);
-    fPath.lineTo(s * 0.52, s * 0.25);
-    fPath.cubicTo(s * 0.47, s * 0.25, s * 0.46, s * 0.27, s * 0.46, s * 0.32);
-    fPath.lineTo(s * 0.46, s * 0.40);
-    fPath.lineTo(s * 0.62, s * 0.40);
-    fPath.lineTo(s * 0.595, s * 0.525);
-    fPath.lineTo(s * 0.46, s * 0.525);
-    fPath.lineTo(s * 0.46, s * 0.80);
-    fPath.lineTo(s * 0.34, s * 0.80);
-    fPath.lineTo(s * 0.34, s * 0.525);
-    fPath.lineTo(s * 0.26, s * 0.525);
-    fPath.lineTo(s * 0.26, s * 0.40);
-    fPath.lineTo(s * 0.34, s * 0.40);
-    fPath.lineTo(s * 0.34, s * 0.31);
-    fPath.cubicTo(s * 0.34, s * 0.19, s * 0.41, s * 0.13, s * 0.54, s * 0.13);
-    fPath.lineTo(s * 0.615, s * 0.13);
-    fPath.close();
-    canvas.drawPath(fPath, f);
+    final f = Paint()..color = Colors.white..style = PaintingStyle.fill;
+    final p = Path()
+      ..moveTo(s * 0.615, s * 0.25)
+      ..lineTo(s * 0.52, s * 0.25)
+      ..cubicTo(s * 0.47, s * 0.25, s * 0.46, s * 0.27, s * 0.46, s * 0.32)
+      ..lineTo(s * 0.46, s * 0.40)
+      ..lineTo(s * 0.62, s * 0.40)
+      ..lineTo(s * 0.595, s * 0.525)
+      ..lineTo(s * 0.46, s * 0.525)
+      ..lineTo(s * 0.46, s * 0.80)
+      ..lineTo(s * 0.34, s * 0.80)
+      ..lineTo(s * 0.34, s * 0.525)
+      ..lineTo(s * 0.26, s * 0.525)
+      ..lineTo(s * 0.26, s * 0.40)
+      ..lineTo(s * 0.34, s * 0.40)
+      ..lineTo(s * 0.34, s * 0.31)
+      ..cubicTo(s * 0.34, s * 0.19, s * 0.41, s * 0.13, s * 0.54, s * 0.13)
+      ..lineTo(s * 0.615, s * 0.13)
+      ..close();
+    canvas.drawPath(p, f);
   }
   @override bool shouldRepaint(_) => false;
 }
 
-/// Instagram gradient camera painter
 class _InstagramPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final s = size.width;
     final rect = Rect.fromLTWH(s * 0.08, s * 0.08, s * 0.84, s * 0.84);
-    final rrect = RRect.fromRectAndRadius(rect, Radius.circular(s * 0.22));
-
-    final gradient = LinearGradient(
-      colors: const [
-        Color(0xFFF9CE34), Color(0xFFEE2A7B), Color(0xFF6228D7),
-      ],
-      begin: Alignment.bottomLeft,
-      end: Alignment.topRight,
+    final rrect =
+    RRect.fromRectAndRadius(rect, Radius.circular(s * 0.22));
+    canvas.drawRRect(
+      rrect,
+      Paint()
+        ..shader = const LinearGradient(
+          colors: [Color(0xFFF9CE34), Color(0xFFEE2A7B), Color(0xFF6228D7)],
+          begin: Alignment.bottomLeft,
+          end: Alignment.topRight,
+        ).createShader(rect),
     );
-    canvas.drawRRect(rrect, Paint()..shader = gradient.createShader(rect));
-
     final white = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.stroke
       ..strokeWidth = s * 0.065;
-
-    // Outer rounded rect
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset(s / 2, s / 2),
-            width: s * 0.52, height: s * 0.52),
+        Rect.fromCenter(
+            center: Offset(s / 2, s / 2), width: s * 0.52, height: s * 0.52),
         Radius.circular(s * 0.14),
       ),
       white,
     );
-    // Circle
     canvas.drawCircle(Offset(s / 2, s / 2), s * 0.155, white);
-    // Dot
-    final dot = Paint()..color = Colors.white..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset(s * 0.64, s * 0.36), s * 0.055, dot);
+    canvas.drawCircle(
+      Offset(s * 0.64, s * 0.36), s * 0.055,
+      Paint()..color = Colors.white..style = PaintingStyle.fill,
+    );
   }
   @override bool shouldRepaint(_) => false;
 }
 
-/// Website globe painter
 class _WebsitePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final s = size.width;
     final cx = s / 2, cy = s / 2, r = s * 0.34;
-
-    final bg = Paint()
-      ..color = const Color(0xFF059669)
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset(cx, cy), s * 0.44, bg);
-
+    canvas.drawCircle(
+      Offset(cx, cy), s * 0.44,
+      Paint()..color = const Color(0xFF059669)..style = PaintingStyle.fill,
+    );
     final p = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.stroke
       ..strokeWidth = s * 0.055;
-
-    // Globe outline
     canvas.drawCircle(Offset(cx, cy), r, p);
-    // Horizontal equator
     canvas.drawLine(Offset(cx - r, cy), Offset(cx + r, cy), p);
-    // Vertical axis
     canvas.drawLine(Offset(cx, cy - r), Offset(cx, cy + r), p);
-    // Ellipses
     canvas.drawOval(
-      Rect.fromCenter(center: Offset(cx, cy), width: r * 0.9, height: r * 2),
+      Rect.fromCenter(
+          center: Offset(cx, cy), width: r * 0.9, height: r * 2),
       p,
     );
   }
   @override bool shouldRepaint(_) => false;
 }
-
-
-
