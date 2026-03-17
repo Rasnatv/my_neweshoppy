@@ -109,8 +109,8 @@ class RestaurantListPage extends StatelessWidget {
                     color: _P.textDark,
                     size: 24,
                   ),
-                  onPressed: ()=>Get.to(RestaurantMainCart()),
-                ),
+                  onPressed: (){}),
+
                 Positioned(
                   top: 10,
                   right: 10,

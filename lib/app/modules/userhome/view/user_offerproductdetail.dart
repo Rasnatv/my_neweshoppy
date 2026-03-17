@@ -1,11 +1,11 @@
 
-
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-import '../../../data/models/user_offerdetailmodel.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+
+import '../../../data/models/user_offerdetailmodel.dart';
 import '../controller/user_offerproductdetail_controller.dart';
 
 class UserOfferProductDetailScreen extends StatefulWidget {
@@ -20,6 +20,13 @@ class UserOfferProductDetailScreen extends StatefulWidget {
 class _UserOfferProductDetailScreenState
     extends State<UserOfferProductDetailScreen> {
   late final UserOfferProductDetailController controller;
+
+  // ✅ Carousel controller to programmatically jump pages
+  final CarouselSliderController _carouselController =
+  CarouselSliderController();
+
+  // ── Token for image auth headers ───────────────────────────
+  final String _token = GetStorage().read('auth_token') ?? '';
 
   // ── Teal palette ───────────────────────────────────────────
   static const _teal      = Color(0xFF009688);
@@ -37,14 +44,25 @@ class _UserOfferProductDetailScreenState
   @override
   void initState() {
     super.initState();
-    // Tag by product ID so each product gets its own controller instance.
     controller = Get.put(
       UserOfferProductDetailController(),
       tag: widget.offerProductId.toString(),
     );
-    if (controller.productData.value == null && !controller.isLoading.value) {
+
+    if (controller.productData.value == null &&
+        !controller.isLoading.value) {
       controller.fetchProductDetails(widget.offerProductId);
     }
+
+    // ✅ Watch currentImageIndex — whenever variant changes,
+    //    smoothly animate carousel to the variant's image
+    ever(controller.currentImageIndex, (index) {
+      _carouselController.animateToPage(
+        index,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+      );
+    });
   }
 
   @override
@@ -52,12 +70,15 @@ class _UserOfferProductDetailScreenState
     return Scaffold(
       backgroundColor: _bg,
       body: Obx(() {
+        // ── Loading ──────────────────────────────────────────
         if (controller.isLoading.value) {
           return const Center(
-            child: CircularProgressIndicator(color: _teal, strokeWidth: 2.5),
+            child: CircularProgressIndicator(
+                color: _teal, strokeWidth: 2.5),
           );
         }
 
+        // ── Error / empty ────────────────────────────────────
         if (controller.productData.value == null) {
           return Center(
             child: Column(
@@ -76,14 +97,15 @@ class _UserOfferProductDetailScreenState
                 const Text(
                   'Failed to load product',
                   style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: _textDark),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: _textDark,
+                  ),
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton.icon(
-                  onPressed: () =>
-                      controller.fetchProductDetails(widget.offerProductId),
+                  onPressed: () => controller
+                      .fetchProductDetails(widget.offerProductId),
                   icon: const Icon(Icons.refresh_rounded, size: 18),
                   label: const Text('Retry'),
                   style: ElevatedButton.styleFrom(
@@ -102,6 +124,7 @@ class _UserOfferProductDetailScreenState
         }
 
         final product = controller.productData.value!;
+
         return CustomScrollView(
           slivers: [
             _buildAppBar(context, product),
@@ -114,6 +137,7 @@ class _UserOfferProductDetailScreenState
                   _buildPriceSection(controller, product),
                   _buildVariantSelector(controller, product),
                   _buildCommonAttributes(product),
+                  _buildDescription(product),
                   const SizedBox(height: 110),
                 ],
               ),
@@ -126,7 +150,8 @@ class _UserOfferProductDetailScreenState
   }
 
   // ── AppBar ─────────────────────────────────────────────────
-  Widget _buildAppBar(BuildContext context, UserOfferProductDetail product) {
+  Widget _buildAppBar(
+      BuildContext context, UserOfferProductDetail product) {
     return SliverAppBar(
       expandedHeight: 60,
       floating: true,
@@ -149,7 +174,8 @@ class _UserOfferProductDetailScreenState
           onPressed: () {},
         ),
         IconButton(
-          icon: const Icon(Icons.favorite_border_rounded, color: Colors.white),
+          icon: const Icon(Icons.favorite_border_rounded,
+              color: Colors.white),
           onPressed: () {},
         ),
       ],
@@ -164,11 +190,12 @@ class _UserOfferProductDetailScreenState
       color: Colors.white,
       child: Column(
         children: [
+          // Discount banner
           if (product.discountPercentage > 0)
             Container(
               width: double.infinity,
-              padding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 16, vertical: 10),
               color: _tealLight.withOpacity(0.5),
               child: Row(
                 children: [
@@ -218,49 +245,77 @@ class _UserOfferProductDetailScreenState
                 ],
               ),
             ),
-          CarouselSlider(
-            options: CarouselOptions(
+
+          // ✅ Empty image guard
+          if (product.productImages.isEmpty)
+            Container(
               height: 300,
-              viewportFraction: 1.0,
-              enlargeCenterPage: false,
-              onPageChanged: (index, reason) {
-                controller.currentImageIndex.value = index;
-              },
-            ),
-            items: product.productImages.map((imageUrl) {
-              return Builder(
-                builder: (BuildContext context) {
-                  return Container(
-                    width: MediaQuery.of(context).size.width,
-                    color: const Color(0xFFF9FAFB),
-                    child: Image.network(
-                      imageUrl,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Center(
-                          child: Icon(Icons.image_not_supported_outlined,
-                              size: 56, color: Color(0xFFCFD8DC)),
-                        );
-                      },
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Center(
-                          child: CircularProgressIndicator(
-                            color: _teal,
-                            strokeWidth: 2,
-                            value: loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded /
-                                loadingProgress.expectedTotalBytes!
-                                : null,
-                          ),
-                        );
-                      },
-                    ),
-                  );
+              color: const Color(0xFFF9FAFB),
+              child: const Center(
+                child: Icon(Icons.image_not_supported_outlined,
+                    size: 56, color: Color(0xFFCFD8DC)),
+              ),
+            )
+          else
+          // ✅ CarouselSlider with carouselController attached
+            CarouselSlider(
+              carouselController: _carouselController,
+              options: CarouselOptions(
+                height: 300,
+                viewportFraction: 1.0,
+                enlargeCenterPage: false,
+                initialPage: controller.currentImageIndex.value,
+                onPageChanged: (index, reason) {
+                  controller.currentImageIndex.value = index;
                 },
-              );
-            }).toList(),
-          ),
+              ),
+              items: product.productImages.map((imageUrl) {
+                return Builder(
+                  builder: (BuildContext context) {
+                    return Container(
+                      width: MediaQuery.of(context).size.width,
+                      color: const Color(0xFFF9FAFB),
+                      child: Image.network(
+                        imageUrl,
+                        fit: BoxFit.contain,
+                        // ✅ Auth header so images load correctly
+                        headers: {
+                          'Authorization': 'Bearer $_token',
+                        },
+                        loadingBuilder:
+                            (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Center(
+                            child: CircularProgressIndicator(
+                              color: _teal,
+                              strokeWidth: 2,
+                              value: loadingProgress
+                                  .expectedTotalBytes !=
+                                  null
+                                  ? loadingProgress
+                                  .cumulativeBytesLoaded /
+                                  loadingProgress
+                                      .expectedTotalBytes!
+                                  : null,
+                            ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Center(
+                            child: Icon(
+                                Icons.image_not_supported_outlined,
+                                size: 56,
+                                color: Color(0xFFCFD8DC)),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                );
+              }).toList(),
+            ),
+
+          // Page indicator dots
           if (product.productImages.length > 1)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 14),
@@ -293,6 +348,7 @@ class _UserOfferProductDetailScreenState
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Product name
               Expanded(
                 child: Text(
                   product.productName,
@@ -306,25 +362,28 @@ class _UserOfferProductDetailScreenState
                 ),
               ),
               const SizedBox(width: 10),
-              Builder(builder: (_) {
-                final stock      = product.stockQty;
-                final qty        = int.tryParse(stock.toString()) ?? 0;
+
+              Obx(() {
+                final qty        = controller.selectedVariant.value?.stock ?? 0;
                 final isLow      = qty > 0 && qty <= 5;
                 final outOfStock = qty <= 0;
-                final color =
-                outOfStock ? _red : (isLow ? _amber : _teal);
+                final color = outOfStock
+                    ? _red
+                    : isLow
+                    ? _amber
+                    : _teal;
+
+                // ✅ Always show actual number instead of "In Stock"
                 final label = outOfStock
                     ? 'Out of Stock'
-                    : isLow
-                    ? 'Only $qty left'
-                    : 'In Stock';
+                    : '$qty in stock';   // ← shows "6 in stock", "40 in stock" etc.
+
                 final icon = outOfStock
                     ? Icons.cancel_rounded
                     : Icons.check_circle_rounded;
 
                 return Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 9, vertical: 5),
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                   decoration: BoxDecoration(
                     color: color.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
@@ -347,48 +406,27 @@ class _UserOfferProductDetailScreenState
                   ),
                 );
               }),
-            ],
-          ),
           const SizedBox(height: 10),
-          Container(
-            padding:
-            const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: _tealLight,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: _teal2.withOpacity(0.5)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.local_offer_rounded,
-                    size: 12, color: _teal),
-                const SizedBox(width: 4),
-                Text(
-                  product.productName,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: _tealDark,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
+
+
         ],
       ),
-    );
+    ]));
   }
 
   // ── Price Section ──────────────────────────────────────────
+  // ✅ Uses selectedVariant.price & selectedVariant.offerPrice
   Widget _buildPriceSection(
       UserOfferProductDetailController controller,
       UserOfferProductDetail product) {
     return Obx(() {
       final variant      = controller.selectedVariant.value;
       final variantPrice = variant?.price ?? product.price;
-      final offerPrice   = product.offerPrice;
+      final offerPrice   = variant?.offerPrice ?? product.offerPrice;
       final saved        = variantPrice - offerPrice;
+      final discountPct  = variantPrice > 0
+          ? ((saved / variantPrice) * 100)
+          : product.discountPercentage;
 
       return Container(
         margin: const EdgeInsets.only(top: 8),
@@ -433,13 +471,16 @@ class _UserOfferProductDetailScreenState
                 ],
               ),
             ),
+
+            // You Save box
             Container(
               padding: const EdgeInsets.symmetric(
                   horizontal: 18, vertical: 14),
               decoration: BoxDecoration(
                 color: _tealLight,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: _teal.withOpacity(0.2)),
+                border:
+                Border.all(color: _teal.withOpacity(0.2)),
               ),
               child: Column(
                 children: [
@@ -462,7 +503,7 @@ class _UserOfferProductDetailScreenState
                     ),
                   ),
                   Text(
-                    '${product.discountPercentage.toStringAsFixed(0)}% off',
+                    '${discountPct.toStringAsFixed(0)}% off',
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -479,6 +520,8 @@ class _UserOfferProductDetailScreenState
   }
 
   // ── Variant Selector ───────────────────────────────────────
+  // ✅ Tapping a chip → controller updates index → ever() fires
+  //    → _carouselController.animateToPage() → image changes
   Widget _buildVariantSelector(
       UserOfferProductDetailController controller,
       UserOfferProductDetail product) {
@@ -501,9 +544,46 @@ class _UserOfferProductDetailScreenState
             return _buildAttributeSelector(
               controller,
               attributeName,
-              controller.getAvailableValuesForAttribute(attributeName),
+              controller
+                  .getAvailableValuesForAttribute(attributeName),
             );
           }).toList(),
+
+          // ✅ Low stock warning for selected variant
+          Obx(() {
+            final stock =
+                controller.selectedVariant.value?.stock ?? 0;
+            if (stock <= 0 || stock > 5) {
+              return const SizedBox.shrink();
+            }
+            return Container(
+              margin: const EdgeInsets.only(top: 4),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: _amber.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border:
+                Border.all(color: _amber.withOpacity(0.4)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.warning_amber_rounded,
+                      size: 14, color: _amber),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Only $stock left in stock!',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: _amber,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );
@@ -514,7 +594,8 @@ class _UserOfferProductDetailScreenState
       String attributeName,
       List<String> values) {
     return Obx(() {
-      final selectedValue = controller.selectedAttributes[attributeName];
+      final selectedValue =
+      controller.selectedAttributes[attributeName];
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -535,8 +616,8 @@ class _UserOfferProductDetailScreenState
             children: values.map((value) {
               final isSelected = selectedValue == value;
               return GestureDetector(
-                onTap: () =>
-                    controller.selectAttribute(attributeName, value),
+                onTap: () => controller.selectAttribute(
+                    attributeName, value),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 180),
                   padding: const EdgeInsets.symmetric(
@@ -563,7 +644,9 @@ class _UserOfferProductDetailScreenState
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: isSelected ? Colors.white : _textDark,
+                      color: isSelected
+                          ? Colors.white
+                          : _textDark,
                     ),
                   ),
                 ),
@@ -578,7 +661,9 @@ class _UserOfferProductDetailScreenState
 
   // ── Common Attributes ──────────────────────────────────────
   Widget _buildCommonAttributes(UserOfferProductDetail product) {
-    if (product.commonAttributes.isEmpty) return const SizedBox.shrink();
+    if (product.commonAttributes.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     final entries = product.commonAttributes.entries.toList();
 
@@ -589,7 +674,8 @@ class _UserOfferProductDetailScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _sectionTitle('Product Details', Icons.inventory_2_outlined),
+          _sectionTitle(
+              'Specifications', Icons.inventory_2_outlined),
           const SizedBox(height: 14),
           ...entries.asMap().entries.map((e) {
             final isEven = e.key.isEven;
@@ -638,23 +724,47 @@ class _UserOfferProductDetailScreenState
     );
   }
 
+  // ── Description ────────────────────────────────────────────
+  Widget _buildDescription(UserOfferProductDetail product) {
+    if (product.description.trim().isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.all(18),
+      color: Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionTitle(
+              'Description', Icons.description_outlined),
+          const SizedBox(height: 12),
+          Text(
+            product.description,
+            style: const TextStyle(
+              fontSize: 14,
+              color: _textMid,
+              height: 1.6,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ── Bottom Bar ─────────────────────────────────────────────
-  //
-  // States:
-  //   Out of stock  → [Out of Stock]  [Unavailable]  (both disabled)
-  //   In stock, not in cart → [Add to Cart]  [Buy Now]
-  //   In stock, in cart     → [Go to Cart]   [Buy Now]
-  //   Remove from cart screen → auto-reverts to [Add to Cart] via ever()
-  Widget _buildBottomBar(UserOfferProductDetailController controller) {
+  Widget _buildBottomBar(
+      UserOfferProductDetailController controller) {
     return Obx(() {
       if (controller.isLoading.value ||
           controller.productData.value == null) {
         return const SizedBox.shrink();
       }
 
-      final variant       = controller.selectedVariant.value;
-      final isOutOfStock  = variant == null || variant.stock <= 0;
-      final isAddedToCart = controller.isAddedToCart.value;
+      final variant      = controller.selectedVariant.value;
+      final isOutOfStock = variant == null || variant.stock <= 0;
+      final isInCart     = controller.isAddedToCart.value;
 
       return Container(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -674,45 +784,50 @@ class _UserOfferProductDetailScreenState
             children: [
               Row(
                 children: [
-
-                  // ── LEFT: Add to Cart  ←→  Go to Cart ──────
+                  // ── Add to Cart  ←→  Go to Cart ────────────
                   Expanded(
                     child: GestureDetector(
                       onTap: isOutOfStock
                           ? null
-                          : isAddedToCart
-                          ? controller.goToCart     // in cart → navigate
-                          : controller.addToCart,   // not in cart → add
+                          : isInCart
+                          ? controller.goToCart
+                          : controller.addToCart,
                       child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 220),
-                        padding:
-                        const EdgeInsets.symmetric(vertical: 14),
+                        duration:
+                        const Duration(milliseconds: 220),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 14),
                         decoration: BoxDecoration(
-                          // Filled teal when already in cart, outlined otherwise
                           color: isOutOfStock
                               ? Colors.white
-                              : isAddedToCart
+                              : isInCart
                               ? _teal
                               : Colors.white,
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius:
+                          BorderRadius.circular(14),
                           border: Border.all(
-                            color: isOutOfStock ? _divider : _teal,
+                            color: isOutOfStock
+                                ? _divider
+                                : _teal,
                             width: 2,
                           ),
                         ),
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisAlignment:
+                          MainAxisAlignment.center,
                           children: [
                             Icon(
                               isOutOfStock
                                   ? Icons.block_rounded
-                                  : isAddedToCart
-                                  ? Icons.shopping_cart_rounded
-                                  : Icons.shopping_cart_outlined,
+                                  : isInCart
+                                  ? Icons
+                                  .shopping_cart_rounded
+                                  : Icons
+                                  .shopping_cart_outlined,
                               size: 18,
                               color: isOutOfStock
                                   ? _textLight
-                                  : isAddedToCart
+                                  : isInCart
                                   ? Colors.white
                                   : _teal,
                             ),
@@ -720,7 +835,7 @@ class _UserOfferProductDetailScreenState
                             Text(
                               isOutOfStock
                                   ? 'Out of Stock'
-                                  : isAddedToCart
+                                  : isInCart
                                   ? 'Go to Cart'
                                   : 'Add to Cart',
                               style: TextStyle(
@@ -728,7 +843,7 @@ class _UserOfferProductDetailScreenState
                                 fontWeight: FontWeight.w800,
                                 color: isOutOfStock
                                     ? _textLight
-                                    : isAddedToCart
+                                    : isInCart
                                     ? Colors.white
                                     : _teal,
                               ),
@@ -741,21 +856,21 @@ class _UserOfferProductDetailScreenState
 
                   const SizedBox(width: 10),
 
-                  // ── RIGHT: Buy Now — always visible ─────────
-                  // Adds to cart (if not already) then goes to cart
+                  // ── Buy Now ─────────────────────────────────
                   Expanded(
                     child: GestureDetector(
                       onTap: isOutOfStock
                           ? null
                           : () async {
-                        if (!controller.isAddedToCart.value) {
+                        if (!controller
+                            .isAddedToCart.value) {
                           await controller.addToCart();
                         }
                         controller.goToCart();
                       },
                       child: Container(
-                        padding:
-                        const EdgeInsets.symmetric(vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 14),
                         decoration: BoxDecoration(
                           gradient: isOutOfStock
                               ? null
@@ -764,32 +879,41 @@ class _UserOfferProductDetailScreenState
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
-                          color: isOutOfStock ? _divider : null,
-                          borderRadius: BorderRadius.circular(14),
+                          color:
+                          isOutOfStock ? _divider : null,
+                          borderRadius:
+                          BorderRadius.circular(14),
                           boxShadow: isOutOfStock
                               ? []
                               : [
                             BoxShadow(
-                              color: _teal.withOpacity(0.35),
+                              color: _teal
+                                  .withOpacity(0.35),
                               blurRadius: 10,
-                              offset: const Offset(0, 4),
+                              offset:
+                              const Offset(0, 4),
                             ),
                           ],
                         ),
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisAlignment:
+                          MainAxisAlignment.center,
                           children: [
                             Icon(
                               isOutOfStock
-                                  ? Icons.remove_shopping_cart_outlined
+                                  ? Icons
+                                  .remove_shopping_cart_outlined
                                   : Icons.bolt_rounded,
                               size: 18,
-                              color:
-                              isOutOfStock ? _textLight : Colors.white,
+                              color: isOutOfStock
+                                  ? _textLight
+                                  : Colors.white,
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              isOutOfStock ? 'Unavailable' : 'Buy Now',
+                              isOutOfStock
+                                  ? 'Unavailable'
+                                  : 'Buy Now',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w800,
@@ -803,7 +927,6 @@ class _UserOfferProductDetailScreenState
                       ),
                     ),
                   ),
-
                 ],
               ),
               const SizedBox(height: 4),
@@ -814,7 +937,7 @@ class _UserOfferProductDetailScreenState
     });
   }
 
-  // ── Helpers ────────────────────────────────────────────────
+  // ── Section Title Helper ───────────────────────────────────
   Widget _sectionTitle(String title, IconData icon) {
     return Row(
       children: [

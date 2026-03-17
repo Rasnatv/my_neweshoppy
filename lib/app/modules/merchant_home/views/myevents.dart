@@ -2,25 +2,28 @@
 import 'package:eshoppy/app/common/style/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../controller/merchant_eventdeletecontroller.dart';
 import '../controller/merchant_myeventcontroller.dart';
 import 'addevents.dart';
+import 'merchant_eventupdatepage.dart';
 
 class MerchantEventsPage extends StatelessWidget {
   MerchantEventsPage({super.key});
+
   final MyEventsController controller = Get.put(MyEventsController());
+  final DeleteEventController ctrl = Get.put(DeleteEventController());
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F6FA),
       appBar: AppBar(
+        automaticallyImplyLeading: true,
         backgroundColor: AppColors.kPrimary,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back,
-              color: Colors.white, size: 20),
-          onPressed: () => Get.back(),
+        title: Text(
+          "My Events",
+          style: TextStyle(color: AppColors.white),
         ),
-        title: Text("My Events",style:TextStyle(color:AppColors.white),),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
@@ -29,8 +32,7 @@ class MerchantEventsPage extends StatelessWidget {
                 Get.to(() => AddEventPage())
                     ?.then((_) => controller.fetchEvents());
               },
-              icon: const Icon(Icons.add_rounded,
-                  color:Colors.white, size: 20),
+              icon: const Icon(Icons.add_rounded, color: Colors.white, size: 20),
               label: const Text(
                 "Add Event",
                 style: TextStyle(
@@ -46,8 +48,9 @@ class MerchantEventsPage extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                   side: BorderSide(
-                      color: const Color(0xF0FFFFFF).withOpacity(0.3),
-                      width: 1),
+                    color: const Color(0xF0FFFFFF).withOpacity(0.3),
+                    width: 1,
+                  ),
                 ),
               ),
             ),
@@ -147,6 +150,7 @@ class MerchantEventsPage extends StatelessWidget {
                       _imagePlaceholder(isLoading: false),
                 ),
               ),
+              // ── Gradient Overlay ──────────────────────────────────
               Positioned(
                 bottom: 0,
                 left: 0,
@@ -167,11 +171,37 @@ class MerchantEventsPage extends StatelessWidget {
                   ),
                 ),
               ),
+              // ── Delete Button ─────────────────────────────────────
               Positioned(
                 top: 12,
                 right: 12,
                 child: _deleteButton(event),
               ),
+              // ── Edit Button ───────────────────────────────────────
+              Positioned(
+                top: 12,
+                right: 55,
+                child: GestureDetector(
+                  onTap: () {
+                    Get.to(
+                          () => EventUpdatePage(),
+                      arguments: {'event_id': event.id},
+                    )?.then((_) => controller.fetchEvents());
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.55),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                          color: Colors.white.withOpacity(0.2), width: 1),
+                    ),
+                    child: const Icon(Icons.edit_note,
+                        color: Colors.white, size: 20),
+                  ),
+                ),
+              ),
+              // ── Event Badge ───────────────────────────────────────
               Positioned(
                 top: 12,
                 left: 12,
@@ -241,21 +271,35 @@ class MerchantEventsPage extends StatelessWidget {
   }
 
   Widget _deleteButton(dynamic event) {
-    return GestureDetector(
-      onTap: () => _showDeleteConfirmation(event),
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.55),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
+    return Obx(() {
+      final isDeleting = ctrl.deletingIds.contains(event.id);
+      return GestureDetector(
+        onTap: isDeleting ? null : () => _showDeleteConfirmation(event),
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.55),
+            borderRadius: BorderRadius.circular(10),
+            border:
+            Border.all(color: Colors.white.withOpacity(0.2), width: 1),
+          ),
+          child: isDeleting
+              ? const SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Colors.white,
+            ),
+          )
+              : const Icon(Icons.delete_outline_rounded,
+              color: Colors.white, size: 20),
         ),
-        child: const Icon(Icons.delete_outline_rounded,
-            color: Colors.white, size: 20),
-      ),
-    );
+      );
+    });
   }
 
+  // ── Image Placeholder ─────────────────────────────────────────────────
   Widget _imagePlaceholder({required bool isLoading}) {
     return Container(
       height: 190,
@@ -273,17 +317,21 @@ class MerchantEventsPage extends StatelessWidget {
             Icon(Icons.image_not_supported_rounded,
                 size: 42, color: Colors.grey[400]),
             const SizedBox(height: 8),
-            Text("Image unavailable",
-                style: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500)),
+            Text(
+              "Image unavailable",
+              style: TextStyle(
+                color: Colors.grey[400],
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
+  // ── Empty State ───────────────────────────────────────────────────────
   Widget _buildEmptyState() {
     return SizedBox(
       height: MediaQuery.of(Get.context!).size.height * 0.65,
@@ -307,16 +355,17 @@ class MerchantEventsPage extends StatelessWidget {
               const Text(
                 "No Events Yet",
                 style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF0D1B2A)),
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0D1B2A),
+                ),
               ),
               const SizedBox(height: 10),
               Text(
                 "Create your first event to start\nengaging with your customers.",
                 textAlign: TextAlign.center,
-                style:
-                TextStyle(fontSize: 15, color: Colors.grey[500], height: 1.6),
+                style: TextStyle(
+                    fontSize: 15, color: Colors.grey[500], height: 1.6),
               ),
               const SizedBox(height: 32),
               ElevatedButton.icon(
@@ -325,11 +374,14 @@ class MerchantEventsPage extends StatelessWidget {
                       ?.then((_) => controller.fetchEvents());
                 },
                 icon: const Icon(Icons.add_rounded, size: 22),
-                label: const Text("Create Event",
-                    style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                        letterSpacing: 0.3)),
+                label: const Text(
+                  "Create Event",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    letterSpacing: 0.3,
+                  ),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0D1B2A),
                   foregroundColor: Colors.white,
@@ -347,10 +399,12 @@ class MerchantEventsPage extends StatelessWidget {
     );
   }
 
+  // ── Delete Confirmation Dialog ────────────────────────────────────────
   void _showDeleteConfirmation(dynamic event) {
     Get.dialog(
       Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        shape:
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         child: Padding(
           padding: const EdgeInsets.all(28),
           child: Column(
@@ -366,21 +420,25 @@ class MerchantEventsPage extends StatelessWidget {
                     color: Colors.red, size: 38),
               ),
               const SizedBox(height: 20),
-              const Text("Delete Event?",
-                  style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF0D1B2A))),
+              const Text(
+                "Delete Event?",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0D1B2A),
+                ),
+              ),
               const SizedBox(height: 10),
               Text(
                 '"${event.eventName}" will be permanently removed.',
                 textAlign: TextAlign.center,
-                style:
-                TextStyle(fontSize: 14, color: Colors.grey[600], height: 1.5),
+                style: TextStyle(
+                    fontSize: 14, color: Colors.grey[600], height: 1.5),
               ),
               const SizedBox(height: 26),
               Row(
                 children: [
+                  // ── Cancel Button ───────────────────────────────
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => Get.back(),
@@ -391,33 +449,58 @@ class MerchantEventsPage extends StatelessWidget {
                         side: const BorderSide(
                             color: Color(0xFFDDE1E7), width: 1.5),
                       ),
-                      child: Text("Cancel",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey[700],
-                              fontSize: 15)),
+                      child: Text(
+                        "Cancel",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[700],
+                          fontSize: 15,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
+                  // ── Delete Button ───────────────────────────────
                   Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Get.back();
-                        // controller.deleteEvent(event.id ?? event.sId);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red[600],
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                        elevation: 0,
-                      ),
-                      child: const Text("Delete",
+                    child: Obx(() {
+                      final isDeleting = ctrl.deletingIds.contains(event.id);
+                      return ElevatedButton(
+                        onPressed: isDeleting
+                            ? null
+                            : () {
+                          Get.back();
+                          ctrl.deleteEvent(
+                            event.id,
+                                () => controller.fetchEvents(),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red[600],
+                          disabledBackgroundColor: Colors.red[300],
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                          elevation: 0,
+                        ),
+                        child: isDeleting
+                            ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                            : const Text(
+                          "Delete",
                           style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                              fontSize: 15)),
-                    ),
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            fontSize: 15,
+                          ),
+                        ),
+                      );
+                    }),
                   ),
                 ],
               ),
@@ -452,9 +535,11 @@ class _InfoPill extends StatelessWidget {
         children: [
           Icon(icon, size: 13, color: color),
           const SizedBox(width: 5),
-          Text(label,
-              style: TextStyle(
-                  fontSize: 12, fontWeight: FontWeight.w600, color: color)),
+          Text(
+            label,
+            style: TextStyle(
+                fontSize: 12, fontWeight: FontWeight.w600, color: color),
+          ),
         ],
       ),
     );
@@ -474,13 +559,16 @@ class _LocationRow extends StatelessWidget {
             size: 15, color: Color(0xFF90A4AE)),
         const SizedBox(width: 5),
         Expanded(
-          child: Text(location,
-              style: const TextStyle(
-                  fontSize: 13,
-                  color: Color(0xFF90A4AE),
-                  fontWeight: FontWeight.w500),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis),
+          child: Text(
+            location,
+            style: const TextStyle(
+              fontSize: 13,
+              color: Color(0xFF90A4AE),
+              fontWeight: FontWeight.w500,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ],
     );
@@ -506,7 +594,8 @@ class _TicketDivider extends StatelessWidget {
               decoration: BoxDecoration(
                 color: const Color(0xFFF4F6FA),
                 shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFFECEFF4), width: 1),
+                border:
+                Border.all(color: const Color(0xFFECEFF4), width: 1),
               ),
             ),
           ),
@@ -523,7 +612,8 @@ class _TicketDivider extends StatelessWidget {
               decoration: BoxDecoration(
                 color: const Color(0xFFF4F6FA),
                 shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFFECEFF4), width: 1),
+                border:
+                Border.all(color: const Color(0xFFECEFF4), width: 1),
               ),
             ),
           ),
@@ -533,6 +623,7 @@ class _TicketDivider extends StatelessWidget {
   }
 }
 
+// ── Dashed Line Painter ────────────────────────────────────────────────────
 class _DashedLinePainter extends CustomPainter {
   final Color color;
   _DashedLinePainter({required this.color});
@@ -554,6 +645,7 @@ class _DashedLinePainter extends CustomPainter {
       x += dashWidth + dashSpace;
     }
   }
+
   @override
   bool shouldRepaint(_DashedLinePainter old) => false;
 }

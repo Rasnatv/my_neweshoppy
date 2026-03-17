@@ -10,22 +10,25 @@ import 'package:http/http.dart' as http;
 import '../views/myevents.dart';
 
 class AddEventController extends GetxController {
-  final eventName = TextEditingController();
-  final description = TextEditingController();
+  final eventName     = TextEditingController();
+  final description   = TextEditingController();
   final eventLocation = TextEditingController();
 
-  var eventDate = "".obs;
-  var eventEndDate = "".obs;
-  var eventTime = "".obs;
-  var bannerImage = Rx<File?>(null);
-  var isLoading = false.obs;
+  // ── Observables ───────────────────────────────────────────
+  var eventDate      = "".obs;
+  var eventEndDate   = "".obs;
+  var eventStartTime = "".obs; // ← was eventTime
+  var eventEndTime   = "".obs; // ← NEW
+  var bannerImage    = Rx<File?>(null);
+  var isLoading      = false.obs;
 
   final ImagePicker picker = ImagePicker();
   final box = GetStorage();
 
-  final String apiUrl = "https://rasma.astradevelops.in/e_shoppyy/public/api/create-event";
+  final String apiUrl =
+      "https://rasma.astradevelops.in/e_shoppyy/public/api/create-event";
 
-  // ---------------- IMAGE PICKER ----------------
+  // ── IMAGE PICKER ──────────────────────────────────────────
   pickBannerImage() async {
     final img = await picker.pickImage(source: ImageSource.gallery);
     if (img != null) bannerImage.value = File(img.path);
@@ -35,7 +38,7 @@ class AddEventController extends GetxController {
     bannerImage.value = null;
   }
 
-  // ---------------- DATE / TIME PICKER ----------------
+  // ── DATE PICKERS ──────────────────────────────────────────
   pickDate(BuildContext context) async {
     final date = await showDatePicker(
       context: context,
@@ -44,63 +47,94 @@ class AddEventController extends GetxController {
       initialDate: DateTime.now(),
     );
     if (date != null) {
-      eventDate.value = "${date.year}-${date.month.toString().padLeft(2,'0')}-${date.day.toString().padLeft(2,'0')}";
+      eventDate.value =
+      "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+      // reset end date if now before start
+      if (eventEndDate.value.isNotEmpty) {
+        final end = DateTime.tryParse(eventEndDate.value);
+        if (end != null && end.isBefore(date)) eventEndDate.value = "";
+      }
     }
   }
 
   pickEndDate(BuildContext context) async {
     final date = await showDatePicker(
       context: context,
-      firstDate: DateTime.now(),
+      firstDate: eventDate.value.isNotEmpty
+          ? DateTime.parse(eventDate.value)
+          : DateTime.now(),
       lastDate: DateTime(2035),
-      initialDate: DateTime.now(),
+      initialDate: eventDate.value.isNotEmpty
+          ? DateTime.parse(eventDate.value)
+          : DateTime.now(),
     );
     if (date != null) {
-      eventEndDate.value = "${date.year}-${date.month.toString().padLeft(2,'0')}-${date.day.toString().padLeft(2,'0')}";
+      eventEndDate.value =
+      "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
     }
   }
 
-  pickTime(BuildContext context) async {
+  // ── TIME PICKERS ──────────────────────────────────────────
+  pickStartTime(BuildContext context) async {
     final time = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
+      helpText: "Select Start Time",
     );
     if (time != null) {
-      final hour = time.hourOfPeriod;
-      final minute = time.minute.toString().padLeft(2, '0');
-      final period = time.period == DayPeriod.am ? 'AM' : 'PM';
-      eventTime.value = "${hour == 0 ? 12 : hour}:$minute $period";
+      eventStartTime.value = _formatTime(time);
     }
   }
 
-  // ---------------- CONVERT IMAGE ----------------
+  pickEndTime(BuildContext context) async {
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+      helpText: "Select End Time",
+    );
+    if (time != null) {
+      eventEndTime.value = _formatTime(time);
+    }
+  }
+
+  String _formatTime(TimeOfDay time) {
+    final hour   = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
+    final minute = time.minute.toString().padLeft(2, '0');
+    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
+    return "$hour:$minute $period";
+  }
+
+  // ── IMAGE → BASE64 ────────────────────────────────────────
   Future<String?> convertImageToBase64(File imageFile) async {
     try {
       final bytes = await imageFile.readAsBytes();
-      String extension = imageFile.path.split('.').last.toLowerCase();
-      String mimeType = extension == 'png' ? 'image/png' : 'image/jpeg';
+      final ext      = imageFile.path.split('.').last.toLowerCase();
+      final mimeType = ext == 'png' ? 'image/png' : 'image/jpeg';
       return "data:$mimeType;base64,${base64Encode(bytes)}";
     } catch (e) {
-      print("Image conversion error: $e");
+      debugPrint("Image conversion error: $e");
       return null;
     }
   }
 
-  // ---------------- SAVE EVENT ----------------
+  // ── SAVE EVENT ────────────────────────────────────────────
   saveEvent() async {
     // Validation
-    if (eventName.text.isEmpty) return _error("Enter event name");
-    if (eventDate.value.isEmpty) return _error("Select Start Date");
-    if (eventEndDate.value.isEmpty) return _error("Select End Date");
-    if (eventTime.value.isEmpty) return _error("Select Time");
-    if (eventLocation.text.isEmpty) return _error("Enter event location");
-    if (bannerImage.value == null) return _error("Select a banner image");
+    if (eventName.text.isEmpty)       return _error("Enter event name");
+    if (eventDate.value.isEmpty)      return _error("Select Start Date");
+    if (eventEndDate.value.isEmpty)   return _error("Select End Date");
+    if (eventStartTime.value.isEmpty) return _error("Select Start Time");
+    if (eventEndTime.value.isEmpty)   return _error("Select End Time");
+    if (eventLocation.text.isEmpty)   return _error("Enter event location");
+    if (bannerImage.value == null)    return _error("Select a banner image");
 
     try {
-      DateTime start = DateTime.parse(eventDate.value);
-      DateTime end = DateTime.parse(eventEndDate.value);
-      if (end.isBefore(start)) return _error("End Date cannot be before Start Date");
-    } catch (e) {
+      final start = DateTime.parse(eventDate.value);
+      final end   = DateTime.parse(eventEndDate.value);
+      if (end.isBefore(start)) {
+        return _error("End Date cannot be before Start Date");
+      }
+    } catch (_) {
       return _error("Invalid date format");
     }
 
@@ -118,21 +152,23 @@ class AddEventController extends GetxController {
       return _error("Invalid token, please login again");
     }
 
+    // ── Payload uses start_time + end_time ─────────────────
     final requestData = {
-      "event_name": eventName.text,
-      "start_date": eventDate.value,
-      "end_date": eventEndDate.value,
-      "time": eventTime.value,
-      "event_location": eventLocation.text,
-      "banner_image": base64Image,
+      "event_name"    : eventName.text.trim(),
+      "start_date"    : eventDate.value,
+      "end_date"      : eventEndDate.value,
+      "start_time"    : eventStartTime.value,   // ← updated
+      "end_time"      : eventEndTime.value,     // ← new
+      "event_location": eventLocation.text.trim(),
+      "banner_image"  : base64Image,
     };
 
     try {
       final response = await http.post(
         Uri.parse(apiUrl),
         headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
+          "Content-Type" : "application/json",
+          "Accept"       : "application/json",
           "Authorization": "Bearer $token",
         },
         body: jsonEncode(requestData),
@@ -146,16 +182,12 @@ class AddEventController extends GetxController {
           Get.snackbar(
             "Success",
             data['message'] ?? "Event created successfully",
-            // colorText: Colors.white,
+            backgroundColor: const Color(0xFF00897B),
+            colorText: Colors.white,
           );
-
           clearForm();
-
-          // Navigate directly to MyEventsPage
           Get.offAll(() => MerchantEventsPage());
-        }
-
-        else {
+        } else {
           _error(data['message'] ?? "Failed to create event");
         }
       } else {
@@ -167,18 +199,21 @@ class AddEventController extends GetxController {
     }
   }
 
+  // ── HELPERS ───────────────────────────────────────────────
   void _error(String msg) {
-    Get.snackbar("Error", msg, backgroundColor: Colors.red, colorText: Colors.white);
+    Get.snackbar("Error", msg,
+        backgroundColor: Colors.red, colorText: Colors.white);
   }
 
   void clearForm() {
     eventName.clear();
     description.clear();
     eventLocation.clear();
-    eventDate.value = "";
-    eventEndDate.value = "";
-    eventTime.value = "";
-    bannerImage.value = null;
+    eventDate.value      = "";
+    eventEndDate.value   = "";
+    eventStartTime.value = "";
+    eventEndTime.value   = "";
+    bannerImage.value    = null;
   }
 
   @override
@@ -189,5 +224,3 @@ class AddEventController extends GetxController {
     super.onClose();
   }
 }
-
-

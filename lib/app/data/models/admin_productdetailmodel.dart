@@ -1,12 +1,17 @@
+
 class ProductVariant {
   final Map<String, dynamic> attributes;
   final double price;
+  final double finalPrice;
   final int stock;
+  final String image;
 
   ProductVariant({
     required this.attributes,
     required this.price,
+    required this.finalPrice,
     required this.stock,
+    required this.image,
   });
 
   factory ProductVariant.fromJson(Map<String, dynamic> json) {
@@ -15,10 +20,19 @@ class ProductVariant {
       price: (json['price'] is num)
           ? (json['price'] as num).toDouble()
           : double.tryParse(json['price'].toString()) ?? 0.0,
+      finalPrice: (json['final_price'] is num)
+          ? (json['final_price'] as num).toDouble()
+          : double.tryParse(json['final_price'].toString()) ?? 0.0,
       stock: (json['stock'] is int)
           ? json['stock'] as int
           : int.tryParse(json['stock'].toString()) ?? 0,
+      image: json['image']?.toString() ?? '',
     );
+  }
+
+  String get displayName {
+    if (attributes.isEmpty) return 'Variant';
+    return attributes.values.join(' - ');
   }
 }
 
@@ -52,14 +66,8 @@ class AdminSingleOfferProductModel {
   final String productName;
   final String description;
   final String categoryId;
-  final String stockQty;
-  final String originalPrice;
-  final double offerPrice;
-  final List<String> productImages;
   final ProductAttributes? productAttributes;
   final String? features;
-  final String createdAt;
-  final String updatedAt;
 
   AdminSingleOfferProductModel({
     required this.id,
@@ -71,17 +79,35 @@ class AdminSingleOfferProductModel {
     required this.productName,
     required this.description,
     required this.categoryId,
-    required this.stockQty,
-    required this.originalPrice,
-    required this.offerPrice,
-    required this.productImages,
     this.productAttributes,
     this.features,
-    required this.createdAt,
-    required this.updatedAt,
   });
 
-  factory AdminSingleOfferProductModel.fromJson(Map<String, dynamic> json) {
+  // ── Computed getters from variants ─────────────────────────
+  List<String> get productImages =>
+      productAttributes?.variants
+          .map((v) => v.image)
+          .where((img) => img.isNotEmpty)
+          .toList() ??
+          [];
+
+  int get totalStock =>
+      productAttributes?.variants
+          .fold(0, (sum, v) => sum! + v.stock) ??
+          0;
+
+  double get originalPrice =>
+      productAttributes?.variants.isNotEmpty == true
+          ? productAttributes!.variants.first.price
+          : 0.0;
+
+  double get offerPrice =>
+      productAttributes?.variants.isNotEmpty == true
+          ? productAttributes!.variants.first.finalPrice
+          : 0.0;
+
+  factory AdminSingleOfferProductModel.fromJson(
+      Map<String, dynamic> json) {
     return AdminSingleOfferProductModel(
       id: json['id'] is int
           ? json['id'] as int
@@ -90,27 +116,18 @@ class AdminSingleOfferProductModel {
           ? json['offer_id'] as int
           : int.tryParse(json['offer_id'].toString()) ?? 0,
       offerName: json['offer_name']?.toString() ?? '',
-      discountPercentage: json['discount_percentage']?.toString() ?? '0',
+      discountPercentage:
+      json['discount_percentage']?.toString() ?? '0',
       merchantId: json['merchant_id']?.toString() ?? '',
       merchantName: json['merchant_name']?.toString() ?? '',
       productName: json['product_name']?.toString() ?? '',
       description: json['description']?.toString() ?? '',
       categoryId: json['category_id']?.toString() ?? '',
-      stockQty: json['stock_qty']?.toString() ?? '0',
-      originalPrice: json['original_price']?.toString() ?? '0',
-      offerPrice: (json['offer_price'] is num)
-          ? (json['offer_price'] as num).toDouble()
-          : double.tryParse(json['offer_price'].toString()) ?? 0.0,
-      productImages: (json['product_images'] as List<dynamic>? ?? [])
-          .map((e) => e.toString())
-          .toList(),
       productAttributes: json['product_attributes'] != null
           ? ProductAttributes.fromJson(
           json['product_attributes'] as Map<String, dynamic>)
           : null,
       features: json['features']?.toString(),
-      createdAt: json['created_at']?.toString() ?? '',
-      updatedAt: json['updated_at']?.toString() ?? '',
     );
   }
 }

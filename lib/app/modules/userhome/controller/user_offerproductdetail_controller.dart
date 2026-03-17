@@ -15,10 +15,7 @@ class UserOfferProductDetailController extends GetxController {
   final String apiUrl =
       "https://rasma.astradevelops.in/e_shoppyy/public/api/offer-product/details";
 
-  // Loading state
   var isLoading = false.obs;
-
-  // Product data
   var productData = Rx<UserOfferProductDetail?>(null);
 
   // Selected variant attributes
@@ -33,16 +30,10 @@ class UserOfferProductDetailController extends GetxController {
   // Quantity
   var quantity = 1.obs;
 
-  // Tracks whether this offer product has been added to cart
+  // Cart state
   var isAddedToCart = false.obs;
 
-  // Worker reference — kept so we don't register duplicate listeners
   Worker? _cartWorker;
-
-  @override
-  void onInit() {
-    super.onInit();
-  }
 
   @override
   void onClose() {
@@ -62,7 +53,6 @@ class UserOfferProductDetailController extends GetxController {
       quantity.value = 1;
 
       final token = box.read("auth_token");
-
       if (token == null) {
         Get.snackbar("Error", "Authentication token not found");
         return;
@@ -75,29 +65,27 @@ class UserOfferProductDetailController extends GetxController {
           "Content-Type": "application/json",
           "Authorization": "Bearer $token",
         },
-        body: jsonEncode({
-          "offer_product_id": offerProductId,
-        }),
+        body: jsonEncode({"offer_product_id": offerProductId}),
       );
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
 
         if (body['status'] == 1) {
-          productData.value = UserOfferProductDetail.fromJson(body['data']);
+          productData.value =
+              UserOfferProductDetail.fromJson(body['data']);
 
           if (productData.value!.variants.isNotEmpty) {
             _initializeFirstVariant();
           }
 
-          // ── Sync cart state & start watching for changes ──
           _syncCartState();
         } else {
           Get.snackbar(
               "Error", body['message'] ?? "Failed to fetch product details");
         }
       } else {
-        Get.snackbar("Error", "Failed to fetch product details");
+        Get.snackbar("Error", "Server error: ${response.statusCode}");
       }
     } catch (e) {
       Get.snackbar("Error", "Failed to fetch product details: $e");
@@ -106,25 +94,16 @@ class UserOfferProductDetailController extends GetxController {
     }
   }
 
-  // ── Sync isAddedToCart with CartController in real-time ────
-  //
-  // 1. Immediately checks current cart items on screen open.
-  // 2. Uses ever() to watch CartController.cartItems — so if the user
-  //    removes this product from the cart screen, the button here
-  //    automatically reverts from "Go to Cart" → "Add to Cart".
+  // ── Sync cart state ────────────────────────────────────────
   void _syncCartState() {
     if (productData.value == null) return;
-
     final productId = productData.value!.id.toString();
 
     if (Get.isRegistered<CartController>()) {
       final cart = Get.find<CartController>();
-
-      // Step 1: Check immediately against current cart list
       isAddedToCart.value =
           cart.cartItems.any((item) => item.productId.toString() == productId);
 
-      // Step 2: Dispose old worker if any, then watch for future changes
       _cartWorker?.dispose();
       _cartWorker = ever(cart.cartItems, (_) {
         if (productData.value != null) {
@@ -133,12 +112,10 @@ class UserOfferProductDetailController extends GetxController {
         }
       });
     } else {
-      // CartController not yet registered — fall back to direct API check
       _checkIfAlreadyInCart();
     }
   }
 
-  // ── Fallback: check cart via API (used if CartController not found) ──
   Future<void> _checkIfAlreadyInCart() async {
     if (productData.value == null) return;
     try {
@@ -170,12 +147,14 @@ class UserOfferProductDetailController extends GetxController {
 
   // ── Initialize first variant ───────────────────────────────
   void _initializeFirstVariant() {
-    if (productData.value == null || productData.value!.variants.isEmpty)
-      return;
+    if (productData.value == null || productData.value!.variants.isEmpty) return;
 
     final firstVariant = productData.value!.variants.first;
     selectedAttributes.value = Map.from(firstVariant.attributes);
     selectedVariant.value = firstVariant;
+
+    // ✅ Show image of first variant
+    _syncImageIndexToVariant(firstVariant);
   }
 
   // ── Select variant attribute ───────────────────────────────
@@ -184,18 +163,29 @@ class UserOfferProductDetailController extends GetxController {
     _updateSelectedVariant();
   }
 
-  // ── Update selected variant based on selected attributes ───
   void _updateSelectedVariant() {
     if (productData.value == null) return;
 
     final matchingVariant = productData.value!.variants.firstWhereOrNull(
-          (variant) => _attributesMatch(variant.attributes, selectedAttributes),
+          (variant) =>
+          _attributesMatch(variant.attributes, selectedAttributes),
     );
 
     selectedVariant.value = matchingVariant;
+
+    // ✅ Jump carousel to matched variant's image
+    if (matchingVariant != null) {
+      _syncImageIndexToVariant(matchingVariant);
+    }
   }
 
-  // ── Check if attributes match ──────────────────────────────
+  // ── Sync carousel to the selected variant's image ──────────
+  void _syncImageIndexToVariant(ProductVariant variant) {
+    final images = productData.value?.productImages ?? [];
+    final idx = images.indexOf(variant.image);
+    if (idx != -1) currentImageIndex.value = idx;
+  }
+
   bool _attributesMatch(
       Map<String, String> variantAttrs, Map<String, String> selectedAttrs) {
     if (variantAttrs.length != selectedAttrs.length) return false;
@@ -205,7 +195,6 @@ class UserOfferProductDetailController extends GetxController {
     return true;
   }
 
-  // ── Get available values for an attribute ──────────────────
   List<String> getAvailableValuesForAttribute(String attributeName) {
     if (productData.value == null) return [];
     return productData.value!.variants
@@ -215,12 +204,10 @@ class UserOfferProductDetailController extends GetxController {
         .toList();
   }
 
-  // ── Get attribute display name ─────────────────────────────
   String getAttributeDisplayName(String key) {
     return key[0].toUpperCase() + key.substring(1);
   }
 
-  // ── Increase quantity ──────────────────────────────────────
   void increaseQuantity() {
     if (selectedVariant.value != null) {
       if (quantity.value < selectedVariant.value!.stock) {
@@ -232,11 +219,8 @@ class UserOfferProductDetailController extends GetxController {
     }
   }
 
-  // ── Decrease quantity ──────────────────────────────────────
   void decreaseQuantity() {
-    if (quantity.value > 1) {
-      quantity.value--;
-    }
+    if (quantity.value > 1) quantity.value--;
   }
 
   // ── Add to Cart ────────────────────────────────────────────
@@ -245,7 +229,6 @@ class UserOfferProductDetailController extends GetxController {
       Get.snackbar("Error", "Please select a variant");
       return;
     }
-
     if (selectedVariant.value!.stock <= 0) {
       Get.snackbar("Out of Stock", "This variant is currently out of stock");
       return;
@@ -255,11 +238,12 @@ class UserOfferProductDetailController extends GetxController {
 
     try {
       final token = box.read("auth_token");
-
       if (token == null) {
         Get.snackbar("Error", "Authentication token not found");
         return;
       }
+
+      final variant = selectedVariant.value!;
 
       final response = await http.post(
         Uri.parse(
@@ -271,10 +255,9 @@ class UserOfferProductDetailController extends GetxController {
         body: {
           "product_id": productData.value!.id.toString(),
           "product_name": productData.value!.productName,
-          "product_image": productData.value!.productImages.isNotEmpty
-              ? productData.value!.productImages.first
-              : '',
-          "price": productData.value!.offerPrice.toString(),
+          // ✅ Use selected variant's image and offer_price
+          "product_image": variant.image,
+          "price": variant.offerPrice.toString(),
           "quantity": quantity.value.toString(),
         },
       );
@@ -282,18 +265,16 @@ class UserOfferProductDetailController extends GetxController {
       final data = jsonDecode(response.body);
 
       if (data['status'] == true) {
-        // Flip button to "Go to Cart"
         isAddedToCart.value = true;
 
-        // Refresh CartController — this also triggers the ever() listener
-        // above, which reconfirms isAddedToCart stays true
         if (Get.isRegistered<CartController>()) {
           await Get.find<CartController>().fetchCart();
         }
 
         Get.snackbar(
           "Added to Cart",
-          "${productData.value!.productName} (${quantity.value} item${quantity.value > 1 ? 's' : ''})",
+          "${productData.value!.productName} — ${variant.getDisplayName()} "
+              "(${quantity.value} item${quantity.value > 1 ? 's' : ''})",
           backgroundColor: const Color(0xFF009688),
           colorText: Colors.white,
         );
@@ -317,14 +298,11 @@ class UserOfferProductDetailController extends GetxController {
     }
   }
 
-  // ── Navigate to Cart ───────────────────────────────────────
-  void goToCart() {
-    Get.to(CartScreen());
-  }
+  void goToCart() => Get.to(CartScreen());
 
-  // ── Calculate discount amount ──────────────────────────────
+  // ✅ Discount = variant price - variant offer_price
   double getDiscountAmount() {
-    if (productData.value == null || selectedVariant.value == null) return 0;
-    return selectedVariant.value!.price - productData.value!.offerPrice;
+    if (selectedVariant.value == null) return 0;
+    return selectedVariant.value!.price - selectedVariant.value!.offerPrice;
   }
 }

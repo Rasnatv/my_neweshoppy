@@ -1,5 +1,4 @@
-import 'package:eshoppy/app/common/style/app_colors.dart';
-import 'package:eshoppy/app/common/style/app_text_style.dart';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

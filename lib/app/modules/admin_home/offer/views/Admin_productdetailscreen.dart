@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+
 import '../../../../data/models/admin_productdetailmodel.dart';
 import '../controller/admin_viewproductdetailcontrller.dart';
 
@@ -9,7 +11,6 @@ class AdminSingleOfferProductScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(AdminSingleOfferProductController());
-
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       body: Obx(() {
@@ -30,7 +31,6 @@ class AdminSingleOfferProductScreen extends StatelessWidget {
 // ─────────────────────────────────────────────
 // Main Detail Content
 // ─────────────────────────────────────────────
-
 class _DetailContent extends StatelessWidget {
   final AdminSingleOfferProductController controller;
   const _DetailContent({required this.controller});
@@ -51,11 +51,11 @@ class _DetailContent extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _HeaderSection(product: p),
+                    _HeaderSection(product: p, controller: controller),
                     const SizedBox(height: 16),
-                    _PriceSection(product: p),
+                    _PriceSection(controller: controller),
                     const SizedBox(height: 16),
-                    _InfoGrid(product: p),
+                    _InfoGrid(product: p, controller: controller),
                     if (p.description.isNotEmpty) ...[
                       const SizedBox(height: 16),
                       _SectionCard(
@@ -71,7 +71,8 @@ class _DetailContent extends StatelessWidget {
                         ),
                       ),
                     ],
-                    if (p.productAttributes != null) ...[
+                    if (p.productAttributes != null &&
+                        p.productAttributes!.commonAttributes.isNotEmpty) ...[
                       const SizedBox(height: 16),
                       _AttributesSection(attributes: p.productAttributes!),
                     ],
@@ -79,10 +80,10 @@ class _DetailContent extends StatelessWidget {
                         p.productAttributes!.variants.isNotEmpty) ...[
                       const SizedBox(height: 16),
                       _VariantsSection(
-                          variants: p.productAttributes!.variants),
+                        variants: p.productAttributes!.variants,
+                        controller: controller,
+                      ),
                     ],
-                    const SizedBox(height: 16),
-                    _MetaSection(product: p),
                     const SizedBox(height: 32),
                   ],
                 ),
@@ -95,18 +96,55 @@ class _DetailContent extends StatelessWidget {
   }
 }
 
-
-class _ImageGalleryAppBar extends StatelessWidget {
+// ─────────────────────────────────────────────
+// Image Gallery AppBar  ← NOW StatefulWidget
+// ─────────────────────────────────────────────
+class _ImageGalleryAppBar extends StatefulWidget {
   final AdminSingleOfferProductController controller;
   const _ImageGalleryAppBar({required this.controller});
 
   @override
+  State<_ImageGalleryAppBar> createState() => _ImageGalleryAppBarState();
+}
+
+class _ImageGalleryAppBarState extends State<_ImageGalleryAppBar> {
+  late final PageController _pageController;
+  final String _token = GetStorage().read('auth_token') ?? '';
+
+  @override
+  void initState() {
+    super.initState();
+
+    _pageController = PageController(
+      initialPage: widget.controller.selectedVariantIndex.value,
+    );
+
+    // ── React to variant taps → scroll gallery to matching image ──
+    ever(widget.controller.selectedVariantIndex, (int idx) {
+      if (!_pageController.hasClients) return;
+      if ((_pageController.page?.round() ?? -1) == idx) return;
+      _pageController.animateToPage(
+        idx,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final controller = widget.controller;
+
     return Obx(() {
       final images = controller.product.value?.productImages ?? [];
-      final discount =
-          controller.product.value?.discountPercentage ?? '0';
-      final pct = double.tryParse(discount) ?? 0;
+      final pct =
+          double.tryParse(controller.product.value?.discountPercentage ?? '0') ?? 0;
       final discountColor = pct >= 25
           ? const Color(0xFF10B981)
           : pct >= 10
@@ -132,8 +170,11 @@ class _ImageGalleryAppBar extends StatelessWidget {
                 ),
               ],
             ),
-            child: const Icon(Icons.arrow_back_ios_new_rounded,
-                size: 18, color: Color(0xFF1A1D26)),
+            child: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              size: 18,
+              color: Color(0xFF1A1D26),
+            ),
           ),
         ),
         actions: [
@@ -148,9 +189,8 @@ class _ImageGalleryAppBar extends StatelessWidget {
               ),
             )
                 : const Icon(Icons.refresh_rounded),
-            onPressed: controller.isLoading.value
-                ? null
-                : controller.refreshProduct,
+            onPressed:
+            controller.isLoading.value ? null : controller.refreshProduct,
           )),
           const SizedBox(width: 4),
         ],
@@ -158,27 +198,38 @@ class _ImageGalleryAppBar extends StatelessWidget {
           background: Stack(
             fit: StackFit.expand,
             children: [
-              // ── Page View ──────────────────────
+              // ── Image PageView ──────────────────────────────────
               images.isEmpty
                   ? Container(
                 color: const Color(0xFFEEF0F5),
                 child: const Center(
-                  child: Icon(Icons.image_not_supported_outlined,
-                      size: 64, color: Color(0xFFD1D5DB)),
+                  child: Icon(
+                    Icons.image_not_supported_outlined,
+                    size: 64,
+                    color: Color(0xFFD1D5DB),
+                  ),
                 ),
               )
                   : PageView.builder(
+                controller: _pageController, // ← KEY: attach the controller
                 itemCount: images.length,
-                onPageChanged: (i) =>
-                controller.currentImageIndex.value = i,
+                onPageChanged: (i) {
+                  // Swipe also updates both observables
+                  controller.currentImageIndex.value = i;
+                  controller.selectedVariantIndex.value = i;
+                },
                 itemBuilder: (_, i) => Image.network(
                   images[i],
                   fit: BoxFit.cover,
+                  headers: {'Authorization': 'Bearer $_token'},
                   errorBuilder: (_, __, ___) => Container(
                     color: const Color(0xFFEEF0F5),
                     child: const Center(
-                      child: Icon(Icons.image_not_supported_outlined,
-                          size: 48, color: Color(0xFFD1D5DB)),
+                      child: Icon(
+                        Icons.image_not_supported_outlined,
+                        size: 48,
+                        color: Color(0xFFD1D5DB),
+                      ),
                     ),
                   ),
                   loadingBuilder: (_, child, progress) {
@@ -196,7 +247,7 @@ class _ImageGalleryAppBar extends StatelessWidget {
                 ),
               ),
 
-              // ── Gradient overlay ───────────────
+              // ── Gradient overlay ────────────────────────────────
               Positioned(
                 bottom: 0,
                 left: 0,
@@ -213,37 +264,38 @@ class _ImageGalleryAppBar extends StatelessWidget {
                 ),
               ),
 
-              // ── Discount badge ─────────────────
-              Positioned(
-                top: 60,
-                right: 16,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: discountColor,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: discountColor.withOpacity(0.4),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
+              // ── Discount badge ──────────────────────────────────
+              if (pct > 0)
+                Positioned(
+                  top: 60,
+                  right: 16,
+                  child: Container(
+                    padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: discountColor,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: discountColor.withOpacity(0.4),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      '${pct.toStringAsFixed(0)}% OFF',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.5,
                       ),
-                    ],
-                  ),
-                  child: Text(
-                    '${pct.toStringAsFixed(0)}% OFF',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.5,
                     ),
                   ),
                 ),
-              ),
 
-              // ── Image dots indicator ───────────
+              // ── Dot indicators ──────────────────────────────────
               if (images.length > 1)
                 Positioned(
                   bottom: 12,
@@ -256,9 +308,7 @@ class _ImageGalleryAppBar extends StatelessWidget {
                           (i) => AnimatedContainer(
                         duration: const Duration(milliseconds: 250),
                         margin: const EdgeInsets.symmetric(horizontal: 3),
-                        width: controller.currentImageIndex.value == i
-                            ? 18
-                            : 6,
+                        width: controller.currentImageIndex.value == i ? 18 : 6,
                         height: 6,
                         decoration: BoxDecoration(
                           color: controller.currentImageIndex.value == i
@@ -279,12 +329,12 @@ class _ImageGalleryAppBar extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────
-// Header — product name + merchant + offer tag
+// Header
 // ─────────────────────────────────────────────
-
 class _HeaderSection extends StatelessWidget {
   final AdminSingleOfferProductModel product;
-  const _HeaderSection({required this.product});
+  final AdminSingleOfferProductController controller;
+  const _HeaderSection({required this.product, required this.controller});
 
   @override
   Widget build(BuildContext context) {
@@ -306,46 +356,56 @@ class _HeaderSection extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            // Stock badge
-            Container(
-              padding:
-              const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: int.parse(product.stockQty) > 5
-                    ? const Color(0xFFD1FAE5)
-                    : const Color(0xFFFEE2E2),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    int.parse(product.stockQty) > 5
-                        ? Icons.check_circle_outline_rounded
-                        : Icons.warning_amber_rounded,
-                    size: 12,
-                    color: int.parse(product.stockQty) > 5
-                        ? const Color(0xFF10B981)
-                        : const Color(0xFFEF4444),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Qty: ${product.stockQty}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: int.parse(product.stockQty) > 5
-                          ? const Color(0xFF10B981)
-                          : const Color(0xFFEF4444),
+            Obx(() {
+              final qty = controller.selectedVariant?.stock ?? 0;
+              final isLow = qty > 0 && qty <= 5;
+              final outOfStock = qty <= 0;
+              final color = outOfStock
+                  ? const Color(0xFFEF4444)
+                  : isLow
+                  ? const Color(0xFFF59E0B)
+                  : const Color(0xFF10B981);
+              final bgColor = outOfStock
+                  ? const Color(0xFFFEE2E2)
+                  : isLow
+                  ? const Color(0xFFFEF3C7)
+                  : const Color(0xFFD1FAE5);
+
+              return Container(
+                padding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: bgColor,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      outOfStock
+                          ? Icons.cancel_rounded
+                          : isLow
+                          ? Icons.warning_amber_rounded
+                          : Icons.check_circle_outline_rounded,
+                      size: 12,
+                      color: color,
                     ),
-                  ),
-                ],
-              ),
-            ),
+                    const SizedBox(width: 4),
+                    Text(
+                      outOfStock ? 'Out of Stock' : '$qty in stock',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: color,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
           ],
         ),
         const SizedBox(height: 8),
-        // Offer name chip
         Row(
           children: [
             Container(
@@ -375,7 +435,6 @@ class _HeaderSection extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            // Merchant chip
             Container(
               padding:
               const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -412,13 +471,11 @@ class _HeaderSection extends StatelessWidget {
 // ─────────────────────────────────────────────
 // Price Section
 // ─────────────────────────────────────────────
-
 class _PriceSection extends StatelessWidget {
-  final AdminSingleOfferProductModel product;
-  const _PriceSection({required this.product});
+  final AdminSingleOfferProductController controller;
+  const _PriceSection({required this.controller});
 
-  Color get _discountColor {
-    final pct = double.tryParse(product.discountPercentage) ?? 0;
+  Color _discountColor(double pct) {
     if (pct >= 25) return const Color(0xFF10B981);
     if (pct >= 10) return const Color(0xFFF59E0B);
     return const Color(0xFF6366F1);
@@ -426,108 +483,110 @@ class _PriceSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final original = double.tryParse(product.originalPrice) ?? 0;
-    final offer = product.offerPrice;
-    final saved = original - offer;
+    return Obx(() {
+      final variant = controller.selectedVariant;
+      final original = variant?.price ?? 0.0;
+      final offer = variant?.finalPrice ?? 0.0;
+      final saved = original - offer;
+      final pct =
+          double.tryParse(controller.product.value?.discountPercentage ?? '0') ?? 0;
+      final color = _discountColor(pct);
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Offer Price',
-                  style: TextStyle(
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Offer Price',
+                    style: TextStyle(
                       fontSize: 12,
                       color: Color(0xFF9CA3AF),
-                      fontWeight: FontWeight.w500),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '₹${offer.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w900,
-                    color: _discountColor,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '₹${original.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF9CA3AF),
-                    decoration: TextDecoration.lineThrough,
+                  const SizedBox(height: 4),
+                  Text(
+                    '₹${offer.round()}',
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w900,
+                      color: color,
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 2),
+                  Text(
+                    '₹${original.round()}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF9CA3AF),
+                      decoration: TextDecoration.lineThrough,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: _discountColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-              border:
-              Border.all(color: _discountColor.withOpacity(0.3)),
+            Container(
+              padding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: color.withOpacity(0.3)),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    'You Save',
+                    style: TextStyle(
+                        fontSize: 11, color: color, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '₹${saved.round()}',
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: color),
+                  ),
+                  Text(
+                    '${pct.toStringAsFixed(0)}% off',
+                    style: TextStyle(
+                        fontSize: 11,
+                        color: color,
+                        fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
             ),
-            child: Column(
-              children: [
-                Text(
-                  'You Save',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: _discountColor,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '₹${saved.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: _discountColor,
-                  ),
-                ),
-                Text(
-                  '${double.tryParse(product.discountPercentage)?.toStringAsFixed(0)}% off',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: _discountColor,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    });
   }
 }
 
 // ─────────────────────────────────────────────
 // Info Grid
 // ─────────────────────────────────────────────
-
 class _InfoGrid extends StatelessWidget {
   final AdminSingleOfferProductModel product;
-  const _InfoGrid({required this.product});
+  final AdminSingleOfferProductController controller;
+  const _InfoGrid({required this.product, required this.controller});
 
   @override
   Widget build(BuildContext context) {
@@ -550,18 +609,6 @@ class _InfoGrid extends StatelessWidget {
           value: '#${product.offerId}',
           icon: Icons.local_offer_rounded,
           color: const Color(0xFF8B5CF6),
-        ),
-        _InfoTile(
-          label: 'Category',
-          value: 'ID: ${product.categoryId}',
-          icon: Icons.category_rounded,
-          color: const Color(0xFFF59E0B),
-        ),
-        _InfoTile(
-          label: 'Stock',
-          value: product.stockQty,
-          icon: Icons.warehouse_rounded,
-          color: const Color(0xFF10B981),
         ),
       ],
     );
@@ -641,15 +688,16 @@ class _InfoTile extends StatelessWidget {
 // ─────────────────────────────────────────────
 // Attributes Section
 // ─────────────────────────────────────────────
-
 class _AttributesSection extends StatelessWidget {
   final ProductAttributes attributes;
   const _AttributesSection({required this.attributes});
 
+  String _capitalize(String s) =>
+      s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+
   @override
   Widget build(BuildContext context) {
     if (attributes.commonAttributes.isEmpty) return const SizedBox.shrink();
-
     return _SectionCard(
       title: 'Common Attributes',
       icon: Icons.tune_rounded,
@@ -692,167 +740,135 @@ class _AttributesSection extends StatelessWidget {
       ),
     );
   }
-
-  String _capitalize(String s) =>
-      s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
 }
 
 // ─────────────────────────────────────────────
 // Variants Section
 // ─────────────────────────────────────────────
-
 class _VariantsSection extends StatelessWidget {
   final List<ProductVariant> variants;
-  const _VariantsSection({required this.variants});
+  final AdminSingleOfferProductController controller;
+  const _VariantsSection({required this.variants, required this.controller});
+
+  String _capitalize(String s) =>
+      s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
 
   @override
   Widget build(BuildContext context) {
     return _SectionCard(
       title: 'Variants',
       icon: Icons.style_rounded,
-      child: Column(
-        children: variants.asMap().entries.map((entry) {
-          final i = entry.key;
-          final v = entry.value;
-          final isLow = v.stock <= 5;
+      child: Obx(() {
+        return Column(
+          children: variants.asMap().entries.map((entry) {
+            final i = entry.key;
+            final v = entry.value;
+            final isSelected = controller.selectedVariantIndex.value == i;
+            final isLow = v.stock > 0 && v.stock <= 5;
+            final outOfStock = v.stock <= 0;
 
-          return Container(
-            margin: EdgeInsets.only(bottom: i < variants.length - 1 ? 10 : 0),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF9FAFB),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE5E7EB)),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: v.attributes.entries.map((e) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF6366F1).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          '${_capitalize(e.key)}: ${e.value}',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF6366F1),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      );
-                    }).toList(),
+            return GestureDetector(
+              onTap: () => controller.selectVariant(i), // ← triggers gallery scroll
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                margin:
+                EdgeInsets.only(bottom: i < variants.length - 1 ? 10 : 0),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? const Color(0xFF6366F1).withOpacity(0.06)
+                      : const Color(0xFFF9FAFB),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isSelected
+                        ? const Color(0xFF6366F1)
+                        : const Color(0xFFE5E7EB),
+                    width: isSelected ? 1.5 : 1,
                   ),
                 ),
-                const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                child: Row(
                   children: [
-                    Text(
-                      '₹${v.price.toStringAsFixed(0)}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF1A1D26),
+                    Expanded(
+                      child: Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: v.attributes.entries.map((e) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color:
+                              const Color(0xFF6366F1).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              '${_capitalize(e.key)}: ${e.value}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF6366F1),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          );
+                        }).toList(),
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: isLow
-                            ? const Color(0xFFFEE2E2)
-                            : const Color(0xFFD1FAE5),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        isLow ? 'Low: ${v.stock}' : 'Stock: ${v.stock}',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: isLow
-                              ? const Color(0xFFEF4444)
-                              : const Color(0xFF10B981),
+                    const SizedBox(width: 10),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '₹${v.finalPrice.round()}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF6366F1),
+                          ),
                         ),
-                      ),
+                        Text(
+                          '₹${v.price.round()}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF9CA3AF),
+                            decoration: TextDecoration.lineThrough,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: outOfStock
+                                ? const Color(0xFFFEE2E2)
+                                : isLow
+                                ? const Color(0xFFFEF3C7)
+                                : const Color(0xFFD1FAE5),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            outOfStock
+                                ? 'Out of Stock'
+                                : '${v.stock} in stock',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: outOfStock
+                                  ? const Color(0xFFEF4444)
+                                  : isLow
+                                  ? const Color(0xFFF59E0B)
+                                  : const Color(0xFF10B981),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  String _capitalize(String s) =>
-      s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
-}
-
-// ─────────────────────────────────────────────
-// Meta Section (timestamps)
-// ─────────────────────────────────────────────
-
-class _MetaSection extends StatelessWidget {
-  final AdminSingleOfferProductModel product;
-  const _MetaSection({required this.product});
-
-  String _formatDate(String iso) {
-    try {
-      final dt = DateTime.parse(iso).toLocal();
-      return '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}  ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-    } catch (_) {
-      return iso;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return _SectionCard(
-      title: 'Details',
-      icon: Icons.info_outline_rounded,
-      child: Column(
-        children: [
-          _MetaRow(
-              label: 'Created',
-              value: _formatDate(product.createdAt)),
-          const Divider(height: 16, color: Color(0xFFF3F4F6)),
-          _MetaRow(
-              label: 'Updated',
-              value: _formatDate(product.updatedAt)),
-        ],
-      ),
-    );
-  }
-}
-
-class _MetaRow extends StatelessWidget {
-  final String label;
-  final String value;
-  const _MetaRow({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label,
-            style: const TextStyle(
-                fontSize: 13, color: Color(0xFF9CA3AF))),
-        Text(value,
-            style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF1A1D26))),
-      ],
+              ),
+            );
+          }).toList(),
+        );
+      }),
     );
   }
 }
@@ -860,7 +876,6 @@ class _MetaRow extends StatelessWidget {
 // ─────────────────────────────────────────────
 // Reusable Section Card
 // ─────────────────────────────────────────────
-
 class _SectionCard extends StatelessWidget {
   final String title;
   final IconData icon;
@@ -914,9 +929,8 @@ class _SectionCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────
-// State Views
+// Loading View
 // ─────────────────────────────────────────────
-
 class _LoadingView extends StatelessWidget {
   const _LoadingView();
 
@@ -930,9 +944,10 @@ class _LoadingView extends StatelessWidget {
           children: [
             CircularProgressIndicator(color: Color(0xFF6366F1)),
             SizedBox(height: 16),
-            Text('Loading product...',
-                style: TextStyle(
-                    color: Color(0xFF9CA3AF), fontSize: 14)),
+            Text(
+              'Loading product...',
+              style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+            ),
           ],
         ),
       ),
@@ -940,10 +955,12 @@ class _LoadingView extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────
+// Error View
+// ─────────────────────────────────────────────
 class _ErrorView extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
-
   const _ErrorView({required this.message, required this.onRetry});
 
   @override
@@ -954,7 +971,8 @@ class _ErrorView extends StatelessWidget {
         elevation: 0,
         backgroundColor: Colors.white,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          icon:
+          const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
           onPressed: () => Get.back(),
         ),
       ),
@@ -970,20 +988,30 @@ class _ErrorView extends StatelessWidget {
                   color: const Color(0xFFFEE2E2),
                   borderRadius: BorderRadius.circular(50),
                 ),
-                child: const Icon(Icons.error_outline_rounded,
-                    color: Color(0xFFEF4444), size: 40),
+                child: const Icon(
+                  Icons.error_outline_rounded,
+                  color: Color(0xFFEF4444),
+                  size: 40,
+                ),
               ),
               const SizedBox(height: 16),
-              const Text('Failed to load product',
-                  style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF1A1D26))),
+              const Text(
+                'Failed to load product',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1A1D26),
+                ),
+              ),
               const SizedBox(height: 8),
-              Text(message,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      fontSize: 13, color: Color(0xFF9CA3AF))),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF9CA3AF),
+                ),
+              ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
                 onPressed: onRetry,
@@ -995,7 +1023,8 @@ class _ErrorView extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 24, vertical: 12),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ],
