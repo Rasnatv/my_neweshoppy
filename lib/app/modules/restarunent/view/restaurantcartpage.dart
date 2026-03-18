@@ -1,5 +1,429 @@
-
-
+//
+//
+// import 'package:eshoppy/app/modules/restarunent/view/restaurantbookingpage.dart';
+// import 'package:flutter/material.dart';
+// import 'package:get/get.dart';
+// import '../../../data/models/restaruantcartmodel.dart';
+// import '../controller/restaurantcartcontroller.dart';
+//
+//
+// class RestaurantCartPage extends StatelessWidget {
+//   /// Pass the restaurantId so this page shows ONLY that restaurant's items
+//   final int restaurantId;
+//
+//   const RestaurantCartPage({super.key, required this.restaurantId});
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     final Restaurantcartcontroller cartController =
+//     Get.find<Restaurantcartcontroller>();
+//
+//     return Scaffold(
+//       backgroundColor: const Color(0xFFF5F5F5),
+//       appBar: AppBar(
+//         backgroundColor: Color(0xFF0F5151),
+//         elevation: 0,
+//         automaticallyImplyLeading: true,
+//         foregroundColor: Colors.white,
+//         // leading: IconButton(
+//         //   icon: const Icon(Icons.arrow_back_ios,
+//         //       color: Colors.black87, size: 20),
+//         //   onPressed: () => Get.back(),
+//         // ),
+//         title: const Text(
+//           'Purchased items',
+//           style: TextStyle(
+//             color: Colors.white,
+//             fontWeight: FontWeight.bold,
+//             fontSize: 20,
+//           ),
+//         ),
+//         actions: [
+//           IconButton(
+//             onPressed: () => cartController.fetchCart(),
+//             icon: const Icon(Icons.refresh, color: Colors.teal),
+//             tooltip: 'Refresh',
+//           ),
+//         ],
+//       ),
+//       body: Obx(() {
+//         if (cartController.isLoading.value) {
+//           return const Center(
+//             child: CircularProgressIndicator(color: Colors.teal),
+//           );
+//         }
+//
+//         // ✅ Only items belonging to THIS restaurant
+//         final items = cartController.itemsForRestaurant(restaurantId);
+//
+//         if (items.isEmpty) {
+//           return _EmptyCartView();
+//         }
+//
+//         final subTotal =
+//         cartController.grandTotalForRestaurant(restaurantId);
+//
+//         return Column(
+//           children: [
+//             // ── CART ITEMS LIST ──────────────────────────────────────
+//             Expanded(
+//               child: ListView.builder(
+//                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+//                 itemCount: items.length,
+//                 itemBuilder: (context, index) {
+//                   final item = items[index];
+//                   return _CartItemCard(
+//                     item: item,
+//                     cartController: cartController,
+//                   );
+//                 },
+//               ),
+//             ),
+//
+//
+//           ],
+//         );
+//       }),
+//
+//       // ── PLACE ORDER BUTTON ───────────────────────────────────────────
+//       bottomNavigationBar: Obx(() {
+//         final items = cartController.itemsForRestaurant(restaurantId);
+//         if (items.isEmpty) return const SizedBox();
+//         final subTotal =
+//         cartController.grandTotalForRestaurant(restaurantId);
+//         return _PlaceOrderBar(subTotal: subTotal, cartController: cartController, restaurantId: restaurantId);
+//       }),
+//     );
+//   }
+// }
+//
+//
+// class _CartItemCard extends StatelessWidget {
+//   final RestaurantCartModel item;
+//   final Restaurantcartcontroller cartController;
+//
+//   const _CartItemCard({required this.item, required this.cartController});
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     final priceDisplay = item.price % 1 == 0
+//         ? item.price.toInt().toString()
+//         : item.price.toStringAsFixed(2);
+//     final totalDisplay = item.totalPrice % 1 == 0
+//         ? item.totalPrice.toInt().toString()
+//         : item.totalPrice.toStringAsFixed(2);
+//
+//     return Container(
+//       margin: const EdgeInsets.only(bottom: 12),
+//       decoration: BoxDecoration(
+//         color: Colors.white,
+//         borderRadius: BorderRadius.circular(16),
+//         boxShadow: [
+//           BoxShadow(
+//             color: Colors.black.withOpacity(0.06),
+//             blurRadius: 10,
+//             offset: const Offset(0, 4),
+//           ),
+//         ],
+//       ),
+//       child: Padding(
+//         padding: const EdgeInsets.all(12),
+//         child: Row(
+//           children: [
+//             // ── IMAGE ────────────────────────────────────────────────
+//             ClipRRect(
+//               borderRadius: BorderRadius.circular(12),
+//               child: item.imageUrl.isNotEmpty
+//                   ? Image.network(
+//                 item.imageUrl, // ✅ use imageUrl not image
+//                 width: 80,
+//                 height: 80,
+//                 fit: BoxFit.cover,
+//                 errorBuilder: (_, __, ___) => Container(
+//                   width: 80,
+//                   height: 80,
+//                   color: Colors.grey.shade200,
+//                   child: Icon(Icons.fastfood,
+//                       size: 36, color: Colors.grey.shade400),
+//                 ),
+//                 loadingBuilder: (context, child, progress) {
+//                   if (progress == null) return child;
+//                   return Container(
+//                     width: 80,
+//                     height: 80,
+//                     color: Colors.grey.shade100,
+//                     child: const Center(
+//                       child: CircularProgressIndicator(
+//                           color: Colors.teal, strokeWidth: 2),
+//                     ),
+//                   );
+//                 },
+//               )
+//                   : Container(
+//                 width: 80,
+//                 height: 80,
+//                 color: Colors.grey.shade200,
+//                 child: Icon(Icons.fastfood,
+//                     size: 36, color: Colors.grey.shade400),
+//               ),
+//             ),
+//             const SizedBox(width: 12),
+//
+//             // ── NAME + PRICE ─────────────────────────────────────────
+//             Expanded(
+//               child: Column(
+//                 crossAxisAlignment: CrossAxisAlignment.start,
+//                 children: [
+//                   Text(
+//                     item.itemName,
+//                     style: const TextStyle(
+//                       fontSize: 15,
+//                       fontWeight: FontWeight.bold,
+//                       color: Colors.black87,
+//                     ),
+//                     maxLines: 2,
+//                     overflow: TextOverflow.ellipsis,
+//                   ),
+//                   const SizedBox(height: 4),
+//                   Text(
+//                     '₹$priceDisplay / item',
+//                     style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+//                   ),
+//                   const SizedBox(height: 8),
+//                   Text(
+//                     '₹$totalDisplay',
+//                     style: const TextStyle(
+//                       fontSize: 16,
+//                       fontWeight: FontWeight.bold,
+//                       color: Colors.teal,
+//                     ),
+//                   ),
+//                 ],
+//               ),
+//             ),
+//
+//             // ── QTY CONTROLS ─────────────────────────────────────────
+//             Obx(() {
+//               final isUpdating = cartController.isUpdating.value;
+//               return Container(
+//                 decoration: BoxDecoration(
+//                   border: Border.all(color: Colors.teal, width: 1.5),
+//                   borderRadius: BorderRadius.circular(12),
+//                   color: Colors.white,
+//                 ),
+//                 child: Row(
+//                   mainAxisSize: MainAxisSize.min,
+//                   children: [
+//                     InkWell(
+//                       onTap: isUpdating
+//                           ? null
+//                           : () => cartController.updateQuantity(
+//                           item.menuId, 'decrement'),
+//                       borderRadius: const BorderRadius.only(
+//                         topLeft: Radius.circular(10),
+//                         bottomLeft: Radius.circular(10),
+//                       ),
+//                       child: Container(
+//                         padding: const EdgeInsets.symmetric(
+//                             horizontal: 10, vertical: 8),
+//                         child: Icon(
+//                           item.quantity == 1
+//                               ? Icons.delete_outline
+//                               : Icons.remove,
+//                           size: 16,
+//                           color: item.quantity == 1
+//                               ? Colors.red.shade400
+//                               : Colors.teal,
+//                         ),
+//                       ),
+//                     ),
+//                     Container(
+//                       width: 28,
+//                       alignment: Alignment.center,
+//                       child: isUpdating
+//                           ? const SizedBox(
+//                         width: 14,
+//                         height: 14,
+//                         child: CircularProgressIndicator(
+//                             color: Colors.teal, strokeWidth: 2),
+//                       )
+//                           : Text(
+//                         '${item.quantity}',
+//                         style: const TextStyle(
+//                           fontSize: 14,
+//                           fontWeight: FontWeight.bold,
+//                           color: Colors.teal,
+//                         ),
+//                       ),
+//                     ),
+//                     InkWell(
+//                       onTap: isUpdating
+//                           ? null
+//                           : () => cartController.updateQuantity(
+//                           item.menuId, 'increment'),
+//                       borderRadius: const BorderRadius.only(
+//                         topRight: Radius.circular(10),
+//                         bottomRight: Radius.circular(10),
+//                       ),
+//                       child: Container(
+//                         padding: const EdgeInsets.symmetric(
+//                             horizontal: 10, vertical: 8),
+//                         child: const Icon(Icons.add,
+//                             size: 16, color: Colors.teal),
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//               );
+//             }),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
+//
+// class _PlaceOrderBar extends StatelessWidget {
+//   final double subTotal;
+//   final Restaurantcartcontroller cartController;
+//   final int restaurantId;
+//
+//   const _PlaceOrderBar({
+//     required this.subTotal,
+//     required this.cartController,
+//     required this.restaurantId,
+//   });
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     final totalDisplay = subTotal % 1 == 0
+//         ? subTotal.toInt().toString()
+//         : subTotal.toStringAsFixed(2);
+//
+//     return Container(
+//       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+//       decoration: BoxDecoration(
+//         color: Colors.white,
+//         boxShadow: [
+//           BoxShadow(
+//             color: Colors.black.withOpacity(0.08),
+//             blurRadius: 10,
+//             offset: const Offset(0, -4),
+//           ),
+//         ],
+//       ),
+//       child: SafeArea(
+//         top: false,
+//         child: Column(
+//           mainAxisSize: MainAxisSize.min,
+//           children: [
+//             // ✅ Total shown separately above the button
+//             Container(
+//               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+//               child: Row(
+//                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                 children: [
+//                   const Text(
+//                     'Total Amount',
+//                     style: TextStyle(
+//                       fontSize: 16,
+//                       fontWeight: FontWeight.w600,
+//                       color: Colors.black87,
+//                     ),
+//                   ),
+//                   Text(
+//                     '₹$totalDisplay',
+//                     style: const TextStyle(
+//                       fontSize: 20,
+//                       fontWeight: FontWeight.bold,
+//                       color: Color(0xFF0F5151),
+//                     ),
+//                   ),
+//                 ],
+//               ),
+//             ),
+//
+//             const Divider(height: 16),
+//
+//             // ✅ Book Slot button — no price inside
+//             SizedBox(
+//               width: double.infinity,
+//               child: Material(
+//                 color: const Color(0xFF0F5151),
+//                 borderRadius: BorderRadius.circular(16),
+//                 child: InkWell(
+//                   borderRadius: BorderRadius.circular(16),
+//                   onTap: () {
+//                  Get.to(() => RestaurantBookingPage(), arguments: {"restaurant_id": restaurantId});
+//                   },
+//                   child: const Padding(
+//                     padding: EdgeInsets.symmetric(vertical: 16),
+//                     child: Text(
+//                       'Book Slot',
+//                       style: TextStyle(
+//                         color: Colors.white,
+//                         fontWeight: FontWeight.bold,
+//                         fontSize: 16,
+//                       ),
+//                       textAlign: TextAlign.center,
+//                     ),
+//                   ),
+//                 ),
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
+// // ── EMPTY CART VIEW ───────────────────────────────────────────────────────────
+// class _EmptyCartView extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     return Center(
+//       child: Column(
+//         mainAxisAlignment: MainAxisAlignment.center,
+//         children: [
+//           Icon(Icons.shopping_cart_outlined,
+//               size: 90, color: Colors.grey.shade300),
+//           const SizedBox(height: 20),
+//           Text(
+//             'Your cart is empty',
+//             style: TextStyle(
+//               fontSize: 20,
+//               fontWeight: FontWeight.bold,
+//               color: Colors.grey.shade600,
+//             ),
+//           ),
+//           const SizedBox(height: 8),
+//           Text(
+//             'Add items from the menu to get started',
+//             style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+//           ),
+//           const SizedBox(height: 32),
+//           ElevatedButton(
+//             style: ElevatedButton.styleFrom(
+//               backgroundColor: Color(0xFF0D1F1A),
+//               padding:
+//               const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+//               shape: RoundedRectangleBorder(
+//                   borderRadius: BorderRadius.circular(12)),
+//             ),
+//             onPressed: () => Get.back(),
+//             child: const Text(
+//               'Browse Menu',
+//               style: TextStyle(
+//                   color: Colors.white,
+//                   fontWeight: FontWeight.bold,
+//                   fontSize: 15),
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
 import 'package:eshoppy/app/modules/restarunent/view/restaurantbookingpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -8,9 +432,7 @@ import '../controller/restaurantcartcontroller.dart';
 
 
 class RestaurantCartPage extends StatelessWidget {
-  /// Pass the restaurantId so this page shows ONLY that restaurant's items
   final int restaurantId;
-
   const RestaurantCartPage({super.key, required this.restaurantId});
 
   @override
@@ -18,18 +440,18 @@ class RestaurantCartPage extends StatelessWidget {
     final Restaurantcartcontroller cartController =
     Get.find<Restaurantcartcontroller>();
 
+    // ✅ Always refresh when this page is opened
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      cartController.fetchCart();
+    });
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
-        backgroundColor: Color(0xFF0F5151),
+        backgroundColor: const Color(0xFF0F5151),
         elevation: 0,
         automaticallyImplyLeading: true,
         foregroundColor: Colors.white,
-        // leading: IconButton(
-        //   icon: const Icon(Icons.arrow_back_ios,
-        //       color: Colors.black87, size: 20),
-        //   onPressed: () => Get.back(),
-        // ),
         title: const Text(
           'Purchased items',
           style: TextStyle(
@@ -53,19 +475,14 @@ class RestaurantCartPage extends StatelessWidget {
           );
         }
 
-        // ✅ Only items belonging to THIS restaurant
         final items = cartController.itemsForRestaurant(restaurantId);
 
         if (items.isEmpty) {
           return _EmptyCartView();
         }
 
-        final subTotal =
-        cartController.grandTotalForRestaurant(restaurantId);
-
         return Column(
           children: [
-            // ── CART ITEMS LIST ──────────────────────────────────────
             Expanded(
               child: ListView.builder(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
@@ -79,19 +496,19 @@ class RestaurantCartPage extends StatelessWidget {
                 },
               ),
             ),
-
-
           ],
         );
       }),
 
-      // ── PLACE ORDER BUTTON ───────────────────────────────────────────
       bottomNavigationBar: Obx(() {
         final items = cartController.itemsForRestaurant(restaurantId);
         if (items.isEmpty) return const SizedBox();
-        final subTotal =
-        cartController.grandTotalForRestaurant(restaurantId);
-        return _PlaceOrderBar(subTotal: subTotal, cartController: cartController, restaurantId: restaurantId);
+        final subTotal = cartController.grandTotalForRestaurant(restaurantId);
+        return _PlaceOrderBar(
+          subTotal: subTotal,
+          cartController: cartController,
+          restaurantId: restaurantId,
+        );
       }),
     );
   }
@@ -130,12 +547,11 @@ class _CartItemCard extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         child: Row(
           children: [
-            // ── IMAGE ────────────────────────────────────────────────
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: item.imageUrl.isNotEmpty
                   ? Image.network(
-                item.imageUrl, // ✅ use imageUrl not image
+                item.imageUrl,
                 width: 80,
                 height: 80,
                 fit: BoxFit.cover,
@@ -169,7 +585,6 @@ class _CartItemCard extends StatelessWidget {
             ),
             const SizedBox(width: 12),
 
-            // ── NAME + PRICE ─────────────────────────────────────────
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -187,7 +602,8 @@ class _CartItemCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     '₹$priceDisplay / item',
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    style:
+                    TextStyle(fontSize: 12, color: Colors.grey.shade600),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -202,7 +618,6 @@ class _CartItemCard extends StatelessWidget {
               ),
             ),
 
-            // ── QTY CONTROLS ─────────────────────────────────────────
             Obx(() {
               final isUpdating = cartController.isUpdating.value;
               return Container(
@@ -317,9 +732,9 @@ class _PlaceOrderBar extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // ✅ Total shown separately above the button
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+              padding:
+              const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -342,10 +757,7 @@ class _PlaceOrderBar extends StatelessWidget {
                 ],
               ),
             ),
-
             const Divider(height: 16),
-
-            // ✅ Book Slot button — no price inside
             SizedBox(
               width: double.infinity,
               child: Material(
@@ -354,7 +766,8 @@ class _PlaceOrderBar extends StatelessWidget {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(16),
                   onTap: () {
-                 Get.to(() => RestaurantBookingPage(), arguments: {"restaurant_id": restaurantId});
+                    Get.to(() => RestaurantBookingPage(),
+                        arguments: {"restaurant_id": restaurantId});
                   },
                   child: const Padding(
                     padding: EdgeInsets.symmetric(vertical: 16),
@@ -377,7 +790,7 @@ class _PlaceOrderBar extends StatelessWidget {
     );
   }
 }
-// ── EMPTY CART VIEW ───────────────────────────────────────────────────────────
+
 class _EmptyCartView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -404,7 +817,7 @@ class _EmptyCartView extends StatelessWidget {
           const SizedBox(height: 32),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF0D1F1A),
+              backgroundColor: const Color(0xFF0D1F1A),
               padding:
               const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
               shape: RoundedRectangleBorder(

@@ -5,10 +5,10 @@ import 'package:get/get.dart';
 import '../../../common/style/app_text_style.dart';
 import '../controller/cartcontroller.dart';
 import '../../../data/models/cartmodel.dart';
+import 'addresslistpage.dart';
 
 class CartScreen extends StatelessWidget {
   CartScreen({Key? key}) : super(key: key);
-
   final CartController cartController = Get.put(CartController());
 
   @override
@@ -62,11 +62,9 @@ class CartScreen extends StatelessWidget {
             ),
           );
         }
-
         if (cartController.cartItems.isEmpty) {
           return _buildEmptyCart();
         }
-
         return Column(
           children: [
             Expanded(
@@ -160,47 +158,72 @@ class CartScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Obx(() => Column(
-                children: [
-                  _summaryRow(
-                    label: "Subtotal",
-                    value:
-                    "₹${cartController.total.value.toStringAsFixed(0)}",
-                    labelStyle: TextStyle(
-                        fontSize: 14, color: Colors.grey.shade600),
-                    valueStyle: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey.shade700),
-                  ),
-                  const SizedBox(height: 8),
-                  _summaryRow(
-                    label: "Delivery",
-                    value: "FREE",
-                    labelStyle: TextStyle(
-                        fontSize: 14, color: Colors.grey.shade600),
-                    valueStyle: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.green.shade600),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 14),
-                    child: Divider(height: 1, thickness: 1),
-                  ),
-                  _summaryRow(
-                    label: "Total Amount",
-                    value:
-                    "₹${cartController.total.value.toStringAsFixed(0)}",
-                    labelStyle: const TextStyle(
-                        fontSize: 17, fontWeight: FontWeight.w700),
-                    valueStyle: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.kPrimary),
-                  ),
-                ],
-              )),
+              Obx(() {
+                // Calculate total savings from offer items
+                final totalSavings = cartController.cartItems.fold(
+                  0.0,
+                      (sum, item) =>
+                  sum +
+                      ((item.price - item.finalPrice) * item.quantity),
+                );
+
+                return Column(
+                  children: [
+                    _summaryRow(
+                      label: "Subtotal",
+                      value:
+                      "₹${cartController.cartItems.fold(0.0, (sum, item) => sum + (item.price * item.quantity)).toStringAsFixed(0)}",
+                      labelStyle: TextStyle(
+                          fontSize: 14, color: Colors.grey.shade600),
+                      valueStyle: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade700),
+                    ),
+                    // Show savings row only if there are offer items
+                    if (totalSavings > 0) ...[
+                      const SizedBox(height: 8),
+                      _summaryRow(
+                        label: "You Save",
+                        value: "- ₹${totalSavings.toStringAsFixed(0)}",
+                        labelStyle: TextStyle(
+                            fontSize: 14,
+                            color: Colors.green.shade600),
+                        valueStyle: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.green.shade600),
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    _summaryRow(
+                      label: "Delivery",
+                      value: "FREE",
+                      labelStyle: TextStyle(
+                          fontSize: 14, color: Colors.grey.shade600),
+                      valueStyle: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.green.shade600),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 14),
+                      child: Divider(height: 1, thickness: 1),
+                    ),
+                    _summaryRow(
+                      label: "Total Amount",
+                      value:
+                      "₹${cartController.total.value.toStringAsFixed(0)}",
+                      labelStyle: const TextStyle(
+                          fontSize: 17, fontWeight: FontWeight.w700),
+                      valueStyle: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.kPrimary),
+                    ),
+                  ],
+                );
+              }),
               const SizedBox(height: 18),
               SizedBox(
                 width: double.infinity,
@@ -218,7 +241,7 @@ class CartScreen extends StatelessWidget {
                       );
                       return;
                     }
-                    Get.toNamed('/checkout');
+                    Get.to(()=> AddressListPage());
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.kPrimary,
@@ -270,7 +293,6 @@ class CartScreen extends StatelessWidget {
 // ─────────────────────────────────────────
 // Cart Item Card
 // ─────────────────────────────────────────
-
 class _CartItemCard extends StatelessWidget {
   final CartItem item;
   final CartController cartController;
@@ -339,7 +361,6 @@ class _CartItemCard extends StatelessWidget {
       ),
       child: Obx(() {
         final isRemoving = cartController.isItemRemoving(item.productId);
-
         return AnimatedOpacity(
           duration: const Duration(milliseconds: 200),
           opacity: isRemoving ? 0.5 : 1.0,
@@ -361,29 +382,63 @@ class _CartItemCard extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Product Image
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      width: 86,
-                      height: 86,
-                      color: Colors.grey.shade100,
-                      child: Image.network(
-                        item.productImage,
-                        width: 86,
-                        height: 86,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Icon(
-                          Icons.image_outlined,
-                          color: Colors.grey.shade400,
-                          size: 36,
+                  // ── Product Image ──
+                  Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          width: 86,
+                          height: 86,
+                          color: Colors.grey.shade100,
+                          child: item.productImage.isNotEmpty
+                              ? Image.network(
+                            item.productImage,
+                            width: 86,
+                            height: 86,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Icon(
+                              Icons.image_outlined,
+                              color: Colors.grey.shade400,
+                              size: 36,
+                            ),
+                          )
+                              : Icon(
+                            Icons.image_outlined,
+                            color: Colors.grey.shade400,
+                            size: 36,
+                          ),
                         ),
                       ),
-                    ),
+                      // Offer badge on image
+                      if (item.type == 1 && item.offerPercentage > 0)
+                        Positioned(
+                          top: 0,
+                          left: 0,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 5, vertical: 3),
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(12),
+                                bottomRight: Radius.circular(8),
+                              ),
+                            ),
+                            child: Text(
+                              "${item.offerPercentage.toStringAsFixed(0)}%",
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                   const SizedBox(width: 14),
-
-                  // Details
+                  // ── Details ──
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -406,7 +461,6 @@ class _CartItemCard extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            // Delete button — small, top-right
                             GestureDetector(
                               onTap: isRemoving
                                   ? null
@@ -436,43 +490,84 @@ class _CartItemCard extends StatelessWidget {
                             ),
                           ],
                         ),
+                        const SizedBox(height: 6),
+                        // ── Price row ──
+                        if (item.type == 1 && item.offerPercentage > 0) ...[
+                          // Offer item: strikethrough original + green final
+                          Row(
+                            children: [
+                              Text(
+                                "₹${item.price.toStringAsFixed(0)}",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade400,
+                                  decoration: TextDecoration.lineThrough,
+                                  decorationColor: Colors.grey.shade400,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                "₹${item.finalPrice.toStringAsFixed(0)} each",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.green.shade600,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ] else ...[
+                          // Normal item: plain price
+                          Text(
+                            "₹${item.finalPrice.toStringAsFixed(0)} each",
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 10),
-
-                        // Unit price + stepper
+                        // ── Stepper + Item total ──
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Text(
-                              "₹${item.price.toStringAsFixed(0)} each",
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey.shade500,
-                              ),
-                            ),
-                            const Spacer(),
                             _QuantityStepper(
                               quantity: item.quantity,
-                              onDecrement: () => cartController.updateQuantity(
-                                  int.parse(item.productId), "decrement"),
-                              onIncrement: () => cartController.updateQuantity(
-                                  int.parse(item.productId), "increment"),
+                              onDecrement: () =>
+                                  cartController.updateQuantity(
+                                      int.parse(item.productId),
+                                      "decrement"),
+                              onIncrement: () =>
+                                  cartController.updateQuantity(
+                                      int.parse(item.productId),
+                                      "increment"),
+                            ),
+                            const Spacer(),
+                            // Item total
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  "₹${item.itemTotal.toStringAsFixed(0)}",
+                                  style: const TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF1A1A2E),
+                                  ),
+                                ),
+                                if (item.type == 1 &&
+                                    item.offerPercentage > 0)
+                                  Text(
+                                    "saved ₹${((item.price - item.finalPrice) * item.quantity).toStringAsFixed(0)}",
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.green.shade600,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                              ],
                             ),
                           ],
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        // Item total
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: Text(
-                            "₹${(item.price * item.quantity).toStringAsFixed(0)}",
-                            style: const TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF1A1A2E),
-                            ),
-                          ),
                         ),
                       ],
                     ),
@@ -488,9 +583,8 @@ class _CartItemCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────
-// Quantity Stepper — no loading indicator
+// Quantity Stepper
 // ─────────────────────────────────────────
-
 class _QuantityStepper extends StatelessWidget {
   final int quantity;
   final VoidCallback onDecrement;
@@ -515,7 +609,6 @@ class _QuantityStepper extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Decrement
           GestureDetector(
             onTap: onDecrement,
             child: Container(
@@ -527,12 +620,12 @@ class _QuantityStepper extends StatelessWidget {
               child: Icon(
                 Icons.remove_rounded,
                 size: 18,
-                color: quantity <= 1 ? Colors.grey.shade400 : Colors.grey.shade700,
+                color: quantity <= 1
+                    ? Colors.grey.shade400
+                    : Colors.grey.shade700,
               ),
             ),
           ),
-
-          // Quantity number — always visible, no spinner
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 150),
             transitionBuilder: (child, anim) =>
@@ -552,8 +645,6 @@ class _QuantityStepper extends StatelessWidget {
               ),
             ),
           ),
-
-          // Increment
           GestureDetector(
             onTap: onIncrement,
             child: Container(

@@ -139,30 +139,7 @@ class UserOfferProductPage extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 6),
-                          //
-                          // // Price row
-                          // Row(
-                          //   children: [
-                          //     Text(
-                          //       '₹${product.originalPrice}',
-                          //       style: const TextStyle(
-                          //         color: Colors.grey,
-                          //         decoration: TextDecoration.lineThrough,
-                          //         fontSize: 12,
-                          //       ),
-                          //     ),
-                          //     const SizedBox(width: 8),
-                          //     Text(
-                          //       '₹${product.offerPrice}',
-                          //       style: TextStyle(
-                          //         color: AppColors.kPrimary,
-                          //         fontWeight: FontWeight.bold,
-                          //         fontSize: 14,
-                          //       ),
-                          //     ),
-                          //   ],
-                          // ),
-                          // Price row — paste this inside itemBuilder replacing the existing Row
+
                           Row(
                             children: [
                               Text(

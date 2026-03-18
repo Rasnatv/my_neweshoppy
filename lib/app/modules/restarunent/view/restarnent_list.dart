@@ -3,8 +3,6 @@ import 'package:eshoppy/app/modules/restarunent/view/Restaurant_mainCart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import '../../../common/style/app_colors.dart';
-import '../../../common/style/app_text_style.dart';
 import '../../../data/models/userrestaurantmodel.dart';
 import '../controller/restaurant_controller.dart';
 import 'restaurantdetail_page.dart';
@@ -109,7 +107,7 @@ class RestaurantListPage extends StatelessWidget {
                     color: _P.textDark,
                     size: 24,
                   ),
-                  onPressed: (){}),
+                  onPressed: ()=>Get.to(()=>RestaurantFinalCart()),),
 
                 Positioned(
                   top: 10,

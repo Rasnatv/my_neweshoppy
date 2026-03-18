@@ -1,4 +1,5 @@
 
+
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -77,11 +78,10 @@ class CartController extends GetxController {
     }
   }
 
+  /// [type] → 0 for normal product, 1 for offer product
   Future<bool> addToCart({
     required int productId,
-    required String name,
-    required String image,
-    required double price,
+    required int type,
   }) async {
     if (authToken.isEmpty) {
       Get.snackbar("Unauthorized", "Please login first",
@@ -105,9 +105,7 @@ class CartController extends GetxController {
         },
         body: {
           "product_id": productId.toString(),
-          "product_name": name,
-          "product_image": image,
-          "price": price.toString(),
+          "type": type.toString(), // 0 = normal, 1 = offer
         },
       );
 
@@ -151,8 +149,7 @@ class CartController extends GetxController {
     }
   }
 
-  /// Update quantity — pure optimistic UI
-  /// Only reverts from server if API call fails
+  /// Optimistic UI update — reverts only on failure
   Future<void> updateQuantity(int productId, String action) async {
     final key = productId.toString();
     final index = cartItems.indexWhere((item) => item.productId == key);
@@ -167,18 +164,16 @@ class CartController extends GetxController {
       return;
     }
 
-    // Save old quantity in case we need to revert
     final oldQuantity = item.quantity;
+    final oldItemTotal = item.itemTotal;
     final newQuantity =
     action == "increment" ? item.quantity + 1 : item.quantity - 1;
+    final newItemTotal = item.finalPrice * newQuantity;
 
-    // Instant UI update — no flicker, no spinner
-    cartItems[index] = CartItem(
-      productId: item.productId,
-      productName: item.productName,
-      productImage: item.productImage,
-      price: item.price,
+    // Instant UI update
+    cartItems[index] = item.copyWith(
       quantity: newQuantity,
+      itemTotal: newItemTotal,
     );
     _recalculateTotal();
 
@@ -199,16 +194,13 @@ class CartController extends GetxController {
       final Map<String, dynamic> data = jsonDecode(response.body);
 
       if (data['status'] != true) {
-        // Revert to old quantity on failure
+        // Revert on failure
         final revertIndex =
         cartItems.indexWhere((i) => i.productId == key);
         if (revertIndex != -1) {
-          cartItems[revertIndex] = CartItem(
-            productId: item.productId,
-            productName: item.productName,
-            productImage: item.productImage,
-            price: item.price,
+          cartItems[revertIndex] = item.copyWith(
             quantity: oldQuantity,
+            itemTotal: oldItemTotal,
           );
           _recalculateTotal();
         }
@@ -222,18 +214,14 @@ class CartController extends GetxController {
           borderRadius: 12,
         );
       }
-      // ✅ On success: do nothing — optimistic update is already correct
     } catch (e) {
       // Revert on network error
       final revertIndex =
       cartItems.indexWhere((i) => i.productId == key);
       if (revertIndex != -1) {
-        cartItems[revertIndex] = CartItem(
-          productId: item.productId,
-          productName: item.productName,
-          productImage: item.productImage,
-          price: item.price,
+        cartItems[revertIndex] = item.copyWith(
           quantity: oldQuantity,
+          itemTotal: oldItemTotal,
         );
         _recalculateTotal();
       }
@@ -241,7 +229,6 @@ class CartController extends GetxController {
     }
   }
 
-  /// Remove product — fades card, no full-screen spinner
   Future<void> removeFromCart(int productId) async {
     final key = productId.toString();
     removingItems[key] = true;
@@ -294,7 +281,8 @@ class CartController extends GetxController {
   }
 
   void _recalculateTotal() {
-    total.value =
-        cartItems.fold(0.0, (sum, item) => sum + (item.price * item.quantity));
+    // Use finalPrice (the actual price paid) × quantity
+    total.value = cartItems.fold(
+        0.0, (sum, item) => sum + (item.finalPrice * item.quantity));
   }
 }

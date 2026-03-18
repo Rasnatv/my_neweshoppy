@@ -882,3 +882,4 @@ class _RestaurantBanner extends StatelessWidget {
     );
   }
 }
+
