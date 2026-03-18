@@ -112,166 +112,124 @@
 //   }
 // }
 // ─────────────────────────────────────────────────────────────────────────────
+// ── restaurantmaincartmodel.dart ──────────────────────────────────────────────
 
-// ── restaurantmaincartmodel.dart ─────────────────────────────────────────────
+// ── restaurantmaincartmodel.dart ──────────────────────────────────────────────
+// ── restaurant_finalcart_model.dart ──────────────────────────────────────────
 
-double _toDouble(dynamic v) => double.tryParse(v?.toString() ?? '0') ?? 0.0;
-int    _toInt(dynamic v)    => int.tryParse(v?.toString() ?? '0') ?? 0;
+class FinalCartResponseModel {
+  final int status;
+  final String message;
+  final List<FinalCartRestaurantModel> data;
 
-// ── Restaurant ────────────────────────────────────────────────────────────────
-class FinalCartRestaurant {
-  final int    restaurantId;
-  final String restaurantName;
-  final String address;
-
-  FinalCartRestaurant({
-    required this.restaurantId,
-    required this.restaurantName,
-    required this.address,
+  FinalCartResponseModel({
+    required this.status,
+    required this.message,
+    required this.data,
   });
 
-  factory FinalCartRestaurant.fromJson(Map<String, dynamic> j) =>
-      FinalCartRestaurant(
-        restaurantId:   _toInt(j['restaurant_id']),
-        restaurantName: j['restaurant_name']?.toString() ?? '',
-        address:        j['address']?.toString() ?? '',
-      );
+  factory FinalCartResponseModel.fromJson(Map<String, dynamic> json) {
+    return FinalCartResponseModel(
+      status: json['status'] ?? 0,
+      message: json['message'] ?? '',
+      data: (json['data'] as List<dynamic>? ?? [])
+          .map((e) => FinalCartRestaurantModel.fromJson(e))
+          .toList(),
+    );
+  }
 }
 
-// ── Booking details ───────────────────────────────────────────────────────────
-class FinalCartBookingDetails {
-  final int    bookingId;
+class FinalCartRestaurantModel {
+  final int restaurantId;
+  final String restaurantName;
+  final String restaurantLocation;
+  final List<FinalCartBookingModel> bookings;
+
+  FinalCartRestaurantModel({
+    required this.restaurantId,
+    required this.restaurantName,
+    required this.restaurantLocation,
+    required this.bookings,
+  });
+
+  factory FinalCartRestaurantModel.fromJson(Map<String, dynamic> json) {
+    return FinalCartRestaurantModel(
+      restaurantId: int.tryParse(json['restaurant_id'].toString()) ?? 0,
+      restaurantName: json['restaurant_name'] ?? '',
+      restaurantLocation: json['restaurant_location'] ?? '',
+      bookings: (json['bookings'] as List<dynamic>? ?? [])
+          .map((e) => FinalCartBookingModel.fromJson(e))
+          .toList(),
+    );
+  }
+
+  /// Total across all bookings in this restaurant
+  double get restaurantTotal =>
+      bookings.fold(0.0, (sum, b) => sum + b.bookingTotal);
+
+  /// Total item count across all bookings
+  int get totalItemCount =>
+      bookings.fold(0, (sum, b) => sum + b.items.length);
+}
+
+class FinalCartBookingModel {
+  final int bookingId;
   final String bookingDate;
   final String timeSlot;
   final String tableNo;
-  final String guests;
-  final String mealType;
-  final String seatingType;
+  final List<FinalCartItemModel> items;
+  final double bookingTotal;
 
-  FinalCartBookingDetails({
+  FinalCartBookingModel({
     required this.bookingId,
     required this.bookingDate,
     required this.timeSlot,
     required this.tableNo,
-    required this.guests,
-    required this.mealType,
-    required this.seatingType,
+    required this.items,
+    required this.bookingTotal,
   });
 
-  factory FinalCartBookingDetails.fromJson(Map<String, dynamic> j) =>
-      FinalCartBookingDetails(
-        bookingId:   _toInt(j['booking_id']),
-        bookingDate: j['booking_date']?.toString() ?? '',
-        timeSlot:    j['time_slot']?.toString() ?? '',
-        tableNo:     j['table_no']?.toString() ?? '',
-        guests:      j['guests']?.toString() ?? '',
-        mealType:    j['meal_type']?.toString() ?? '',
-        seatingType: j['seating_type']?.toString() ?? '',
-      );
-
-  String get mealLabel {
-    final m = mealType.toLowerCase();
-    return m.isEmpty ? '' : '${m[0].toUpperCase()}${m.substring(1)}';
-  }
-
-  String get seatingLabel {
-    final s = seatingType.toLowerCase();
-    return s.isEmpty ? '' : '${s[0].toUpperCase()}${s.substring(1)}';
+  factory FinalCartBookingModel.fromJson(Map<String, dynamic> json) {
+    return FinalCartBookingModel(
+      bookingId: int.tryParse(json['booking_id'].toString()) ?? 0,
+      bookingDate: json['booking_date'] ?? '',
+      timeSlot: json['time_slot'] ?? '',
+      tableNo: json['table_no'] ?? '',
+      items: (json['items'] as List<dynamic>? ?? [])
+          .map((e) => FinalCartItemModel.fromJson(e))
+          .toList(),
+      bookingTotal:
+      double.tryParse(json['booking_total'].toString()) ?? 0.0,
+    );
   }
 }
 
-// ── Cart item ─────────────────────────────────────────────────────────────────
-class FinalCartItem {
-  final int    id;
-  final int    restaurantId;
+class FinalCartItemModel {
+  final String itemImage;
   final String itemName;
-  final String image;
   final double price;
-  final int    quantity;
+  final int quantity;
   final double totalPrice;
 
-  const FinalCartItem({
-    required this.id,
-    required this.restaurantId,
+  FinalCartItemModel({
+    required this.itemImage,
     required this.itemName,
-    required this.image,
     required this.price,
     required this.quantity,
     required this.totalPrice,
   });
 
-  factory FinalCartItem.fromJson(Map<String, dynamic> j) => FinalCartItem(
-    id:           _toInt(j['id']),
-    restaurantId: _toInt(j['restaurant_id']),
-    itemName:     j['item_name']?.toString() ?? '',
-    image:        j['image']?.toString() ?? '',
-    price:        _toDouble(j['price']),
-    quantity:     _toInt(j['quantity']),
-    totalPrice:   _toDouble(j['total_price']),
-  );
-
-  FinalCartItem copyWith({int? quantity}) {
-    final q = quantity ?? this.quantity;
-    return FinalCartItem(
-      id:           id,
-      restaurantId: restaurantId,
-      itemName:     itemName,
-      image:        image,
-      price:        price,
-      quantity:     q,
-      totalPrice:   price * q,
+  factory FinalCartItemModel.fromJson(Map<String, dynamic> json) {
+    return FinalCartItemModel(
+      itemImage: json['item_image'] ?? '',
+      itemName: json['item_name'] ?? '',
+      price: double.tryParse(json['price'].toString()) ?? 0.0,
+      quantity: int.tryParse(json['quantity'].toString()) ?? 0,
+      totalPrice: double.tryParse(json['total_price'].toString()) ?? 0.0,
     );
   }
-}
 
-// ── Full cart data ────────────────────────────────────────────────────────────
-class FinalCartData {
-  final FinalCartRestaurant     restaurant;
-  final FinalCartBookingDetails? bookingDetails;
-  final List<FinalCartItem>     cartItems;
-  final double                  grandTotal;
-
-  FinalCartData({
-    required this.restaurant,
-    required this.bookingDetails,
-    required this.cartItems,
-    required this.grandTotal,
-  });
-
-  factory FinalCartData.fromJson(Map<String, dynamic> j) => FinalCartData(
-    restaurant: FinalCartRestaurant.fromJson(
-        j['restaurant'] as Map<String, dynamic>),
-    bookingDetails: j['booking_details'] != null
-        ? FinalCartBookingDetails.fromJson(
-        j['booking_details'] as Map<String, dynamic>)
-        : null,
-    cartItems: (j['cart_items'] as List<dynamic>? ?? [])
-        .map((e) => FinalCartItem.fromJson(e as Map<String, dynamic>))
-        .toList(),
-    grandTotal: _toDouble(j['grand_total']),
-  );
-
-  int    get totalItemCount => cartItems.fold(0, (s, i) => s + i.quantity);
-  double get cartSubtotal   => cartItems.fold(0.0, (s, i) => s + i.totalPrice);
-}
-
-// ── Response wrapper ──────────────────────────────────────────────────────────
-class FinalCartResponse {
-  final int    status;
-  final String message;
-  final FinalCartData? data;
-
-  FinalCartResponse({
-    required this.status,
-    required this.message,
-    this.data,
-  });
-
-  factory FinalCartResponse.fromJson(Map<String, dynamic> j) => FinalCartResponse(
-    status:  _toInt(j['status']),
-    message: j['message']?.toString() ?? '',
-    data: j['data'] != null
-        ? FinalCartData.fromJson(j['data'] as Map<String, dynamic>)
-        : null,
-  );
+  /// Full image URL helper  — adjust base URL as needed
+  String get imageUrl =>
+      'https://rasma.astradevelops.in/e_shoppyy/public/$itemImage';
 }

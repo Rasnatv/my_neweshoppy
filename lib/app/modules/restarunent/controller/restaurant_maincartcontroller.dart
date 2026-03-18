@@ -185,140 +185,169 @@
 // POST /restaurant/final-cart  { "restaurant_id": <id> }
 // ─────────────────────────────────────────────────────────────────────────────
 // ── restaurant_maincartcontroller.dart ───────────────────────────────────────
+// ── restaurant_maincartcontroller.dart ────────────────────────────────────────
+//
+// Requires:
+//   get_storage: ^2.x  (GetStorage)
+//   get: ^4.x          (GetX)
+//   http: ^1.x
+//
+// GetStorage key expected:  'auth_token'  →  Bearer token string
+// ─────────────────────────────────────────────────────────────────────────────
+// ── restaurant_maincartcontroller.dart ────────────────────────────────────────
+//
+// Dependencies:
+//   get: ^4.x
+//   get_storage: ^2.x
+//   http: ^1.x
+//
+// GetStorage key: 'auth_token' → Bearer token string
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── restaurant_finalcart_controller.dart ─────────────────────────────────────
+//
+// Usage:
+//   final FinalCartController controller = Get.put(FinalCartController());
+//
+// Requires:  get_storage, get, http (or dio)
+// ─────────────────────────────────────────────────────────────────────────────
 
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../data/models/restaurantmaincartmodel.dart';
 
-class MainCartController extends GetxController {
-  // ── restaurantId passed directly — never from Get.arguments ───────────────
-  final int restaurantId;
-  MainCartController({required this.restaurantId});
 
-  // ── State ──────────────────────────────────────────────────────────────────
-  final Rx<FinalCartData?> cartData    = Rx<FinalCartData?>(null);
-  final RxBool             isLoading   = false.obs;
-  final RxString           errorMessage = ''.obs;
 
-  // ── Config ─────────────────────────────────────────────────────────────────
-  static const String _base =
-      'https://rasma.astradevelops.in/e_shoppyy/public/api';
-  static const String _imageBase =
-      'https://rasma.astradevelops.in/e_shoppyy/public/';
+class FinalCartController extends GetxController {
+  // ── Storage ────────────────────────────────────────────────────────────────
+  final  _box = GetStorage();
 
-  String imageUrl(String path) => '$_imageBase$path';
+  // ── Observable state ───────────────────────────────────────────────────────
+  final RxList<FinalCartRestaurantModel> restaurants =
+      <FinalCartRestaurantModel>[].obs;
+  final RxBool isLoading = false.obs;
+  final RxString errorMessage = ''.obs;
 
-  final _box = GetStorage();
-  String get _token => _box.read<String>('auth_token') ?? '';
+  // ── Computed ───────────────────────────────────────────────────────────────
+  bool get isEmpty => restaurants.isEmpty;
 
+  double get grandTotal =>
+      restaurants.fold(0.0, (sum, r) => sum + r.restaurantTotal);
+
+  int get totalBookingCount =>
+      restaurants.fold(0, (sum, r) => sum + r.bookings.length);
+
+  int get totalItemCount =>
+      restaurants.fold(0, (sum, r) => sum + r.totalItemCount);
+
+  // ── Lifecycle ──────────────────────────────────────────────────────────────
   @override
   void onInit() {
     super.onInit();
-    debugPrint('── MainCartController.onInit  restaurantId=$restaurantId');
-    fetchCart();
+    fetchFinalCart();
   }
 
-  // ── Fetch ──────────────────────────────────────────────────────────────────
-  Future<void> fetchCart() async {
+  // ── Auth token helper ──────────────────────────────────────────────────────
+  String get _authToken => _box.read('auth_token') ?? '';
+
+  // ── API ────────────────────────────────────────────────────────────────────
+  static const String _baseUrl =
+      'https://rasma.astradevelops.in/e_shoppyy/public/api';
+
+  Future<void> fetchFinalCart() async {
+    if (_authToken.isEmpty) {
+      errorMessage.value = 'Authentication token not found. Please log in.';
+      return;
+    }
+
     try {
-      isLoading.value    = true;
+      isLoading.value = true;
       errorMessage.value = '';
-      cartData.value     = null;   // clear stale data while loading
 
-      final body = jsonEncode({'restaurant_id': restaurantId});
-      debugPrint('── FINAL CART REQUEST  body=$body  token=${_token.isNotEmpty}');
-
-      final res = await http.post(
-        Uri.parse('$_base/restaurant/final-cart'),
+      final response = await http.get(
+        Uri.parse('$_baseUrl/restaurant-final-cart'),
         headers: {
           'Content-Type': 'application/json',
-          'Accept':       'application/json',
-          if (_token.isNotEmpty) 'Authorization': 'Bearer $_token',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $_authToken',
         },
-        body: body,
       );
 
-      debugPrint('── FINAL CART RESPONSE status=${res.statusCode}');
-      debugPrint('── FINAL CART RESPONSE body=${res.body}');
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = jsonDecode(response.body);
+        final FinalCartResponseModel cartResponse =
+        FinalCartResponseModel.fromJson(jsonData);
 
-      final json   = _safe(res.body);
-      final parsed = FinalCartResponse.fromJson(json);
-
-      debugPrint('── parsed.status=${parsed.status}  parsed.message=${parsed.message}');
-      debugPrint('── parsed.data=${parsed.data}');
-
-      if (parsed.status == 1 && parsed.data != null) {
-        cartData.value = parsed.data;
-        debugPrint('── cartItems count=${parsed.data!.cartItems.length}');
+        if (cartResponse.status == 1) {
+          restaurants.assignAll(cartResponse.data);
+        } else {
+          errorMessage.value =
+          cartResponse.message.isNotEmpty
+              ? cartResponse.message
+              : 'Failed to fetch cart.';
+        }
+      } else if (response.statusCode == 401) {
+        errorMessage.value = 'Session expired. Please log in again.';
       } else {
-        errorMessage.value = parsed.message.isNotEmpty
-            ? parsed.message
-            : 'Could not load cart.';
+        errorMessage.value =
+        'Server error (${response.statusCode}). Please try again.';
       }
-    } catch (e, st) {
+    } catch (e) {
       errorMessage.value = 'Network error. Please check your connection.';
-      debugPrint('── fetchCart ERROR: $e');
-      debugPrintStack(stackTrace: st, label: 'fetchCart');
     } finally {
       isLoading.value = false;
     }
   }
 
-  // ── Local qty controls (no network call) ──────────────────────────────────
-  void incrementItem(int itemId) => _changeQty(itemId, 1);
+  // ── Remove a single booking ────────────────────────────────────────────────
+  Future<void> removeBooking(int restaurantId, int bookingId) async {
+    if (_authToken.isEmpty) return;
 
-  void decrementItem(int itemId) {
-    final item = cartData.value?.cartItems
-        .firstWhereOrNull((i) => i.id == itemId);
-    if (item != null && item.quantity <= 1) {
-      removeItem(itemId);
-    } else {
-      _changeQty(itemId, -1);
-    }
-  }
-
-  void removeItem(int itemId) {
-    if (cartData.value == null) return;
-    _updateItems(
-      cartData.value!.cartItems.where((i) => i.id != itemId).toList(),
-    );
-  }
-
-  void _changeQty(int itemId, int delta) {
-    if (cartData.value == null) return;
-    final updated = cartData.value!.cartItems.map((i) {
-      if (i.id == itemId) return i.copyWith(quantity: i.quantity + delta);
-      return i;
-    }).toList();
-    _updateItems(updated);
-  }
-
-  void _updateItems(List<FinalCartItem> items) {
-    final old = cartData.value!;
-    cartData.value = FinalCartData(
-      restaurant:     old.restaurant,
-      bookingDetails: old.bookingDetails,
-      cartItems:      items,
-      grandTotal:     items.fold(0.0, (s, i) => s + i.totalPrice),
-    );
-  }
-
-  // ── Helpers ────────────────────────────────────────────────────────────────
-  bool get isEmpty =>
-      cartData.value == null || cartData.value!.cartItems.isEmpty;
-
-  Map<String, dynamic> _safe(String body) {
     try {
-      final d = jsonDecode(body);
-      return d is Map<String, dynamic>
-          ? d
-          : {'status': 0, 'message': 'Unexpected response'};
-    } catch (_) {
-      return {'status': 0, 'message': 'Invalid JSON'};
+      // Optimistic UI: remove locally first
+      final rIndex =
+      restaurants.indexWhere((r) => r.restaurantId == restaurantId);
+      if (rIndex == -1) return;
+
+      final updatedBookings = restaurants[rIndex]
+          .bookings
+          .where((b) => b.bookingId != bookingId)
+          .toList();
+
+      if (updatedBookings.isEmpty) {
+        // Remove the entire restaurant card if no bookings remain
+        restaurants.removeAt(rIndex);
+      } else {
+        restaurants[rIndex] = FinalCartRestaurantModel(
+          restaurantId: restaurants[rIndex].restaurantId,
+          restaurantName: restaurants[rIndex].restaurantName,
+          restaurantLocation: restaurants[rIndex].restaurantLocation,
+          bookings: updatedBookings,
+        );
+      }
+      restaurants.refresh();
+
+      // TODO: Add your delete booking API call here
+      // await http.delete(
+      //   Uri.parse('$_baseUrl/restaurant-booking/$bookingId'),
+      //   headers: {'Authorization': 'Bearer $_authToken'},
+      // );
+    } catch (e) {
+      errorMessage.value = 'Failed to remove booking.';
+      fetchFinalCart(); // Re-sync on error
     }
   }
+
+
+  void removeRestaurant(int restaurantId) {
+    restaurants.removeWhere((r) => r.restaurantId == restaurantId);
+    restaurants.refresh();
+  }
+
+  // ── Format price helper ────────────────────────────────────────────────────
+  static String formatPrice(double price) =>
+      price % 1 == 0 ? price.toInt().toString() : price.toStringAsFixed(2);
 }

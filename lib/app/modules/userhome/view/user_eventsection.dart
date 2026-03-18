@@ -235,7 +235,7 @@ class UpcomingEventsSection extends StatelessWidget {
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                event.time,
+                                "${event.startTime} - ${event.endTime}",
                                 style: TextStyle(
                                   fontSize: 11,
                                   color: Colors.grey[700],
