@@ -102,8 +102,8 @@ class HomeShimmerSkeleton extends StatelessWidget {
         // ── 1. HEADER ──────────────────────────────────────────────────────
         SliverToBoxAdapter(
           child: Container(
-            decoration:  BoxDecoration(
-              color:Colors.teal,
+            decoration: const BoxDecoration(
+              color: Colors.teal,
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(28),
                 bottomRight: Radius.circular(28),
@@ -410,7 +410,7 @@ class _UserhomeState extends State<Userhome> with TickerProviderStateMixin {
         SliverToBoxAdapter(child: CategorySection()),
         const SliverToBoxAdapter(child: SizedBox(height: 5)),
 
-        SliverToBoxAdapter(child: _RestaurantBanner()),
+        SliverToBoxAdapter(child: const _RestaurantBanner()),
         const SliverToBoxAdapter(child: SizedBox(height: 28)),
 
         SliverToBoxAdapter(
@@ -436,6 +436,9 @@ class _UserhomeState extends State<Userhome> with TickerProviderStateMixin {
           ),
         ),
         const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+        // ✅ FIX: UserOfferSection already returns SliverToBoxAdapter internally
+        // so we do NOT wrap it in another SliverToBoxAdapter here
         UserOfferSection(),
 
         const SliverToBoxAdapter(child: SizedBox(height: 80)),

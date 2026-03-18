@@ -97,7 +97,7 @@ class RestaurantCartPage extends StatelessWidget {
   }
 }
 
-// ── CART ITEM CARD ────────────────────────────────────────────────────────────
+
 class _CartItemCard extends StatelessWidget {
   final RestaurantCartModel item;
   final Restaurantcartcontroller cartController;
@@ -133,8 +133,9 @@ class _CartItemCard extends StatelessWidget {
             // ── IMAGE ────────────────────────────────────────────────
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                item.image,
+              child: item.imageUrl.isNotEmpty
+                  ? Image.network(
+                item.imageUrl, // ✅ use imageUrl not image
                 width: 80,
                 height: 80,
                 fit: BoxFit.cover,
@@ -157,6 +158,13 @@ class _CartItemCard extends StatelessWidget {
                     ),
                   );
                 },
+              )
+                  : Container(
+                width: 80,
+                height: 80,
+                color: Colors.grey.shade200,
+                child: Icon(Icons.fastfood,
+                    size: 36, color: Colors.grey.shade400),
               ),
             ),
             const SizedBox(width: 12),
@@ -179,8 +187,7 @@ class _CartItemCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     '₹$priceDisplay / item',
-                    style:
-                    TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                   ),
                   const SizedBox(height: 8),
                   Text(

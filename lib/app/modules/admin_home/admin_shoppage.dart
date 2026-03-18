@@ -142,17 +142,10 @@ class AdminShopPage extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {
-            Get.to(
-                  () => ShopProductsPage(
-                shopName: shop.name,
-                products: const [],
-              ),
-              transition: Transition.rightToLeft,
-              duration: const Duration(milliseconds: 300),
-            );
-          },
-          borderRadius: BorderRadius.circular(16),
+          onTap: () =>Get.to(
+                () => ShopProductPage(),
+            arguments: {'shop_id': shop.id }, // pass your shop id here
+          ),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(

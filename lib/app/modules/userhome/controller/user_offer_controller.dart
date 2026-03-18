@@ -1,9 +1,9 @@
+
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import '../../../data/models/usermerchantoffermodel.dart';
-
 
 class UserOfferController extends GetxController {
   var isLoading = false.obs;
@@ -24,7 +24,7 @@ class UserOfferController extends GetxController {
     try {
       isLoading(true);
 
-      final token = box.read('auth_token'); // 🔑 auth_token from storage
+      final token = box.read('auth_token');
 
       final response = await http.get(
         Uri.parse(apiUrl),
@@ -40,16 +40,23 @@ class UserOfferController extends GetxController {
         if (decoded['status'] == 1) {
           final List data = decoded['data'];
 
-          offerList.value =
-              data.map((e) => UserOfferModel.fromJson(e)).toList();
+          // ✅ Filter out items where merchant_id or shop_name is null
+          // These are invalid/incomplete offer entries from the backend
+          offerList.value = data
+              .map((e) => UserOfferModel.fromJson(e))
+              .where((offer) =>
+          offer.merchantId != null && offer.shopName != null)
+              .toList();
+
         } else {
-          Get.snackbar('Error', decoded['message']);
+          Get.snackbar('Error', decoded['message'] ?? 'Something went wrong');
         }
       } else {
-        Get.snackbar('Error', 'Server error');
+        Get.snackbar('Error', 'Server error: ${response.statusCode}');
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to load offers');
+      print('fetchOffers error: $e');  // 👈 check this in console
+      Get.snackbar('Error', 'Failed to load offers: $e');
     } finally {
       isLoading(false);
     }

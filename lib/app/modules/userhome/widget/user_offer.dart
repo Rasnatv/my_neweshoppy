@@ -1,11 +1,11 @@
-//
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-//
-// import '../../../common/style/app_colors.dart';
-// import '../controller/user_offer_controller.dart';
-// import '../view/user_offerproductlistpage.dart';
-//
+
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+import '../../../common/style/app_colors.dart';
+import '../controller/user_offer_controller.dart';
+import '../view/user_offerproductlistpage.dart';
+
 // class UserOfferSection extends StatelessWidget {
 //   UserOfferSection({super.key});
 //
@@ -236,7 +236,8 @@
 //                               ),
 //                               const SizedBox(width: 4),
 //                               Text(
-//                                 "${widget.offer.discountPercentage}% OFF",
+//                                 // ✅ FIXED: removes decimals — shows "30% OFF" not "30.00% OFF"
+//                                 "${double.parse(widget.offer.discountPercentage.toString()).toInt()}% OFF",
 //                                 style: const TextStyle(
 //                                   color: Colors.white,
 //                                   fontSize: 11,
@@ -290,8 +291,7 @@
 //                                       Text(
 //                                         "Limited Time Offer",
 //                                         style: TextStyle(
-//                                           color:
-//                                           Colors.white.withOpacity(0.80),
+//                                           color: Colors.white.withOpacity(0.80),
 //                                           fontSize: 11,
 //                                           fontWeight: FontWeight.w500,
 //                                           letterSpacing: 0.2,
@@ -314,8 +314,7 @@
 //                                 borderRadius: BorderRadius.circular(12),
 //                                 boxShadow: [
 //                                   BoxShadow(
-//                                     color:
-//                                     Colors.black.withOpacity(0.15),
+//                                     color: Colors.black.withOpacity(0.15),
 //                                     blurRadius: 8,
 //                                     offset: const Offset(0, 3),
 //                                   ),
@@ -356,12 +355,7 @@
 //     );
 //   }
 // }
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
-import '../../../common/style/app_colors.dart';
-import '../controller/user_offer_controller.dart';
-import '../view/user_offerproductlistpage.dart';
 
 class UserOfferSection extends StatelessWidget {
   UserOfferSection({super.key});
@@ -376,11 +370,21 @@ class UserOfferSection extends StatelessWidget {
           // ---------- LOADING ----------
           if (controller.isLoading.value) {
             return SizedBox(
-              height: 200,
-              child: Center(
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: AppColors.kPrimary,
+              height: 210,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: 3,
+                itemBuilder: (_, i) => Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: Container(
+                    width: 300,
+                    height: 210,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(22),
+                    ),
+                  ),
                 ),
               ),
             );
@@ -460,7 +464,7 @@ class _OfferCardState extends State<_OfferCard>
     );
 
     final delay = (widget.index * 0.15).clamp(0.0, 0.6);
-    final end   = (delay + 0.5).clamp(0.0, 1.0);
+    final end = (delay + 0.5).clamp(0.0, 1.0);
 
     _fade = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(
@@ -531,7 +535,7 @@ class _OfferCardState extends State<_OfferCard>
                   borderRadius: BorderRadius.circular(22),
                   child: Stack(
                     children: [
-                      // ── Background image ─────────────────────────────────
+                      // ── Background image ──────────────────────────────
                       Positioned.fill(
                         child: Image.network(
                           widget.offer.image,
@@ -547,7 +551,7 @@ class _OfferCardState extends State<_OfferCard>
                         ),
                       ),
 
-                      // ── Gradient overlay ─────────────────────────────────
+                      // ── Gradient overlay ──────────────────────────────
                       Positioned.fill(
                         child: DecoratedBox(
                           decoration: BoxDecoration(
@@ -565,7 +569,7 @@ class _OfferCardState extends State<_OfferCard>
                         ),
                       ),
 
-                      // ── Discount badge ───────────────────────────────────
+                      // ── Discount badge ────────────────────────────────
                       Positioned(
                         top: 14,
                         left: 14,
@@ -593,7 +597,6 @@ class _OfferCardState extends State<_OfferCard>
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                // ✅ FIXED: removes decimals — shows "30% OFF" not "30.00% OFF"
                                 "${double.parse(widget.offer.discountPercentage.toString()).toInt()}% OFF",
                                 style: const TextStyle(
                                   color: Colors.white,
@@ -607,7 +610,7 @@ class _OfferCardState extends State<_OfferCard>
                         ),
                       ),
 
-                      // ── Bottom content ───────────────────────────────────
+                      // ── Bottom content ────────────────────────────────
                       Positioned(
                         left: 16,
                         right: 16,
@@ -648,7 +651,8 @@ class _OfferCardState extends State<_OfferCard>
                                       Text(
                                         "Limited Time Offer",
                                         style: TextStyle(
-                                          color: Colors.white.withOpacity(0.80),
+                                          color:
+                                          Colors.white.withOpacity(0.80),
                                           fontSize: 11,
                                           fontWeight: FontWeight.w500,
                                           letterSpacing: 0.2,

@@ -1,4 +1,4 @@
-// lib/app/data/models/restaurantcartmodel.dart
+
 
 class RestaurantCartModel {
   final int id;
@@ -13,6 +13,10 @@ class RestaurantCartModel {
   final String createdAt;
   final String updatedAt;
 
+  // ── Base URL for relative image paths ─────────────────────────────────────
+  static const String _baseImageUrl =
+      'https://rasma.astradevelops.in/e_shoppyy/public/';
+
   RestaurantCartModel({
     required this.id,
     required this.userId,
@@ -26,6 +30,18 @@ class RestaurantCartModel {
     required this.createdAt,
     required this.updatedAt,
   });
+
+  /// Always returns a full valid URL regardless of what API returns
+  String get imageUrl {
+    if (image.isEmpty) return '';
+    // Already a full URL — return as-is
+    if (image.startsWith('http://') || image.startsWith('https://')) {
+      return image;
+    }
+    // Relative path — prepend base URL
+    final path = image.startsWith('/') ? image.substring(1) : image;
+    return '$_baseImageUrl$path';
+  }
 
   factory RestaurantCartModel.fromJson(Map<String, dynamic> json) {
     return RestaurantCartModel(
