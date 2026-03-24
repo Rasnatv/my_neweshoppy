@@ -42,13 +42,13 @@ class UserloginController extends GetxController {
       description: 'Manage your store',
       color: const Color(0xFFFF9800),
     ),
-    3: RoleInfo(
-      id: 3,
-      name: 'Admin',
-      icon: Icons.admin_panel_settings_outlined,
-      description: 'System administration',
-      color: const Color(0xFF9C27B0),
-    ),
+    // 3: RoleInfo(
+    //   id: 3,
+    //   name: 'Admin',
+    //   icon: Icons.admin_panel_settings_outlined,
+    //   description: 'System administration',
+    //   color: const Color(0xFF9C27B0),
+    // ),
   };
 
   @override
@@ -163,13 +163,13 @@ class UserloginController extends GetxController {
           duration: const Duration(milliseconds: 400),
         );
         break;
-      case 3:
-        Get.offAll(
-              () => AdminDashboard(),
-          transition: Transition.fadeIn,
-          duration: const Duration(milliseconds: 400),
-        );
-        break;
+      // case 3:
+      //   Get.offAll(
+      //         () => AdminDashboard(),
+      //     transition: Transition.fadeIn,
+      //     duration: const Duration(milliseconds: 400),
+      //   );
+      //   break;
       default:
         _showError("Invalid user role");
     }
@@ -228,3 +228,4 @@ class RoleInfo {
     required this.color,
   });
 }
+

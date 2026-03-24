@@ -7,6 +7,7 @@ import '../../modules/profile/controller/editprofile_controller.dart';
 import '../../modules/userhome/controller/district _controller.dart';
 import '../../modules/userhome/controller/usercategory_controller.dart';
 import '../../modules/userlogin/controller/userlogin_controller.dart';
+import '../../modules/userlogin/view/login.dart';
 
 
 class AuthService {
@@ -68,8 +69,8 @@ class AuthService {
     if (Get.isRegistered<EditProfileController>()) {
       Get.delete<EditProfileController>(force: true);
     }
-
-    Get.offAllNamed('/login');
+    Get.offAll(LoginPageView());
+    //Get.offAllNamed('/login');
   }
 
 }

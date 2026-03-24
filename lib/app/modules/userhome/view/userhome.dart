@@ -18,9 +18,7 @@ const kPurplePrimary = Color(0xFF00796B);
 const kPurpleMid     = Color(0xFF00796B);
 const kPurpleLight   = Color(0xFF00796B);
 
-// ─────────────────────────────────────────────
-//  SHIMMER BOX
-// ─────────────────────────────────────────────
+
 class ShimmerBox extends StatefulWidget {
   final double width;
   final double height;

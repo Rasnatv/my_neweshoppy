@@ -2,9 +2,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../common/style/app_colors.dart';
 import '../../../data/models/addresslistmodel.dart';
 import '../controller/address_listcontroller.dart';
 import 'address_newadding.dart';
+import 'address_updatepage.dart';
 
 
 class AddressListPage extends StatelessWidget {
@@ -12,7 +14,7 @@ class AddressListPage extends StatelessWidget {
 
   final AddressListController controller = Get.put(AddressListController());
 
-  static const Color primary = Color(0xFFB02399);
+  static  Color primary = AppColors.kPrimary;
   static const Color bg = Color(0xFFF0F0F5);
   static const Color textDark = Color(0xFF1A1A1A);
 
@@ -44,7 +46,7 @@ class AddressListPage extends StatelessWidget {
           Expanded(
             child: Obx(() {
               if (controller.isLoading.value) {
-                return const Center(
+                return Center(
                   child: CircularProgressIndicator(color: primary),
                 );
               }
@@ -54,11 +56,8 @@ class AddressListPage extends StatelessWidget {
                 child: ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
-                    // ── Add New Address button ──────────────────────────────
                     _buildAddNewButton(),
                     const SizedBox(height: 4),
-
-                    // ── Address cards ──────────────────────────────────────
                     if (controller.addressList.isEmpty)
                       _buildEmptyState()
                     else
@@ -170,19 +169,17 @@ class AddressListPage extends StatelessWidget {
     return GestureDetector(
       onTap: () async {
         await Get.to(() => NewAddAddressPage());
-        // Refresh list after returning from add page
         controller.fetchAddresses();
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
-        padding:
-        const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: primary.withOpacity(0.4), width: 1.4),
         ),
-        child: const Row(
+        child:  Row(
           children: [
             Icon(Icons.add_circle_outline, color: primary, size: 20),
             SizedBox(width: 10),
@@ -260,7 +257,6 @@ class AddressListPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Name + Radio
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -280,14 +276,11 @@ class AddressListPage extends StatelessWidget {
                       onChanged: (v) =>
                           controller.selectAddress(v ?? addr.addressId),
                       activeColor: primary,
-                      materialTapTargetSize:
-                      MaterialTapTargetSize.shrinkWrap,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                   ],
                 ),
                 const SizedBox(height: 6),
-
-                // Full address
                 Text(
                   addr.fullAddress,
                   style: const TextStyle(
@@ -297,8 +290,6 @@ class AddressListPage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 5),
-
-                // Phone
                 Row(
                   children: [
                     const Icon(Icons.phone_outlined,
@@ -307,31 +298,31 @@ class AddressListPage extends StatelessWidget {
                     Text(
                       addr.phoneNumber,
                       style: const TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF555555),
-                      ),
+                          fontSize: 13, color: Color(0xFF555555)),
                     ),
                   ],
                 ),
-
-                // Edit + Deliver button (only when selected)
                 if (isSelected) ...[
                   const SizedBox(height: 12),
                   const Divider(height: 1, color: Color(0xFFEEEEEE)),
                   const SizedBox(height: 10),
 
-                  // Edit button
+                  // ── EDIT button ─────────────────────────────────────────
                   Row(
                     children: [
                       TextButton.icon(
-                        onPressed: () async {
-                          // Navigate to edit — pass address data
-                          // await Get.to(() => EditAddressPage(address: addr));
-                          // controller.fetchAddresses();
+                      onPressed: () async {
+              final result = await Get.to(
+           () => EditAddressPage(addressId: addr.addressId),);
+
+
+          if (result == true) {
+                            await controller.fetchAddresses();
+                          }
                         },
-                        icon: const Icon(Icons.edit_outlined,
+                        icon:  Icon(Icons.edit_outlined,
                             size: 15, color: primary),
-                        label: const Text(
+                        label: Text(
                           'EDIT',
                           style: TextStyle(
                             color: primary,
@@ -350,7 +341,6 @@ class AddressListPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
 
-                  // Deliver to this address button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -358,8 +348,7 @@ class AddressListPage extends StatelessWidget {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primary,
                         foregroundColor: Colors.white,
-                        padding:
-                        const EdgeInsets.symmetric(vertical: 14),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(9)),
                         elevation: 0,
@@ -383,3 +372,4 @@ class AddressListPage extends StatelessWidget {
     });
   }
 }
+

@@ -63,7 +63,7 @@ class CategorySection extends StatelessWidget {
             crossAxisCount: 4,
             mainAxisSpacing: 20,
             crossAxisSpacing: 12,
-            childAspectRatio: 0.75,
+            childAspectRatio: 0.58,
           ),
           itemBuilder: (context, index) {
             final UserCategoryModel cat = controller.categories[index];
@@ -188,8 +188,8 @@ class _CategoryCardState extends State<_CategoryCard>
                 children: [
                   // ── Icon bubble ──────────────────────────────────────────
                   Container(
-                    height: 62,
-                    width: 62,
+                    height: 100,
+                    width: 100,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(20),
