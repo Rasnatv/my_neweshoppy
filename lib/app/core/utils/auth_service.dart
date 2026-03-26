@@ -6,6 +6,7 @@ import '../../modules/product/controller/cartcontroller.dart';
 import '../../modules/profile/controller/editprofile_controller.dart';
 import '../../modules/userhome/controller/district _controller.dart';
 import '../../modules/userhome/controller/usercategory_controller.dart';
+import '../../modules/userlogin/controller/admin_logincontroller.dart';
 import '../../modules/userlogin/controller/userlogin_controller.dart';
 import '../../modules/userlogin/view/login.dart';
 
@@ -69,6 +70,9 @@ class AuthService {
     if (Get.isRegistered<EditProfileController>()) {
       Get.delete<EditProfileController>(force: true);
     }
+    // if (Get.isRegistered<AdminLoginController>()) {
+    //   Get.delete<AdminLoginController>(force: true);
+    // }
     Get.offAll(LoginPageView());
     //Get.offAllNamed('/login');
   }

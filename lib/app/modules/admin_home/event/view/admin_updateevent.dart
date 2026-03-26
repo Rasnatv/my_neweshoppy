@@ -4,13 +4,14 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../controller/merchant_eventupdatecontroller.dart';
+import '../controller/admin_updateeventcontroller.dart';
 
 
-class EventUpdatePage extends StatelessWidget {
-  EventUpdatePage({super.key});
 
-  final EventUpdateController controller = Get.put(EventUpdateController());
+class AdminEventUpdatePage extends StatelessWidget {
+  AdminEventUpdatePage({super.key});
+
+  final AdminEventUpdateController controller = Get.put(AdminEventUpdateController());
   @override
   Widget build(BuildContext context) {
     return Scaffold(

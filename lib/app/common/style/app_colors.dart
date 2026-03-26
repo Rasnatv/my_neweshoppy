@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 abstract class AppColors {
   static const kPrimary = Colors.teal;
+  static const welcomecardclr=Color(0xFF084E43);
  // static const kPrimary = Color(0xFF00A693);
   //static const kPrimary = Colors.teal;
    static const kcard = Color(0xFF00A693);

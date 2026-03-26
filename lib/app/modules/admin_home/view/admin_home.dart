@@ -21,7 +21,7 @@ class AdminDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Initialize the controller
+
     final controller = Get.put(AdminDashboardController());
 
     return Scaffold(
@@ -144,7 +144,6 @@ class AdminDashboard extends StatelessWidget {
     );
   }
 
-  // ----------- Quick Stats (now uses controller) -----------
   Widget _buildQuickStats(AdminDashboardController controller) {
     return Obx(() => Row(
       children: [

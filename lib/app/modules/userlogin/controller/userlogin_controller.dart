@@ -163,13 +163,7 @@ class UserloginController extends GetxController {
           duration: const Duration(milliseconds: 400),
         );
         break;
-      // case 3:
-      //   Get.offAll(
-      //         () => AdminDashboard(),
-      //     transition: Transition.fadeIn,
-      //     duration: const Duration(milliseconds: 400),
-      //   );
-      //   break;
+
       default:
         _showError("Invalid user role");
     }

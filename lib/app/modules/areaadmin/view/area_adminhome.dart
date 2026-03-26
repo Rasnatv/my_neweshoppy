@@ -1,10 +1,24 @@
 
 
 import 'package:flutter/material.dart';
-import '../../../../common/style/app_colors.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_instance/src/extension_instance.dart';
+import 'package:get/get_navigation/src/extension_navigation.dart';
+import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 
-class Districtadminhomepage extends StatelessWidget {
-  const Districtadminhomepage({super.key});
+import '../../../common/style/app_colors.dart';
+import '../../../core/utils/auth_service.dart';
+import '../../../data/models/areaadmin_eventsgetmodel.dart';
+import '../controller/areaadmin_eventgettingcontroller.dart';
+import '../widget/areaadmin_getting_advertismentsection.dart';
+import '../widget/eventwidget.dart';
+import 'alladvertismentpage.dart';
+import 'alleeventspage.dart';
+import 'areawise_advertisment.dart';
+import 'areawiseeventpage.dart';
+
+class AreaAdminhomepage extends StatelessWidget {
+  const AreaAdminhomepage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +28,7 @@ class Districtadminhomepage extends StatelessWidget {
         elevation: 0,
         backgroundColor: AppColors.welcomecardclr,
         title: const Text(
-          "DistrictAdmin",
+          "Area Admin",
           style: TextStyle(
             color: Colors.white,
             fontSize: 17,
@@ -24,7 +38,7 @@ class Districtadminhomepage extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.exit_to_app_rounded, color: Colors.white),
-            onPressed: () {},
+            onPressed: () => AuthService.showLogoutDialog(),
           ),
           const SizedBox(width: 8),
         ],
@@ -43,16 +57,18 @@ class Districtadminhomepage extends StatelessWidget {
             _buildSectionHeader(
               title: 'Recent Events',
               actionLabel: 'See all',
-              onAction: () {},
+              onAction: ()=>Get.to(()=>AreaAdminAllEventsPage()),
             ),
             const SizedBox(height: 12),
-            _buildRecentEvents(),
+            RecentEventsWidget(),
             const SizedBox(height: 24),
             _buildSectionHeader(
               title: 'Recent Advertisements',
               actionLabel: 'See all',
-              onAction: () {},
+              onAction: ()=>Get.to(()=>AreaAdminAllAdvertismentViewPage()),
             ),
+            const SizedBox(height: 24),
+            HomeAdvertisementWidget(),
 
             const SizedBox(height: 80),
           ],
@@ -105,7 +121,7 @@ class Districtadminhomepage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Welcome, District Admin!",
+                  "Welcome, Area Admin!",
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -114,7 +130,7 @@ class Districtadminhomepage extends StatelessWidget {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  "Manage your District efficiently",
+                  "Manage your area efficiently",
                   style: TextStyle(color: Colors.white70, fontSize: 13),
                 ),
               ],
@@ -215,27 +231,26 @@ class Districtadminhomepage extends StatelessWidget {
 
   Widget _buildActionButtons() {
     return Row(
-      children: [
-        Expanded(
-          child: _buildActionButton(
-            icon: Icons.add_circle_outline_rounded,
-            iconColor: const Color(0xFF6366F1),
-            title: 'Post Event',
-            subtitle: 'Area or district',
-            onTap: () {},
+        children: [
+          Expanded(
+            child: _buildActionButton(
+              icon: Icons.add_circle_outline_rounded,
+              iconColor: const Color(0xFF6366F1),
+              title: 'Post Event',
+              subtitle: 'Area wise',
+              onTap: () => Get.to(() => AreaAdminAddEventPage()),
+            ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildActionButton(
-            icon: Icons.campaign_rounded,
-            iconColor: const Color(0xFFEC4899),
-            title: 'Post Ad',
-            subtitle: 'Business promo',
-            onTap: () {},
-          ),
-        ),
-      ],
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildActionButton(
+              icon: Icons.campaign_rounded,
+              iconColor: const Color(0xFFEC4899),
+              title: 'Post Ad',
+              subtitle: 'Business promo',
+              onTap: () => Get.to(() => AreaAdminAddAdvertisementPage()),
+            ),),
+        ]
     );
   }
 
@@ -345,221 +360,4 @@ class Districtadminhomepage extends StatelessWidget {
     );
   }
 
-  // ─── Recent Events ────────────────────────────────────────────────────────
-
-  Widget _buildRecentEvents() {
-    final events = [
-      _EventData(
-        emoji: '🎉',
-        title: 'Eid Festival Celebration',
-        date: '31 Mar',
-        location: 'Town Square, Malappuram',
-        tag: 'Festival',
-        tagColor: const Color(0xFF10B981),
-        district: 'Malappuram',
-      ),
-      _EventData(
-        emoji: '🏏',
-        title: 'District Cricket Tournament',
-        date: '04 Apr',
-        location: 'Sports Ground, Tirur',
-        tag: 'Sports',
-        tagColor: const Color(0xFF3B82F6),
-        district: 'Tirur',
-      ),
-      _EventData(
-        emoji: '🎭',
-        title: 'Cultural Night Show',
-        date: '07 Apr',
-        location: 'Town Hall, Kondotty',
-        tag: 'Cultural',
-        tagColor: const Color(0xFF8B5CF6),
-        district: 'Kondotty',
-      ),
-    ];
-
-    return Column(
-      children: events
-          .map((e) => Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: _buildEventCard(e),
-      ))
-          .toList(),
-    );
-  }
-
-  Widget _buildEventCard(_EventData event) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {},
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(14),
-                child: Row(
-                  children: [
-                    // Emoji Avatar
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: event.tagColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Center(
-                        child: Text(event.emoji,
-                            style: const TextStyle(fontSize: 22)),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  event.title,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF2D3748),
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: event.tagColor.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  event.tag,
-                                  style: TextStyle(
-                                    color: event.tagColor,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              Icon(Icons.calendar_today_rounded,
-                                  size: 11, color: Colors.grey[400]),
-                              const SizedBox(width: 4),
-                              Text(event.date,
-                                  style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.grey[500])),
-                              const SizedBox(width: 10),
-                              Icon(Icons.place_outlined,
-                                  size: 11, color: Colors.grey[400]),
-                              const SizedBox(width: 3),
-                              Expanded(
-                                child: Text(
-                                  event.location,
-                                  style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.grey[500]),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Footer
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey[50],
-                  borderRadius: const BorderRadius.vertical(
-                      bottom: Radius.circular(16)),
-                  border:
-                  Border(top: BorderSide(color: Colors.grey.shade100)),
-                ),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 14, vertical: 9),
-                child: Row(
-                  children: [
-                    Icon(Icons.location_on_rounded,
-                        size: 13, color: Colors.grey[400]),
-                    const SizedBox(width: 4),
-                    Text(
-                      event.district,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[500],
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      'View details →',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.kPrimary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-// ─── Recent Ads ───────────────────────────────────────────────────────────
 }
-
-// ─── Data Models ──────────────────────────────────────────────────────────────
-
-class _EventData {
-  final String emoji;
-  final String title;
-  final String date;
-  final String location;
-  final String tag;
-  final Color tagColor;
-  final String district;
-
-  _EventData({
-    required this.emoji,
-    required this.title,
-    required this.date,
-    required this.location,
-    required this.tag,
-    required this.tagColor,
-    required this.district,
-  });
-}
-
