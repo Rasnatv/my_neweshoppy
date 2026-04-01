@@ -1,10 +1,23 @@
 
 
 import 'package:flutter/material.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_instance/src/extension_instance.dart';
+import 'package:get/get_navigation/src/extension_navigation.dart';
 import '../../../../common/style/app_colors.dart';
+import '../../../../core/utils/auth_service.dart';
+import '../controller/districtadmin_dashboardcontroller.dart';
+import '../widget/districtadmin_advertisementgetpage.dart';
+import '../widget/recent_eventwidget.dart';
+import 'Districtadmin_addeventpage.dart';
+import 'districtadmin_addadvertismentpage.dart';
+import 'districtadmin_alleventspage.dart';
+import 'districtadminalladvertismentpage.dart';
+
 
 class Districtadminhomepage extends StatelessWidget {
-  const Districtadminhomepage({super.key});
+  Districtadminhomepage({super.key});
+  final DistrictAdminDashboardController ctrl=Get.put(DistrictAdminDashboardController());
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +37,7 @@ class Districtadminhomepage extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.exit_to_app_rounded, color: Colors.white),
-            onPressed: () {},
+            onPressed: () => AuthService.showLogoutDialog(),
           ),
           const SizedBox(width: 8),
         ],
@@ -43,17 +56,17 @@ class Districtadminhomepage extends StatelessWidget {
             _buildSectionHeader(
               title: 'Recent Events',
               actionLabel: 'See all',
-              onAction: () {},
+              onAction: () =>Get.to(()=>DistrictAdminAllEventsPage()),
             ),
             const SizedBox(height: 12),
-            _buildRecentEvents(),
+            DistrictAdminRecentEventsWidget(),
             const SizedBox(height: 24),
             _buildSectionHeader(
               title: 'Recent Advertisements',
               actionLabel: 'See all',
-              onAction: () {},
+              onAction: () =>Get.to(()=>DistrictAdminAllAdvertisementsPage()),
             ),
-
+            DistrictAdminHomeAdvertisementWidget(),
             const SizedBox(height: 80),
           ],
         ),
@@ -133,7 +146,7 @@ class Districtadminhomepage extends StatelessWidget {
         Expanded(
           child: _buildStatCard(
             icon: Icons.calendar_month_rounded,
-            value: '4',
+            value: '${ctrl.totalEvents.value}',
             label: 'Total Events',
             color: const Color(0xFF6366F1),
           ),
@@ -142,7 +155,7 @@ class Districtadminhomepage extends StatelessWidget {
         Expanded(
           child: _buildStatCard(
             icon: Icons.campaign_rounded,
-            value: '2',
+            value: ' ${ctrl.totalAdvertisements.value}',
             label: 'Active Ads',
             color: const Color(0xFFEC4899),
           ),
@@ -222,7 +235,7 @@ class Districtadminhomepage extends StatelessWidget {
             iconColor: const Color(0xFF6366F1),
             title: 'Post Event',
             subtitle: 'Area or district',
-            onTap: () {},
+            onTap: () =>Get.to(()=>DistrictAdminAddEventPage ()),
           ),
         ),
         const SizedBox(width: 12),
@@ -232,7 +245,7 @@ class Districtadminhomepage extends StatelessWidget {
             iconColor: const Color(0xFFEC4899),
             title: 'Post Ad',
             subtitle: 'Business promo',
-            onTap: () {},
+            onTap: ()=>Get.to(()=>DistrictAdminAddAdvertisementPage()),
           ),
         ),
       ],
@@ -345,48 +358,7 @@ class Districtadminhomepage extends StatelessWidget {
     );
   }
 
-  // ─── Recent Events ────────────────────────────────────────────────────────
 
-  Widget _buildRecentEvents() {
-    final events = [
-      _EventData(
-        emoji: '🎉',
-        title: 'Eid Festival Celebration',
-        date: '31 Mar',
-        location: 'Town Square, Malappuram',
-        tag: 'Festival',
-        tagColor: const Color(0xFF10B981),
-        district: 'Malappuram',
-      ),
-      _EventData(
-        emoji: '🏏',
-        title: 'District Cricket Tournament',
-        date: '04 Apr',
-        location: 'Sports Ground, Tirur',
-        tag: 'Sports',
-        tagColor: const Color(0xFF3B82F6),
-        district: 'Tirur',
-      ),
-      _EventData(
-        emoji: '🎭',
-        title: 'Cultural Night Show',
-        date: '07 Apr',
-        location: 'Town Hall, Kondotty',
-        tag: 'Cultural',
-        tagColor: const Color(0xFF8B5CF6),
-        district: 'Kondotty',
-      ),
-    ];
-
-    return Column(
-      children: events
-          .map((e) => Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: _buildEventCard(e),
-      ))
-          .toList(),
-    );
-  }
 
   Widget _buildEventCard(_EventData event) {
     return Material(

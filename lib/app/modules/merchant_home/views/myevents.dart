@@ -13,6 +13,14 @@ class MerchantEventsPage extends StatelessWidget {
   final MyEventsController controller = Get.put(MyEventsController());
   final DeleteEventController ctrl = Get.put(DeleteEventController());
 
+  static const List<Color> _accentColors = [
+    Color(0xFF00BFA5),
+    Color(0xFF7C4DFF),
+    Color(0xFFFF6D00),
+    Color(0xFF2979FF),
+    Color(0xFFE91E63),
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -20,26 +28,20 @@ class MerchantEventsPage extends StatelessWidget {
       appBar: AppBar(
         automaticallyImplyLeading: true,
         backgroundColor: AppColors.kPrimary,
-        title: Text(
-          "My Events",
-          style: TextStyle(color: AppColors.white),
-        ),
+        title: Text("My Events", style: TextStyle(color: AppColors.white)),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
             child: TextButton.icon(
-              onPressed: () {
-                Get.to(() => AddEventPage())
-                    ?.then((_) => controller.fetchEvents());
-              },
+              onPressed: () => Get.to(() => AddEventPage())
+                  ?.then((_) => controller.fetchEvents()),
               icon: const Icon(Icons.add_rounded, color: Colors.white, size: 20),
               label: const Text(
                 "Add Event",
                 style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                ),
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14),
               ),
               style: TextButton.styleFrom(
                 backgroundColor: const Color(0xFF00BFA5).withOpacity(0.10),
@@ -48,9 +50,8 @@ class MerchantEventsPage extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                   side: BorderSide(
-                    color: const Color(0xF0FFFFFF).withOpacity(0.3),
-                    width: 1,
-                  ),
+                      color: const Color(0xF0FFFFFF).withOpacity(0.3),
+                      width: 1),
                 ),
               ),
             ),
@@ -66,27 +67,20 @@ class MerchantEventsPage extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   CircularProgressIndicator(
-                    color: Color(0xFF00BFA5),
-                    strokeWidth: 3,
-                  ),
+                      color: Color(0xFF00BFA5), strokeWidth: 3),
                   SizedBox(height: 16),
-                  Text(
-                    "Loading your events...",
-                    style: TextStyle(
-                      color: Color(0xFF8A95A3),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+                  Text("Loading your events...",
+                      style: TextStyle(
+                          color: Color(0xFF8A95A3),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500)),
                 ],
               ),
             ),
           );
         }
 
-        if (controller.events.isEmpty) {
-          return _buildEmptyState();
-        }
+        if (controller.events.isEmpty) return _buildEmptyState();
 
         return RefreshIndicator(
           onRefresh: () async => controller.fetchEvents(),
@@ -106,14 +100,7 @@ class MerchantEventsPage extends StatelessWidget {
 
   // ── EVENT CARD (Ticket Style) ─────────────────────────────────────────
   Widget _buildEventCard(dynamic event, int index) {
-    final List<Color> accentColors = [
-      const Color(0xFF00BFA5),
-      const Color(0xFF7C4DFF),
-      const Color(0xFFFF6D00),
-      const Color(0xFF2979FF),
-      const Color(0xFFE91E63),
-    ];
-    final Color accent = accentColors[index % accentColors.length];
+    final Color accent = _accentColors[index % _accentColors.length];
 
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
@@ -171,7 +158,7 @@ class MerchantEventsPage extends StatelessWidget {
                   ),
                 ),
               ),
-              // ── Delete Button ─────────────────────────────────────
+
               Positioned(
                 top: 12,
                 right: 12,
@@ -183,10 +170,9 @@ class MerchantEventsPage extends StatelessWidget {
                 right: 55,
                 child: GestureDetector(
                   onTap: () {
-                    Get.to(
-                          () => EventUpdatePage(),
-                      arguments: {'event_id': event.id},
-                    )?.then((_) => controller.fetchEvents());
+                    Get.to(() => EventUpdatePage(),
+                        arguments: {'event_id': event.id})
+                        ?.then((_) => controller.fetchEvents());
                   },
                   child: Container(
                     padding: const EdgeInsets.all(8),
@@ -201,7 +187,7 @@ class MerchantEventsPage extends StatelessWidget {
                   ),
                 ),
               ),
-              // ── Event Badge ───────────────────────────────────────
+              // ── Event Number Badge (top-left) ─────────────────────
               Positioned(
                 top: 12,
                 left: 12,
@@ -225,12 +211,16 @@ class MerchantEventsPage extends StatelessWidget {
               ),
             ],
           ),
+
           _TicketDivider(color: accent),
+
+          // ── Card Body ─────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Event Name
                 Text(
                   event.eventName,
                   style: const TextStyle(
@@ -243,14 +233,20 @@ class MerchantEventsPage extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
+
+                // Date & Time pills
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: [
                     _InfoPill(
                       icon: Icons.calendar_today_rounded,
-                      label: "${event.startDate} – ${event.endDate}",
+                      // AFTER
+                      label: event.startDate == event.endDate
+                          ? event.startDate
+                          : "${event.startDate} – ${event.endDate}",
+                      // label: "${event.startDate} – ${event.endDate}",
                       color: accent,
                     ),
                     _InfoPill(
@@ -258,10 +254,17 @@ class MerchantEventsPage extends StatelessWidget {
                       label: event.time,
                       color: const Color(0xFF7C4DFF),
                     ),
+
                   ],
                 ),
-                const SizedBox(height: 8),
-                _LocationRow(location: event.location),
+                const SizedBox(height: 12),
+
+                // ── Location Section (two rows) ───────────────────
+                _LocationSection(
+                  eventLocation: event.location,
+                   displayLocation: event.displayLocation,
+                  accent: accent,
+                ),
               ],
             ),
           ),
@@ -270,6 +273,7 @@ class MerchantEventsPage extends StatelessWidget {
     );
   }
 
+  // ── Delete Button ─────────────────────────────────────────────────────
   Widget _deleteButton(dynamic event) {
     return Obx(() {
       final isDeleting = ctrl.deletingIds.contains(event.id);
@@ -288,9 +292,7 @@ class MerchantEventsPage extends StatelessWidget {
             width: 20,
             height: 20,
             child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: Colors.white,
-            ),
+                strokeWidth: 2, color: Colors.white),
           )
               : const Icon(Icons.delete_outline_rounded,
               color: Colors.white, size: 20),
@@ -317,14 +319,11 @@ class MerchantEventsPage extends StatelessWidget {
             Icon(Icons.image_not_supported_rounded,
                 size: 42, color: Colors.grey[400]),
             const SizedBox(height: 8),
-            Text(
-              "Image unavailable",
-              style: TextStyle(
-                color: Colors.grey[400],
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
+            Text("Image unavailable",
+                style: TextStyle(
+                    color: Colors.grey[400],
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500)),
           ],
         ),
       ),
@@ -352,41 +351,33 @@ class MerchantEventsPage extends StatelessWidget {
                     size: 56, color: Color(0xFF90A4AE)),
               ),
               const SizedBox(height: 28),
-              const Text(
-                "No Events Yet",
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF0D1B2A),
-                ),
-              ),
+              const Text("No Events Yet",
+                  style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0D1B2A))),
               const SizedBox(height: 10),
               Text(
                 "Create your first event to start\nengaging with your customers.",
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontSize: 15, color: Colors.grey[500], height: 1.6),
+                style:
+                TextStyle(fontSize: 15, color: Colors.grey[500], height: 1.6),
               ),
               const SizedBox(height: 32),
               ElevatedButton.icon(
-                onPressed: () {
-                  Get.to(() => AddEventPage())
-                      ?.then((_) => controller.fetchEvents());
-                },
+                onPressed: () => Get.to(() => AddEventPage())
+                    ?.then((_) => controller.fetchEvents()),
                 icon: const Icon(Icons.add_rounded, size: 22),
-                label: const Text(
-                  "Create Event",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                    letterSpacing: 0.3,
-                  ),
-                ),
+                label: const Text("Create Event",
+                    style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        letterSpacing: 0.3)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0D1B2A),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 32, vertical: 16),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14)),
                   elevation: 0,
@@ -413,32 +404,25 @@ class MerchantEventsPage extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
+                    color: Colors.red.withOpacity(0.1),
+                    shape: BoxShape.circle),
                 child: const Icon(Icons.delete_outline_rounded,
                     color: Colors.red, size: 38),
               ),
               const SizedBox(height: 20),
-              const Text(
-                "Delete Event?",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF0D1B2A),
-                ),
-              ),
+              const Text("Delete Event?",
+                  style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0D1B2A))),
               const SizedBox(height: 10),
-              Text(
-                '"${event.eventName}" will be permanently removed.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontSize: 14, color: Colors.grey[600], height: 1.5),
-              ),
+              Text('"${event.eventName}" will be permanently removed.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      fontSize: 14, color: Colors.grey[600], height: 1.5)),
               const SizedBox(height: 26),
               Row(
                 children: [
-                  // ── Cancel Button ───────────────────────────────
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => Get.back(),
@@ -449,18 +433,14 @@ class MerchantEventsPage extends StatelessWidget {
                         side: const BorderSide(
                             color: Color(0xFFDDE1E7), width: 1.5),
                       ),
-                      child: Text(
-                        "Cancel",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey[700],
-                          fontSize: 15,
-                        ),
-                      ),
+                      child: Text("Cancel",
+                          style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey[700],
+                              fontSize: 15)),
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // ── Delete Button ───────────────────────────────
                   Expanded(
                     child: Obx(() {
                       final isDeleting = ctrl.deletingIds.contains(event.id);
@@ -470,9 +450,7 @@ class MerchantEventsPage extends StatelessWidget {
                             : () {
                           Get.back();
                           ctrl.deleteEvent(
-                            event.id,
-                                () => controller.fetchEvents(),
-                          );
+                              event.id, () => controller.fetchEvents());
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red[600],
@@ -484,21 +462,15 @@ class MerchantEventsPage extends StatelessWidget {
                         ),
                         child: isDeleting
                             ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                            : const Text(
-                          "Delete",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                            fontSize: 15,
-                          ),
-                        ),
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white))
+                            : const Text("Delete",
+                            style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                                fontSize: 15)),
                       );
                     }),
                   ),
@@ -507,6 +479,139 @@ class MerchantEventsPage extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ── Location Section (two separate highlighted rows) ──────────────────────
+class _LocationSection extends StatelessWidget {
+  final String eventLocation;   // raw event_location (venue/place)
+   final String displayLocation; // district or main_location
+  final Color accent;
+
+  const _LocationSection({
+    required this.eventLocation,
+    required this.displayLocation,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Don't show district row if it's the same as eventLocation (fallback case)
+    final bool showDistrict =
+        displayLocation.isNotEmpty && displayLocation != eventLocation;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Row 1: Venue / event_location (grey, subtle) ───────────
+        if (eventLocation.isNotEmpty)
+          Row(
+            children: [
+              const Icon(Icons.place_outlined,
+                  size: 14, color: Color(0xFF90A4AE)),
+              const SizedBox(width: 5),
+              Expanded(
+                child: Text(
+                  eventLocation,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF90A4AE),
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+
+        if (eventLocation.isNotEmpty && showDistrict)
+          const SizedBox(height: 7),
+
+        // ── Row 2: District / Area (highlighted pill badge) ────────
+        if (showDistrict)
+          Row(
+            children: [
+              // Divider dot between venue and district
+              Container(
+                width: 3,
+                height: 3,
+                margin: const EdgeInsets.only(right: 6),
+                decoration: BoxDecoration(
+                  color: accent.withOpacity(0.4),
+                  shape: BoxShape.circle,
+                ),
+              ),
+              Container(
+                padding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: accent.withOpacity(0.09),
+                  borderRadius: BorderRadius.circular(20),
+                  border:
+                  Border.all(color: accent.withOpacity(0.28), width: 1),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.location_on_rounded, size: 12, color: accent),
+                    const SizedBox(width: 4),
+                    Text(
+                      displayLocation,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: accent,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              // "District" label tag
+
+            ],
+          ),
+      ],
+    );
+  }
+}
+
+// ── District Badge on image (bottom-left) ────────────────────────────────
+class _DistrictBadge extends StatelessWidget {
+  final String district;
+  final Color color;
+
+  const _DistrictBadge({required this.district, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    if (district.isEmpty) return const SizedBox.shrink();
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.55),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.6), width: 1.2),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.location_on_rounded, size: 11, color: color),
+          const SizedBox(width: 4),
+          Text(
+            district,
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.3,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -535,42 +640,11 @@ class _InfoPill extends StatelessWidget {
         children: [
           Icon(icon, size: 13, color: color),
           const SizedBox(width: 5),
-          Text(
-            label,
-            style: TextStyle(
-                fontSize: 12, fontWeight: FontWeight.w600, color: color),
-          ),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 12, fontWeight: FontWeight.w600, color: color)),
         ],
       ),
-    );
-  }
-}
-
-// ── Location Row ───────────────────────────────────────────────────────────
-class _LocationRow extends StatelessWidget {
-  final String location;
-  const _LocationRow({required this.location});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const Icon(Icons.location_on_rounded,
-            size: 15, color: Color(0xFF90A4AE)),
-        const SizedBox(width: 5),
-        Expanded(
-          child: Text(
-            location,
-            style: const TextStyle(
-              fontSize: 13,
-              color: Color(0xFF90A4AE),
-              fontWeight: FontWeight.w500,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
     );
   }
 }
@@ -634,12 +708,10 @@ class _DashedLinePainter extends CustomPainter {
       ..color = color
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
-
     const dashWidth = 6.0;
     const dashSpace = 4.0;
     double x = 0;
     final y = size.height / 2;
-
     while (x < size.width) {
       canvas.drawLine(Offset(x, y), Offset(x + dashWidth, y), paint);
       x += dashWidth + dashSpace;

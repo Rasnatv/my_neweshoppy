@@ -1,23 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../common/style/app_colors.dart';
-import '../../../data/models/areaadmin_eventsgetmodel.dart';
-import '../controller/areaadmin_eventgettingcontroller.dart';
-import '../widget/eventwidget.dart';
-import 'areaadmin_updateeventpage.dart';
 
-class AreaAdminAllEventsPage extends StatelessWidget {
-  AreaAdminAllEventsPage({super.key});
 
-  // ✅ Use Get.find — controller already registered from the dashboard/home page
-  final controller = Get.find<AreaadminGettingEventController>();
+import '../../../../common/style/app_colors.dart';
+import '../../../../data/models/districtadmineventmodel.dart';
+import '../controller/districtadmin_eventgettingcontroller.dart';
+import '../widget/recent_eventwidget.dart';
+import 'districtadmin_eventupdatepage.dart';
+
+
+class DistrictAdminAllEventsPage extends StatelessWidget {
+  DistrictAdminAllEventsPage({super.key});
+
+  // Use Get.find — controller already registered from dashboard/recent widget
+  final controller = Get.find<DistrictAdminGettingEventController>();
 
   String _formatDate(String raw) {
+    if (raw.isEmpty) return '—';
     try {
       final dt = DateTime.parse(raw);
       const months = [
         'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
       ];
       return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
     } catch (_) {
@@ -25,28 +29,15 @@ class AreaAdminAllEventsPage extends StatelessWidget {
     }
   }
 
-  String _formatCreatedAt(String raw) {
-    try {
-      final dt = DateTime.parse(raw).toLocal();
-      const months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-      ];
-      final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
-      final minute = dt.minute.toString().padLeft(2, '0');
-      final period = dt.hour < 12 ? 'AM' : 'PM';
-      return '${dt.day} ${months[dt.month - 1]} ${dt.year}, $hour:$minute $period';
-    } catch (_) {
-      return raw;
-    }
-  }
+  // No created_at in district admin API — passthrough
+  String _formatCreatedAt(String raw) => raw;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        backgroundColor: AppColors.welcomecardclr,
+        backgroundColor: AppColors.kPrimary,
         elevation: 0,
         centerTitle: true,
         title: const Text(
@@ -54,7 +45,6 @@ class AreaAdminAllEventsPage extends StatelessWidget {
           style: TextStyle(fontWeight: FontWeight.w700, fontSize: 17),
         ),
         actions: [
-          // ✅ Pull-to-refresh button in AppBar
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             onPressed: controller.fetchEvents,
@@ -125,19 +115,19 @@ class AreaAdminAllEventsPage extends StatelessWidget {
 
         // ── List ─────────────────────────────────────────────────────────────
         return RefreshIndicator(
-          onRefresh: controller.fetchEvents, // ✅ pull-to-refresh
+          onRefresh: controller.fetchEvents,
           child: ListView.separated(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
             itemCount: controller.allEvents.length,
             separatorBuilder: (_, __) => const SizedBox(height: 14),
             itemBuilder: (context, index) {
               final event = controller.allEvents[index];
-              return EventCard(
+              return DistrictAdminEventCard(
                 event: event,
                 formatDate: _formatDate,
                 formatCreatedAt: _formatCreatedAt,
                 onDelete: () => _confirmDelete(context, event),
-                onEdit: () => _navigateToEdit(event),
+                onEdit:   () => _navigateToEdit(event),
               );
             },
           ),
@@ -146,14 +136,15 @@ class AreaAdminAllEventsPage extends StatelessWidget {
     );
   }
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
+  // ─── Helpers ──────────────────────────────────────────────────────────────
 
-  void _confirmDelete(BuildContext context, AreaAdmingshowEventModel event) {
+  void _confirmDelete(BuildContext context, DistrictAdminEventModel event) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Delete Event'),
-        content: Text('Are you sure you want to delete "${event.eventName}"?'),
+        content:
+        Text('Are you sure you want to delete "${event.eventName}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -162,23 +153,21 @@ class AreaAdminAllEventsPage extends StatelessWidget {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              controller.deleteEvent(event.id); // ✅ call delete here
+              controller.deleteEvent(event.id);
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child:
+            const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
     );
   }
 
-  void _navigateToEdit(AreaAdmingshowEventModel event) {
-    Get.to(
-          () => AreaAdminUpdateEventPage(eventId: event.id.toString()),
-    )?.then((result) {
-      if (result == true) {
-        controller.fetchEvents(); // ✅ this updates allEvents → list refreshes
-      }
+  void _navigateToEdit(DistrictAdminEventModel event) {
+    // TODO: Uncomment when update page is ready
+    Get.to(() => DistrictAdminUpdateEventPage(eventId: event.id))
+        ?.then((result) {
+      if (result == true) controller.fetchEvents();
     });
   }
-
 }

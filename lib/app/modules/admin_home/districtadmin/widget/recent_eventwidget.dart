@@ -2,22 +2,23 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../data/models/areaadmin_eventsgetmodel.dart';
-import '../controller/areaadmin_eventgettingcontroller.dart';
-import '../view/areaadmin_updateeventpage.dart';
 
-class RecentEventsWidget extends StatelessWidget {
-  RecentEventsWidget({super.key});
+import '../../../../data/models/districtadmineventmodel.dart';
+import '../controller/districtadmin_eventgettingcontroller.dart';
+import '../view/districtadmin_eventupdatepage.dart';
 
-  final controller = Get.put(AreaadminGettingEventController());
+class DistrictAdminRecentEventsWidget extends StatelessWidget {
+  DistrictAdminRecentEventsWidget({super.key});
+
+  final controller = Get.put(DistrictAdminGettingEventController());
 
   String _formatDate(String raw) {
     if (raw.isEmpty) return '—';
     try {
       final dt = DateTime.parse(raw);
       const months = [
-        'Jan','Feb','Mar','Apr','May','Jun',
-        'Jul','Aug','Sep','Oct','Nov','Dec'
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
       ];
       return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
     } catch (_) {
@@ -25,22 +26,7 @@ class RecentEventsWidget extends StatelessWidget {
     }
   }
 
-  String _formatCreatedAt(String raw) {
-    if (raw.isEmpty) return '—';
-    try {
-      final dt = DateTime.parse(raw).toLocal();
-      const months = [
-        'Jan','Feb','Mar','Apr','May','Jun',
-        'Jul','Aug','Sep','Oct','Nov','Dec'
-      ];
-      final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
-      final minute = dt.minute.toString().padLeft(2, '0');
-      final period = dt.hour < 12 ? 'AM' : 'PM';
-      return '${dt.day} ${months[dt.month - 1]} ${dt.year}, $hour:$minute $period';
-    } catch (_) {
-      return raw;
-    }
-  }
+  String _formatCreatedAt(String raw) => raw;
 
   @override
   Widget build(BuildContext context) {
@@ -97,18 +83,43 @@ class RecentEventsWidget extends StatelessWidget {
         physics: const NeverScrollableScrollPhysics(),
         itemCount: controller.recentEvents.length,
         separatorBuilder: (_, __) => const SizedBox(height: 14),
-        itemBuilder: (context, index) => EventCard(
+        itemBuilder: (context, index) => DistrictAdminEventCard(
           event: controller.recentEvents[index],
           formatDate: _formatDate,
           formatCreatedAt: _formatCreatedAt,
           onDelete: () => _confirmDelete(context, controller.recentEvents[index]),
+          // ✅ pass onEdit with refresh callback
           onEdit: () => _navigateToEdit(controller.recentEvents[index]),
         ),
       );
     });
   }
 
-  void _confirmDelete(BuildContext context, AreaAdmingshowEventModel event) {
+  // void _confirmDelete(BuildContext context, DistrictAdminEventModel event) {
+  //   showDialog(
+  //     context: context,
+  //     builder: (_) => AlertDialog(
+  //       title: const Text('Delete Event'),
+  //       content: Text('Are you sure you want to delete "${event.eventName}"?'),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () => Navigator.pop(context),
+  //           child: const Text('Cancel'),
+  //         ),
+  //         TextButton(
+  //           onPressed: () {
+  //             Navigator.pop(context);
+  //             controller.deleteEvent(event.id);
+  //           },
+  //           child: const Text('Delete', style: TextStyle(color: Colors.red)),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+  //
+  // // ✅ Navigate to update page, refresh list only when update succeeds
+  void _confirmDelete(BuildContext context, DistrictAdminEventModel event) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -119,30 +130,44 @@ class RecentEventsWidget extends StatelessWidget {
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
-          TextButton(
-            onPressed: () {
+          Obx(() => TextButton(
+            onPressed: controller.isDeleting.value
+                ? null // ✅ disable when deleting
+                : () async {
               Navigator.pop(context);
-              controller.deleteEvent(event.id);
+
+              await controller.deleteEvent(event.id);
+
+              // ✅ Refresh after delete
+              controller.fetchEvents();
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
+            child: controller.isDeleting.value
+                ? const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+                : const Text(
+              'Delete',
+              style: TextStyle(color: Colors.red),
+            ),
+          )),
         ],
       ),
     );
   }
-
-  void _navigateToEdit(AreaAdmingshowEventModel event) {
-    Get.to(() => AreaAdminUpdateEventPage(eventId: event.id.toString()))
+  void _navigateToEdit(DistrictAdminEventModel event) {
+    Get.to(() => DistrictAdminUpdateEventPage(eventId: event.id))
         ?.then((result) {
       if (result == true) controller.fetchEvents();
     });
   }
 }
 
-// ── Card widget ───────────────────────────────────────────────────────────────
+// ─── Card Widget ─────────────────────────────────────────────────────────────
 
-class EventCard extends StatelessWidget {
-  const EventCard({
+class DistrictAdminEventCard extends StatelessWidget {
+  const DistrictAdminEventCard({
     super.key,
     required this.event,
     required this.formatDate,
@@ -151,54 +176,20 @@ class EventCard extends StatelessWidget {
     required this.onEdit,
   });
 
-  final AreaAdmingshowEventModel event;
+  final DistrictAdminEventModel event;
   final String Function(String) formatDate;
   final String Function(String) formatCreatedAt;
   final VoidCallback onDelete;
   final VoidCallback onEdit;
 
-  static const _indigo    = Color(0xFF4F46E5);
-  static const _indigoBg  = Color(0xFFEEEDFE);
-  static const _green     = Color(0xFF059669);
-  static const _red       = Color(0xFFDC2626);
-  static const _slate900  = Color(0xFF0F172A);
-  static const _slate500  = Color(0xFF64748B);
-  static const _slate400  = Color(0xFF94A3B8);
-  static const _divider   = Color(0xFFF1F5F9);
-  static const _adminBg   = Color(0xFFFFF7ED);
-  static const _adminColor = Color(0xFFEA580C);   // orange — admin badge
-  static const _areaBg    = Color(0xFFECFDF5);
-  static const _areaColor  = Color(0xFF059669);   // green  — area_admin badge
-  static const _merchantBg   = Color(0xFFF0F9FF);
-  static const _merchantColor = Color(0xFF0284C7); // blue  — merchant badge
-
-  // ── poster badge config ──────────────────────────────────────────────────
-  _BadgeConfig get _posterBadge {
-    switch (event.createdByType) {
-      case 'admin':
-        return _BadgeConfig(
-          label: 'Admin',
-          icon: Icons.admin_panel_settings_rounded,
-          color: _adminColor,
-          bg: _adminBg,
-        );
-      case 'merchant':
-        return _BadgeConfig(
-          label: 'Merchant',
-          icon: Icons.store_rounded,
-          color: _merchantColor,
-          bg: _merchantBg,
-        );
-      case 'area_admin':
-      default:
-        return _BadgeConfig(
-          label: 'Area Admin',
-          icon: Icons.manage_accounts_rounded,
-          color: _areaColor,
-          bg: _areaBg,
-        );
-    }
-  }
+  static const _indigo   = Color(0xFF4F46E5);
+  static const _indigoBg = Color(0xFFEEEDFE);
+  static const _green    = Color(0xFF059669);
+  static const _red      = Color(0xFFDC2626);
+  static const _slate900 = Color(0xFF0F172A);
+  static const _slate500 = Color(0xFF64748B);
+  static const _slate400 = Color(0xFF94A3B8);
+  static const _divider  = Color(0xFFF1F5F9);
 
   @override
   Widget build(BuildContext context) {
@@ -234,12 +225,7 @@ class EventCard extends StatelessWidget {
               _dividerLine(),
               _dateTimeRow(),
               _dividerLine(),
-              _posterRow(),           // ← NEW: Posted by row
-              // Only show actions when area_admin created this event
-              if (event.isEditableByAreaAdmin) ...[
-                _dividerLine(),
-                _actionRow(),
-              ],
+              _actionRow(),
             ],
           ),
         ),
@@ -253,7 +239,6 @@ class EventCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Banner image
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: Image.network(
@@ -281,7 +266,6 @@ class EventCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Event name
                 Text(
                   event.eventName,
                   maxLines: 2,
@@ -295,23 +279,20 @@ class EventCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-
-                // ── Main location — highlighted pill ─────────────────────
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: _indigoBg,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: _indigo.withOpacity(0.25), width: 1),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.place_rounded, size: 13, color: _indigo),
+                      const Icon(Icons.map_outlined, size: 13, color: _indigo),
                       const SizedBox(width: 4),
                       Flexible(
                         child: Text(
-                          event.mainLocation,
+                          event.district,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
@@ -325,11 +306,10 @@ class EventCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 5),
-
-                // Sub-location
                 Row(
                   children: [
-                    const Icon(Icons.location_on_outlined, size: 12, color: _slate400),
+                    const Icon(Icons.location_on_outlined,
+                        size: 12, color: _slate400),
                     const SizedBox(width: 3),
                     Expanded(
                       child: Text(
@@ -345,26 +325,30 @@ class EventCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-
-                // Posted time
-                Row(
-                  children: [
-                    const Icon(Icons.schedule_outlined, size: 11, color: _slate400),
-                    const SizedBox(width: 3),
-                    Flexible(
-                      child: Text(
-                        'Posted ${_fmtCreatedAt(event.createdAt)}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: _slate400,
-                          fontWeight: FontWeight.w500,
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.teal.shade50,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.admin_panel_settings_outlined,
+                          size: 11, color: Colors.teal.shade700),
+                      const SizedBox(width: 3),
+                      Text(
+                        event.createdByType.replaceAll('_', ' ').toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.teal.shade700,
+                          letterSpacing: 0.3,
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -374,14 +358,13 @@ class EventCard extends StatelessWidget {
     );
   }
 
-  // thin helper so EventCard can call formatCreatedAt without passing context
-  String _fmtCreatedAt(String raw) => formatCreatedAt(raw);
-
-  Widget _dividerLine() => Container(
-    height: 1,
-    color: _divider,
-    margin: const EdgeInsets.symmetric(horizontal: 14),
-  );
+  Widget _dividerLine() {
+    return Container(
+      height: 1,
+      color: _divider,
+      margin: const EdgeInsets.symmetric(horizontal: 14),
+    );
+  }
 
   Widget _dateTimeRow() {
     return Padding(
@@ -398,7 +381,11 @@ class EventCard extends StatelessWidget {
                 icon: Icons.play_arrow_rounded,
               ),
             ),
-            Container(width: 1, color: _divider, margin: const EdgeInsets.symmetric(horizontal: 14)),
+            Container(
+              width: 1,
+              color: _divider,
+              margin: const EdgeInsets.symmetric(horizontal: 14),
+            ),
             Expanded(
               child: _dateTimeBlock(
                 label: 'END',
@@ -462,7 +449,11 @@ class EventCard extends StatelessWidget {
               const SizedBox(height: 1),
               Text(
                 time,
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
               ),
             ],
           ),
@@ -471,51 +462,12 @@ class EventCard extends StatelessWidget {
     );
   }
 
-  // ── NEW: Posted-by row ───────────────────────────────────────────────────
-  Widget _posterRow() {
-    final badge = _posterBadge;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
-      child: Row(
-        children: [
-          const Text(
-            'Posted by',
-            style: TextStyle(
-              fontSize: 12,
-              color: _slate400,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-            decoration: BoxDecoration(
-              color: badge.bg,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: badge.color.withOpacity(0.3), width: 1),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(badge.icon, size: 13, color: badge.color),
-                const SizedBox(width: 5),
-                Text(
-                  badge.label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: badge.color,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _actionRow() {
+    final isAdminPost = !['district_admin', 'merchant'].contains(
+      event.createdByType.toLowerCase(),
+    );
+    if (isAdminPost) return const SizedBox.shrink();
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
       child: Row(
@@ -563,19 +515,17 @@ class EventCard extends StatelessWidget {
           children: [
             Icon(icon, size: 15, color: color),
             const SizedBox(width: 7),
-            Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: color)),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
           ],
         ),
       ),
     );
   }
-}
-
-// ── Small config holder ──────────────────────────────────────────────────────
-class _BadgeConfig {
-  final String label;
-  final IconData icon;
-  final Color color;
-  final Color bg;
-  const _BadgeConfig({required this.label, required this.icon, required this.color, required this.bg});
 }

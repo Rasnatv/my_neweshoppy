@@ -16,6 +16,11 @@ abstract class Routes {
   static const PROFILE = _Paths.PROFILE;
   static const CATEGORYS = _Paths.CATEGORYS;
   static const CHECKEMAIL = _Paths.CHECKEMAIL;
+  static const DISTRICTADMINHOME= _Paths.DISTRICTADMINHOME;
+  static const ADMINADVERTISMENTUPDATION= _Paths.ADMINADVERTISMENTUPDATION;
+  static const DISTRICTADMINADVUPDATION= _Paths. DISTRICTADMINADVUPDATION;
+
+
 }
 
 abstract class _Paths {
@@ -33,4 +38,7 @@ abstract class _Paths {
   static const CATEGORYS= '/category';
   static const SPLASH ='/splash';
   static const CHECKEMAIL='/checkemail';
+  static const DISTRICTADMINHOME='/districtadminhome';
+  static const ADMINADVERTISMENTUPDATION='/adminadvertismentupdation';
+  static const DISTRICTADMINADVUPDATION='/districtadminadvupdation';
 }

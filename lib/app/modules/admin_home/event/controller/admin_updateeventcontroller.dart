@@ -1,3 +1,5 @@
+//
+//
 // import 'dart:convert';
 // import 'dart:io';
 //
@@ -9,6 +11,8 @@
 // import 'package:http/http.dart' as http;
 //
 // import '../../../../data/models/merchant_eventupadatemodel.dart';
+// import '../../controller/admin_eventgetcontroller.dart';
+// import '../view/admin_event.dart';
 //
 // class AdminEventUpdateController extends GetxController {
 //   // ─── State ────────────────────────────────────────────────────────────────
@@ -20,6 +24,10 @@
 //   final formKey = GlobalKey<FormState>();
 //   late TextEditingController eventNameCtrl;
 //   late TextEditingController locationCtrl;
+//
+//   // ─── Read-only fields (not editable) ─────────────────────────────────────
+//   final mainLocation = RxnString();
+//   final district = RxnString();
 //
 //   // ─── Date / time observables ──────────────────────────────────────────────
 //   final startDate = Rxn<DateTime>();
@@ -52,7 +60,6 @@
 //     eventNameCtrl = TextEditingController();
 //     locationCtrl = TextEditingController();
 //
-//     // Accept event_id from Get.arguments
 //     final Map<String, dynamic>? args = Get.arguments != null
 //         ? Map<String, dynamic>.from(Get.arguments as Map)
 //         : null;
@@ -104,28 +111,32 @@
 //       : 'Select time';
 //
 //   // ─── Time formatting ──────────────────────────────────────────────────────
-//
-//   /// Converts TimeOfDay → "10:00 AM" (API format)
+//   // FIX: API expects 24-hr "HH:mm", not "hh:mm a"
 //   String _formatTime(TimeOfDay time) {
 //     final now = DateTime.now();
 //     final dt = DateTime(now.year, now.month, now.day, time.hour, time.minute);
-//     return DateFormat('hh:mm a').format(dt);
+//     return DateFormat('HH:mm').format(dt);
 //   }
 //
-//   /// Parses "10:00 AM" → TimeOfDay
+//   // FIX: Handle all time formats returned by the API
 //   TimeOfDay? _parseTime(String? timeStr) {
 //     if (timeStr == null || timeStr.trim().isEmpty) return null;
+//     // Try "hh:mm a" → e.g. "11:00 AM"
 //     try {
 //       final dt = DateFormat('hh:mm a').parse(timeStr.trim());
 //       return TimeOfDay(hour: dt.hour, minute: dt.minute);
+//     } catch (_) {}
+//     // Try "HH:mm" → e.g. "09:00"
+//     try {
+//       final dt = DateFormat('HH:mm').parse(timeStr.trim());
+//       return TimeOfDay(hour: dt.hour, minute: dt.minute);
+//     } catch (_) {}
+//     // Try "HH:mm:ss" → e.g. "09:00:00"
+//     try {
+//       final dt = DateFormat('HH:mm:ss').parse(timeStr.trim());
+//       return TimeOfDay(hour: dt.hour, minute: dt.minute);
 //     } catch (_) {
-//       try {
-//         // Fallback: try 24h format "HH:mm"
-//         final dt = DateFormat('HH:mm').parse(timeStr.trim());
-//         return TimeOfDay(hour: dt.hour, minute: dt.minute);
-//       } catch (_) {
-//         return null;
-//       }
+//       return null;
 //     }
 //   }
 //
@@ -137,6 +148,11 @@
 //     endDate.value = DateTime.tryParse(e.endDate);
 //     startTime.value = _parseTime(e.startTime);
 //     endTime.value = _parseTime(e.endTime);
+//     // Read-only: shown in UI but never sent back as edited values
+//     mainLocation.value =
+//     (e.mainLocation?.trim().isEmpty ?? true) ? null : e.mainLocation;
+//     district.value =
+//     (e.district?.trim().isEmpty ?? true) ? null : e.district;
 //   }
 //
 //   // ─── Fetch single event ───────────────────────────────────────────────────
@@ -145,16 +161,20 @@
 //       isLoading.value = true;
 //
 //       final response = await http.post(
-//         Uri.parse('$_baseUrl/get-single-event'),
+//         Uri.parse('$_baseUrl/get-Single-Event-admindisrict'),
 //         headers: _authHeaders,
 //         body: jsonEncode({'event_id': eventId}),
 //       );
 //
 //       final body = jsonDecode(response.body) as Map<String, dynamic>;
 //
-//       if (response.statusCode == 200 && body['status'] == '1') {
-//         event.value = HEventModel.fromJson(
-//             body['data'] as Map<String, dynamic>);
+//       final isSuccess = body['status'] == true ||
+//           body['status'] == '1' ||
+//           body['status_code'] == 200;
+//
+//       if (response.statusCode == 200 && isSuccess) {
+//         event.value =
+//             HEventModel.fromJson(body['data'] as Map<String, dynamic>);
 //         _populateForm(event.value!);
 //       } else {
 //         _showError(body['message']?.toString() ?? 'Failed to fetch event');
@@ -169,8 +189,8 @@
 //   // ─── Pick banner image ────────────────────────────────────────────────────
 //   Future<void> pickBannerImage() async {
 //     final picker = ImagePicker();
-//     final picked =
-//     await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+//     final picked = await picker.pickImage(
+//         source: ImageSource.gallery, imageQuality: 85);
 //     if (picked == null) return;
 //
 //     final file = File(picked.path);
@@ -182,27 +202,53 @@
 //     pickedImageBase64.value = 'data:$mime;base64,${base64Encode(bytes)}';
 //   }
 //
-//   // ─── Date / time pickers ──────────────────────────────────────────────────
+//   // ─── Date pickers ─────────────────────────────────────────────────────────
+//   DateTime get _today => DateTime(
+//     DateTime.now().year,
+//     DateTime.now().month,
+//     DateTime.now().day,
+//   );
+//
 //   Future<void> selectStartDate(BuildContext context) async {
+//     final initialDate =
+//     (startDate.value != null && !startDate.value!.isBefore(_today))
+//         ? startDate.value!
+//         : _today;
+//
 //     final picked = await showDatePicker(
 //       context: context,
-//       initialDate: startDate.value ?? DateTime.now(),
-//       firstDate: DateTime(2020),
+//       initialDate: initialDate,
+//       firstDate: _today,
 //       lastDate: DateTime(2035),
 //     );
-//     if (picked != null) startDate.value = picked;
+//
+//     if (picked != null) {
+//       startDate.value = picked;
+//       if (endDate.value != null && endDate.value!.isBefore(picked)) {
+//         endDate.value = null;
+//       }
+//     }
 //   }
 //
 //   Future<void> selectEndDate(BuildContext context) async {
+//     final first =
+//     (startDate.value != null && !startDate.value!.isBefore(_today))
+//         ? startDate.value!
+//         : _today;
+//
+//     DateTime initial = endDate.value ?? first;
+//     if (initial.isBefore(first)) initial = first;
+//
 //     final picked = await showDatePicker(
 //       context: context,
-//       initialDate: endDate.value ?? (startDate.value ?? DateTime.now()),
-//       firstDate: startDate.value ?? DateTime(2020),
+//       initialDate: initial,
+//       firstDate: first,
 //       lastDate: DateTime(2035),
 //     );
 //     if (picked != null) endDate.value = picked;
 //   }
 //
+//   // ─── Time pickers ─────────────────────────────────────────────────────────
 //   Future<void> selectStartTime(BuildContext context) async {
 //     final picked = await showTimePicker(
 //       context: context,
@@ -219,7 +265,7 @@
 //     if (picked != null) endTime.value = picked;
 //   }
 //
-//   // ─── Update event (PUT /update-event) ────────────────────────────────────
+//   // ─── Update event ─────────────────────────────────────────────────────────
 //   Future<void> updateEvent() async {
 //     if (!formKey.currentState!.validate()) return;
 //
@@ -238,31 +284,33 @@
 //       final payload = <String, dynamic>{
 //         'event_id': int.parse(event.value!.id),
 //         'event_name': eventNameCtrl.text.trim(),
+//         'event_location': locationCtrl.text.trim(),
+//         // Read-only: always send original values unchanged
+//         'main_location': event.value?.mainLocation ?? '',
+//         'district': event.value?.district ?? '',
 //         'start_date': formattedStartDate,
 //         'end_date': formattedEndDate,
 //         'start_time': _formatTime(startTime.value!),
 //         'end_time': _formatTime(endTime.value!),
-//         'event_location': locationCtrl.text.trim(),
 //       };
 //
-//       // Only attach banner_image when a new image is picked
 //       if (pickedImageBase64.value != null) {
 //         payload['banner_image'] = pickedImageBase64.value!;
 //       }
 //
 //       final response = await http.put(
-//         Uri.parse('$_baseUrl/update-event'),
+//         Uri.parse('$_baseUrl/update-Event-admin-district'),
 //         headers: _authHeaders,
 //         body: jsonEncode(payload),
 //       );
 //
 //       final body = jsonDecode(response.body) as Map<String, dynamic>;
 //
-//       if (response.statusCode == 200 && body['status'] == '1') {
-//         // Refresh local model with updated data
-//         event.value = HEventModel.fromJson(
-//             body['data'] as Map<String, dynamic>);
+//       final isSuccess = body['status'] == true ||
+//           body['status'] == '1' ||
+//           body['status_code'] == 200;
 //
+//       if (response.statusCode == 200 && isSuccess) {
 //         Get.snackbar(
 //           'Success',
 //           body['message']?.toString() ?? 'Event updated successfully',
@@ -272,8 +320,14 @@
 //           margin: const EdgeInsets.all(16),
 //         );
 //
-//         // Return true so the event list page can refresh
-//         Get.back(result: true);
+//         // FIX: Force-delete the AdminEventPage controller so its onInit
+//         // re-runs and fetchEvents() is called fresh when the page mounts.
+//         // Without this GetX returns the stale cached instance and skips onInit.
+//         try {
+//           Get.delete<AdminEventGetController>(force: true);
+//         } catch (_) {}
+//
+//         Get.offAll(() => AdminEventPage());
 //       } else {
 //         _showError(body['message']?.toString() ?? 'Failed to update event');
 //       }
@@ -307,6 +361,8 @@ import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../../data/models/merchant_eventupadatemodel.dart';
+import '../../controller/admin_eventgetcontroller.dart';
+import '../view/admin_event.dart';
 
 class AdminEventUpdateController extends GetxController {
   // ─── State ────────────────────────────────────────────────────────────────
@@ -318,6 +374,10 @@ class AdminEventUpdateController extends GetxController {
   final formKey = GlobalKey<FormState>();
   late TextEditingController eventNameCtrl;
   late TextEditingController locationCtrl;
+
+  // ─── Read-only fields (not editable) ─────────────────────────────────────
+  final mainLocation = RxnString();
+  final district = RxnString();
 
   // ─── Date / time observables ──────────────────────────────────────────────
   final startDate = Rxn<DateTime>();
@@ -392,36 +452,47 @@ class AdminEventUpdateController extends GetxController {
       ? DateFormat('MMM dd, yyyy').format(endDate.value!)
       : 'Select date';
 
-  String get displayStartTime => startTime.value != null
-      ? startTime.value!.format(Get.context!)
-      : 'Select time';
+  // Always display in 12-hour format (e.g. "1:46 PM") regardless of
+  // the device's system time setting — avoids "13:46" on 24-hr devices.
+  String _displayTime(TimeOfDay time) {
+    final now = DateTime.now();
+    final dt = DateTime(now.year, now.month, now.day, time.hour, time.minute);
+    return DateFormat('h:mm a').format(dt); // h = no leading zero → "1:46 PM"
+  }
 
-  String get displayEndTime => endTime.value != null
-      ? endTime.value!.format(Get.context!)
-      : 'Select time';
+  String get displayStartTime =>
+      startTime.value != null ? _displayTime(startTime.value!) : 'Select time';
+
+  String get displayEndTime =>
+      endTime.value != null ? _displayTime(endTime.value!) : 'Select time';
 
   // ─── Time formatting ──────────────────────────────────────────────────────
-
-  /// Converts TimeOfDay → "10:00 AM" (API format)
+  // FIX: API expects 24-hr "HH:mm", not "hh:mm a"
   String _formatTime(TimeOfDay time) {
     final now = DateTime.now();
     final dt = DateTime(now.year, now.month, now.day, time.hour, time.minute);
-    return DateFormat('hh:mm a').format(dt);
+    return DateFormat('HH:mm').format(dt);
   }
 
-  /// Parses "10:00 AM" → TimeOfDay
+  // FIX: Handle all time formats returned by the API
   TimeOfDay? _parseTime(String? timeStr) {
     if (timeStr == null || timeStr.trim().isEmpty) return null;
+    // Try "hh:mm a" → e.g. "11:00 AM"
     try {
       final dt = DateFormat('hh:mm a').parse(timeStr.trim());
       return TimeOfDay(hour: dt.hour, minute: dt.minute);
+    } catch (_) {}
+    // Try "HH:mm" → e.g. "09:00"
+    try {
+      final dt = DateFormat('HH:mm').parse(timeStr.trim());
+      return TimeOfDay(hour: dt.hour, minute: dt.minute);
+    } catch (_) {}
+    // Try "HH:mm:ss" → e.g. "09:00:00"
+    try {
+      final dt = DateFormat('HH:mm:ss').parse(timeStr.trim());
+      return TimeOfDay(hour: dt.hour, minute: dt.minute);
     } catch (_) {
-      try {
-        final dt = DateFormat('HH:mm').parse(timeStr.trim());
-        return TimeOfDay(hour: dt.hour, minute: dt.minute);
-      } catch (_) {
-        return null;
-      }
+      return null;
     }
   }
 
@@ -433,6 +504,11 @@ class AdminEventUpdateController extends GetxController {
     endDate.value = DateTime.tryParse(e.endDate);
     startTime.value = _parseTime(e.startTime);
     endTime.value = _parseTime(e.endTime);
+    // Read-only: shown in UI but never sent back as edited values
+    mainLocation.value =
+    (e.mainLocation?.trim().isEmpty ?? true) ? null : e.mainLocation;
+    district.value =
+    (e.district?.trim().isEmpty ?? true) ? null : e.district;
   }
 
   // ─── Fetch single event ───────────────────────────────────────────────────
@@ -441,14 +517,18 @@ class AdminEventUpdateController extends GetxController {
       isLoading.value = true;
 
       final response = await http.post(
-        Uri.parse('$_baseUrl/get-single-event'),
+        Uri.parse('$_baseUrl/get-Single-Event-admindisrict'),
         headers: _authHeaders,
         body: jsonEncode({'event_id': eventId}),
       );
 
       final body = jsonDecode(response.body) as Map<String, dynamic>;
 
-      if (response.statusCode == 200 && body['status'] == '1') {
+      final isSuccess = body['status'] == true ||
+          body['status'] == '1' ||
+          body['status_code'] == 200;
+
+      if (response.statusCode == 200 && isSuccess) {
         event.value =
             HEventModel.fromJson(body['data'] as Map<String, dynamic>);
         _populateForm(event.value!);
@@ -465,8 +545,8 @@ class AdminEventUpdateController extends GetxController {
   // ─── Pick banner image ────────────────────────────────────────────────────
   Future<void> pickBannerImage() async {
     final picker = ImagePicker();
-    final picked =
-    await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    final picked = await picker.pickImage(
+        source: ImageSource.gallery, imageQuality: 85);
     if (picked == null) return;
 
     final file = File(picked.path);
@@ -479,18 +559,27 @@ class AdminEventUpdateController extends GetxController {
   }
 
   // ─── Date pickers ─────────────────────────────────────────────────────────
+  DateTime get _today => DateTime(
+    DateTime.now().year,
+    DateTime.now().month,
+    DateTime.now().day,
+  );
 
   Future<void> selectStartDate(BuildContext context) async {
+    final initialDate =
+    (startDate.value != null && !startDate.value!.isBefore(_today))
+        ? startDate.value!
+        : _today;
+
     final picked = await showDatePicker(
       context: context,
-      initialDate: startDate.value ?? DateTime.now(),
-      firstDate: DateTime(2020),
+      initialDate: initialDate,
+      firstDate: _today,
       lastDate: DateTime(2035),
     );
+
     if (picked != null) {
       startDate.value = picked;
-
-      // Reset endDate if it is now before the new startDate
       if (endDate.value != null && endDate.value!.isBefore(picked)) {
         endDate.value = null;
       }
@@ -498,10 +587,11 @@ class AdminEventUpdateController extends GetxController {
   }
 
   Future<void> selectEndDate(BuildContext context) async {
-    // firstDate must be startDate (or fallback to 2020)
-    final first = startDate.value ?? DateTime(2020);
+    final first =
+    (startDate.value != null && !startDate.value!.isBefore(_today))
+        ? startDate.value!
+        : _today;
 
-    // initialDate must never be before firstDate — clamp it
     DateTime initial = endDate.value ?? first;
     if (initial.isBefore(first)) initial = first;
 
@@ -531,7 +621,7 @@ class AdminEventUpdateController extends GetxController {
     if (picked != null) endTime.value = picked;
   }
 
-  // ─── Update event (PUT /update-event) ─────────────────────────────────────
+  // ─── Update event ─────────────────────────────────────────────────────────
   Future<void> updateEvent() async {
     if (!formKey.currentState!.validate()) return;
 
@@ -550,30 +640,33 @@ class AdminEventUpdateController extends GetxController {
       final payload = <String, dynamic>{
         'event_id': int.parse(event.value!.id),
         'event_name': eventNameCtrl.text.trim(),
+        'event_location': locationCtrl.text.trim(),
+        // Read-only: always send original values unchanged
+        'main_location': event.value?.mainLocation ?? '',
+        'district': event.value?.district ?? '',
         'start_date': formattedStartDate,
         'end_date': formattedEndDate,
         'start_time': _formatTime(startTime.value!),
         'end_time': _formatTime(endTime.value!),
-        'event_location': locationCtrl.text.trim(),
       };
 
-      // Only attach banner_image when a new image is picked
       if (pickedImageBase64.value != null) {
         payload['banner_image'] = pickedImageBase64.value!;
       }
 
       final response = await http.put(
-        Uri.parse('$_baseUrl/update-event'),
+        Uri.parse('$_baseUrl/update-Event-admin-district'),
         headers: _authHeaders,
         body: jsonEncode(payload),
       );
 
       final body = jsonDecode(response.body) as Map<String, dynamic>;
 
-      if (response.statusCode == 200 && body['status'] == '1') {
-        event.value =
-            HEventModel.fromJson(body['data'] as Map<String, dynamic>);
+      final isSuccess = body['status'] == true ||
+          body['status'] == '1' ||
+          body['status_code'] == 200;
 
+      if (response.statusCode == 200 && isSuccess) {
         Get.snackbar(
           'Success',
           body['message']?.toString() ?? 'Event updated successfully',
@@ -583,7 +676,14 @@ class AdminEventUpdateController extends GetxController {
           margin: const EdgeInsets.all(16),
         );
 
-        Get.back(result: true);
+        // FIX: Force-delete the AdminEventPage controller so its onInit
+        // re-runs and fetchEvents() is called fresh when the page mounts.
+        // Without this GetX returns the stale cached instance and skips onInit.
+        try {
+          Get.delete<AdminEventGetController>(force: true);
+        } catch (_) {}
+
+        Get.offAll(() => AdminEventPage());
       } else {
         _showError(body['message']?.toString() ?? 'Failed to update event');
       }

@@ -18,11 +18,8 @@ class MerchantAddAdvertisementPage extends StatelessWidget {
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
         automaticallyImplyLeading: true,
-        iconTheme: const IconThemeData(
-          color: Colors.white, // back arrow color
-        ),
+        iconTheme: const IconThemeData(color: Colors.white),
         backgroundColor: AppColors.kPrimary,
-        //elevation: 0,
         title: Text(
           "Create Advertisement",
           style: AppTextStyle.rTextNunitoWhite16w600,
@@ -31,17 +28,13 @@ class MerchantAddAdvertisementPage extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Header gradient
-            Container(
-              height: 20,
-            ),
-
+            const SizedBox(height: 20),
             Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Banner upload section
+                  // ── Banner Upload ──────────────────────────────────
                   Text(
                     "Advertisement Banner",
                     style: TextStyle(
@@ -81,7 +74,8 @@ class MerchantAddAdvertisementPage extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: AppColors.kPrimary.withOpacity(0.1),
+                              color: AppColors.kPrimary
+                                  .withOpacity(0.1),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
@@ -145,7 +139,7 @@ class MerchantAddAdvertisementPage extends StatelessWidget {
 
                   const SizedBox(height: 32),
 
-                  // Ad name section
+                  // ── Advertisement Details ──────────────────────────
                   Text(
                     "Advertisement Details",
                     style: TextStyle(
@@ -156,58 +150,124 @@ class MerchantAddAdvertisementPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
 
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
+                  // Ad Name
+                  _buildCard(
                     child: TextField(
                       controller: controller.adNameController,
                       style: const TextStyle(fontSize: 15),
-                      decoration: InputDecoration(
-                        labelText: "Advertisement Name",
-                        labelStyle: TextStyle(color: Colors.grey.shade600),
-                        hintText: "Enter a catchy name",
-                        hintStyle: TextStyle(color: Colors.grey.shade400),
-                        prefixIcon: Icon(
-                          Icons.campaign_outlined,
-                          color: AppColors.kPrimary,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide.none,
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide.none,
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(
-                            color: AppColors.kPrimary,
-                            width: 2,
-                          ),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 18,
-                        ),
+                      decoration: _inputDecoration(
+                        label: "Advertisement Name",
+                        hint: "Enter a catchy name",
+                        icon: Icons.campaign_outlined,
                       ),
                     ),
                   ),
 
+                  const SizedBox(height: 24),
+
+                  // ── Location Type Label ────────────────────────────
+                  Text(
+                    "Location Type",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade800,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // ── Toggle Buttons: District | Area ────────────────
+                  Obx(() => Row(
+                    children: [
+                      Expanded(
+                        child: _locationToggleButton(
+                          label: "District",
+                          icon: Icons.location_city_outlined,
+                          isSelected:
+                          controller.locationType.value == 'district',
+                          onTap: () =>
+                              controller.setLocationType('district'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _locationToggleButton(
+                          label: "Area",
+                          icon: Icons.place_outlined,
+                          isSelected:
+                          controller.locationType.value == 'area',
+                          onTap: () => controller.setLocationType('area'),
+                        ),
+                      ),
+                    ],
+                  )),
+
+                  // ── Conditional Dropdown below toggle ──────────────
+                  Obx(() {
+                    final type = controller.locationType.value;
+                    if (type == null) return const SizedBox.shrink();
+
+                    return Column(
+                      children: [
+                        const SizedBox(height: 16),
+                        if (type == 'district') ...[
+                          controller.isLoadingDistricts.value
+                              ? _buildLoadingDropdown("Loading districts...")
+                              : _buildCard(
+                            child: DropdownButtonFormField<String>(
+                              value: controller.selectedDistrict.value,
+                              decoration: _inputDecoration(
+                                label: "Select District",
+                                hint: "Choose a district",
+                                icon: Icons.location_city_outlined,
+                              ),
+                              items: controller.districts
+                                  .map((d) => DropdownMenuItem(
+                                value: d,
+                                child: Text(d),
+                              ))
+                                  .toList(),
+                              onChanged: (val) =>
+                              controller.selectedDistrict.value = val,
+                              isExpanded: true,
+                              icon: Icon(Icons.keyboard_arrow_down,
+                                  color: AppColors.kPrimary),
+                              dropdownColor: Colors.white,
+                            ),
+                          ),
+                        ] else if (type == 'area') ...[
+                          controller.isLoadingAreas.value
+                              ? _buildLoadingDropdown("Loading areas...")
+                              : _buildCard(
+                            child: DropdownButtonFormField<String>(
+                              value: controller.selectedArea.value,
+                              decoration: _inputDecoration(
+                                label: "Select Area",
+                                hint: "Choose an area",
+                                icon: Icons.place_outlined,
+                              ),
+                              items: controller.areas
+                                  .map((a) => DropdownMenuItem(
+                                value: a,
+                                child: Text(a),
+                              ))
+                                  .toList(),
+                              onChanged: (val) =>
+                              controller.selectedArea.value = val,
+                              isExpanded: true,
+                              icon: Icon(Icons.keyboard_arrow_down,
+                                  color: AppColors.kPrimary),
+                              dropdownColor: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ],
+                    );
+                  }),
+
                   const SizedBox(height: 40),
 
-                  // Post button
+                  // ── Post Button ───────────────────────────────────
                   Obx(() => Container(
                     width: double.infinity,
                     height: 56,
@@ -251,9 +311,9 @@ class MerchantAddAdvertisementPage extends StatelessWidget {
                           strokeWidth: 2.5,
                         ),
                       )
-                          : Row(
+                          : const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
+                        children: [
                           Icon(Icons.publish, color: Colors.white),
                           SizedBox(width: 8),
                           Text(
@@ -276,6 +336,139 @@ class MerchantAddAdvertisementPage extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  // ── Location Toggle Button ─────────────────────────────────────────
+  Widget _locationToggleButton({
+    required String label,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        height: 52,
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.kPrimary : Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected ? AppColors.kPrimary : Colors.grey.shade300,
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isSelected
+                  ? AppColors.kPrimary.withOpacity(0.25)
+                  : Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 20,
+              color: isSelected ? Colors.white : Colors.grey.shade600,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? Colors.white : Colors.grey.shade700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────
+
+  Widget _buildCard({required Widget child}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+
+  Widget _buildLoadingDropdown(String label) {
+    return Container(
+      height: 56,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        children: [
+          SizedBox(
+            height: 18,
+            width: 18,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppColors.kPrimary,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(label,
+              style: TextStyle(color: Colors.grey.shade500, fontSize: 14)),
+        ],
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration({
+    required String label,
+    required String hint,
+    required IconData icon,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: TextStyle(color: Colors.grey.shade600),
+      hintText: hint,
+      hintStyle: TextStyle(color: Colors.grey.shade400),
+      prefixIcon: Icon(icon, color: AppColors.kPrimary),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: AppColors.kPrimary, width: 2),
+      ),
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
     );
   }
 }

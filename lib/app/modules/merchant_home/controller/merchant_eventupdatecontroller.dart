@@ -10,8 +10,6 @@ import 'package:http/http.dart' as http;
 
 import '../../../data/models/merchant_eventupadatemodel.dart';
 
-
-
 class EventUpdateController extends GetxController {
   // ─── State ────────────────────────────────────────────────────────────────
   final isLoading = false.obs;
@@ -23,6 +21,10 @@ class EventUpdateController extends GetxController {
 
   late TextEditingController eventNameCtrl;
   late TextEditingController locationCtrl;
+
+  // ─── Read-only locked fields ──────────────────────────────────────────────
+  final district = RxnString();
+  final mainLocation = RxnString();
 
   // ─── Date / time observables ──────────────────────────────────────────────
   final startDate = Rxn<DateTime>();
@@ -56,7 +58,6 @@ class EventUpdateController extends GetxController {
     eventNameCtrl = TextEditingController();
     locationCtrl = TextEditingController();
 
-    // Read as dynamic to avoid implicit String -> int? cast crash
     final Map<String, dynamic>? args = Get.arguments != null
         ? Map<String, dynamic>.from(Get.arguments as Map)
         : null;
@@ -83,22 +84,34 @@ class EventUpdateController extends GetxController {
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
   String get formattedStartDate =>
-      startDate.value != null ? DateFormat('yyyy-MM-dd').format(startDate.value!) : '—';
+      startDate.value != null
+          ? DateFormat('yyyy-MM-dd').format(startDate.value!)
+          : '—';
 
   String get formattedEndDate =>
-      endDate.value != null ? DateFormat('yyyy-MM-dd').format(endDate.value!) : '—';
+      endDate.value != null
+          ? DateFormat('yyyy-MM-dd').format(endDate.value!)
+          : '—';
 
   String get displayStartDate =>
-      startDate.value != null ? DateFormat('MMM dd, yyyy').format(startDate.value!) : 'Select date';
+      startDate.value != null
+          ? DateFormat('MMM dd, yyyy').format(startDate.value!)
+          : 'Select date';
 
   String get displayEndDate =>
-      endDate.value != null ? DateFormat('MMM dd, yyyy').format(endDate.value!) : 'Select date';
+      endDate.value != null
+          ? DateFormat('MMM dd, yyyy').format(endDate.value!)
+          : 'Select date';
 
   String get displayStartTime =>
-      startTime.value != null ? startTime.value!.format(Get.context!) : 'Select time';
+      startTime.value != null
+          ? startTime.value!.format(Get.context!)
+          : 'Select time';
 
   String get displayEndTime =>
-      endTime.value != null ? endTime.value!.format(Get.context!) : 'Select time';
+      endTime.value != null
+          ? endTime.value!.format(Get.context!)
+          : 'Select time';
 
   String _formatTime(TimeOfDay time) {
     final now = DateTime.now();
@@ -112,7 +125,13 @@ class EventUpdateController extends GetxController {
       final dt = DateFormat('hh:mm a').parse(timeStr);
       return TimeOfDay(hour: dt.hour, minute: dt.minute);
     } catch (_) {
-      return null;
+      try {
+        // Fallback: try 24h format HH:mm
+        final dt = DateFormat('HH:mm').parse(timeStr);
+        return TimeOfDay(hour: dt.hour, minute: dt.minute);
+      } catch (_) {
+        return null;
+      }
     }
   }
 
@@ -123,6 +142,12 @@ class EventUpdateController extends GetxController {
     endDate.value = DateTime.tryParse(e.endDate);
     startTime.value = _parseTime(e.startTime);
     endTime.value = _parseTime(e.endTime);
+
+    district.value = e.district.isNotEmpty ? e.district : null;
+    mainLocation.value =
+    (e.mainLocation != null && e.mainLocation!.isNotEmpty)
+        ? e.mainLocation
+        : null;
   }
 
   // ─── Fetch event ──────────────────────────────────────────────────────────
@@ -152,7 +177,8 @@ class EventUpdateController extends GetxController {
   // ─── Pick image ───────────────────────────────────────────────────────────
   Future<void> pickBannerImage() async {
     final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    final picked = await picker.pickImage(
+        source: ImageSource.gallery, imageQuality: 85);
     if (picked == null) return;
 
     final file = File(picked.path);
@@ -165,23 +191,143 @@ class EventUpdateController extends GetxController {
   }
 
   // ─── Date / time pickers ──────────────────────────────────────────────────
+  //
+  // Future<void> selectStartDate(BuildContext context) async {
+  //   final now = DateTime.now();
+  //   final initial = startDate.value ?? now;
+  //
+  //   final picked = await showDatePicker(
+  //     context: context,
+  //     initialDate: initial,
+  //     firstDate: DateTime(2020),
+  //     lastDate: DateTime(2030),
+  //   );
+  //
+  //   if (picked != null) {
+  //     startDate.value = picked;
+  //
+  //     // ── FIX: clear end date + end time if they are now before start date ──
+  //     if (endDate.value != null) {
+  //       final end = endDate.value!;
+  //       // Compare date-only (strip time component)
+  //       final endDateOnly =
+  //       DateTime(end.year, end.month, end.day);
+  //       final startDateOnly =
+  //       DateTime(picked.year, picked.month, picked.day);
+  //
+  //       if (endDateOnly.isBefore(startDateOnly)) {
+  //         endDate.value = null;
+  //         endTime.value = null;
+  //         Get.snackbar(
+  //           'Notice',
+  //           'End date & time were reset because they were before the new start date.',
+  //           backgroundColor: const Color(0xFFFF9800),
+  //           colorText: Colors.white,
+  //           snackPosition: SnackPosition.BOTTOM,
+  //           margin: const EdgeInsets.all(16),
+  //           duration: const Duration(seconds: 3),
+  //         );
+  //       }
+  //     }
+  //   }
+  // }
+  //
+  // Future<void> selectEndDate(BuildContext context) async {
+  //   final now = DateTime.now();
+  //
+  //   // ── FIX: compute a safe initial date that is never before firstDate ──
+  //   final firstDate = startDate.value ?? DateTime(2020);
+  //   DateTime safeInitial;
+  //
+  //   if (endDate.value != null) {
+  //     final end = endDate.value!;
+  //     final endDateOnly = DateTime(end.year, end.month, end.day);
+  //     final firstDateOnly =
+  //     DateTime(firstDate.year, firstDate.month, firstDate.day);
+  //     // If stored endDate is before firstDate, clamp to firstDate
+  //     safeInitial =
+  //     endDateOnly.isBefore(firstDateOnly) ? firstDate : endDate.value!;
+  //   } else {
+  //     safeInitial = firstDate;
+  //   }
+  //
+  //   final picked = await showDatePicker(
+  //     context: context,
+  //     initialDate: safeInitial,   // ← always valid, never before firstDate
+  //     firstDate: firstDate,
+  //     lastDate: DateTime(2030),
+  //   );
+  //
+  //   if (picked != null) endDate.value = picked;
+  // }
   Future<void> selectStartDate(BuildContext context) async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day); // strip time
+
+    // If existing startDate is in the past, clamp initial to today
+    final safeInitial = (startDate.value != null &&
+        startDate.value!.isAfter(today.subtract(const Duration(days: 1))))
+        ? startDate.value!
+        : today;
+
     final picked = await showDatePicker(
       context: context,
-      initialDate: startDate.value ?? DateTime.now(),
-      firstDate: DateTime(2020),
+      initialDate: safeInitial,
+      firstDate: today,           // ← past dates greyed out / unselectable
       lastDate: DateTime(2030),
     );
-    if (picked != null) startDate.value = picked;
+
+    if (picked != null) {
+      startDate.value = picked;
+
+      // Clear end date+time if now before new start
+      if (endDate.value != null) {
+        final endOnly = DateTime(
+            endDate.value!.year, endDate.value!.month, endDate.value!.day);
+        if (endOnly.isBefore(picked)) {
+          endDate.value = null;
+          endTime.value = null;
+          Get.snackbar(
+            'Notice',
+            'End date & time were reset because they were before the new start date.',
+            backgroundColor: const Color(0xFFFF9800),
+            colorText: Colors.white,
+            snackPosition: SnackPosition.BOTTOM,
+            margin: const EdgeInsets.all(16),
+            duration: const Duration(seconds: 3),
+          );
+        }
+      }
+    }
   }
 
   Future<void> selectEndDate(BuildContext context) async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    // firstDate is whichever is later: today OR the selected start date
+    final firstDate = (startDate.value != null &&
+        startDate.value!.isAfter(today))
+        ? startDate.value!
+        : today;
+
+    // Clamp initialDate so it's never before firstDate
+    DateTime safeInitial;
+    if (endDate.value != null) {
+      final endOnly = DateTime(
+          endDate.value!.year, endDate.value!.month, endDate.value!.day);
+      safeInitial = endOnly.isBefore(firstDate) ? firstDate : endDate.value!;
+    } else {
+      safeInitial = firstDate;
+    }
+
     final picked = await showDatePicker(
       context: context,
-      initialDate: endDate.value ?? (startDate.value ?? DateTime.now()),
-      firstDate: startDate.value ?? DateTime(2020),
+      initialDate: safeInitial,
+      firstDate: firstDate,       // ← past + pre-startDate greyed out
       lastDate: DateTime(2030),
     );
+
     if (picked != null) endDate.value = picked;
   }
 
@@ -190,15 +336,68 @@ class EventUpdateController extends GetxController {
       context: context,
       initialTime: startTime.value ?? TimeOfDay.now(),
     );
-    if (picked != null) startTime.value = picked;
+
+    if (picked != null) {
+      startTime.value = picked;
+
+      // ── FIX: if same date, clear end time when it is now <= start time ──
+      if (endTime.value != null && _isSameDay()) {
+        final sMinutes = picked.hour * 60 + picked.minute;
+        final eMinutes =
+            endTime.value!.hour * 60 + endTime.value!.minute;
+        if (eMinutes <= sMinutes) {
+          endTime.value = null;
+          Get.snackbar(
+            'Notice',
+            'End time was reset because it was not after the new start time.',
+            backgroundColor: const Color(0xFFFF9800),
+            colorText: Colors.white,
+            snackPosition: SnackPosition.BOTTOM,
+            margin: const EdgeInsets.all(16),
+            duration: const Duration(seconds: 3),
+          );
+        }
+      }
+    }
   }
 
   Future<void> selectEndTime(BuildContext context) async {
+    // ── FIX: guard: ensure end time is after start time on the same date ──
+    TimeOfDay initialTime = endTime.value ?? TimeOfDay.now();
+
     final picked = await showTimePicker(
       context: context,
-      initialTime: endTime.value ?? TimeOfDay.now(),
+      initialTime: initialTime,
     );
-    if (picked != null) endTime.value = picked;
+
+    if (picked != null) {
+      // Validate on same day
+      if (_isSameDay() && startTime.value != null) {
+        final sMinutes =
+            startTime.value!.hour * 60 + startTime.value!.minute;
+        final eMinutes = picked.hour * 60 + picked.minute;
+        if (eMinutes <= sMinutes) {
+          Get.snackbar(
+            'Invalid Time',
+            'End time must be after start time.',
+            backgroundColor: const Color(0xFFF44336),
+            colorText: Colors.white,
+            snackPosition: SnackPosition.BOTTOM,
+            margin: const EdgeInsets.all(16),
+          );
+          return; // ← do NOT save an invalid end time
+        }
+      }
+      endTime.value = picked;
+    }
+  }
+
+  /// Returns true when startDate and endDate are the same calendar day.
+  bool _isSameDay() {
+    final s = startDate.value;
+    final e = endDate.value;
+    if (s == null || e == null) return false;
+    return s.year == e.year && s.month == e.month && s.day == e.day;
   }
 
   // ─── Update event ─────────────────────────────────────────────────────────
@@ -224,9 +423,10 @@ class EventUpdateController extends GetxController {
         'start_time': _formatTime(startTime.value!),
         'end_time': _formatTime(endTime.value!),
         'event_location': locationCtrl.text.trim(),
+        'district': district.value ?? '',
+        'main_location': mainLocation.value ?? '',
       };
 
-      // Only send banner_image if a new image was picked
       if (pickedImageBase64.value != null) {
         payload['banner_image'] = pickedImageBase64.value!;
       }

@@ -2,8 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-
-import '../../../common/style/app_text_style.dart';
 import '../controller/addevent_controller.dart';
 
 class AddEventPage extends StatelessWidget {
@@ -64,7 +62,7 @@ class AddEventPage extends StatelessWidget {
                         icon: Icons.title_rounded,
                       ),
                       const SizedBox(height: 16),
-                      _fieldLabel("Location"),
+                      _fieldLabel("Event Location"),
                       const SizedBox(height: 6),
                       _inputField(
                         controller: controller.eventLocation,
@@ -76,13 +74,20 @@ class AddEventPage extends StatelessWidget {
 
                   const SizedBox(height: 14),
 
+                  // ── Area / District Card ────────────────────────
+                  _sectionCard(
+                    title: "EVENT COVERAGE",
+                    icon: Icons.map_outlined,
+                    children: [_buildAreaDistrictSection()],
+                  ),
+
+                  const SizedBox(height: 14),
+
                   // ── Schedule Card ───────────────────────────────
                   _sectionCard(
                     title: "SCHEDULE",
                     icon: Icons.calendar_month_outlined,
                     children: [
-
-                      // Dates row
                       Row(
                         children: [
                           Expanded(
@@ -108,10 +113,7 @@ class AddEventPage extends StatelessWidget {
                           ),
                         ],
                       ),
-
                       const SizedBox(height: 10),
-
-                      // ── Time row — now two separate pickers ─────
                       Row(
                         children: [
                           Expanded(
@@ -158,7 +160,7 @@ class AddEventPage extends StatelessWidget {
               child: _buildSubmitButton(),
             ),
 
-            // ── Loading overlay ─────────────────────────────────
+            // ── Loading Overlay ─────────────────────────────────
             Obx(() => controller.isLoading.value
                 ? Container(
               color: Colors.black45,
@@ -195,6 +197,262 @@ class AddEventPage extends StatelessWidget {
     );
   }
 
+  // ══════════════════════════════════════════════════════════
+  // AREA / DISTRICT SECTION
+  // ══════════════════════════════════════════════════════════
+  Widget _buildAreaDistrictSection() {
+    return Obx(() {
+      final isArea     = controller.showMode.value == "area";
+      final isDistrict = controller.showMode.value == "district";
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+
+          // ── Toggle Tabs ──────────────────────────────────
+          Container(
+            decoration: BoxDecoration(
+              color: _bg,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: _border),
+            ),
+            child: Row(
+              children: [
+                _modeTab(
+                  label: "Area Wise",
+                  icon: Icons.grid_view_rounded,
+                  selected: isArea,
+                  onTap: () {
+                    controller.showMode.value = "area";
+                    controller.selectedDistrict.value = null; // clear district
+                  },
+                ),
+                _modeTab(
+                  label: "District Wise",
+                  icon: Icons.location_city_rounded,
+                  selected: isDistrict,
+                  onTap: () {
+                    controller.showMode.value = "district";
+                    controller.selectedArea.value = null; // clear area
+                  },
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          // ── AREA MODE ────────────────────────────────────
+          if (isArea) ...[
+            _fieldLabel("Select Area"),
+            const SizedBox(height: 8),
+
+            // Dropdown
+            Obx(() {
+              if (controller.isLoadingAreas.value) {
+                return _loadingDropdown("Loading areas…");
+              }
+              if (controller.areaList.isEmpty) {
+                return _emptyState("No areas available");
+              }
+              return _dropdownField(
+                value: controller.selectedArea.value,
+                hint: "Choose an area",
+                icon: Icons.grid_view_rounded,
+                items: controller.areaList,
+                onChanged: (val) => controller.selectedArea.value = val,
+              );
+            }),
+
+            const SizedBox(height: 10),
+
+
+          ],
+
+          // ── DISTRICT MODE ────────────────────────────────
+          if (isDistrict) ...[
+            _fieldLabel("Select District"),
+            const SizedBox(height: 8),
+
+            // Dropdown
+            Obx(() {
+              if (controller.isLoadingDistricts.value) {
+                return _loadingDropdown("Loading districts…");
+              }
+              if (controller.districtList.isEmpty) {
+                return _emptyState("No districts available");
+              }
+              return _dropdownField(
+                value: controller.selectedDistrict.value,
+                hint: "Choose a district",
+                icon: Icons.location_city_rounded,
+                items: controller.districtList,
+                onChanged: (val) => controller.selectedDistrict.value = val,
+              );
+            }),
+
+            const SizedBox(height: 10),
+
+          ],
+        ],
+      );
+    });
+  }
+
+  // ── MODE TAB ──────────────────────────────────────────────
+  Widget _modeTab({
+    required String label,
+    required IconData icon,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          margin: const EdgeInsets.all(3),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: selected ? _teal : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon,
+                  size: 14,
+                  color: selected ? Colors.white : _textSecondary),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: selected ? Colors.white : _textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── DROPDOWN FIELD ────────────────────────────────────────
+  Widget _dropdownField({
+    required String? value,
+    required String hint,
+    required IconData icon,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: _bg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: value != null ? _teal.withOpacity(0.45) : _border,
+          width: value != null ? 1.4 : 1,
+        ),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          isExpanded: true,
+          hint: Padding(
+            padding: const EdgeInsets.only(left: 12),
+            child: Row(
+              children: [
+                Icon(icon, size: 16, color: _textSecondary),
+                const SizedBox(width: 8),
+                Text(hint,
+                    style: const TextStyle(
+                        fontSize: 14, color: _textSecondary)),
+              ],
+            ),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          borderRadius: BorderRadius.circular(10),
+          dropdownColor: Colors.white,
+          icon: const Icon(Icons.keyboard_arrow_down_rounded,
+              color: _textSecondary, size: 20),
+          items: items.map((item) {
+            return DropdownMenuItem<String>(
+              value: item,
+              child: Row(
+                children: [
+                  Icon(icon, size: 15, color: _teal),
+                  const SizedBox(width: 8),
+                  Text(item,
+                      style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: _textPrimary)),
+                ],
+              ),
+            );
+          }).toList(),
+          onChanged: onChanged,
+          selectedItemBuilder: (context) => items.map((item) {
+            return Row(
+              children: [
+                Icon(icon, size: 16, color: _teal),
+                const SizedBox(width: 8),
+                Text(item,
+                    style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: _textPrimary)),
+              ],
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  // ── LOADING DROPDOWN PLACEHOLDER ─────────────────────────
+  Widget _loadingDropdown(String msg) {
+    return Container(
+      height: 50,
+      decoration: BoxDecoration(
+        color: _bg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: _border),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const SizedBox(
+            width: 14,
+            height: 14,
+            child: CircularProgressIndicator(strokeWidth: 2, color: _teal),
+          ),
+          const SizedBox(width: 10),
+          Text(msg,
+              style: const TextStyle(fontSize: 13, color: _textSecondary)),
+        ],
+      ),
+    );
+  }
+
+  // ── EMPTY STATE ───────────────────────────────────────────
+  Widget _emptyState(String msg) {
+    return Container(
+      height: 50,
+      decoration: BoxDecoration(
+        color: _bg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: _border),
+      ),
+      child: Center(
+        child: Text(msg,
+            style: const TextStyle(fontSize: 13, color: _textSecondary)),
+      ),
+    );
+  }
+
   // ── SECTION CARD ──────────────────────────────────────────
   Widget _sectionCard({
     required String title,
@@ -219,7 +477,6 @@ class AddEventPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Section header with icon
           Row(
             children: [
               Icon(icon, size: 14, color: _teal),
@@ -289,11 +546,9 @@ class AddEventPage extends StatelessWidget {
     required String label,
     required String value,
     required IconData icon,
-    bool fullWidth = false,
   }) {
     final bool has = value.isNotEmpty;
     return Container(
-      width: fullWidth ? double.infinity : null,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: BoxDecoration(
         color: _bg,
@@ -380,7 +635,8 @@ class AddEventPage extends StatelessWidget {
             const SizedBox(height: 3),
             const Text(
               "Recommended: 1280 × 720px",
-              style: TextStyle(fontSize: 11, color: _textSecondary),
+              style:
+              TextStyle(fontSize: 11, color: _textSecondary),
             ),
           ],
         )
@@ -395,7 +651,6 @@ class AddEventPage extends StatelessWidget {
                 height: double.infinity,
               ),
             ),
-            // Remove button
             Positioned(
               top: 8,
               right: 8,
@@ -418,7 +673,6 @@ class AddEventPage extends StatelessWidget {
                 ),
               ),
             ),
-            // "Banner selected" badge
             Positioned(
               bottom: 8,
               left: 8,

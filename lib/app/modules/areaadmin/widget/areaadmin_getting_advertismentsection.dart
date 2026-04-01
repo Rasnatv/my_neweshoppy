@@ -7,6 +7,7 @@ import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 
 import '../../../data/models/area_admin_advertismentgetmodel.dart';
 import '../controller/areaadmin_getting_advertismentcontroller.dart';
+import '../view/area_adminhome.dart';
 import '../view/areaadmin_updateadvertismentpage.dart';
 
 class HomeAdvertisementWidget extends StatelessWidget {
@@ -36,48 +37,7 @@ class HomeAdvertisementWidget extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Row(
-              children: [
-                Container(
-                  width: 4,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF4F6CF7),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                const Text(
-                  'Advertisements',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF1A1D2E),
-                    letterSpacing: 0.2,
-                  ),
-                ),
-                const Spacer(),
-                Container(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEEF1FF),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '${controller.latestAds.length} Active',
-                    style: const TextStyle(
-                      color: Color(0xFF4F6CF7),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -87,9 +47,11 @@ class HomeAdvertisementWidget extends StatelessWidget {
               final ad = controller.latestAds[index];
               return AdCard(
                 ad: ad,
-                onEdit: () =>
-                    Get.to(() =>
-                        AreaAdminUpdateAdvertisementPage(adId: ad.id,)),
+                onEdit: () => Get.to(() => AreaAdminUpdateAdvertisementPage(adId: ad.id))
+                    ?.then((result) {
+                  if (result == true) controller.fetchAdvertisements();
+                  Get.offAll(AreaAdminhomepage());
+                }),
                 onDelete: () {
                   _confirmDelete(context, ad);
                 },
@@ -316,24 +278,7 @@ class _AdCardState extends State<AdCard>
                           const SizedBox(height: 6),
                           Row(
                             children: [
-                              Container(
-                                width: 8,
-                                height: 8,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFF22C55E),
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
                               const SizedBox(width: 5),
-                              const Text(
-                                'Active',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Color(0xFF22C55E),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
                               const Icon(
                                 Icons.calendar_today_rounded,
                                 size: 11,

@@ -55,10 +55,14 @@ class AreaadminGettingEventController extends GetxController {
           List<AreaAdmingshowEventModel> events =
           list.map((e) => AreaAdmingshowEventModel.fromJson(e)).toList();
 
-          // Sort latest created first
-          events.sort((a, b) =>
-              DateTime.parse(b.createdAt).compareTo(DateTime.parse(a.createdAt)));
-
+          events.sort((a, b) {
+            try {
+              return DateTime.parse(b.createdAt)
+                  .compareTo(DateTime.parse(a.createdAt));
+            } catch (_) {
+              return 0; // treat unparseable dates as equal
+            }
+          });
           allEvents.value = events;
           recentEvents.value = events.take(3).toList();
         } else {
@@ -79,7 +83,7 @@ class AreaadminGettingEventController extends GetxController {
       isLoading(false);
     }
   }
-  Future<void> deleteEvent(int eventId) async {
+  Future<void> deleteEvent(String eventId) async {
     // Optimistically remove from both lists immediately
     recentEvents.removeWhere((e) => e.id == eventId);
     allEvents.removeWhere((e) => e.id == eventId);

@@ -14,8 +14,6 @@ class MerchantAdvertisementGetController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-
-    /// 🔴 IMPORTANT: Read token AFTER storage is ready
     authToken = box.read("auth_token") ?? "";
 
     if (authToken.isEmpty) {
@@ -26,7 +24,7 @@ class MerchantAdvertisementGetController extends GetxController {
     fetchAdvertisements();
   }
 
-  /// 🔹 GET ADVERTISEMENTS
+  /// GET ADVERTISEMENTS
   Future<void> fetchAdvertisements() async {
     try {
       isLoading.value = true;
@@ -36,7 +34,7 @@ class MerchantAdvertisementGetController extends GetxController {
           "https://rasma.astradevelops.in/e_shoppyy/public/api/getadvertisement",
         ),
         headers: {
-          "Authorization": "Bearer $authToken", // ✅ MUST
+          "Authorization": "Bearer $authToken",
           "Accept": "application/json",
         },
       );
@@ -46,10 +44,22 @@ class MerchantAdvertisementGetController extends GetxController {
       if (response.statusCode == 200 &&
           (body["status"] == "1" || body["status"] == 1)) {
         ads.value = List<Map<String, dynamic>>.from(
-          body["data"].map((e) => {
-            "id": e["id"].toString(),
-            "title": e["advertisement"],
-            "image": e["banner_image"],
+          body["data"].map((e) {
+            // Determine location type and value from API response
+            String? district = e["district"]?.toString();
+            String? area = e["main_location"]?.toString();
+
+            // Ignore empty strings
+            if (district != null && district.trim().isEmpty) district = null;
+            if (area != null && area.trim().isEmpty) area = null;
+
+            return {
+              "id": e["id"].toString(),
+              "title": e["advertisement"],
+              "image": e["banner_image"],
+              "district": district,      // null if not present
+              "main_location": area,     // null if not present
+            };
           }),
         );
       } else {

@@ -1,481 +1,4 @@
-//
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-// import '../../../../common/style/app_colors.dart';
-// import '../../../../common/style/app_text_style.dart';
-// import '../../../../common/utils/validators.dart';
-// import '../../controller/admin_addeventcontroller.dart';
-//
-// class AdminAddEventPage extends StatelessWidget {
-//   AdminAddEventPage({super.key});
-//
-//   final AdminEventAddController controller = Get.put(AdminEventAddController());
-//   final _formKey = GlobalKey<FormState>();
-//   final RxBool _submitted = false.obs;
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       backgroundColor: Colors.grey.shade50,
-//       appBar: AppBar(
-//         automaticallyImplyLeading: true,
-//         title: Text(
-//           "Create Event",
-//           style: AppTextStyle.rTextNunitoWhite17w700,
-//         ),
-//         backgroundColor: AppColors.kPrimary,
-//         elevation: 0,
-//       ),
-//       body: SingleChildScrollView(
-//         child: Column(
-//           children: [
-//             /// Gradient header decoration
-//             Container(
-//               height: 8,
-//               decoration: BoxDecoration(
-//                 gradient: LinearGradient(
-//                   colors: [
-//                     AppColors.kPrimary,
-//                     AppColors.kPrimary.withOpacity(0.7),
-//                   ],
-//                 ),
-//               ),
-//             ),
-//             Padding(
-//               padding: const EdgeInsets.all(20),
-//               child: Form(
-//                 key: _formKey,
-//                 child: Column(
-//                   crossAxisAlignment: CrossAxisAlignment.start,
-//                   children: [
-//                     /// ================= EVENT DETAILS CARD =================
-//                     _buildCard(
-//                       child: Column(
-//                         crossAxisAlignment: CrossAxisAlignment.start,
-//                         children: [
-//                           _sectionHeader(
-//                             icon: Icons.event_note_rounded,
-//                             title: "Event Details",
-//                           ),
-//                           const SizedBox(height: 20),
-//                           _modernTextField(
-//                             controller: controller.eventName,
-//                             label: "Event Name",
-//                             hint: "Enter event name",
-//                             icon: Icons.celebration_outlined,
-//                             validator: (v) =>
-//                                 DValidator.validateEmptyText("Event Name", v),
-//                           ),
-//                           const SizedBox(height: 16),
-//                           _modernTextField(
-//                             controller: controller.eventLocation,
-//                             label: "Location",
-//                             hint: "Enter event location",
-//                             icon: Icons.location_on_outlined,
-//                             validator: (v) =>
-//                                 DValidator.validateEmptyText("Location", v),
-//                           ),
-//                         ],
-//                       ),
-//                     ),
-//
-//                     const SizedBox(height: 20),
-//
-//                     /// ================= SCHEDULE CARD =================
-//                     _buildCard(
-//                       child: Column(
-//                         crossAxisAlignment: CrossAxisAlignment.start,
-//                         children: [
-//                           _sectionHeader(
-//                             icon: Icons.access_time_rounded,
-//                             title: "Schedule",
-//                           ),
-//                           const SizedBox(height: 20),
-//                           _modernPickerField(
-//                             label: "Start Date",
-//                             value: controller.startDate,
-//                             icon: Icons.calendar_today_outlined,
-//                             onTap: () => controller.pickStartDate(context),
-//                             errorText: "Start Date is required",
-//                           ),
-//                           const SizedBox(height: 16),
-//                           _modernPickerField(
-//                             label: "End Date",
-//                             value: controller.endDate,
-//                             icon: Icons.event_outlined,
-//                             onTap: () => controller.pickEndDate(context),
-//                             errorText: "End Date is required",
-//                           ),
-//                           const SizedBox(height: 16),
-//                           _modernPickerField(
-//                             label: "Event Time",
-//                             value: controller.eventTime,
-//                             icon: Icons.access_time,
-//                             onTap: () => controller.pickTime(context),
-//                             errorText: "Event Time is required",
-//                           ),
-//                         ],
-//                       ),
-//                     ),
-//
-//                     const SizedBox(height: 20),
-//
-//                     /// ================= IMAGE UPLOAD CARD =================
-//                     _buildCard(
-//                       child: Column(
-//                         crossAxisAlignment: CrossAxisAlignment.start,
-//                         children: [
-//                           _sectionHeader(
-//                             icon: Icons.image_rounded,
-//                             title: "Banner Image",
-//                           ),
-//                           const SizedBox(height: 20),
-//                           Obx(() => InkWell(
-//                             onTap: controller.pickBannerImage,
-//                             borderRadius: BorderRadius.circular(12),
-//                             child: Container(
-//                               height: 200,
-//                               width: double.infinity,
-//                               decoration: BoxDecoration(
-//                                 border: Border.all(
-//                                   color: _submitted.value &&
-//                                       controller.bannerImage.value ==
-//                                           null
-//                                       ? Colors.red.shade300
-//                                       : Colors.grey.shade300,
-//                                   width: 2,
-//                                   strokeAlign: BorderSide.strokeAlignInside,
-//                                 ),
-//                                 borderRadius: BorderRadius.circular(12),
-//                                 color: Colors.grey.shade50,
-//                               ),
-//                               child: controller.bannerImage.value == null
-//                                   ? Column(
-//                                 mainAxisAlignment:
-//                                 MainAxisAlignment.center,
-//                                 children: [
-//                                   Container(
-//                                     padding: const EdgeInsets.all(16),
-//                                     decoration: BoxDecoration(
-//                                       color: AppColors.kPrimary
-//                                           .withOpacity(0.1),
-//                                       shape: BoxShape.circle,
-//                                     ),
-//                                     child: Icon(
-//                                       Icons.cloud_upload_outlined,
-//                                       size: 40,
-//                                       color: AppColors.kPrimary,
-//                                     ),
-//                                   ),
-//                                   const SizedBox(height: 16),
-//                                   Text(
-//                                     "Upload Event Banner",
-//                                     style: TextStyle(
-//                                       fontSize: 16,
-//                                       fontWeight: FontWeight.w600,
-//                                       color: Colors.grey.shade700,
-//                                     ),
-//                                   ),
-//                                   const SizedBox(height: 6),
-//                                   Text(
-//                                     "Click to browse",
-//                                     style: TextStyle(
-//                                       fontSize: 13,
-//                                       color: Colors.grey.shade500,
-//                                     ),
-//                                   ),
-//                                 ],
-//                               )
-//                                   : Stack(
-//                                 children: [
-//                                   ClipRRect(
-//                                     borderRadius:
-//                                     BorderRadius.circular(10),
-//                                     child: Image.file(
-//                                       controller.bannerImage.value!,
-//                                       fit: BoxFit.cover,
-//                                       width: double.infinity,
-//                                       height: double.infinity,
-//                                     ),
-//                                   ),
-//                                   Positioned(
-//                                     top: 8,
-//                                     right: 8,
-//                                     child: Container(
-//                                       padding:
-//                                       const EdgeInsets.all(8),
-//                                       decoration: BoxDecoration(
-//                                         color: Colors.black54,
-//                                         borderRadius:
-//                                         BorderRadius.circular(8),
-//                                       ),
-//                                       child: const Icon(
-//                                         Icons.edit,
-//                                         color: Colors.white,
-//                                         size: 20,
-//                                       ),
-//                                     ),
-//                                   ),
-//                                 ],
-//                               ),
-//                             ),
-//                           )),
-//                           Obx(() => _submitted.value &&
-//                               controller.bannerImage.value == null
-//                               ? Padding(
-//                             padding: const EdgeInsets.only(
-//                                 top: 8, left: 12),
-//                             child: Row(
-//                               children: [
-//                                 Icon(
-//                                   Icons.error_outline,
-//                                   size: 14,
-//                                   color: Colors.red.shade700,
-//                                 ),
-//                                 const SizedBox(width: 6),
-//                                 Text(
-//                                   "Banner image is required",
-//                                   style: TextStyle(
-//                                     color: Colors.red.shade700,
-//                                     fontSize: 12,
-//                                   ),
-//                                 ),
-//                               ],
-//                             ),
-//                           )
-//                               : const SizedBox()),
-//                         ],
-//                       ),
-//                     ),
-//
-//                     const SizedBox(height: 32),
-//
-//                     /// ================= SAVE BUTTON =================
-//                     Container(
-//                       width: double.infinity,
-//                       height: 54,
-//                       decoration: BoxDecoration(
-//                         borderRadius: BorderRadius.circular(12),
-//                         gradient: LinearGradient(
-//                           colors: [
-//                             AppColors.kPrimary,
-//                             AppColors.kPrimary.withOpacity(0.8),
-//                           ],
-//                         ),
-//                         boxShadow: [
-//                           BoxShadow(
-//                             color: AppColors.kPrimary.withOpacity(0.3),
-//                             blurRadius: 12,
-//                             offset: const Offset(0, 6),
-//                           ),
-//                         ],
-//                       ),
-//                       child: ElevatedButton(
-//                         style: ElevatedButton.styleFrom(
-//                           backgroundColor: Colors.transparent,
-//                           shadowColor: Colors.transparent,
-//                           shape: RoundedRectangleBorder(
-//                             borderRadius: BorderRadius.circular(12),
-//                           ),
-//                         ),
-//                         onPressed: () {
-//                           _submitted.value = true;
-//                           if (_formKey.currentState!.validate() &&
-//                               controller.startDate.value.isNotEmpty &&
-//                               controller.endDate.value.isNotEmpty &&
-//                               controller.eventTime.value.isNotEmpty &&
-//                               controller.bannerImage.value != null) {
-//                             controller.addEvent();
-//                           } else {
-//                             Get.snackbar(
-//                               "Validation Error",
-//                               "Please fill all required fields",
-//                               snackPosition: SnackPosition.BOTTOM,
-//                               backgroundColor: Colors.red.shade400,
-//                               colorText: Colors.white,
-//                               margin: const EdgeInsets.all(16),
-//                               borderRadius: 12,
-//                               icon: const Icon(
-//                                 Icons.error_outline,
-//                                 color: Colors.white,
-//                               ),
-//                             );
-//                           }
-//                         },
-//                         child: Row(
-//                           mainAxisAlignment: MainAxisAlignment.center,
-//                           children: const [
-//                             Icon(
-//                               Icons.check_circle_outline,
-//                               size: 22,
-//                             ),
-//                             SizedBox(width: 10),
-//                             Text(
-//                               "CREATE EVENT",
-//                               style: TextStyle(
-//                                 fontSize: 16,
-//                                 fontWeight: FontWeight.w700,
-//                                 letterSpacing: 0.8,
-//                               ),
-//                             ),
-//                           ],
-//                         ),
-//                       ),
-//                     ),
-//
-//                     const SizedBox(height: 20),
-//                   ],
-//                 ),
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-//
-//   /// ================= CARD WRAPPER =================
-//   Widget _buildCard({required Widget child}) {
-//     return Container(
-//       padding: const EdgeInsets.all(20),
-//       decoration: BoxDecoration(
-//         color: Colors.white,
-//         borderRadius: BorderRadius.circular(16),
-//         boxShadow: [
-//           BoxShadow(
-//             color: Colors.black.withOpacity(0.04),
-//             blurRadius: 10,
-//             offset: const Offset(0, 2),
-//           ),
-//         ],
-//       ),
-//       child: child,
-//     );
-//   }
-//
-//   /// ================= SECTION HEADER =================
-//   Widget _sectionHeader({required IconData icon, required String title}) {
-//     return Row(
-//       children: [
-//         Container(
-//           padding: const EdgeInsets.all(8),
-//           decoration: BoxDecoration(
-//             color: AppColors.kPrimary.withOpacity(0.1),
-//             borderRadius: BorderRadius.circular(8),
-//           ),
-//           child: Icon(
-//             icon,
-//             color: AppColors.kPrimary,
-//             size: 20,
-//           ),
-//         ),
-//         const SizedBox(width: 12),
-//         Text(
-//           title,
-//           style: const TextStyle(
-//             fontSize: 17,
-//             fontWeight: FontWeight.w700,
-//             color: Colors.black87,
-//           ),
-//         ),
-//       ],
-//     );
-//   }
-//
-//   /// ================= MODERN TEXT FIELD =================
-//   Widget _modernTextField({
-//     required TextEditingController controller,
-//     required String label,
-//     required String hint,
-//     required IconData icon,
-//     required String? Function(String?) validator,
-//   }) {
-//     return TextFormField(
-//       controller: controller,
-//       validator: validator,
-//       style: const TextStyle(fontSize: 15),
-//       decoration: InputDecoration(
-//         labelText: label,
-//         hintText: hint,
-//         prefixIcon: Icon(icon, size: 22),
-//         filled: true,
-//         fillColor: Colors.grey.shade50,
-//         border: OutlineInputBorder(
-//           borderRadius: BorderRadius.circular(12),
-//           borderSide: BorderSide(color: Colors.grey.shade300),
-//         ),
-//         enabledBorder: OutlineInputBorder(
-//           borderRadius: BorderRadius.circular(12),
-//           borderSide: BorderSide(color: Colors.grey.shade300),
-//         ),
-//         focusedBorder: OutlineInputBorder(
-//           borderRadius: BorderRadius.circular(12),
-//           borderSide: BorderSide(color: AppColors.kPrimary, width: 2),
-//         ),
-//         errorBorder: OutlineInputBorder(
-//           borderRadius: BorderRadius.circular(12),
-//           borderSide: BorderSide(color: Colors.red.shade300, width: 2),
-//         ),
-//         focusedErrorBorder: OutlineInputBorder(
-//           borderRadius: BorderRadius.circular(12),
-//           borderSide: BorderSide(color: Colors.red.shade400, width: 2),
-//         ),
-//         contentPadding:
-//         const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-//       ),
-//     );
-//   }
-//
-//   /// ================= MODERN PICKER FIELD =================
-//   Widget _modernPickerField({
-//     required String label,
-//     required RxString value,
-//     required IconData icon,
-//     required VoidCallback onTap,
-//     required String errorText,
-//   }) {
-//     return Obx(() => InkWell(
-//       onTap: onTap,
-//       borderRadius: BorderRadius.circular(12),
-//       child: InputDecorator(
-//         decoration: InputDecoration(
-//           labelText: label,
-//           prefixIcon: Icon(icon, size: 22),
-//           suffixIcon: const Icon(Icons.arrow_drop_down, size: 28),
-//           filled: true,
-//           fillColor: Colors.grey.shade50,
-//           border: OutlineInputBorder(
-//             borderRadius: BorderRadius.circular(12),
-//             borderSide: BorderSide(color: Colors.grey.shade300),
-//           ),
-//           enabledBorder: OutlineInputBorder(
-//             borderRadius: BorderRadius.circular(12),
-//             borderSide: BorderSide(color: Colors.grey.shade300),
-//           ),
-//           focusedBorder: OutlineInputBorder(
-//             borderRadius: BorderRadius.circular(12),
-//             borderSide: BorderSide(color: AppColors.kPrimary, width: 2),
-//           ),
-//           errorBorder: OutlineInputBorder(
-//             borderRadius: BorderRadius.circular(12),
-//             borderSide: BorderSide(color: Colors.red.shade300, width: 2),
-//           ),
-//           errorText: _submitted.value && value.value.isEmpty ? errorText : null,
-//           contentPadding:
-//           const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-//         ),
-//         child: Text(
-//           value.value.isEmpty ? "Select $label" : value.value,
-//           style: TextStyle(
-//             fontSize: 15,
-//             color: value.value.isEmpty ? Colors.grey.shade600 : Colors.black87,
-//             fontWeight: value.value.isEmpty ? FontWeight.w400 : FontWeight.w500,
-//           ),
-//         ),
-//       ),
-//     ));
-//   }
-// }
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../common/style/app_colors.dart';
@@ -487,7 +10,7 @@ class AdminAddEventPage extends StatelessWidget {
   AdminAddEventPage({super.key});
 
   final AdminEventAddController controller = Get.put(AdminEventAddController());
-  final _formKey  = GlobalKey<FormState>();
+  final _formKey   = GlobalKey<FormState>();
   final _submitted = false.obs;
 
   @override
@@ -497,7 +20,7 @@ class AdminAddEventPage extends StatelessWidget {
       appBar: AppBar(
         automaticallyImplyLeading: true,
         title: Text(
-          "Create Event",
+          'Create Event',
           style: AppTextStyle.rTextNunitoWhite17w700,
         ),
         backgroundColor: AppColors.kPrimary,
@@ -529,34 +52,34 @@ class AdminAddEventPage extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
 
-                        // ════════════════════════════════════════
+                        // ════════════════════════════════════
                         // EVENT DETAILS CARD
-                        // ════════════════════════════════════════
+                        // ════════════════════════════════════
                         _buildCard(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               _sectionHeader(
                                 icon: Icons.event_note_rounded,
-                                title: "Event Details",
+                                title: 'Event Details',
                               ),
                               const SizedBox(height: 20),
                               _modernTextField(
                                 controller: controller.eventName,
-                                label: "Event Name",
-                                hint: "Enter event name",
+                                label: 'Event Name',
+                                hint: 'Enter event name',
                                 icon: Icons.celebration_outlined,
                                 validator: (v) =>
-                                    DValidator.validateEmptyText("Event Name", v),
+                                    DValidator.validateEmptyText('Event Name', v),
                               ),
                               const SizedBox(height: 16),
                               _modernTextField(
                                 controller: controller.eventLocation,
-                                label: "Event Location",
-                                hint: "Enter event location",
+                                label: 'Event Location',
+                                hint: 'Enter event location',
                                 icon: Icons.location_on_outlined,
                                 validator: (v) =>
-                                    DValidator.validateEmptyText("Location", v),
+                                    DValidator.validateEmptyText('Location', v),
                               ),
                             ],
                           ),
@@ -564,61 +87,55 @@ class AdminAddEventPage extends StatelessWidget {
 
                         const SizedBox(height: 20),
 
-                        // ════════════════════════════════════════
+                        // ════════════════════════════════════
                         // SCHEDULE CARD
-                        // ════════════════════════════════════════
+                        // ════════════════════════════════════
                         _buildCard(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               _sectionHeader(
                                 icon: Icons.access_time_rounded,
-                                title: "Schedule",
+                                title: 'Schedule',
                               ),
                               const SizedBox(height: 20),
-
-                              // ── Start Date ───────────────────
                               _modernPickerField(
-                                label: "Start Date",
+                                label: 'Start Date',
                                 value: controller.startDate,
                                 icon: Icons.calendar_today_outlined,
                                 onTap: () => controller.pickStartDate(context),
-                                errorText: "Start Date is required",
+                                errorText: 'Start Date is required',
                               ),
                               const SizedBox(height: 16),
-
-                              // ── End Date ─────────────────────
                               _modernPickerField(
-                                label: "End Date",
+                                label: 'End Date',
                                 value: controller.endDate,
                                 icon: Icons.event_outlined,
                                 onTap: () => controller.pickEndDate(context),
-                                errorText: "End Date is required",
+                                errorText: 'End Date is required',
                               ),
                               const SizedBox(height: 16),
-
-                              // ── Start Time & End Time (row) ──
                               Row(
                                 children: [
                                   Expanded(
                                     child: _modernPickerField(
-                                      label: "Start Time",
+                                      label: 'Start Time',
                                       value: controller.startTime,
                                       icon: Icons.access_time,
                                       onTap: () =>
                                           controller.pickStartTime(context),
-                                      errorText: "Required",
+                                      errorText: 'Required',
                                     ),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: _modernPickerField(
-                                      label: "End Time",
+                                      label: 'End Time',
                                       value: controller.endTime,
                                       icon: Icons.access_time_filled,
                                       onTap: () =>
                                           controller.pickEndTime(context),
-                                      errorText: "Required",
+                                      errorText: 'Required',
                                     ),
                                   ),
                                 ],
@@ -629,16 +146,102 @@ class AdminAddEventPage extends StatelessWidget {
 
                         const SizedBox(height: 20),
 
-                        // ════════════════════════════════════════
+                        // ════════════════════════════════════
+                        // LOCATION (District / Area) CARD
+                        // ════════════════════════════════════
+                        _buildCard(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _sectionHeader(
+                                icon: Icons.location_on_outlined,
+                                title: 'Location Type',
+                              ),
+                              const SizedBox(height: 20),
+
+                              // ── Toggle buttons ────────────
+                              Obx(() => Row(
+                                children: [
+                                  Expanded(
+                                    child: _locationToggleButton(
+                                      label: 'District',
+                                      icon: Icons.location_city_outlined,
+                                      isSelected: controller
+                                          .locationType.value ==
+                                          'district',
+                                      onTap: () => controller
+                                          .setLocationType('district'),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _locationToggleButton(
+                                      label: 'Area',
+                                      icon: Icons.place_outlined,
+                                      isSelected: controller
+                                          .locationType.value ==
+                                          'area',
+                                      onTap: () =>
+                                          controller.setLocationType('area'),
+                                    ),
+                                  ),
+                                ],
+                              )),
+
+                              // ── Conditional dropdown ───────
+                              Obx(() {
+                                final type = controller.locationType.value;
+                                if (type == null) return const SizedBox.shrink();
+
+                                return Column(
+                                  children: [
+                                    const SizedBox(height: 16),
+                                    if (type == 'district') ...[
+                                      controller.isLoadingDistricts.value
+                                          ? _buildLoadingRow(
+                                          'Loading districts...')
+                                          : _buildDropdown(
+                                        value: controller
+                                            .selectedDistrict.value,
+                                        hint: 'Select District',
+                                        icon:
+                                        Icons.location_city_outlined,
+                                        items: controller.districts,
+                                        onChanged: (val) => controller
+                                            .selectedDistrict.value = val,
+                                      ),
+                                    ] else if (type == 'area') ...[
+                                      controller.isLoadingAreas.value
+                                          ? _buildLoadingRow('Loading areas...')
+                                          : _buildDropdown(
+                                        value:
+                                        controller.selectedArea.value,
+                                        hint: 'Select Area',
+                                        icon: Icons.place_outlined,
+                                        items: controller.areas,
+                                        onChanged: (val) => controller
+                                            .selectedArea.value = val,
+                                      ),
+                                    ],
+                                  ],
+                                );
+                              }),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // ════════════════════════════════════
                         // BANNER IMAGE CARD
-                        // ════════════════════════════════════════
+                        // ════════════════════════════════════
                         _buildCard(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               _sectionHeader(
                                 icon: Icons.image_rounded,
-                                title: "Banner Image",
+                                title: 'Banner Image',
                               ),
                               const SizedBox(height: 20),
 
@@ -651,18 +254,17 @@ class AdminAddEventPage extends StatelessWidget {
                                   decoration: BoxDecoration(
                                     border: Border.all(
                                       color: _submitted.value &&
-                                          controller.bannerImage.value ==
+                                          controller
+                                              .bannerImage.value ==
                                               null
                                           ? Colors.red.shade300
                                           : Colors.grey.shade300,
                                       width: 2,
                                     ),
-                                    borderRadius:
-                                    BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(12),
                                     color: Colors.grey.shade50,
                                   ),
-                                  child: controller.bannerImage.value ==
-                                      null
+                                  child: controller.bannerImage.value == null
                                       ? Column(
                                     mainAxisAlignment:
                                     MainAxisAlignment.center,
@@ -683,7 +285,7 @@ class AdminAddEventPage extends StatelessWidget {
                                       ),
                                       const SizedBox(height: 16),
                                       Text(
-                                        "Upload Event Banner",
+                                        'Upload Event Banner',
                                         style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.w600,
@@ -692,7 +294,7 @@ class AdminAddEventPage extends StatelessWidget {
                                       ),
                                       const SizedBox(height: 6),
                                       Text(
-                                        "Tap to browse from gallery",
+                                        'Tap to browse from gallery',
                                         style: TextStyle(
                                           fontSize: 13,
                                           color: Colors.grey.shade500,
@@ -706,8 +308,7 @@ class AdminAddEventPage extends StatelessWidget {
                                         borderRadius:
                                         BorderRadius.circular(10),
                                         child: Image.file(
-                                          controller
-                                              .bannerImage.value!,
+                                          controller.bannerImage.value!,
                                           fit: BoxFit.cover,
                                           width: double.infinity,
                                           height: double.infinity,
@@ -741,7 +342,6 @@ class AdminAddEventPage extends StatelessWidget {
                                 ),
                               )),
 
-                              // Image required error
                               Obx(() => _submitted.value &&
                                   controller.bannerImage.value == null
                                   ? Padding(
@@ -754,7 +354,7 @@ class AdminAddEventPage extends StatelessWidget {
                                         color: Colors.red.shade700),
                                     const SizedBox(width: 6),
                                     Text(
-                                      "Banner image is required",
+                                      'Banner image is required',
                                       style: TextStyle(
                                           color: Colors.red.shade700,
                                           fontSize: 12),
@@ -769,9 +369,9 @@ class AdminAddEventPage extends StatelessWidget {
 
                         const SizedBox(height: 32),
 
-                        // ════════════════════════════════════════
+                        // ════════════════════════════════════
                         // CREATE BUTTON
-                        // ════════════════════════════════════════
+                        // ════════════════════════════════════
                         Obx(() => SizedBox(
                           width: double.infinity,
                           height: 54,
@@ -787,19 +387,44 @@ class AdminAddEventPage extends StatelessWidget {
                                 ? null
                                 : () {
                               _submitted.value = true;
+
+                              // Validate location selection
+                              final locType =
+                                  controller.locationType.value;
+                              final locationValid = locType == null ||
+                                  (locType == 'district' &&
+                                      controller.selectedDistrict
+                                          .value !=
+                                          null) ||
+                                  (locType == 'area' &&
+                                      controller.selectedArea.value !=
+                                          null);
+
                               if (_formKey.currentState!.validate() &&
-                                  controller.startDate.value.isNotEmpty &&
-                                  controller.endDate.value.isNotEmpty &&
-                                  controller.startTime.value.isNotEmpty &&
-                                  controller.endTime.value.isNotEmpty &&
-                                  controller.bannerImage.value != null) {
+                                  controller.startDate.value
+                                      .isNotEmpty &&
+                                  controller.endDate.value
+                                      .isNotEmpty &&
+                                  controller.startTime.value
+                                      .isNotEmpty &&
+                                  controller.endTime.value
+                                      .isNotEmpty &&
+                                  controller.bannerImage.value !=
+                                      null &&
+                                  locationValid) {
                                 controller.addEvent();
                               } else {
+                                String msg =
+                                    'Please fill all required fields';
+                                if (!locationValid) {
+                                  msg = locType == 'district'
+                                      ? 'Please select a district'
+                                      : 'Please select an area';
+                                }
                                 Get.snackbar(
-                                  "Validation Error",
-                                  "Please fill all required fields",
-                                  snackPosition:
-                                  SnackPosition.BOTTOM,
+                                  'Validation Error',
+                                  msg,
+                                  snackPosition: SnackPosition.BOTTOM,
                                   backgroundColor:
                                   Colors.red.shade400,
                                   colorText: Colors.white,
@@ -822,7 +447,7 @@ class AdminAddEventPage extends StatelessWidget {
                                     size: 22),
                                 SizedBox(width: 10),
                                 Text(
-                                  "CREATE EVENT",
+                                  'CREATE EVENT',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w700,
@@ -843,13 +468,127 @@ class AdminAddEventPage extends StatelessWidget {
             ),
           ),
 
-          // ── Full Screen Loader ──────────────────────────
+          // ── Full Screen Loader ────────────────────────────
           Obx(() => controller.isLoading.value
               ? Container(
             color: Colors.black38,
-            child: const Center(child: CircularProgressIndicator()),
+            child: const Center(
+                child: CircularProgressIndicator()),
           )
               : const SizedBox()),
+        ],
+      ),
+    );
+  }
+
+  // ─── Location Toggle Button ───────────────────────────────
+  Widget _locationToggleButton({
+    required String label,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        height: 50,
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.kPrimary : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? AppColors.kPrimary : Colors.grey.shade300,
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isSelected
+                  ? AppColors.kPrimary.withOpacity(0.25)
+                  : Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: isSelected ? Colors.white : Colors.grey.shade600,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? Colors.white : Colors.grey.shade700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ─── Dropdown ─────────────────────────────────────────────
+  Widget _buildDropdown({
+    required String? value,
+    required String hint,
+    required IconData icon,
+    required List<String> items,
+    required void Function(String?) onChanged,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: DropdownButtonFormField<String>(
+        value: value,
+        decoration: InputDecoration(
+          prefixIcon: Icon(icon, size: 20, color: AppColors.kPrimary),
+          hintText: hint,
+          hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+          border: InputBorder.none,
+          contentPadding:
+          const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        ),
+        items: items
+            .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+            .toList(),
+        onChanged: onChanged,
+        isExpanded: true,
+        icon: Icon(Icons.keyboard_arrow_down, color: AppColors.kPrimary),
+        dropdownColor: Colors.white,
+      ),
+    );
+  }
+
+  // ─── Loading Row ──────────────────────────────────────────
+  Widget _buildLoadingRow(String label) {
+    return Container(
+      height: 52,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            height: 16,
+            width: 16,
+            child: CircularProgressIndicator(
+                strokeWidth: 2, color: AppColors.kPrimary),
+          ),
+          const SizedBox(width: 12),
+          Text(label,
+              style: TextStyle(color: Colors.grey.shade500, fontSize: 14)),
         ],
       ),
     );
@@ -977,7 +716,7 @@ class AdminAddEventPage extends StatelessWidget {
           const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
         child: Text(
-          value.value.isEmpty ? "Select $label" : value.value,
+          value.value.isEmpty ? 'Select $label' : value.value,
           style: TextStyle(
             fontSize: 14,
             color: value.value.isEmpty

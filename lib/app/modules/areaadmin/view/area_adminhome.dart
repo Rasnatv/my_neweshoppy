@@ -8,8 +8,8 @@ import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 
 import '../../../common/style/app_colors.dart';
 import '../../../core/utils/auth_service.dart';
-import '../../../data/models/areaadmin_eventsgetmodel.dart';
-import '../controller/areaadmin_eventgettingcontroller.dart';
+import '../controller/areaadmin_dashboardcountcnroller.dart';
+
 import '../widget/areaadmin_getting_advertismentsection.dart';
 import '../widget/eventwidget.dart';
 import 'alladvertismentpage.dart';
@@ -18,7 +18,8 @@ import 'areawise_advertisment.dart';
 import 'areawiseeventpage.dart';
 
 class AreaAdminhomepage extends StatelessWidget {
-  const AreaAdminhomepage({super.key});
+  AreaAdminhomepage({super.key});
+  final AreaAdminDashboardController ctrl=Get.put(AreaAdminDashboardController());
 
   @override
   Widget build(BuildContext context) {
@@ -140,16 +141,13 @@ class AreaAdminhomepage extends StatelessWidget {
       ),
     );
   }
-
-  // ─── Quick Stats ──────────────────────────────────────────────────────────
-
   Widget _buildQuickStats() {
-    return Row(
+    return Obx(() => Row(
       children: [
         Expanded(
           child: _buildStatCard(
             icon: Icons.calendar_month_rounded,
-            value: '4',
+            value: '${ctrl.totalEvents.value}',
             label: 'Total Events',
             color: const Color(0xFF6366F1),
           ),
@@ -158,11 +156,11 @@ class AreaAdminhomepage extends StatelessWidget {
         Expanded(
           child: _buildStatCard(
             icon: Icons.campaign_rounded,
-            value: '2',
+            value: '${ctrl.totalAdvertisements.value}',
             label: 'Active Ads',
             color: const Color(0xFFEC4899),
-          ),
-        ),
+          ),),
+
         const SizedBox(width: 12),
         Expanded(
           child: _buildStatCard(
@@ -173,7 +171,7 @@ class AreaAdminhomepage extends StatelessWidget {
           ),
         ),
       ],
-    );
+    ));
   }
 
   Widget _buildStatCard({

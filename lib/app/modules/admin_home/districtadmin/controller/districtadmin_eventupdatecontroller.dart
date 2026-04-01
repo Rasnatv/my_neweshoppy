@@ -7,47 +7,42 @@ import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
-import '../view/area_adminhome.dart';
+import '../view/districtadmin_home.dart';
+import 'districtadmin_eventgettingcontroller.dart';
 
-class AreaAdminUpdateEventController extends GetxController {
+// TODO: replace with your actual district admin home page import
+// import '../view/district_adminhome.dart';
+
+class DistrictAdminUpdateEventController extends GetxController {
   final _box = GetStorage();
 
   // ─── API URLs ─────────────────────────────────────
-  static const String _areaAdminBaseUrl =
-      'https://rasma.astradevelops.in/e_shoppyy/public/api/area-admin';
   static const String _eventFetchUrl =
-      'https://rasma.astradevelops.in/e_shoppyy/public/api/event';
+      'https://rasma.astradevelops.in/e_shoppyy/public/api/district-admin/event';
   static const String _eventUpdateUrl =
-      'https://rasma.astradevelops.in/e_shoppyy/public/api/event/update';
+      'https://rasma.astradevelops.in/e_shoppyy/public/api/district-admin/event/update';
 
   // ─── Observables ──────────────────────────────────
-  final isLoading          = false.obs;
-  final isEventLoading     = false.obs;
-  final isLocationsLoading = false.obs;
+  final isLoading      = false.obs;
+  final isEventLoading = false.obs;
 
-  final mainLocations        = <String>[].obs;
-  final selectedMainLocation = RxnString();
+  /// Locked — comes from API, user cannot edit
+  final lockedDistrict = RxnString();
 
   final startDate = RxnString();
   final endDate   = RxnString();
-  final startTime = RxnString(); // driven by time picker
+  final startTime = RxnString();
   final endTime   = RxnString();
 
   final pickedImage       = Rxn<File>();
   final existingBannerUrl = RxnString();
-  final imageChanged      = false.obs; // true only when user picks a new image
+  final imageChanged      = false.obs;
 
   // ─── Text Controllers ─────────────────────────────
   final eventName     = TextEditingController();
   final eventLocation = TextEditingController();
 
   // ─── Lifecycle ────────────────────────────────────
-  @override
-  void onInit() {
-    super.onInit();
-    fetchMainLocations();
-  }
-
   @override
   void onClose() {
     eventName.dispose();
@@ -58,29 +53,21 @@ class AreaAdminUpdateEventController extends GetxController {
   // ─── Auth ─────────────────────────────────────────
   String get _authToken => _box.read('auth_token') ?? '';
 
-  Map<String, String> get _authHeaders => {
-    'Authorization': 'Bearer $_authToken',
-    'Accept': 'application/json',
-  };
-
   Map<String, String> get _jsonHeaders => {
     'Authorization': 'Bearer $_authToken',
-    'Accept': 'application/json',
-    'Content-Type': 'application/json',
+    'Accept'       : 'application/json',
+    'Content-Type' : 'application/json',
   };
 
   // ─── Fetch Event ──────────────────────────────────
   Future<void> fetchEvent(String eventId) async {
-    if (_authToken.isEmpty) {
-      _handleUnauthorized();
-      return;
-    }
+    if (_authToken.isEmpty) { _handleUnauthorized(); return; }
     try {
       isEventLoading.value = true;
       final response = await http.post(
         Uri.parse(_eventFetchUrl),
         headers: _jsonHeaders,
-        body: jsonEncode({'event_id': int.tryParse(eventId) ?? eventId}),
+        body   : jsonEncode({'event_id': int.tryParse(eventId) ?? eventId}),
       );
       final body = jsonDecode(response.body);
       if (response.statusCode == 200 && body['status'] == true) {
@@ -97,70 +84,32 @@ class AreaAdminUpdateEventController extends GetxController {
     }
   }
 
-  // ─── Prefill from API response ────────────────────
+  // ─── Prefill ──────────────────────────────────────
   void _prefillFromResponse(Map<String, dynamic> data) {
-    eventName.text     = data['event_name']     ?? '';
-    eventLocation.text = data['event_location'] ?? '';
-    startDate.value    = data['start_date'];
-    endDate.value      = data['end_date'];
-    startTime.value    = data['start_time']; // e.g. "12:00 AM"
-    endTime.value      = data['end_time'];   // e.g. "8:00 PM"
+    eventName.text          = data['event_name']     ?? '';
+    eventLocation.text      = data['event_location'] ?? '';
+    startDate.value         = data['start_date'];
+    endDate.value           = data['end_date'];
+    startTime.value         = data['start_time'];
+    endTime.value           = data['end_time'];
     existingBannerUrl.value = data['banner_image'];
-    imageChanged.value = false;
-
-    final mainLoc = data['main_location'] ?? '';
-    if (mainLocations.contains(mainLoc)) {
-      selectedMainLocation.value = mainLoc;
-    }
-    ever(mainLocations, (_) {
-      if (mainLocations.contains(mainLoc) &&
-          selectedMainLocation.value == null) {
-        selectedMainLocation.value = mainLoc;
-      }
-    });
-  }
-
-  // ─── Fetch Main Locations (unchanged) ────────────
-  Future<void> fetchMainLocations() async {
-    if (_authToken.isEmpty) {
-      _handleUnauthorized();
-      return;
-    }
-    try {
-      isLocationsLoading.value = true;
-      final response = await http.get(
-        Uri.parse('$_areaAdminBaseUrl/main-locations'),
-        headers: _authHeaders,
-      );
-      final body = jsonDecode(response.body);
-      if (response.statusCode == 200 && body['status'] == true) {
-        final List data = body['data'] ?? [];
-        mainLocations.assignAll(data.map((e) => e.toString()).toList());
-      } else if (response.statusCode == 401) {
-        _handleUnauthorized();
-      } else {
-        _showError('Error', body['message'] ?? 'Failed to load locations');
-      }
-    } catch (e) {
-      _showError('Network Error', e.toString());
-    } finally {
-      isLocationsLoading.value = false;
-    }
+    lockedDistrict.value    = data['district'];   // ← locked, display-only
+    imageChanged.value      = false;
   }
 
   // ─── Pick Image ───────────────────────────────────
   Future<void> pickImage() async {
     final picked = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
+      source      : ImageSource.gallery,
       imageQuality: 85,
     );
     if (picked != null) {
       pickedImage.value  = File(picked.path);
-      imageChanged.value = true; // mark image as dirty
+      imageChanged.value = true;
     }
   }
 
-  // ─── Pick Date (today or future only) ────────────
+  // ─── Pick Date ────────────────────────────────────
   Future<void> pickDate(BuildContext context, {required bool isStart}) async {
     final today     = DateTime.now();
     final todayOnly = DateTime(today.year, today.month, today.day);
@@ -168,10 +117,9 @@ class AreaAdminUpdateEventController extends GetxController {
     DateTime initial;
     if (isStart) {
       initial = startDate.value != null
-          ? _parseDate(startDate.value!, todayOnly)
+          ? (_parseDate(startDate.value!, todayOnly))
           : todayOnly;
     } else {
-      // end date must be >= start date
       final startParsed = startDate.value != null
           ? _parseDate(startDate.value!, todayOnly)
           : todayOnly;
@@ -179,14 +127,12 @@ class AreaAdminUpdateEventController extends GetxController {
           ? _parseDate(endDate.value!, startParsed)
           : startParsed;
     }
-
-    // clamp initial to firstDate to avoid assertion error
     if (initial.isBefore(todayOnly)) initial = todayOnly;
 
     final picked = await showDatePicker(
       context    : context,
       initialDate: initial,
-      firstDate  : todayOnly, // ← past dates disabled
+      firstDate  : todayOnly,
       lastDate   : DateTime(2100),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
@@ -201,7 +147,6 @@ class AreaAdminUpdateEventController extends GetxController {
           '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
       if (isStart) {
         startDate.value = formatted;
-        // clear end date if it falls before the new start date
         if (endDate.value != null) {
           final end = DateTime.tryParse(endDate.value!);
           if (end != null && end.isBefore(picked)) endDate.value = null;
@@ -233,7 +178,7 @@ class AreaAdminUpdateEventController extends GetxController {
     );
 
     if (picked != null) {
-      final formatted = _formatTimeOfDay(picked); // "hh:mm AM/PM"
+      final formatted = _formatTimeOfDay(picked);
       if (isStart) {
         startTime.value = formatted;
       } else {
@@ -244,18 +189,14 @@ class AreaAdminUpdateEventController extends GetxController {
 
   // ─── Update Event ─────────────────────────────────
   Future<void> updateEvent(String eventId) async {
-    if (_authToken.isEmpty) {
-      _handleUnauthorized();
-      return;
-    }
+    if (_authToken.isEmpty) { _handleUnauthorized(); return; }
 
     if (eventName.text.trim().isEmpty ||
         eventLocation.text.trim().isEmpty ||
-        selectedMainLocation.value == null ||
         startDate.value == null ||
-        endDate.value == null ||
+        endDate.value   == null ||
         startTime.value == null ||
-        endTime.value == null) {
+        endTime.value   == null) {
       _showError('Validation', 'Please fill all fields');
       return;
     }
@@ -263,17 +204,13 @@ class AreaAdminUpdateEventController extends GetxController {
     try {
       isLoading.value = true;
 
-      // ── Image: only send if user picked a new one ──
       String? base64Image;
       if (imageChanged.value && pickedImage.value != null) {
         final bytes = await pickedImage.value!.readAsBytes();
         final ext   = pickedImage.value!.path.split('.').last.toLowerCase();
-        final mime  = ext == 'png'
-            ? 'image/png'
-            : ext == 'gif'
-            ? 'image/gif'
+        final mime  = ext == 'png' ? 'image/png'
+            : ext == 'gif' ? 'image/gif'
             : 'image/jpeg';
-        // data URI prefix lets the server detect file type
         base64Image = 'data:$mime;base64,${base64Encode(bytes)}';
       }
 
@@ -281,11 +218,12 @@ class AreaAdminUpdateEventController extends GetxController {
         'event_id'      : int.tryParse(eventId) ?? eventId,
         'event_name'    : eventName.text.trim(),
         'event_location': eventLocation.text.trim(),
-        'main_location' : selectedMainLocation.value,
         'start_date'    : startDate.value,
         'end_date'      : endDate.value,
         'start_time'    : startTime.value,
         'end_time'      : endTime.value,
+        // district is sent as-is from the API — user cannot edit it
+        if (lockedDistrict.value != null) 'district': lockedDistrict.value,
         if (base64Image != null) 'banner_image': base64Image,
       };
 
@@ -297,10 +235,17 @@ class AreaAdminUpdateEventController extends GetxController {
 
       final body = jsonDecode(response.body);
 
+
       if (response.statusCode == 200 && body['status'] == true) {
         _showSuccess('Success', body['message'] ?? 'Event updated successfully');
-        await Future.delayed(const Duration(milliseconds: 300)); // let snackbar show
-        Get.offAll(()=>AreaAdminhomepage()); // ✅ result: true triggers .then() in caller
+        await Future.delayed(const Duration(milliseconds: 300));
+
+        // ✅ Directly trigger fetchEvents on the list controller before going back
+        if (Get.isRegistered<DistrictAdminGettingEventController>()) {
+          Get.find<DistrictAdminGettingEventController>().fetchEvents();
+        }
+
+        Get.toNamed('/districtadminhome');
       } else if (response.statusCode == 401) {
         _handleUnauthorized();
       } else {
@@ -314,7 +259,6 @@ class AreaAdminUpdateEventController extends GetxController {
   }
 
   // ─── Time Helpers ─────────────────────────────────
-  /// Parse "12:00 AM" / "8:00 PM" → TimeOfDay
   TimeOfDay? _parseTimeOfDay(String time) {
     try {
       final parts  = time.trim().split(' ');
@@ -325,12 +269,9 @@ class AreaAdminUpdateEventController extends GetxController {
       if (isPM && hour != 12) hour += 12;
       if (!isPM && hour == 12) hour = 0;
       return TimeOfDay(hour: hour, minute: minute);
-    } catch (_) {
-      return null;
-    }
+    } catch (_) { return null; }
   }
 
-  /// Format TimeOfDay → "h:mm AM/PM"
   String _formatTimeOfDay(TimeOfDay t) {
     final period = t.period == DayPeriod.am ? 'AM' : 'PM';
     final hour   = t.hourOfPeriod == 0 ? 12 : t.hourOfPeriod;
@@ -338,7 +279,6 @@ class AreaAdminUpdateEventController extends GetxController {
     return '$hour:$minute $period';
   }
 
-  /// Parse date string safely with fallback
   DateTime _parseDate(String value, DateTime fallback) =>
       DateTime.tryParse(value) ?? fallback;
 
@@ -362,3 +302,6 @@ class AreaAdminUpdateEventController extends GetxController {
     snackPosition  : SnackPosition.TOP,
   );
 }
+
+
+

@@ -2,11 +2,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_instance/src/extension_instance.dart';
+import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 
 import '../../../common/style/app_colors.dart';
+import '../../../data/models/area_admin_advertismentgetmodel.dart';
 import '../controller/areaadmin_getting_advertismentcontroller.dart';
-import '../widget/areaadmin_getting_advertismentsection.dart'; // AdCard lives here
+import '../widget/areaadmin_getting_advertismentsection.dart';
+import 'area_adminhome.dart';
+import 'areaadmin_updateadvertismentpage.dart'; // AdCard lives here
 
 class AreaAdminAllAdvertismentViewPage extends StatelessWidget {
   AreaAdminAllAdvertismentViewPage({super.key});
@@ -58,66 +62,47 @@ class AreaAdminAllAdvertismentViewPage extends StatelessWidget {
             final ad = controller.advertisementList[index]; // ✅ direct item
             return AdCard( // ✅ single card per item, no duplication
               ad: ad,
-              onEdit: () {
-                // TODO: navigate to edit page
-              },
+              onEdit: () => Get.to(() => AreaAdminUpdateAdvertisementPage(adId: ad.id))
+                  ?.then((result) {
+                if (result == true) controller.fetchAdvertisements();
+              }),
+
               onDelete: () {
-                _showDeleteDialog(context, ad);
+                _confirmDelete(context, ad);
               },
             );
-          },
-        );
+          });
       }),
     );
   }
 
-  void _showDeleteDialog(BuildContext context, dynamic ad) {
+  void _confirmDelete(
+      BuildContext context,
+      AreaAdmingetAdvertisementModel advertisement,
+      ) {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape:
-        RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
-          children: [
-            Icon(Icons.warning_amber_rounded,
-                color: Color(0xFFFF5C5C), size: 24),
-            SizedBox(width: 8),
-            Text(
-              'Delete Ad',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 18,
-                color: Color(0xFF1A1D2E),
-              ),
-            ),
-          ],
-        ),
+      builder: (_) => AlertDialog(
+        title: const Text('Delete Advertisement'),
         content: Text(
-          'Are you sure you want to delete "${ad.advertisement}"? This action cannot be undone.',
-          style: const TextStyle(color: Color(0xFF6B7280), height: 1.5),
+          'Are you sure you want to delete "${advertisement.advertisement}"?',
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: Color(0xFF6B7280)),
-            ),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
           ),
-          ElevatedButton(
+          TextButton(
             onPressed: () {
-              Navigator.pop(ctx);
-              // TODO: controller.deleteAd(ad.id);
+              Navigator.pop(context);
+
+              // ✅ Correct delete call
+              controller.deleteAdvertisement(advertisement.id);
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFF5C5C),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-              elevation: 0,
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: Colors.red),
             ),
-            child: const Text('Delete',
-                style: TextStyle(fontWeight: FontWeight.w600)),
           ),
         ],
       ),

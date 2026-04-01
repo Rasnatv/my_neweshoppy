@@ -1,16 +1,14 @@
-import 'dart:io';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../controller/merchant_eventupdatecontroller.dart';
 
-
 class EventUpdatePage extends StatelessWidget {
   EventUpdatePage({super.key});
 
   final EventUpdateController controller = Get.put(EventUpdateController());
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -71,15 +69,50 @@ class EventUpdatePage extends StatelessWidget {
             label: 'Event Name',
             controller: controller.eventNameCtrl,
             icon: Icons.event_rounded,
-            validator: (v) => v == null || v.trim().isEmpty ? 'Event name is required' : null,
+            validator: (v) =>
+            v == null || v.trim().isEmpty ? 'Event name is required' : null,
           ),
           const SizedBox(height: 16),
           _buildTextField(
             label: 'Location',
             controller: controller.locationCtrl,
             icon: Icons.location_on_rounded,
-            validator: (v) => v == null || v.trim().isEmpty ? 'Location is required' : null,
+            validator: (v) =>
+            v == null || v.trim().isEmpty ? 'Location is required' : null,
           ),
+          const SizedBox(height: 16),
+
+          // ── Locked read-only field (mainLocation if present, else district) ──
+          Obx(() {
+            final hasMainLocation =
+                controller.mainLocation.value != null &&
+                    controller.mainLocation.value!.trim().isNotEmpty;
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSectionLabel('Region Info'),
+                const SizedBox(height: 6),
+                _buildLockedNote(),
+                const SizedBox(height: 12),
+                if (hasMainLocation)
+                  _buildLockedField(
+                    label: 'Main Location',
+                    value: controller.mainLocation.value!,
+                    icon: Icons.place_rounded,
+                  )
+                else
+                  _buildLockedField(
+                    label: 'District',
+                    value: controller.district.value?.isNotEmpty == true
+                        ? controller.district.value!
+                        : '—',
+                    icon: Icons.map_rounded,
+                  ),
+              ],
+            );
+          }),
+
           const SizedBox(height: 28),
           _buildSectionLabel('Date & Time'),
           const SizedBox(height: 12),
@@ -136,13 +169,14 @@ class EventUpdatePage extends StatelessWidget {
                 children: [
                   // Image display
                   if (hasNewImage)
-                    Image.file(controller.pickedImageFile.value!, fit: BoxFit.cover)
+                    Image.file(controller.pickedImageFile.value!,
+                        fit: BoxFit.cover)
                   else if (networkUrl.isNotEmpty)
                     CachedNetworkImage(
                       imageUrl: networkUrl,
                       fit: BoxFit.cover,
-                      placeholder: (_, __) =>
-                      const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                      placeholder: (_, __) => const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2)),
                       errorWidget: (_, __, ___) => _buildImagePlaceholder(),
                     )
                   else
@@ -154,7 +188,10 @@ class EventUpdatePage extends StatelessWidget {
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [Colors.transparent, Colors.black.withOpacity(0.45)],
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withOpacity(0.45),
+                        ],
                       ),
                     ),
                   ),
@@ -164,7 +201,8 @@ class EventUpdatePage extends StatelessWidget {
                     bottom: 12,
                     right: 14,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 7),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
@@ -178,7 +216,8 @@ class EventUpdatePage extends StatelessWidget {
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.camera_alt_rounded, size: 14, color: Color(0xFF6C63FF)),
+                          Icon(Icons.camera_alt_rounded,
+                              size: 14, color: Color(0xFF6C63FF)),
                           SizedBox(width: 5),
                           Text(
                             'Change',
@@ -205,7 +244,8 @@ class EventUpdatePage extends StatelessWidget {
     return const Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.add_photo_alternate_outlined, size: 40, color: Color(0xFFAAAAAA)),
+        Icon(Icons.add_photo_alternate_outlined,
+            size: 40, color: Color(0xFFAAAAAA)),
         SizedBox(height: 8),
         Text(
           'Tap to add banner',
@@ -224,6 +264,93 @@ class EventUpdatePage extends StatelessWidget {
         fontWeight: FontWeight.w700,
         color: Color(0xFF6C63FF),
         letterSpacing: 0.5,
+      ),
+    );
+  }
+
+  // ─── Locked note ───────────────────────────────────────────────────────────
+  Widget _buildLockedNote() {
+    return Row(
+      children: [
+        const Icon(Icons.info_outline_rounded,
+            size: 13, color: Color(0xFFAAAAAA)),
+        const SizedBox(width: 5),
+        Text(
+          'These fields are set by admin and cannot be changed.',
+          style: TextStyle(
+            fontSize: 11,
+            color: Colors.grey.shade500,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ─── Locked read-only field ────────────────────────────────────────────────
+  Widget _buildLockedField({
+    required String label,
+    required String value,
+    required IconData icon,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3F3F8),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE0E0E0), width: 1),
+      ),
+      child: Row(
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Icon(icon, size: 20, color: const Color(0xFFB0ADE8)),
+              Positioned(
+                right: -5,
+                bottom: -4,
+                child: Container(
+                  padding: const EdgeInsets.all(1.5),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF3F3F8),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.lock_rounded,
+                    size: 9,
+                    color: Color(0xFFAAAAAA),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF999999),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF6B6B8A),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.lock_rounded, size: 15, color: Color(0xFFCCCCCC)),
+        ],
       ),
     );
   }
@@ -249,7 +376,8 @@ class EventUpdatePage extends StatelessWidget {
         prefixIcon: Icon(icon, size: 20, color: const Color(0xFF6C63FF)),
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding:
+        const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: Color(0xFFEEEEEE)),
@@ -274,8 +402,11 @@ class EventUpdatePage extends StatelessWidget {
   Widget _buildDateField(BuildContext context, {required bool isStart}) {
     return Obx(() {
       final label = isStart ? 'Start Date' : 'End Date';
-      final display = isStart ? controller.displayStartDate : controller.displayEndDate;
-      final hasValue = isStart ? controller.startDate.value != null : controller.endDate.value != null;
+      final display =
+      isStart ? controller.displayStartDate : controller.displayEndDate;
+      final hasValue = isStart
+          ? controller.startDate.value != null
+          : controller.endDate.value != null;
 
       return GestureDetector(
         onTap: () => isStart
@@ -293,7 +424,8 @@ class EventUpdatePage extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: const TextStyle(fontSize: 11, color: Color(0xFF999999)),
+                style:
+                const TextStyle(fontSize: 11, color: Color(0xFF999999)),
               ),
               const SizedBox(height: 4),
               Row(
@@ -301,7 +433,9 @@ class EventUpdatePage extends StatelessWidget {
                   Icon(
                     Icons.calendar_today_rounded,
                     size: 15,
-                    color: hasValue ? const Color(0xFF6C63FF) : const Color(0xFFAAAAAA),
+                    color: hasValue
+                        ? const Color(0xFF6C63FF)
+                        : const Color(0xFFAAAAAA),
                   ),
                   const SizedBox(width: 6),
                   Flexible(
@@ -309,8 +443,11 @@ class EventUpdatePage extends StatelessWidget {
                       display,
                       style: TextStyle(
                         fontSize: 13,
-                        fontWeight: hasValue ? FontWeight.w600 : FontWeight.w400,
-                        color: hasValue ? const Color(0xFF1A1A2E) : const Color(0xFFAAAAAA),
+                        fontWeight:
+                        hasValue ? FontWeight.w600 : FontWeight.w400,
+                        color: hasValue
+                            ? const Color(0xFF1A1A2E)
+                            : const Color(0xFFAAAAAA),
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -328,8 +465,11 @@ class EventUpdatePage extends StatelessWidget {
   Widget _buildTimeField(BuildContext context, {required bool isStart}) {
     return Obx(() {
       final label = isStart ? 'Start Time' : 'End Time';
-      final display = isStart ? controller.displayStartTime : controller.displayEndTime;
-      final hasValue = isStart ? controller.startTime.value != null : controller.endTime.value != null;
+      final display =
+      isStart ? controller.displayStartTime : controller.displayEndTime;
+      final hasValue = isStart
+          ? controller.startTime.value != null
+          : controller.endTime.value != null;
 
       return GestureDetector(
         onTap: () => isStart
@@ -347,7 +487,8 @@ class EventUpdatePage extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: const TextStyle(fontSize: 11, color: Color(0xFF999999)),
+                style:
+                const TextStyle(fontSize: 11, color: Color(0xFF999999)),
               ),
               const SizedBox(height: 4),
               Row(
@@ -355,7 +496,9 @@ class EventUpdatePage extends StatelessWidget {
                   Icon(
                     Icons.access_time_rounded,
                     size: 15,
-                    color: hasValue ? const Color(0xFF6C63FF) : const Color(0xFFAAAAAA),
+                    color: hasValue
+                        ? const Color(0xFF6C63FF)
+                        : const Color(0xFFAAAAAA),
                   ),
                   const SizedBox(width: 6),
                   Flexible(
@@ -363,8 +506,11 @@ class EventUpdatePage extends StatelessWidget {
                       display,
                       style: TextStyle(
                         fontSize: 13,
-                        fontWeight: hasValue ? FontWeight.w600 : FontWeight.w400,
-                        color: hasValue ? const Color(0xFF1A1A2E) : const Color(0xFFAAAAAA),
+                        fontWeight:
+                        hasValue ? FontWeight.w600 : FontWeight.w400,
+                        color: hasValue
+                            ? const Color(0xFF1A1A2E)
+                            : const Color(0xFFAAAAAA),
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -384,7 +530,8 @@ class EventUpdatePage extends StatelessWidget {
       width: double.infinity,
       height: 54,
       child: ElevatedButton(
-        onPressed: controller.isUpdating.value ? null : controller.updateEvent,
+        onPressed:
+        controller.isUpdating.value ? null : controller.updateEvent,
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF6C63FF),
           disabledBackgroundColor: const Color(0xFFBBB8FF),

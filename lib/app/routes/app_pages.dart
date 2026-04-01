@@ -1,6 +1,9 @@
 
 import 'package:eshoppy/app/modules/profile/view/profile_view.dart';
 import 'package:get/get.dart';
+import '../modules/admin_home/banners/views/adminadvertisment.dart';
+import '../modules/admin_home/districtadmin/view/districtadmin_advertismentupdatepage.dart';
+import '../modules/admin_home/districtadmin/view/districtadmin_home.dart';
 import '../modules/admin_home/offer/views/Admin_productdetailscreen.dart';
 import '../modules/admin_home/offer/views/admin_viewofferproduct.dart';
 import '../modules/forgotpassowrd/binding/checkemailotp_binding.dart';
@@ -56,11 +59,11 @@ class AppPages {
       binding: NewpswdBindings(),
      // bindings: [HomeBinding(),WishlistBinding()]
     ),
-    // GetPage(
-    //   name: _Paths.SALESREGISTER,
-    //   page: () =>  SalesRegisterForm(),
-    //    binding: SalesegisterBindings (),
-    // ),
+    GetPage(
+      name: _Paths.DISTRICTADMINADVUPDATION,
+      page: () =>   DistrictAdvertisementUpdatePage(),
+
+    ),
     GetPage(
       name: _Paths.SIGNUP,
       page: () => UserSignup(),
@@ -90,15 +93,16 @@ class AppPages {
       name: '/offer-product-detail',
       page: () => const AdminSingleOfferProductScreen(),
     ),
+    GetPage(
+      name: '/adminadvertismentupdation',
+      page: () =>  AdminAdvertisementPage(),
+    ),
     // GetPage(
     //   name: _Paths.PROFILE,
     //   page: () =>  ProfileView(),
     //   binding: EditprofileBinding(),
     // ),
-    // GetPage(
-    //   name: _Paths.CATEGORYS,
-    //   page: () => CategoriesScreen(),
-    //     binding: CategoryBinding()
-    // ),
-  ];
+    GetPage(
+      name: _Paths.DISTRICTADMINHOME,
+      page: () => Districtadminhomepage())];
 }
