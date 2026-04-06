@@ -30,14 +30,11 @@
 //         );
 //       }
 //
-//       if (controller.latestAds.isEmpty) {
-//         return const SizedBox();
-//       }
+//       if (controller.latestAds.isEmpty) return const SizedBox();
 //
 //       return Column(
 //         crossAxisAlignment: CrossAxisAlignment.start,
 //         children: [
-//
 //           ListView.builder(
 //             shrinkWrap: true,
 //             physics: const NeverScrollableScrollPhysics(),
@@ -47,14 +44,13 @@
 //               final ad = controller.latestAds[index];
 //               return AdCard(
 //                 ad: ad,
-//                 onEdit: () => Get.to(() => AreaAdminUpdateAdvertisementPage(adId: ad.id))
+//                 onEdit: () => Get.to(() =>
+//                     AreaAdminUpdateAdvertisementPage(adId: ad.id))
 //                     ?.then((result) {
 //                   if (result == true) controller.fetchAdvertisements();
 //                   Get.offAll(AreaAdminhomepage());
 //                 }),
-//                 onDelete: () {
-//                   _confirmDelete(context, ad);
-//                 },
+//                 onDelete: () => _confirmDelete(context, ad),
 //               );
 //             },
 //           ),
@@ -83,21 +79,22 @@
 //           TextButton(
 //             onPressed: () {
 //               Navigator.pop(context);
-//
-//               // ✅ Correct delete call
 //               controller.deleteAdvertisement(advertisement.id);
 //             },
-//             child: const Text(
-//               'Delete',
-//               style: TextStyle(color: Colors.red),
-//             ),
+//             child: const Text('Delete',
+//                 style: TextStyle(color: Colors.red)),
 //           ),
 //         ],
 //       ),
 //     );
-//   }}
-//   class AdCard extends StatefulWidget {
-//   final dynamic ad;
+//   }
+// }
+//
+// // ─────────────────────────────────────────────────────────────────────────────
+// // AdCard
+// // ─────────────────────────────────────────────────────────────────────────────
+// class AdCard extends StatefulWidget {
+//   final AreaAdmingetAdvertisementModel ad;
 //   final VoidCallback onEdit;
 //   final VoidCallback onDelete;
 //
@@ -112,8 +109,7 @@
 //   State<AdCard> createState() => _AdCardState();
 // }
 //
-// class _AdCardState extends State<AdCard>
-//     with SingleTickerProviderStateMixin {
+// class _AdCardState extends State<AdCard> with SingleTickerProviderStateMixin {
 //   late AnimationController _animController;
 //   late Animation<double> _scaleAnim;
 //
@@ -143,8 +139,45 @@
 //     return '${months[date.month - 1]} ${date.day}, ${date.year}';
 //   }
 //
+//   /// Badge color per poster type
+//   Color get _badgeBg {
+//     switch (widget.ad.createdByType) {
+//       case 'admin':
+//         return const Color(0xFFFFE9E9);
+//       case 'merchant':
+//         return const Color(0xFFE9F9EE);
+//       default: // area_admin
+//         return Colors.white.withOpacity(0.92);
+//     }
+//   }
+//
+//   Color get _badgeTextColor {
+//     switch (widget.ad.createdByType) {
+//       case 'admin':
+//         return const Color(0xFFD93025);
+//       case 'merchant':
+//         return const Color(0xFF1E8E3E);
+//       default:
+//         return const Color(0xFF4F6CF7);
+//     }
+//   }
+//
+//   IconData get _badgeIcon {
+//     switch (widget.ad.createdByType) {
+//       case 'admin':
+//         return Icons.shield_rounded;
+//       case 'merchant':
+//         return Icons.store_rounded;
+//       default:
+//         return Icons.location_on_rounded;
+//     }
+//   }
+//
 //   @override
 //   Widget build(BuildContext context) {
+//     final ad = widget.ad;
+//     final showActions = ad.canEditOrDelete; // only area_admin posts
+//
 //     return ScaleTransition(
 //       scale: _scaleAnim,
 //       child: GestureDetector(
@@ -172,14 +205,14 @@
 //           child: Column(
 //             crossAxisAlignment: CrossAxisAlignment.start,
 //             children: [
-//               // ── Banner Image ──────────────────────────────────
+//               // ── Banner Image ─────────────────────────────────
 //               ClipRRect(
-//                 borderRadius: const BorderRadius.vertical(
-//                     top: Radius.circular(18)),
+//                 borderRadius:
+//                 const BorderRadius.vertical(top: Radius.circular(18)),
 //                 child: Stack(
 //                   children: [
 //                     Image.network(
-//                       widget.ad.bannerImage,
+//                       ad.bannerImage,
 //                       height: 160,
 //                       width: double.infinity,
 //                       fit: BoxFit.cover,
@@ -220,7 +253,8 @@
 //                         ),
 //                       ),
 //                     ),
-//                     // Location badge on image
+//
+//                     // ── Location / Posted-by badge ───────────────
 //                     Positioned(
 //                       bottom: 10,
 //                       left: 12,
@@ -228,19 +262,22 @@
 //                         padding: const EdgeInsets.symmetric(
 //                             horizontal: 10, vertical: 5),
 //                         decoration: BoxDecoration(
-//                           color: Colors.white.withOpacity(0.92),
+//                           color: _badgeBg,
 //                           borderRadius: BorderRadius.circular(20),
 //                         ),
 //                         child: Row(
 //                           mainAxisSize: MainAxisSize.min,
 //                           children: [
-//                             const Icon(Icons.location_on_rounded,
-//                                 size: 13, color: Color(0xFF4F6CF7)),
+//                             Icon(_badgeIcon,
+//                                 size: 13, color: _badgeTextColor),
 //                             const SizedBox(width: 4),
 //                             Text(
-//                               widget.ad.mainLocation.toUpperCase(),
-//                               style: const TextStyle(
-//                                 color: Color(0xFF4F6CF7),
+//                               // e.g. "ADMIN", "MERCHANT", or "NILESHWRAM"
+//                               ad.createdByType == 'area_admin'
+//                                   ? ad.mainLocation.toUpperCase()
+//                                   : ad.createdByType.toUpperCase(),
+//                               style: TextStyle(
+//                                 color: _badgeTextColor,
 //                                 fontSize: 11,
 //                                 fontWeight: FontWeight.w700,
 //                                 letterSpacing: 0.5,
@@ -250,6 +287,29 @@
 //                         ),
 //                       ),
 //                     ),
+//
+//                     // ── "Posted by" pill (top-right) ─────────────
+//                     if (ad.createdByType != 'area_admin')
+//                       Positioned(
+//                         top: 10,
+//                         right: 10,
+//                         child: Container(
+//                           padding: const EdgeInsets.symmetric(
+//                               horizontal: 9, vertical: 4),
+//                           decoration: BoxDecoration(
+//                             color: _badgeBg,
+//                             borderRadius: BorderRadius.circular(20),
+//                           ),
+//                           child: Text(
+//                             'Posted by ${ad.createdByType == 'admin' ? 'Admin' : 'Merchant'}',
+//                             style: TextStyle(
+//                               color: _badgeTextColor,
+//                               fontSize: 10,
+//                               fontWeight: FontWeight.w700,
+//                             ),
+//                           ),
+//                         ),
+//                       ),
 //                   ],
 //                 ),
 //               ),
@@ -265,7 +325,7 @@
 //                         crossAxisAlignment: CrossAxisAlignment.start,
 //                         children: [
 //                           Text(
-//                             widget.ad.advertisement,
+//                             ad.advertisement,
 //                             style: const TextStyle(
 //                               fontWeight: FontWeight.w700,
 //                               fontSize: 15,
@@ -278,15 +338,11 @@
 //                           const SizedBox(height: 6),
 //                           Row(
 //                             children: [
-//                               const SizedBox(width: 5),
-//                               const Icon(
-//                                 Icons.calendar_today_rounded,
-//                                 size: 11,
-//                                 color: Color(0xFF9CA3AF),
-//                               ),
+//                               const Icon(Icons.calendar_today_rounded,
+//                                   size: 11, color: Color(0xFF9CA3AF)),
 //                               const SizedBox(width: 4),
 //                               Text(
-//                                 _formatDate(widget.ad.createdAt),
+//                                 _formatDate(ad.createdAt),
 //                                 style: const TextStyle(
 //                                   fontSize: 11,
 //                                   color: Color(0xFF9CA3AF),
@@ -298,28 +354,30 @@
 //                         ],
 //                       ),
 //                     ),
-//                     const SizedBox(width: 8),
 //
-//                     // ── Action Buttons ───────────────────────────
-//                     Row(
-//                       children: [
-//                         _ActionButton(
-//                           icon: Icons.edit_rounded,
-//                           color: const Color(0xFF4F6CF7),
-//                           bgColor: const Color(0xFFEEF1FF),
-//                           tooltip: 'Edit',
-//                           onTap: widget.onEdit,
-//                         ),
-//                         const SizedBox(width: 8),
-//                         _ActionButton(
-//                           icon: Icons.delete_rounded,
-//                           color: const Color(0xFFFF5C5C),
-//                           bgColor: const Color(0xFFFFEEEE),
-//                           tooltip: 'Delete',
-//                           onTap: widget.onDelete,
-//                         ),
-//                       ],
-//                     ),
+//                     // ── Edit / Delete (only for area_admin posts) ──
+//                     if (showActions) ...[
+//                       const SizedBox(width: 8),
+//                       Row(
+//                         children: [
+//                           _ActionButton(
+//                             icon: Icons.edit_rounded,
+//                             color: const Color(0xFF4F6CF7),
+//                             bgColor: const Color(0xFFEEF1FF),
+//                             tooltip: 'Edit',
+//                             onTap: widget.onEdit,
+//                           ),
+//                           const SizedBox(width: 8),
+//                           _ActionButton(
+//                             icon: Icons.delete_rounded,
+//                             color: const Color(0xFFFF5C5C),
+//                             bgColor: const Color(0xFFFFEEEE),
+//                             tooltip: 'Delete',
+//                             onTap: widget.onDelete,
+//                           ),
+//                         ],
+//                       ),
+//                     ],
 //                   ],
 //                 ),
 //               ),
@@ -331,6 +389,9 @@
 //   }
 // }
 //
+// // ─────────────────────────────────────────────────────────────────────────────
+// // _ActionButton (unchanged)
+// // ─────────────────────────────────────────────────────────────────────────────
 // class _ActionButton extends StatefulWidget {
 //   final IconData icon;
 //   final Color color;
@@ -379,11 +440,10 @@
 //     );
 //   }
 // }
+// lib/app/modules/area_admin/widget/areaadmin_getting_advertismentsection.dart
+
 import 'package:flutter/material.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_instance/src/extension_instance.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart';
-import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
+import 'package:get/get.dart';
 
 import '../../../data/models/area_admin_advertismentgetmodel.dart';
 import '../controller/areaadmin_getting_advertismentcontroller.dart';
@@ -424,11 +484,13 @@ class HomeAdvertisementWidget extends StatelessWidget {
               final ad = controller.latestAds[index];
               return AdCard(
                 ad: ad,
-                onEdit: () => Get.to(() =>
-                    AreaAdminUpdateAdvertisementPage(adId: ad.id))
-                    ?.then((result) {
-                  if (result == true) controller.fetchAdvertisements();
-                  Get.offAll(AreaAdminhomepage());
+                onEdit: () => Get.to(
+                      () => AreaAdminUpdateAdvertisementPage(adId: ad.id),
+                )?.then((result) {
+                  if (result == true) {
+                    controller.fetchAdvertisements();
+                    Get.offAll(() => AreaAdminhomepage());
+                  }
                 }),
                 onDelete: () => _confirmDelete(context, ad),
               );
@@ -447,22 +509,35 @@ class HomeAdvertisementWidget extends StatelessWidget {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Delete Advertisement'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Delete Advertisement',
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+        ),
         content: Text(
           'Are you sure you want to delete "${advertisement.advertisement}"?',
+          style: const TextStyle(color: Color(0xFF6B7280), fontSize: 14),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Color(0xFF6B7280)),
+            ),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               controller.deleteAdvertisement(advertisement.id);
             },
-            child: const Text('Delete',
-                style: TextStyle(color: Colors.red)),
+            child: const Text(
+              'Delete',
+              style: TextStyle(
+                color: Color(0xFFFF5C5C),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
@@ -512,6 +587,8 @@ class _AdCardState extends State<AdCard> with SingleTickerProviderStateMixin {
   }
 
   String _formatDate(DateTime date) {
+    // If date is epoch fallback, show nothing
+    if (date.millisecondsSinceEpoch == 0) return '';
     const months = [
       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
@@ -519,14 +596,13 @@ class _AdCardState extends State<AdCard> with SingleTickerProviderStateMixin {
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 
-  /// Badge color per poster type
   Color get _badgeBg {
     switch (widget.ad.createdByType) {
       case 'admin':
         return const Color(0xFFFFE9E9);
       case 'merchant':
         return const Color(0xFFE9F9EE);
-      default: // area_admin
+      default:
         return Colors.white.withOpacity(0.92);
     }
   }
@@ -556,7 +632,8 @@ class _AdCardState extends State<AdCard> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final ad = widget.ad;
-    final showActions = ad.canEditOrDelete; // only area_admin posts
+    final showActions = ad.canEditOrDelete;
+    final formattedDate = _formatDate(ad.createdAt);
 
     return ScaleTransition(
       scale: _scaleAnim,
@@ -585,7 +662,7 @@ class _AdCardState extends State<AdCard> with SingleTickerProviderStateMixin {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Banner Image ─────────────────────────────────
+              // ── Banner Image ──────────────────────────────────
               ClipRRect(
                 borderRadius:
                 const BorderRadius.vertical(top: Radius.circular(18)),
@@ -633,7 +710,6 @@ class _AdCardState extends State<AdCard> with SingleTickerProviderStateMixin {
                         ),
                       ),
                     ),
-
                     // ── Location / Posted-by badge ───────────────
                     Positioned(
                       bottom: 10,
@@ -652,7 +728,6 @@ class _AdCardState extends State<AdCard> with SingleTickerProviderStateMixin {
                                 size: 13, color: _badgeTextColor),
                             const SizedBox(width: 4),
                             Text(
-                              // e.g. "ADMIN", "MERCHANT", or "NILESHWRAM"
                               ad.createdByType == 'area_admin'
                                   ? ad.mainLocation.toUpperCase()
                                   : ad.createdByType.toUpperCase(),
@@ -667,7 +742,6 @@ class _AdCardState extends State<AdCard> with SingleTickerProviderStateMixin {
                         ),
                       ),
                     ),
-
                     // ── "Posted by" pill (top-right) ─────────────
                     if (ad.createdByType != 'area_admin')
                       Positioned(
@@ -715,26 +789,28 @@ class _AdCardState extends State<AdCard> with SingleTickerProviderStateMixin {
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              const Icon(Icons.calendar_today_rounded,
-                                  size: 11, color: Color(0xFF9CA3AF)),
-                              const SizedBox(width: 4),
-                              Text(
-                                _formatDate(ad.createdAt),
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: Color(0xFF9CA3AF),
-                                  fontWeight: FontWeight.w500,
+                          // Only show date row if date is available
+                          if (formattedDate.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                const Icon(Icons.calendar_today_rounded,
+                                    size: 11, color: Color(0xFF9CA3AF)),
+                                const SizedBox(width: 4),
+                                Text(
+                                  formattedDate,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: Color(0xFF9CA3AF),
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                     ),
-
                     // ── Edit / Delete (only for area_admin posts) ──
                     if (showActions) ...[
                       const SizedBox(width: 8),
@@ -770,7 +846,7 @@ class _AdCardState extends State<AdCard> with SingleTickerProviderStateMixin {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// _ActionButton (unchanged)
+// _ActionButton
 // ─────────────────────────────────────────────────────────────────────────────
 class _ActionButton extends StatefulWidget {
   final IconData icon;

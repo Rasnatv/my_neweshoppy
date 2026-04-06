@@ -41,7 +41,7 @@ class LandingController extends GetxController {
     // case LandingItem.filter:
     //   return FilterView();
       case LandingItem.MyOrders:
-        return Myodersview();
+        return MyOrdersView();
       case LandingItem.Profile:
         return ProfileView();
     }

@@ -76,7 +76,7 @@ class ProfileView extends StatelessWidget {
                   label: 'My Orders',
                   sub: 'Track & manage orders',
                   color: _blue,
-                  onTap: () => Get.to(() => Myodersview()),
+                  onTap: () => Get.to(() => MyOrdersView()),
                 ),
                 _Tile(
                   icon: Icons.favorite_border_rounded,

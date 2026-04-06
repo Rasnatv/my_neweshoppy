@@ -7,7 +7,6 @@ import '../../../data/models/addresslistmodel.dart';
 import '../controller/address_listcontroller.dart';
 import 'address_newadding.dart';
 import 'address_updatepage.dart';
-
 import 'orderconfirmationpage.dart';
 
 class AddressListPage extends StatelessWidget {
@@ -24,21 +23,21 @@ class AddressListPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: bg,
       appBar: AppBar(
-        backgroundColor:AppColors.kPrimary,
+        backgroundColor: AppColors.kPrimary,
         elevation: 0.5,
         shadowColor: Colors.black12,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color:Colors.white),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Get.back(),
         ),
         title: const Text(
           'Select Address',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 17,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.1,
-            )
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.1,
+          ),
         ),
       ),
       body: Obx(() {
@@ -66,7 +65,7 @@ class AddressListPage extends StatelessWidget {
     );
   }
 
-  // ── Add New Address button ─────────────────────────────────────────────────
+  // ── Add New Address button ──────────────────────────────────────────────────
   Widget _buildAddNewButton() {
     return GestureDetector(
       onTap: () async {
@@ -100,7 +99,7 @@ class AddressListPage extends StatelessWidget {
     );
   }
 
-  // ── Empty state ────────────────────────────────────────────────────────────
+  // ── Empty state ─────────────────────────────────────────────────────────────
   Widget _buildEmptyState() {
     return Padding(
       padding: const EdgeInsets.only(top: 80),
@@ -135,7 +134,7 @@ class AddressListPage extends StatelessWidget {
     );
   }
 
-  // ── Address card ───────────────────────────────────────────────────────────
+  // ── Address card ────────────────────────────────────────────────────────────
   Widget _buildAddressCard(AddressListModel addr) {
     return Obx(() {
       final isSelected =
@@ -218,7 +217,7 @@ class AddressListPage extends StatelessWidget {
                   const Divider(height: 1, color: Color(0xFFEEEEEE)),
                   const SizedBox(height: 10),
 
-                  // ── EDIT ──────────────────────────────────────────────
+                  // ── EDIT ──────────────────────────────────────────────────
                   Row(
                     children: [
                       TextButton.icon(
@@ -251,13 +250,14 @@ class AddressListPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
 
-                  // ── DELIVER TO THIS ADDRESS ────────────────────────────
+                  // ── DELIVER TO THIS ADDRESS ──────────────────────────────
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
+                        // ✅ Pass only addressId — no AddressListModel needed
                         Get.to(() => OrderConfirmationPage(
-                          address: addr,
+                          addressId: addr.addressId,
                         ));
                       },
                       style: ElevatedButton.styleFrom(

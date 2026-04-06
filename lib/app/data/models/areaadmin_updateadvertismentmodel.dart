@@ -1,28 +1,41 @@
+
 class AreaAdminAdvertisementupdateModel {
   final int id;
   final String advertisement;
-  final String mainLocation;
   final String bannerImage;
-  final String createdAt;
-  final String updatedAt;
+  final String mainLocation;
+  final String createdByType;
+  final int createdById;
 
-  AreaAdminAdvertisementupdateModel({
+  const AreaAdminAdvertisementupdateModel({
     required this.id,
     required this.advertisement,
-    required this.mainLocation,
     required this.bannerImage,
-    required this.createdAt,
-    required this.updatedAt,
+    required this.mainLocation,
+    required this.createdByType,
+    required this.createdById,
   });
 
-  factory AreaAdminAdvertisementupdateModel.fromJson(Map<String, dynamic> json) {
+  factory AreaAdminAdvertisementupdateModel.fromJson(
+      Map<String, dynamic> json) {
     return AreaAdminAdvertisementupdateModel(
-      id: json['id'],
-      advertisement: json['advertisement'] ?? '',
-      mainLocation: json['main_location'] ?? '',
-      bannerImage: json['banner_image'] ?? '',
-      createdAt: json['created_at'] ?? '',
-      updatedAt: json['updated_at'] ?? '',
+      // API returns id as a String ("50") — parse safely
+      id: int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      advertisement: json['advertisement']?.toString() ?? '',
+      bannerImage: json['banner_image']?.toString() ?? '',
+      mainLocation: json['main_location']?.toString() ?? '',
+      createdByType: json['created_by_type']?.toString() ?? '',
+      createdById:
+      int.tryParse(json['created_by_id']?.toString() ?? '0') ?? 0,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'advertisement': advertisement,
+    'banner_image': bannerImage,
+    'main_location': mainLocation,
+    'created_by_type': createdByType,
+    'created_by_id': createdById,
+  };
 }
