@@ -17,7 +17,12 @@ class CartScreen extends StatelessWidget {
       backgroundColor: const Color(0xFFF7F8FA),
       appBar: AppBar(
         backgroundColor: AppColors.kPrimary,
-        title: Text("My Cart", style: AppTextStyle.rTextNunitoWhite17w700),
+        title: Text("My Cart", style: TextStyle(
+          color: Colors.white,
+          fontSize: 17,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.1,
+        ),),
         iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
         actions: [
@@ -169,43 +174,6 @@ class CartScreen extends StatelessWidget {
 
                 return Column(
                   children: [
-                    _summaryRow(
-                      label: "Subtotal",
-                      value:
-                      "₹${cartController.cartItems.fold(0.0, (sum, item) => sum + (item.price * item.quantity)).toStringAsFixed(0)}",
-                      labelStyle: TextStyle(
-                          fontSize: 14, color: Colors.grey.shade600),
-                      valueStyle: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey.shade700),
-                    ),
-                    // Show savings row only if there are offer items
-                    if (totalSavings > 0) ...[
-                      const SizedBox(height: 8),
-                      _summaryRow(
-                        label: "You Save",
-                        value: "- ₹${totalSavings.toStringAsFixed(0)}",
-                        labelStyle: TextStyle(
-                            fontSize: 14,
-                            color: Colors.green.shade600),
-                        valueStyle: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.green.shade600),
-                      ),
-                    ],
-                    const SizedBox(height: 8),
-                    _summaryRow(
-                      label: "Delivery",
-                      value: "FREE",
-                      labelStyle: TextStyle(
-                          fontSize: 14, color: Colors.grey.shade600),
-                      valueStyle: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.green.shade600),
-                    ),
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 14),
                       child: Divider(height: 1, thickness: 1),
@@ -220,9 +188,8 @@ class CartScreen extends StatelessWidget {
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
                           color: AppColors.kPrimary),
-                    ),
-                  ],
-                );
+                    )
+               ] );
               }),
               const SizedBox(height: 18),
               SizedBox(

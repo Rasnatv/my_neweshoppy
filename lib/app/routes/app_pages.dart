@@ -97,11 +97,10 @@ class AppPages {
       name: '/adminadvertismentupdation',
       page: () =>  AdminAdvertisementPage(),
     ),
-    // GetPage(
-    //   name: _Paths.PROFILE,
-    //   page: () =>  ProfileView(),
-    //   binding: EditprofileBinding(),
-    // ),
+    GetPage(
+      name: _Paths.PROFILE,
+      page: () =>  ProfileView(),
+    ),
     GetPage(
       name: _Paths.DISTRICTADMINHOME,
       page: () => Districtadminhomepage())];

@@ -20,9 +20,15 @@ class Categoriesofshoplist extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppColors.kPrimary,
+        iconTheme: IconThemeData(color: Colors.white),
         title: Text(
           "Shops",
-          style: AppTextStyle.rTextNunitoWhite17w700,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.1,
+          ),
         ),
       ),
 

@@ -1,159 +1,5 @@
-//
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-// import '../../../common/style/app_colors.dart';
-// import '../../../data/models/categoryshoplistmodel.dart';
-// import '../view/shopview.dart';
-//
-// class Shopscard extends StatefulWidget {
-//   final ShoplistModel shop;
-//   const Shopscard({super.key, required this.shop});
-//
-//   @override
-//   State<Shopscard> createState() => _ShopscardState();
-// }
-//
-// class _ShopscardState extends State<Shopscard> {
-//   bool _pressed = false;
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return GestureDetector(
-//       onTap: () => Get.to(
-//             () => ShopDetailPage(merchantId: widget.shop.merchantId),
-//         transition: Transition.fadeIn,
-//         duration: const Duration(milliseconds: 280),
-//       ),
-//       onTapDown: (_) => setState(() => _pressed = true),
-//       onTapUp: (_) => setState(() => _pressed = false),
-//       onTapCancel: () => setState(() => _pressed = false),
-//       child: AnimatedScale(
-//         scale: _pressed ? 0.97 : 1.0,
-//         duration: const Duration(milliseconds: 120),
-//         curve: Curves.easeOut,
-//         child: Container(
-//           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-//           padding: const EdgeInsets.all(12),
-//           decoration: BoxDecoration(
-//             color: Colors.white,
-//             borderRadius: BorderRadius.circular(16),
-//             border: Border.all(
-//               color: AppColors.kPrimary.withOpacity(0.08),
-//               width: 1,
-//             ),
-//             boxShadow: [
-//               BoxShadow(
-//                 color: AppColors.kPrimary.withOpacity(0.07),
-//                 blurRadius: 16,
-//                 offset: const Offset(0, 6),
-//                 spreadRadius: -2,
-//               ),
-//               BoxShadow(
-//                 color: Colors.black.withOpacity(0.04),
-//                 blurRadius: 6,
-//                 offset: const Offset(0, 2),
-//               ),
-//             ],
-//           ),
-//           child: Row(
-//             children: [
-//               // ── Shop image ─────────────────────────────────────────────
-//               SizedBox(
-//                 width: 56,
-//                 height: 56,
-//                 child: ClipRRect(
-//                   borderRadius: BorderRadius.circular(14),
-//                   child: Image.network(
-//                     widget.shop.image,
-//                     width: 56,
-//                     height: 56,
-//                     fit: BoxFit.cover,
-//                     errorBuilder: (_, __, ___) => Container(
-//                       width: 56,
-//                       height: 56,
-//                       decoration: BoxDecoration(
-//                         color: AppColors.kPrimary.withOpacity(0.08),
-//                         borderRadius: BorderRadius.circular(14),
-//                       ),
-//                       child: Icon(
-//                         Icons.store_outlined,
-//                         color: AppColors.kPrimary.withOpacity(0.5),
-//                         size: 26,
-//                       ),
-//                     ),
-//                   ),
-//                 ),
-//               ),
-//
-//               const SizedBox(width: 14),
-//
-//               // ── Shop info ──────────────────────────────────────────────
-//               Expanded(
-//                 child: Column(
-//                   crossAxisAlignment: CrossAxisAlignment.start,
-//                   children: [
-//                     Text(
-//                       widget.shop.shopName,
-//                       maxLines: 1,
-//                       overflow: TextOverflow.ellipsis,
-//                       style: const TextStyle(
-//                         fontSize: 14,
-//                         fontWeight: FontWeight.w700,
-//                         color: Color(0xFF1A1A2E),
-//                         letterSpacing: 0.1,
-//                       ),
-//                     ),
-//                     const SizedBox(height: 4),
-//                     Row(
-//                       children: [
-//                         Icon(
-//                           Icons.location_on_outlined,
-//                           size: 12,
-//                           color: AppColors.kPrimary.withOpacity(0.7),
-//                         ),
-//                         const SizedBox(width: 3),
-//                         Expanded(
-//                           child: Text(
-//                             widget.shop.location,
-//                             maxLines: 1,
-//                             overflow: TextOverflow.ellipsis,
-//                             style: TextStyle(
-//                               fontSize: 12,
-//                               fontWeight: FontWeight.w400,
-//                               color: Colors.grey.shade500,
-//                               letterSpacing: 0.1,
-//                             ),
-//                           ),
-//                         ),
-//                       ],
-//                     ),
-//                   ],
-//                 ),
-//               ),
-//
-//               const SizedBox(width: 8),
-//
-//               // ── Arrow ──────────────────────────────────────────────────
-//               Container(
-//                 width: 32,
-//                 height: 32,
-//                 decoration: BoxDecoration(
-//                   color: AppColors.kPrimary.withOpacity(0.08),
-//                   borderRadius: BorderRadius.circular(10),
-//                 ),
-//                 child: Icon(
-//                   Icons.arrow_forward_ios_rounded,
-//                   size: 13,
-//                   color: AppColors.kPrimary,
-//                 ),
-//               ),
-//             ],
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_colors.dart';
@@ -177,200 +23,137 @@ class _ShopscardState extends State<Shopscard> {
       onTap: () => Get.to(
             () => ShopDetailPage(merchantId: widget.shop.merchantId),
         transition: Transition.fadeIn,
-        duration: const Duration(milliseconds: 280),
+        duration: const Duration(milliseconds: 260),
       ),
       onTapDown: (_) => setState(() => _pressed = true),
       onTapUp: (_) => setState(() => _pressed = false),
       onTapCancel: () => setState(() => _pressed = false),
       child: AnimatedScale(
-        scale: _pressed ? 0.975 : 1.0,
-        duration: const Duration(milliseconds: 130),
+        scale: _pressed ? 0.985 : 1.0,
+        duration: const Duration(milliseconds: 120),
         curve: Curves.easeOut,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 130),
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          duration: const Duration(milliseconds: 120),
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: _pressed
+                  ? AppColors.kPrimary.withOpacity(0.25)
+                  : const Color(0xFFE8ECF0),
+              width: 1,
+            ),
             boxShadow: _pressed
-                ? [
-              BoxShadow(
-                color: AppColors.kPrimary.withOpacity(0.08),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ]
+                ? []
                 : [
               BoxShadow(
-                color: AppColors.kPrimary.withOpacity(0.12),
-                blurRadius: 28,
-                offset: const Offset(0, 10),
-                spreadRadius: -4,
-              ),
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
+                color: Colors.black.withOpacity(0.06),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(22),
-            child: Stack(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
               children: [
-                // ── Accent left bar ────────────────────────────────────
-                Positioned(
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  child: Container(
-                    width: 5,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          AppColors.kPrimary,
-                          AppColors.kPrimary.withOpacity(0.35),
-                        ],
+                // ── Shop Image ──────────────────────────────────────────
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    color: const Color(0xFFF1F4F8),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: CachedNetworkImage(
+                      imageUrl: widget.shop.image,
+                      width: 64,
+                      height: 64,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        color: const Color(0xFFF1F4F8),
+                        child: const Center(
+                          child: SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Color(0xFFCBD5E0),
+                            ),
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        color: const Color(0xFFF1F4F8),
+                        child: const Center(
+                          child: Icon(
+                            Icons.storefront_outlined,
+                            color: Color(0xFFADB5BD),
+                            size: 28,
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
 
-                // ── Card content ───────────────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(22, 18, 16, 18),
-                  child: Row(
+                const SizedBox(width: 14),
+
+                // ── Shop Info ────────────────────────────────────────────
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ── Shop image ──────────────────────────────────
-                      Container(
-                        width: 76,
-                        height: 76,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(18),
-                          gradient: LinearGradient(
-                            colors: [
-                              AppColors.kPrimary.withOpacity(0.12),
-                              AppColors.kPrimary.withOpacity(0.04),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(18),
-                          child: Image.network(
-                            widget.shop.image,
-                            width: 76,
-                            height: 76,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Center(
-                              child: Icon(
-                                Icons.storefront_rounded,
-                                color: AppColors.kPrimary.withOpacity(0.55),
-                                size: 32,
-                              ),
-                            ),
-                          ),
+                      Text(
+                        widget.shop.shopName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700, // was w600
+                          color: Color(0xFF1A202C),
+                          letterSpacing: -0.2,
+                          height: 1.3,
                         ),
                       ),
-
-                      const SizedBox(width: 16),
-
-                      // ── Shop info ───────────────────────────────────
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.shop.shopName,
+                      const SizedBox(height: 5),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.location_on_outlined,
+                            size: 13,
+                            color: Color(0xFF9AA5B1),
+                          ),
+                          const SizedBox(width: 3),
+                          Expanded(
+                            child: Text(
+                              widget.shop.location,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF0F172A),
-                                letterSpacing: -0.3,
-                                height: 1.2,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500, // was w400
+                                color: Color(0xFF6B7280),
+                                letterSpacing: 0.1,
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.kPrimary.withOpacity(0.08),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.location_on_rounded,
-                                        size: 11,
-                                        color: Colors.red,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      ConstrainedBox(
-                                        constraints: const BoxConstraints(
-                                            maxWidth: 150),
-                                        child: Text(
-                                          widget.shop.location,
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w500,
-                                            color: Colors.black
-                                                .withOpacity(0.85),
-                                            letterSpacing: 0.1,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(width: 12),
-
-                      // ── Arrow button ────────────────────────────────
-                      Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              AppColors.kPrimary,
-                              AppColors.kPrimary.withOpacity(0.75),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
                           ),
-                          borderRadius: BorderRadius.circular(14),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.kPrimary.withOpacity(0.35),
-                              blurRadius: 12,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          size: 15,
-                          color: Colors.white,
-                        ),
+                        ],
                       ),
                     ],
                   ),
+                ),
+
+                const SizedBox(width: 10),
+
+                // ── Chevron ──────────────────────────────────────────────
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  size: 22,
+                  color: Color(0xFFCBD5E0),
                 ),
               ],
             ),

@@ -1,3 +1,4 @@
+import 'package:eshoppy/app/common/style/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -15,23 +16,19 @@ class NewAddAddressPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7FB),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.kPrimary,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: Color(0xFF1A1A2E), size: 20),
-          onPressed: () => Get.back(),
-        ),
+       automaticallyImplyLeading: true,
+        iconTheme: IconThemeData(color:Colors.white),
         title: const Text(
           'Add New Address',
           style: TextStyle(
-            color: Color(0xFF1A1A2E),
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.3,
+            color: Colors.white,
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.1,
           ),
         ),
-        centerTitle: true,
         systemOverlayStyle: SystemUiOverlayStyle.dark,
       ),
       body: Form(
@@ -159,14 +156,6 @@ class NewAddAddressPage extends StatelessWidget {
                     onPressed: controller.isLoading.value
                         ? null
                         : controller.addAddress,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF4F46E5),
-                      disabledBackgroundColor: const Color(0xFF4F46E5).withOpacity(0.6),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      elevation: 0,
-                    ),
                     child: controller.isLoading.value
                         ? const SizedBox(
                       height: 22,
@@ -211,10 +200,10 @@ class NewAddAddressPage extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
-            color: const Color(0xFF4F46E5).withOpacity(0.1),
+            color: const Color(0xFF00695C).withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, size: 16, color: const Color(0xFF4F46E5)),
+          child: Icon(icon, size: 16, color: const Color(0xFF00695C)),
         ),
         const SizedBox(width: 10),
         Text(
@@ -262,7 +251,7 @@ class NewAddAddressPage extends StatelessWidget {
           fontSize: 13,
           fontWeight: FontWeight.w500,
         ),
-        prefixIcon: Icon(icon, color: const Color(0xFF4F46E5), size: 20),
+        prefixIcon: Icon(icon, color: const Color(0xFF00695C), size: 20),
         filled: true,
         fillColor: Colors.white,
         contentPadding:
@@ -278,7 +267,7 @@ class NewAddAddressPage extends StatelessWidget {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide:
-          const BorderSide(color: Color(0xFF4F46E5), width: 1.5),
+          const BorderSide(color: Color(0xFF00695C), width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

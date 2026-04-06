@@ -47,14 +47,6 @@ class LandingController extends GetxController {
     }
   }
 
-  // void onPop() {
-  //   if (selectedPage != LandingItem.Home) {
-  //     selectedPage = LandingItem.Home;
-  //     update();
-  //     return;
-  //   }
-  //   Get.back();
-  // }
   void onPop() {
     if (selectedPage != LandingItem.Home) {
       selectedPage = LandingItem.Home;

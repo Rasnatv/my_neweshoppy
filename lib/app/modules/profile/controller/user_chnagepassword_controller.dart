@@ -1,9 +1,11 @@
+
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter/material.dart';
-
+import '../../landingview/controller/landing_controller.dart';
+import '../../landingview/view/landing_screen.dart';
+import '../../merchantlogin/widget/successwidget.dart';
 import '../view/profile_view.dart';
 
 class ChangePasswordController extends GetxController {
@@ -18,7 +20,7 @@ class ChangePasswordController extends GetxController {
     try {
       isLoading.value = true;
 
-      final token = box.read('auth_token'); // 🔑 token stored at login
+      final token = box.read('auth_token');
 
       final response = await http.post(
         Uri.parse(
@@ -38,31 +40,13 @@ class ChangePasswordController extends GetxController {
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200 && data['status'] == "1") {
-        Get.back();
-        Get.snackbar(
-          "Success",
-          data['message'],
-          backgroundColor: const Color(0xFF4CAF50),
-          colorText: const Color(0xFFFFFFFF),
-        );
-
-          Get.offAll(() => ProfileView()); // 👈 navigate to profile page
-        }
-      else {
-        Get.snackbar(
-          "Error",
-          data['message'] ?? "Password change failed",
-          backgroundColor: const Color(0xFFE53935),
-          colorText: const Color(0xFFFFFFFF),
-        );
+        AppSnackbar.success(data['message']); // ✅
+        Get.offAll(() => LandingView(), arguments: LandingItem.Profile);
+      } else {
+        AppSnackbar.error(data['message'] ?? "Password change failed"); // ✅
       }
     } catch (e) {
-      Get.snackbar(
-        "Error",
-        "Something went wrong",
-        backgroundColor: const Color(0xFFE53935),
-        colorText: const Color(0xFFFFFFFF),
-      );
+      AppSnackbar.error("Something went wrong"); // ✅
     } finally {
       isLoading.value = false;
     }

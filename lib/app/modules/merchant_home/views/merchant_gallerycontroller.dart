@@ -147,7 +147,6 @@ class MerchantGalleryController extends GetxController {
 
       if (response.statusCode == 200 && data["status"] == 1) {
         uploadedImages.removeAt(index);
-        Get.snackbar("Success", data["message"]);
       } else {
         Get.snackbar("Error", data["message"] ?? "Delete failed");
       }

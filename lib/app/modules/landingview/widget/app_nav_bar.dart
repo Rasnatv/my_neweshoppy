@@ -41,11 +41,6 @@ class AppNavBar extends StatelessWidget {
               label: "Profile",
             ),
 
-            // AppNavItem(label:"home",iconPath: AppIcons.homeIcon, value: LandingItem.Home, padding: EdgeInsets.only(left: 5.sp)),
-            // AppNavItem(label:"whishlist",iconPath: AppIcons.wishlistIcon, value: LandingItem.Wishlist),
-            //
-            // AppNavItem(label:"myorders",iconPath: AppIcons.cartIcon, value: LandingItem.MyOrders),
-            // AppNavItem(label:"profile",iconPath: AppIcons.profileIcon, value: LandingItem.Profile, padding: EdgeInsets.only(right: 5.sp))
           ],
         ),
       ),

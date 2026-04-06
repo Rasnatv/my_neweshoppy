@@ -8,13 +8,14 @@ import '../controller/address_listcontroller.dart';
 import 'address_newadding.dart';
 import 'address_updatepage.dart';
 
+import 'orderconfirmationpage.dart';
 
 class AddressListPage extends StatelessWidget {
   AddressListPage({super.key});
 
   final AddressListController controller = Get.put(AddressListController());
 
-  static  Color primary = AppColors.kPrimary;
+  static Color primary = AppColors.kPrimary;
   static const Color bg = Color(0xFFF0F0F5);
   static const Color textDark = Color(0xFF1A1A1A);
 
@@ -23,148 +24,49 @@ class AddressListPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: bg,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor:AppColors.kPrimary,
         elevation: 0.5,
         shadowColor: Colors.black12,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: textDark),
+          icon: const Icon(Icons.arrow_back, color:Colors.white),
           onPressed: () => Get.back(),
         ),
         title: const Text(
-          'ADDRESS',
-          style: TextStyle(
-            color: textDark,
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.2,
-          ),
+          'Select Address',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.1,
+            )
         ),
       ),
-      body: Column(
-        children: [
-          _buildStepIndicator(),
-          Expanded(
-            child: Obx(() {
-              if (controller.isLoading.value) {
-                return Center(
-                  child: CircularProgressIndicator(color: primary),
-                );
-              }
-              return RefreshIndicator(
-                color: primary,
-                onRefresh: controller.fetchAddresses,
-                child: ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    _buildAddNewButton(),
-                    const SizedBox(height: 4),
-                    if (controller.addressList.isEmpty)
-                      _buildEmptyState()
-                    else
-                      ...controller.addressList
-                          .map((addr) => _buildAddressCard(addr))
-                          .toList(),
-                  ],
-                ),
-              );
-            }),
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return Center(child: CircularProgressIndicator(color: primary));
+        }
+        return RefreshIndicator(
+          color: primary,
+          onRefresh: controller.fetchAddresses,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              _buildAddNewButton(),
+              const SizedBox(height: 4),
+              if (controller.addressList.isEmpty)
+                _buildEmptyState()
+              else
+                ...controller.addressList
+                    .map((addr) => _buildAddressCard(addr))
+                    .toList(),
+            ],
           ),
-        ],
-      ),
+        );
+      }),
     );
   }
 
-  // ── Step indicator ──────────────────────────────────────────────────────────
-  Widget _buildStepIndicator() {
-    final steps = ['Cart', 'Address', 'Payment', 'Summary'];
-    const currentStep = 1;
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-      child: Row(
-        children: List.generate(steps.length, (i) {
-          final isCompleted = i < currentStep;
-          final isCurrent = i == currentStep;
-          final isLast = i == steps.length - 1;
-          return Expanded(
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    if (i > 0)
-                      Expanded(
-                        child: Container(
-                          height: 2,
-                          color: isCompleted || isCurrent
-                              ? primary
-                              : const Color(0xFFDDDDDD),
-                        ),
-                      ),
-                    Container(
-                      width: 26,
-                      height: 26,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: isCompleted
-                            ? primary
-                            : isCurrent
-                            ? Colors.white
-                            : const Color(0xFFF0F0F0),
-                        border: Border.all(
-                          color: isCompleted || isCurrent
-                              ? primary
-                              : const Color(0xFFCCCCCC),
-                          width: 2,
-                        ),
-                      ),
-                      child: Center(
-                        child: isCompleted
-                            ? const Icon(Icons.check,
-                            size: 14, color: Colors.white)
-                            : Text(
-                          '${i + 1}',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: isCurrent
-                                ? primary
-                                : const Color(0xFFAAAAAA),
-                          ),
-                        ),
-                      ),
-                    ),
-                    if (!isLast)
-                      Expanded(
-                        child: Container(
-                          height: 2,
-                          color: isCompleted
-                              ? primary
-                              : const Color(0xFFDDDDDD),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  steps[i],
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight:
-                    isCurrent ? FontWeight.w700 : FontWeight.w400,
-                    color: isCompleted || isCurrent
-                        ? primary
-                        : const Color(0xFFAAAAAA),
-                  ),
-                ),
-              ],
-            ),
-          );
-        }),
-      ),
-    );
-  }
-
-  // ── Add New Address button ──────────────────────────────────────────────────
+  // ── Add New Address button ─────────────────────────────────────────────────
   Widget _buildAddNewButton() {
     return GestureDetector(
       onTap: () async {
@@ -179,10 +81,10 @@ class AddressListPage extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: primary.withOpacity(0.4), width: 1.4),
         ),
-        child:  Row(
+        child: Row(
           children: [
             Icon(Icons.add_circle_outline, color: primary, size: 20),
-            SizedBox(width: 10),
+            const SizedBox(width: 10),
             Text(
               'ADD NEW ADDRESS',
               style: TextStyle(
@@ -198,16 +100,24 @@ class AddressListPage extends StatelessWidget {
     );
   }
 
-  // ── Empty state ─────────────────────────────────────────────────────────────
+  // ── Empty state ────────────────────────────────────────────────────────────
   Widget _buildEmptyState() {
-    return const Padding(
-      padding: EdgeInsets.only(top: 60),
+    return Padding(
+      padding: const EdgeInsets.only(top: 80),
       child: Column(
         children: [
-          Icon(Icons.location_off_outlined,
-              size: 64, color: Color(0xFFCCCCCC)),
-          SizedBox(height: 16),
-          Text(
+          Container(
+            width: 90,
+            height: 90,
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.location_off_outlined,
+                size: 44, color: Color(0xFFCCCCCC)),
+          ),
+          const SizedBox(height: 20),
+          const Text(
             'No addresses found',
             style: TextStyle(
               fontSize: 15,
@@ -215,8 +125,8 @@ class AddressListPage extends StatelessWidget {
               color: Color(0xFF888888),
             ),
           ),
-          SizedBox(height: 6),
-          Text(
+          const SizedBox(height: 6),
+          const Text(
             'Add a new address to continue',
             style: TextStyle(fontSize: 13, color: Color(0xFFAAAAAA)),
           ),
@@ -225,18 +135,19 @@ class AddressListPage extends StatelessWidget {
     );
   }
 
-  // ── Address card ────────────────────────────────────────────────────────────
+  // ── Address card ───────────────────────────────────────────────────────────
   Widget _buildAddressCard(AddressListModel addr) {
     return Obx(() {
       final isSelected =
           controller.selectedAddressId.value == addr.addressId;
+
       return GestureDetector(
         onTap: () => controller.selectAddress(addr.addressId),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFFCF0FB) : Colors.white,
+            color: isSelected ? const Color(0xF0FFFFFF) : Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isSelected ? primary : const Color(0xFFE5E5E5),
@@ -307,20 +218,19 @@ class AddressListPage extends StatelessWidget {
                   const Divider(height: 1, color: Color(0xFFEEEEEE)),
                   const SizedBox(height: 10),
 
-                  // ── EDIT button ─────────────────────────────────────────
+                  // ── EDIT ──────────────────────────────────────────────
                   Row(
                     children: [
                       TextButton.icon(
-                      onPressed: () async {
-              final result = await Get.to(
-           () => EditAddressPage(addressId: addr.addressId),);
-
-
-          if (result == true) {
+                        onPressed: () async {
+                          final result = await Get.to(
+                                  () => EditAddressPage(
+                                  addressId: addr.addressId));
+                          if (result == true) {
                             await controller.fetchAddresses();
                           }
                         },
-                        icon:  Icon(Icons.edit_outlined,
+                        icon: Icon(Icons.edit_outlined,
                             size: 15, color: primary),
                         label: Text(
                           'EDIT',
@@ -341,14 +251,20 @@ class AddressListPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
 
+                  // ── DELIVER TO THIS ADDRESS ────────────────────────────
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: controller.deliverToSelected,
+                      onPressed: () {
+                        Get.to(() => OrderConfirmationPage(
+                          address: addr,
+                        ));
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primary,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        padding:
+                        const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(9)),
                         elevation: 0,
@@ -372,4 +288,3 @@ class AddressListPage extends StatelessWidget {
     });
   }
 }
-

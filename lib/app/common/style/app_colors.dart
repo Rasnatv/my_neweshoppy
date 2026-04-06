@@ -23,6 +23,53 @@ abstract class AppColors {
   static const grayButton = Color(0xFFC8C2C2);
   static const grayText = Color(0xFF4B7AE8);
 
+  //merchantsection
+  static const teal           = Color(0xFF0A6E5C);
+  static const surface        = Colors.white;
+  static const bg             = Color(0xFFF0F4F3);
+  static const border         = Color(0xFFDDE5E3);
+  static const divider        = Color(0xFFF1F5F4);
+  static const textPrimary    = Color(0xFF111827);
+  static const textSecond     = Color(0xFF6B7280);
+  static const textMuted      = Color(0xFF9CA3AF);
+  static const success        = Color(0xFF059669);
+  static const successBg      = Color(0xFFECFDF5);
+  static const locked         = Color(0xFFF8FAFB);
+  static const lockedBorder   = Color(0xFFE5E7EB);
+  static const lockedText     = Color(0xFF9CA3AF);
+  static const focusAccent    = Color(0xFF6366F1);
+  static const focusBg        = Color(0xFFFAFAFF);
+  static const ownerIcon      = Color(0xFF6366F1);
+  static const ownerIconBg    = Color(0xFFEEF2FF);
+  static const shopIcon       = Color(0xFF8B5CF6);
+  static const shopIconBg     = Color(0xFFF5F3FF);
+  static const phoneIcon      = Color(0xFFD97706);
+  static const phoneIconBg    = Color(0xFFFFFBEB);
+  static const stateIcon      = Color(0xFF2563EB);
+  static final stateIconBg    = Color(0xFFEFF6FF);
+  static const districtIcon   = Color(0xFF0891B2);
+  static const districtIconBg = Color(0xFFECFEFF);
+  static const pinIcon        = Color(0xFFE11D48);
+  static const pinIconBg      = Color(0xFFFFF1F2);
+  static const gpsBtnFg       = Color(0xFF2563EB);
+  static const gpsBtnBg       = Color(0xFFEFF6FF);
+  static const mapBtnFg       = Color(0xFF8B5CF6);
+  static const mapBtnBg       = Color(0xFFF5F3FF);
+
+  // Social icon colors
+  static const whatsappColor  = Color(0xFF16A34A);
+  static const whatsappBg     = Color(0xFFDCFCE7);
+  static const facebookColor  = Color(0xFF1877F2);
+  static const facebookBg     = Color(0xFFEFF6FF);
+  static const instagramColor = Color(0xFFE11D48);
+  static const instagramBg    = Color(0xFFFDF2F8);
+  static const websiteColor   = Color(0xFF059669);
+  static const websiteBg      = Color(0xFFF0FDF4);
+
+
+
+
+
 
 
 
@@ -42,3 +89,5 @@ abstract class AppColors {
     },
   );
 }
+// ─────────────────────────────────────────────────────────────────────────────
+

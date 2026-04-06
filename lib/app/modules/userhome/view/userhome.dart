@@ -13,6 +13,8 @@ import '../widget/promotionbanner.dart';
 import '../view/selectlocationpage.dart';
 import '../view/user_eventsection.dart';
 import '../widget/user_offer.dart';
+import 'all_events.dart';
+import 'all_offers.dart';
 
 const kPurplePrimary = Color(0xFF00796B);
 const kPurpleMid     = Color(0xFF00796B);
@@ -401,10 +403,9 @@ class _UserhomeState extends State<Userhome> with TickerProviderStateMixin {
             iconBg: Colors.orange.shade50,
             iconColor: Colors.orange.shade600,
             title: "Categories",
-            actionLabel: "See All",
           ),
         ),
-        const SliverToBoxAdapter(child: SizedBox(height: 5)),
+        SliverToBoxAdapter(child: SizedBox(height: 5)),
         SliverToBoxAdapter(child: CategorySection()),
         const SliverToBoxAdapter(child: SizedBox(height: 5)),
 
@@ -418,6 +419,9 @@ class _UserhomeState extends State<Userhome> with TickerProviderStateMixin {
             iconColor: Colors.teal,
             title: "Upcoming Events",
             actionLabel: "See All",
+            onTap: () {
+              Get.to(() => AllEventsPage()); // 👈 NAVIGATION
+            },
           ),
         ),
         const SliverToBoxAdapter(child: SizedBox(height: 12)),
@@ -431,12 +435,13 @@ class _UserhomeState extends State<Userhome> with TickerProviderStateMixin {
             iconColor: Colors.red.shade600,
             title: "Hot Offers",
             actionLabel: "Explore",
+            onTap:() {
+              Get.to(() => AllOffersPage());
+            }
           ),
         ),
         const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-        // ✅ FIX: UserOfferSection already returns SliverToBoxAdapter internally
-        // so we do NOT wrap it in another SliverToBoxAdapter here
         UserOfferSection(),
 
         const SliverToBoxAdapter(child: SizedBox(height: 80)),
@@ -680,20 +685,21 @@ class _HeaderIconButton extends StatelessWidget {
     );
   }
 }
-
 class _SectionHeader extends StatelessWidget {
   final IconData icon;
   final Color iconBg;
   final Color iconColor;
   final String title;
-  final String actionLabel;
+  final String? actionLabel;
+  final VoidCallback? onTap; // 👈 ADD THIS
 
   const _SectionHeader({
     required this.icon,
     required this.iconBg,
     required this.iconColor,
     required this.title,
-    required this.actionLabel,
+    this.actionLabel,
+    this.onTap, // 👈 ADD
   });
 
   @override
@@ -719,16 +725,16 @@ class _SectionHeader extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF1A1A2E),
-                  letterSpacing: 0.2,
                 ),
               ),
             ],
           ),
+
+          // 🔥 CLICK HERE
           GestureDetector(
-            onTap: () {},
+            onTap: onTap,
             child: Text(
-              actionLabel,
+              actionLabel ?? "",
               style: const TextStyle(
                 color: kPurplePrimary,
                 fontWeight: FontWeight.w700,
@@ -741,6 +747,7 @@ class _SectionHeader extends StatelessWidget {
     );
   }
 }
+
 
 class _RestaurantBanner extends StatelessWidget {
   const _RestaurantBanner();

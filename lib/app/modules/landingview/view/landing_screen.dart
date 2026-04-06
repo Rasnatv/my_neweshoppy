@@ -1,4 +1,4 @@
-//
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -10,14 +10,21 @@ class LandingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Ensure controller is created
-    Get.put(LandingController());
+    final controller = Get.put(LandingController());
+
+    // ✅ Read argument and navigate to correct tab after first frame
+    final arg = Get.arguments;
+    if (arg is LandingItem) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        controller.changePage(page: arg);
+      });
+    }
 
     return GetBuilder<LandingController>(
       builder: (controller) {
         return Scaffold(
           extendBody: true,
-          body: controller.getPage(),  // NOT reactive → fine for GetBuilder
+          body: controller.getPage(),
           bottomNavigationBar: const AppNavBar(),
         );
       },

@@ -42,13 +42,7 @@ class UserloginController extends GetxController {
       description: 'Manage your store',
       color: const Color(0xFFFF9800),
     ),
-    // 3: RoleInfo(
-    //   id: 3,
-    //   name: 'Admin',
-    //   icon: Icons.admin_panel_settings_outlined,
-    //   description: 'System administration',
-    //   color: const Color(0xFF9C27B0),
-    // ),
+
   };
 
   @override
@@ -123,7 +117,7 @@ class UserloginController extends GetxController {
       // Navigate automatically based on role
       _navigateToHome(data['role']);
 
-      _showSuccess(body['message'] ?? "Login successful");
+      // _showSuccess(body['message'] ?? "Login successful");
 
     } catch (e) {
       debugPrint("Login error: $e");
@@ -184,20 +178,6 @@ class UserloginController extends GetxController {
     );
   }
 
-  /// Show success snackbar
-  void _showSuccess(String message) {
-    Get.snackbar(
-      "Success",
-      message,
-      icon: const Icon(Icons.check_circle_outline, color: Colors.white),
-      snackPosition: SnackPosition.TOP,
-      borderRadius: 12,
-      margin: const EdgeInsets.all(16),
-      duration: const Duration(seconds: 3),
-    );
-  }
-
-  /// Clear all fields
   void clearFields() {
     username.clear();
     password.clear();

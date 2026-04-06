@@ -30,18 +30,6 @@ class RestaurantRegistrationPage extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // ── Gradient strip ──────────────────────────────────────────────
-            // Container(
-            //   height: 8,
-            //   decoration: BoxDecoration(
-            //     gradient: LinearGradient(
-            //       colors: [
-            //         AppColors.kPrimary,
-            //         AppColors.kPrimary.withOpacity(0.6),
-            //       ],
-            //     ),
-            //   ),
-            // ),
 
             Padding(
               padding: const EdgeInsets.all(20),

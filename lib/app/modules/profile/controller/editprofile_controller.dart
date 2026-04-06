@@ -1,12 +1,14 @@
 
 import 'dart:convert';
 import 'dart:io';
+import 'package:eshoppy/app/modules/profile/view/profile_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import '../../../data/models/edit_profilemodel.dart';
+import '../../landingview/controller/landing_controller.dart';
 import '../../landingview/view/landing_screen.dart';
 
 class EditProfileController extends GetxController {
@@ -96,15 +98,10 @@ class EditProfileController extends GetxController {
       if (response.statusCode == 200 && body['status'] == "1") {
         profile.value = ProfileModel.fromJson(body['data']);
 
-        Get.snackbar(
-          "Success",
-          body['message'],
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
-
-        Get.offAll(() => LandingView());
-      } else {
+        // Get.toNamed('/profile');
+        Get.offAll(() => LandingView(), arguments: LandingItem.Profile);
+      }
+      else {
         Get.snackbar("Error", body['message'],
             backgroundColor: Colors.red, colorText: Colors.white);
       }

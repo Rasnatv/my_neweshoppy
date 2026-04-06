@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../controller/merchantreg_controller.dart';
 import '../view/merchantmap.dart';
+import 'package:flutter/services.dart';
 
 class MerchantRegform extends StatelessWidget {
   MerchantRegform({super.key});
@@ -245,10 +246,15 @@ class MerchantRegform extends StatelessWidget {
             fontWeight: FontWeight.w500,
           ),
           keyboardType: TextInputType.phone,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(10),
+          ],
           decoration: inputStyle("Phone Number", Icons.phone_outlined),
         ),
         const SizedBox(height: 16),
 
+// Phone Number 2
         TextFormField(
           controller: controller.phoneNo2Controller,
           style: const TextStyle(
@@ -257,9 +263,12 @@ class MerchantRegform extends StatelessWidget {
             fontWeight: FontWeight.w500,
           ),
           keyboardType: TextInputType.phone,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(10),
+          ],
           decoration: inputStyle("Alternate Phone (Optional)", Icons.phone_outlined),
         ),
-
         const SizedBox(height: 24),
 
         // ------------------ DROPDOWN: STATE ------------------

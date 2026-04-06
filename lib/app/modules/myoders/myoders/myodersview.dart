@@ -41,7 +41,12 @@ class  Myodersview extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(" Orders",style:AppTextStyle.rTextNunitoWhite17w700),
+        title: Text(" Orders",style: TextStyle(
+          color: Colors.white,
+          fontSize: 17,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.1,
+        ),),
         backgroundColor: AppColors.kPrimary,
       ),
       body: ListView.builder(

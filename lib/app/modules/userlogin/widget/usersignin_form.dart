@@ -151,6 +151,49 @@ class UsersigninForm extends StatelessWidget {
 
           const SizedBox(height: 28),
 
+          // // Login Button
+          // Obx(() => SizedBox(
+          //   width: double.infinity,
+          //   height: 54,
+          //   child: ElevatedButton(
+          //     onPressed: controller.isLoading.value
+          //         ? null
+          //         : () {
+          //       if (_formKey.currentState!.validate()) {
+          //         FocusScope.of(context).unfocus();
+          //         controller.submit();
+          //       }
+          //     },
+          //     style: ElevatedButton.styleFrom(
+          //       backgroundColor: Colors.teal,
+          //       foregroundColor: Colors.white,
+          //       disabledBackgroundColor: const Color(0xFFD1D5DB),
+          //       elevation: 0,
+          //       shape: RoundedRectangleBorder(
+          //         borderRadius: BorderRadius.circular(12),
+          //       ),
+          //     ),
+          //     child: controller.isLoading.value
+          //         ? const SizedBox(
+          //       width: 22,
+          //       height: 22,
+          //       child: CircularProgressIndicator(
+          //         strokeWidth: 2.5,
+          //         valueColor: AlwaysStoppedAnimation<Color>(
+          //           Colors.white,
+          //         ),
+          //       ),
+          //     )
+          //         : const Text(
+          //       "Sign In",
+          //       style: TextStyle(
+          //         fontSize: 16,
+          //         fontWeight: FontWeight.w700,
+          //         letterSpacing: 0.3,
+          //       ),
+          //     ),
+          //   ),
+          // )),
           // Login Button
           Obx(() => SizedBox(
             width: double.infinity,
@@ -167,7 +210,7 @@ class UsersigninForm extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.teal,
                 foregroundColor: Colors.white,
-                disabledBackgroundColor: const Color(0xFFD1D5DB),
+                disabledBackgroundColor: Colors.teal,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -175,13 +218,11 @@ class UsersigninForm extends StatelessWidget {
               ),
               child: controller.isLoading.value
                   ? const SizedBox(
-                width: 22,
-                height: 22,
+                width: 20,
+                height: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2.5,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    Colors.white,
-                  ),
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                 ),
               )
                   : const Text(

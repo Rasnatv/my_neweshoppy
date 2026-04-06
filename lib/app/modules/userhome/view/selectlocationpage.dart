@@ -22,7 +22,12 @@ class SelectLocationPage extends StatelessWidget {
         iconTheme: const IconThemeData(color: Colors.white),
         title: Text(
           'Select Location',
-          style: AppTextStyle.rTextNunitoWhite17w700,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.1,
+            ),
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),

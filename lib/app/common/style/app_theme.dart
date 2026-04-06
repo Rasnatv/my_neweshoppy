@@ -13,7 +13,7 @@ class AppTheme {
        textTheme:  DTextTheme.lightTheme,
       primaryColor: AppColors.black,
       primarySwatch: AppColors.kPrimarySwatch,
-      elevatedButtonTheme:DElevatedButtonTheme.LightElevatedButtonTheme,
+      elevatedButtonTheme:DElevatedButtonTheme.lightElevatedButtonTheme,
       //inputDecorationTheme:DTextFormFieldTheme.lightInputDecorationTheme,
       //outlinedButtonTheme: DOutlineButtonTheme.LightOutlineButtonTheme,
       colorScheme: ColorScheme.fromSeed(

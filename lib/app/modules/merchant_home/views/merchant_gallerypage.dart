@@ -22,7 +22,12 @@ class MerchantGalleryPage extends StatelessWidget {
           iconTheme: const IconThemeData(
             color: Colors.white, // back arrow color
           ),
-        title:  Text("Merchant Gallery",style:AppTextStyle.rTextNunitoWhite17w700),
+        title:  Text("Merchant Gallery",style: TextStyle(
+          color: Colors.white,
+          fontSize: 17,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.1,
+        ),),
         elevation: 0,
       ),
       body: Obx(() {
