@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_colors.dart';
 
-import '../../../data/models/user_myordersmodel.dart';
-import '../controller/my_orderscontroller.dart';
 
 
 class MyOrdersView extends StatelessWidget {
