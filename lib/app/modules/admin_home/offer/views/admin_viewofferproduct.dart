@@ -50,9 +50,10 @@ class AdminOfferProductScreen extends StatelessWidget {
           const Text(
             'Offer Products',
             style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
               color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.1,
             ),
           ),
           // offerId is a plain int — no Obx needed
@@ -90,42 +91,6 @@ class AdminOfferProductScreen extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-// Main Content
-// ─────────────────────────────────────────────
-//
-// class _ProductsContent extends StatelessWidget {
-//   final AdminOfferProductController controller;
-//   const _ProductsContent({required this.controller});
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return RefreshIndicator(
-//       color: const Color(0xFF6366F1),
-//       onRefresh: controller.refreshProducts,
-//       child: CustomScrollView(
-//         slivers: [
-//
-//           Obx(() => SliverPadding(
-//             padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-//             sliver: SliverList(
-//               delegate: SliverChildBuilderDelegate(
-//                     (context, index) => GestureDetector(
-//     onTap: () => Get.toNamed('/offer-product-detail', arguments: product.id),
-//          ,child:
-//                         _ProductCard(
-//                   product: controller.products[index],
-//                 ),),
-//                 childCount: controller.products.length,
-//               ),
-//             ),
-//           )),
-//           const SliverPadding(padding: EdgeInsets.only(bottom: 24)),
-//         ],
-//       ),
-//     );
-//   }
-// }
 class _ProductsContent extends StatelessWidget {
   final AdminOfferProductController controller;
   const _ProductsContent({required this.controller});

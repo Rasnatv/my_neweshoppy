@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/userlogin_controller.dart';
@@ -5,6 +6,7 @@ import '../controller/userlogin_controller.dart';
 class UsersigninForm extends StatelessWidget {
   UsersigninForm({super.key});
 
+  // ✅ FIND only — never put here
   final UserloginController controller = Get.find<UserloginController>();
   final _formKey = GlobalKey<FormState>();
 
@@ -20,52 +22,30 @@ class UsersigninForm extends StatelessWidget {
         fontSize: 14,
         fontWeight: FontWeight.w500,
       ),
-      prefixIcon: Icon(
-        icon,
-        color: const Color(0xFF009788),
-        size: 22,
-      ),
+      prefixIcon: Icon(icon, color: const Color(0xFF009788), size: 22),
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: const Color(0xFFF9FAFB),
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 20,
-        vertical: 18,
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(
-          color: Color(0xFFE5E7EB),
-          width: 1.5,
-        ),
+        borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1.5),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(
-          color: Color(0xFFE5E7EB),
-          width: 1.5,
-        ),
+        borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1.5),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(
-          color: Color(0xFF009788),
-          width: 2,
-        ),
+        borderSide: const BorderSide(color: Color(0xFF009788), width: 2),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(
-          color: Color(0xFFEF4444),
-          width: 1.5,
-        ),
+        borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.5),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(
-          color: Color(0xFFEF4444),
-          width: 2,
-        ),
+        borderSide: const BorderSide(color: Color(0xFFEF4444), width: 2),
       ),
       errorStyle: const TextStyle(
         color: Color(0xFFEF4444),
@@ -82,18 +62,13 @@ class UsersigninForm extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Email Field
           TextFormField(
             controller: controller.username,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
             validator: (v) {
-              if (v == null || v.isEmpty) {
-                return "Email is required";
-              }
-              if (!GetUtils.isEmail(v)) {
-                return "Please enter a valid email";
-              }
+              if (v == null || v.isEmpty) return "Email is required";
+              if (!GetUtils.isEmail(v)) return "Please enter a valid email";
               return null;
             },
             style: const TextStyle(
@@ -109,7 +84,6 @@ class UsersigninForm extends StatelessWidget {
 
           const SizedBox(height: 20),
 
-          // Password Field
           Obx(() => TextFormField(
             controller: controller.password,
             obscureText: !controller.isPasswordVisible.value,
@@ -120,12 +94,8 @@ class UsersigninForm extends StatelessWidget {
               }
             },
             validator: (v) {
-              if (v == null || v.isEmpty) {
-                return "Password is required";
-              }
-              if (v.length < 6) {
-                return "Password must be at least 6 characters";
-              }
+              if (v == null || v.isEmpty) return "Password is required";
+              if (v.length < 6) return "Password must be at least 6 characters";
               return null;
             },
             style: const TextStyle(
@@ -151,50 +121,6 @@ class UsersigninForm extends StatelessWidget {
 
           const SizedBox(height: 28),
 
-          // // Login Button
-          // Obx(() => SizedBox(
-          //   width: double.infinity,
-          //   height: 54,
-          //   child: ElevatedButton(
-          //     onPressed: controller.isLoading.value
-          //         ? null
-          //         : () {
-          //       if (_formKey.currentState!.validate()) {
-          //         FocusScope.of(context).unfocus();
-          //         controller.submit();
-          //       }
-          //     },
-          //     style: ElevatedButton.styleFrom(
-          //       backgroundColor: Colors.teal,
-          //       foregroundColor: Colors.white,
-          //       disabledBackgroundColor: const Color(0xFFD1D5DB),
-          //       elevation: 0,
-          //       shape: RoundedRectangleBorder(
-          //         borderRadius: BorderRadius.circular(12),
-          //       ),
-          //     ),
-          //     child: controller.isLoading.value
-          //         ? const SizedBox(
-          //       width: 22,
-          //       height: 22,
-          //       child: CircularProgressIndicator(
-          //         strokeWidth: 2.5,
-          //         valueColor: AlwaysStoppedAnimation<Color>(
-          //           Colors.white,
-          //         ),
-          //       ),
-          //     )
-          //         : const Text(
-          //       "Sign In",
-          //       style: TextStyle(
-          //         fontSize: 16,
-          //         fontWeight: FontWeight.w700,
-          //         letterSpacing: 0.3,
-          //       ),
-          //     ),
-          //   ),
-          // )),
-          // Login Button
           Obx(() => SizedBox(
             width: double.infinity,
             height: 54,
@@ -203,6 +129,7 @@ class UsersigninForm extends StatelessWidget {
                   ? null
                   : () {
                 if (_formKey.currentState!.validate()) {
+                  // ✅ Dismiss keyboard before submit
                   FocusScope.of(context).unfocus();
                   controller.submit();
                 }
@@ -222,7 +149,8 @@ class UsersigninForm extends StatelessWidget {
                 height: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2.5,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  valueColor:
+                  AlwaysStoppedAnimation<Color>(Colors.white),
                 ),
               )
                   : const Text(
@@ -235,45 +163,7 @@ class UsersigninForm extends StatelessWidget {
               ),
             ),
           )),
-
-          const SizedBox(height: 24),
-
-          // Social Login Buttons
-
         ],
-      ),
-    );
-  }
-
-  Widget _buildSocialButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return OutlinedButton.icon(
-      onPressed: onTap,
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        side: const BorderSide(
-          color: Color(0xFFE5E7EB),
-          width: 1.5,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-      icon: Icon(
-        icon,
-        color: const Color(0xFF6B7280),
-        size: 22,
-      ),
-      label: Text(
-        label,
-        style: const TextStyle(
-          color: Color(0xFF374151),
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-        ),
       ),
     );
   }

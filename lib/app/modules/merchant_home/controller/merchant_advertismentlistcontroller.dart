@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
+import '../../../data/errors/api_error.dart';
+import '../../merchantlogin/widget/successwidget.dart';
 
 class MerchantAdvertisementGetController extends GetxController {
   final ads = <Map<String, dynamic>>[].obs;
@@ -16,15 +18,10 @@ class MerchantAdvertisementGetController extends GetxController {
     super.onInit();
     authToken = box.read("auth_token") ?? "";
 
-    if (authToken.isEmpty) {
-      Get.snackbar("Auth Error", "Token missing. Please login again.");
-      return;
-    }
 
     fetchAdvertisements();
   }
 
-  /// GET ADVERTISEMENTS
   Future<void> fetchAdvertisements() async {
     try {
       isLoading.value = true;
@@ -39,34 +36,40 @@ class MerchantAdvertisementGetController extends GetxController {
         },
       );
 
-      final body = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
 
-      if (response.statusCode == 200 &&
-          (body["status"] == "1" || body["status"] == 1)) {
-        ads.value = List<Map<String, dynamic>>.from(
-          body["data"].map((e) {
-            // Determine location type and value from API response
-            String? district = e["district"]?.toString();
-            String? area = e["main_location"]?.toString();
+        if (body["status"] == "1" || body["status"] == 1) {
+          ads.value = List<Map<String, dynamic>>.from(
+            body["data"].map((e) {
+              String? district = e["district"]?.toString();
+              String? area = e["main_location"]?.toString();
 
-            // Ignore empty strings
-            if (district != null && district.trim().isEmpty) district = null;
-            if (area != null && area.trim().isEmpty) area = null;
+              if (district != null && district
+                  .trim()
+                  .isEmpty) district = null;
+              if (area != null && area
+                  .trim()
+                  .isEmpty) area = null;
 
-            return {
-              "id": e["id"].toString(),
-              "title": e["advertisement"],
-              "image": e["banner_image"],
-              "district": district,      // null if not present
-              "main_location": area,     // null if not present
-            };
-          }),
-        );
-      } else {
-        Get.snackbar("Error", body["message"] ?? "Failed to load ads");
+              return {
+                "id": e["id"].toString(),
+                "title": e["advertisement"],
+                "image": e["banner_image"],
+                "district": district,
+                "main_location": area,
+              };
+            }),
+          );
+        }
       }
+      // } else {
+      //   final errorMessage = ApiErrorHandler.handleResponse(response);
+      //   AppSnackbar.error(errorMessage);
+      // }
     } catch (e) {
-      Get.snackbar("Error", "Unable to fetch advertisements");
+      final errorMessage = ApiErrorHandler.handleException(e);
+      AppSnackbar.error(errorMessage);
     } finally {
       isLoading.value = false;
     }

@@ -1,51 +1,55 @@
-
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../data/errors/api_error.dart';
 import '../../../data/models/admin_addeventmodel.dart';
+import '../../merchantlogin/widget/successwidget.dart';
 
 class AdminEventAddController extends GetxController {
-  // ─── State ───────────────────────────────────────────────
-  var events    = <AdminaddEventModel>[].obs;
+  var events = <AdminaddEventModel>[].obs;
   var isLoading = false.obs;
 
-  // ─── Form Controllers ────────────────────────────────────
-  final eventName     = TextEditingController();
+  final eventName = TextEditingController();
   final eventLocation = TextEditingController();
 
-  // ─── Date / Time Observables ─────────────────────────────
   final startDate = ''.obs;
-  final endDate   = ''.obs;
+  final endDate = ''.obs;
   final startTime = ''.obs;
-  final endTime   = ''.obs;
+  final endTime = ''.obs;
 
-  // ─── Banner Image ────────────────────────────────────────
   final bannerImage = Rx<File?>(null);
 
-  // ─── Storage & Picker ────────────────────────────────────
-  final box    = GetStorage();
+  final box = GetStorage();
   final picker = ImagePicker();
 
   DateTime? _selectedStartDate;
 
-  // ─── District & Area ─────────────────────────────────────
-  final districts          = <String>[].obs;
-  final areas              = <String>[].obs;
+  final stateList = <String>[].obs;
+  final districtList = <String>[].obs;
+  final areaList = <String>[].obs;
+
+  final isLoadingStates = false.obs;
   final isLoadingDistricts = false.obs;
-  final isLoadingAreas     = false.obs;
+  final isLoadingAreas = false.obs;
 
-  // 'district' | 'area' | null
-  final locationType      = Rx<String?>(null);
-  final selectedDistrict  = Rx<String?>(null);
-  final selectedArea      = Rx<String?>(null);
+  final selectedState = Rx<String?>(null);
+  final selectedDistrict = Rx<String?>(null);
+  final selectedArea = Rx<String?>(null);
 
-  // ─── Auth token helper ────────────────────────────────────
+  final showMode = 'district'.obs;
+
+  static const _baseUrl = 'https://rasma.astradevelops.in/e_shoppyy/public/api';
+  static const _statesUrl = '$_baseUrl/merchant/states';
+  static const _districtsUrl = '$_baseUrl/districts';
+  static const _areasUrl = '$_baseUrl/areas';
+  static const _createUrl = '$_baseUrl/create-event';
+
   String get _token => box.read('auth_token')?.toString().trim() ?? '';
 
   Map<String, String> get _headers => {
@@ -53,10 +57,19 @@ class AdminEventAddController extends GetxController {
     'Authorization': 'Bearer $_token',
   };
 
-  // ─── Lifecycle ────────────────────────────────────────────
+  // ───────── TOKEN CHECK ─────────
+  bool _checkAuth() {
+    if (_token.isEmpty) {
+      Get.offAllNamed('/login');
+      return false;
+    }
+    return true;
+  }
+
   @override
   void onInit() {
     super.onInit();
+    fetchStates();
     fetchDistricts();
     fetchAreas();
   }
@@ -68,65 +81,132 @@ class AdminEventAddController extends GetxController {
     super.onClose();
   }
 
-  // ─── Set location type (toggle) ───────────────────────────
-  void setLocationType(String type) {
-    locationType.value     = type;
+  void setShowMode(String mode) {
+    showMode.value = mode;
+    selectedState.value = null;
     selectedDistrict.value = null;
-    selectedArea.value     = null;
+    selectedArea.value = null;
   }
 
-  // ─── Fetch Districts ──────────────────────────────────────
+  // ───────── STATES ─────────
+  Future<void> fetchStates() async {
+    if (!_checkAuth()) return;
+
+    isLoadingStates.value = true;
+    try {
+      final response = await http.get(Uri.parse(_statesUrl), headers: _headers);
+
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
+
+        if ((body['status'] == true || body['status'] == 1) && body['data'] != null) {
+          stateList.value = List<String>.from(body['data']);
+        }
+      } else {
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
+      }
+    } catch (e) {
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
+    } finally {
+      isLoadingStates.value = false;
+    }
+  }
+
+  // ───────── DISTRICTS ─────────
   Future<void> fetchDistricts() async {
+    if (!_checkAuth()) return;
+
     isLoadingDistricts.value = true;
     try {
-      final response = await http.get(
-        Uri.parse(
-            'https://rasma.astradevelops.in/e_shoppyy/public/api/districts'),
-        headers: _headers,
-      );
-      final body = jsonDecode(response.body);
-      if (body['status'] == true && body['data'] != null) {
-        districts.value = List<String>.from(body['data']);
+      final response = await http.get(Uri.parse(_districtsUrl), headers: _headers);
+
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
+
+        if (body['status'] == true && body['data'] != null) {
+          districtList.value = List<String>.from(body['data']);
+        }
+      } else {
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
-    } catch (_) {
-      Get.snackbar('Error', 'Failed to load districts');
+    } catch (e) {
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoadingDistricts.value = false;
     }
   }
 
-  // ─── Fetch Areas ──────────────────────────────────────────
+  // ───────── AREAS ─────────
   Future<void> fetchAreas() async {
+    if (!_checkAuth()) return;
+
     isLoadingAreas.value = true;
     try {
-      final response = await http.get(
-        Uri.parse(
-            'https://rasma.astradevelops.in/e_shoppyy/public/api/areas'),
-        headers: _headers,
-      );
-      final body = jsonDecode(response.body);
-      if (body['status'] == true && body['data'] != null) {
-        areas.value = List<String>.from(body['data']);
+      final response = await http.get(Uri.parse(_areasUrl), headers: _headers);
+
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
+
+        if (body['status'] == true && body['data'] != null) {
+          areaList.value = List<String>.from(body['data']);
+        }
+      } else {
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
-    } catch (_) {
-      Get.snackbar('Error', 'Failed to load areas');
+    } catch (e) {
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoadingAreas.value = false;
     }
   }
 
-  // ─── Image Pick / Remove ──────────────────────────────────
+  // ───────── IMAGE PICK WITH 2:1 RATIO ─────────
   Future<void> pickBannerImage() async {
-    final img = await picker.pickImage(
+    final picked = await picker.pickImage(
       source: ImageSource.gallery,
       imageQuality: 85,
     );
-    if (img != null) bannerImage.value = File(img.path);
+
+    if (picked == null) return;
+
+    File file = File(picked.path);
+
+    // 1️⃣ SIZE CHECK (1MB limit)
+    final int bytes = await file.length();
+    if (bytes > 1024 * 1024) {
+      AppSnackbar.error("Please upload an image less than 1 MB");
+      return;
+    }
+
+    // 2️⃣ CROP IMAGE (2:1 RATIO)
+    final croppedFile = await ImageCropper().cropImage(
+      sourcePath: file.path,
+      aspectRatio: const CropAspectRatio(ratioX: 2, ratioY: 1),
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: 'Crop Banner',
+          toolbarColor: Colors.black,
+          toolbarWidgetColor: Colors.white,
+          lockAspectRatio: true,
+        ),
+        IOSUiSettings(
+          title: 'Crop Banner',
+          aspectRatioLockEnabled: true,
+        ),
+      ],
+    );
+
+    if (croppedFile == null) return;
+
+    file = File(croppedFile.path);
+
+    // 3️⃣ FINAL ASSIGN
+    bannerImage.value = file;
   }
 
   void removeBannerImage() => bannerImage.value = null;
 
-  // ─── Date Pickers ─────────────────────────────────────────
+  // ───────── DATE TIME ─────────
   Future<void> pickStartDate(BuildContext context) async {
     final date = await showDatePicker(
       context: context,
@@ -134,29 +214,30 @@ class AdminEventAddController extends GetxController {
       lastDate: DateTime(2035),
       initialDate: DateTime.now(),
     );
+
     if (date != null) {
       _selectedStartDate = date;
-      startDate.value    = _formatDate(date);
-      endDate.value      = '';
+      startDate.value = _formatDate(date);
+      endDate.value = '';
     }
   }
 
   Future<void> pickEndDate(BuildContext context) async {
     if (_selectedStartDate == null) {
-      Get.snackbar('Error', 'Select start date first',
-          backgroundColor: Colors.red, colorText: Colors.white);
+      AppSnackbar.error('Select start date first');
       return;
     }
+
     final date = await showDatePicker(
       context: context,
       firstDate: _selectedStartDate!,
       lastDate: DateTime(2035),
       initialDate: _selectedStartDate!,
     );
+
     if (date != null) endDate.value = _formatDate(date);
   }
 
-  // ─── Time Pickers ─────────────────────────────────────────
   Future<void> pickStartTime(BuildContext context) async {
     final time = await showTimePicker(
       context: context,
@@ -173,181 +254,101 @@ class AdminEventAddController extends GetxController {
     if (time != null) endTime.value = _formatTime(time);
   }
 
-  // ─── Add Event ────────────────────────────────────────────
+  // ───────── VALIDATION ─────────
+  String? validate() {
+    if (eventName.text.trim().isEmpty) return 'Enter event name';
+    if (eventLocation.text.trim().isEmpty) return 'Enter event location';
+    if (startDate.value.isEmpty) return 'Select start date';
+    if (endDate.value.isEmpty) return 'Select end date';
+    if (startTime.value.isEmpty) return 'Select start time';
+    if (endTime.value.isEmpty) return 'Select end time';
+    if (bannerImage.value == null) return 'Upload banner image';
+    if (selectedState.value == null) return 'Select a state';
+    if (selectedDistrict.value == null) return 'Select a district';
+    if (showMode.value == 'area' && selectedArea.value == null) {
+      return 'Select an area';
+    }
+    return null;
+  }
+
+  // ───────── ADD EVENT ─────────
   Future<void> addEvent() async {
+    if (!_checkAuth()) return;
+
+    final err = validate();
+    if (err != null) {
+      AppSnackbar.error(err);
+      return;
+    }
+
     try {
       isLoading.value = true;
 
-      if (_token.isEmpty) {
-        Get.snackbar('Session Expired', 'Please login again',
-            backgroundColor: Colors.red, colorText: Colors.white);
-        return;
-      }
-
-      final imgBytes  = await bannerImage.value!.readAsBytes();
+      final imgBytes = await bannerImage.value!.readAsBytes();
       final imgBase64 = 'data:image/jpeg;base64,${base64Encode(imgBytes)}';
 
       final body = {
-        'event_name':     eventName.text.trim(),
-        'start_date':     startDate.value,
-        'end_date':       endDate.value,
-        'start_time':     startTime.value,
-        'end_time':       endTime.value,
+        'event_name': eventName.text.trim(),
+        'start_date': startDate.value,
+        'end_date': endDate.value,
+        'start_time': startTime.value,
+        'end_time': endTime.value,
         'event_location': eventLocation.text.trim(),
-        'district':
-        locationType.value == 'district' ? selectedDistrict.value ?? '' : '',
-        'main_location':
-        locationType.value == 'area' ? selectedArea.value ?? '' : '',
+        'state': selectedState.value ?? '',
+        'district': selectedDistrict.value ?? '',
         'banner_image': imgBase64,
       };
 
+      if (showMode.value == 'area') {
+        body['main_location'] = selectedArea.value ?? '';
+      }
+
       final response = await http.post(
-        Uri.parse(
-            'https://rasma.astradevelops.in/e_shoppyy/public/api/create-event'),
-        headers: {
-          ..._headers,
-          'Content-Type': 'application/json',
-        },
+        Uri.parse(_createUrl),
+        headers: {..._headers, 'Content-Type': 'application/json'},
         body: jsonEncode(body),
       );
 
-      final res = jsonDecode(response.body);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final res = jsonDecode(response.body);
 
-      if (res['status'].toString() == '1' ||
-          response.statusCode == 200 ||
-          response.statusCode == 201) {
         final newEvent = AdminaddEventModel.fromJson(res['data']);
         events.insert(0, newEvent);
 
         clearForm();
         Get.back(result: true);
-        Get.snackbar(
-          'Success',
-          res['message'] ?? 'Event created successfully',
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
+
+        AppSnackbar.success(res['message'] ?? 'Event created successfully');
       } else {
-        Get.snackbar(
-          'Error',
-          res['message'] ?? 'Failed to create event',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
-      Get.snackbar('Error', 'Something went wrong: $e',
-          backgroundColor: Colors.red, colorText: Colors.white);
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoading.value = false;
     }
   }
 
-  // ─── Fetch Events ─────────────────────────────────────────
-  Future<void> fetchEvents() async {
-    if (_token.isEmpty) {
-      Get.snackbar('Session Expired', 'Please login again',
-          backgroundColor: Colors.red, colorText: Colors.white);
-      return;
-    }
-    try {
-      isLoading.value = true;
-      final response = await http.get(
-        Uri.parse(
-            'https://rasma.astradevelops.in/e_shoppyy/public/api/events'),
-        headers: _headers,
-      );
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final List list = data['data'] ?? data['events'] ?? [];
-        events.value =
-            list.map((e) => AdminaddEventModel.fromJson(e)).toList();
-        events.sort((a, b) => b.id.compareTo(a.id));
-      }
-    } catch (_) {
-      Get.snackbar('Error', 'Failed to fetch events',
-          backgroundColor: Colors.red, colorText: Colors.white);
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  // ─── Delete Event ─────────────────────────────────────────
-  Future<void> deleteEvent(String id) async {
-    if (_token.isEmpty) return;
-
-    final confirm = await Get.dialog<bool>(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Delete Event',
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        content: const Text('Are you sure you want to delete this event?'),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(result: false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Get.back(result: true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
-            ),
-            child: const Text('Delete',
-                style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm != true) return;
-
-    try {
-      isLoading.value = true;
-      final response = await http.delete(
-        Uri.parse(
-            'https://rasma.astradevelops.in/e_shoppyy/public/api/delete-event/$id'),
-        headers: _headers,
-      );
-      if (response.statusCode == 200 || response.statusCode == 204) {
-        events.removeWhere((e) => e.id == id);
-        Get.snackbar('Deleted', 'Event removed successfully',
-            backgroundColor: Colors.green, colorText: Colors.white);
-      } else {
-        final res = jsonDecode(response.body);
-        Get.snackbar('Error', res['message'] ?? 'Failed to delete event',
-            backgroundColor: Colors.red, colorText: Colors.white);
-      }
-    } catch (_) {
-      Get.snackbar('Error', 'Something went wrong',
-          backgroundColor: Colors.red, colorText: Colors.white);
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  // ─── Clear Form ───────────────────────────────────────────
   void clearForm() {
     eventName.clear();
     eventLocation.clear();
-    startDate.value        = '';
-    endDate.value          = '';
-    startTime.value        = '';
-    endTime.value          = '';
-    bannerImage.value      = null;
-    _selectedStartDate     = null;
-    locationType.value     = null;
+    startDate.value = '';
+    endDate.value = '';
+    startTime.value = '';
+    endTime.value = '';
+    bannerImage.value = null;
+    _selectedStartDate = null;
+    selectedState.value = null;
     selectedDistrict.value = null;
-    selectedArea.value     = null;
+    selectedArea.value = null;
+    showMode.value = 'district';
   }
 
-  // ─── Helpers ──────────────────────────────────────────────
   String _formatDate(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
   String _formatTime(TimeOfDay t) {
-    final hour   = t.hourOfPeriod == 0 ? 12 : t.hourOfPeriod;
+    final hour = t.hourOfPeriod == 0 ? 12 : t.hourOfPeriod;
     final minute = t.minute.toString().padLeft(2, '0');
     final period = t.period == DayPeriod.am ? 'AM' : 'PM';
     return '$hour:$minute $period';

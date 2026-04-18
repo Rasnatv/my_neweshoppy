@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -15,18 +16,11 @@ class CategorySection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      // ---------- LOADING ----------
-      if (controller.isLoading.value) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 40),
-          child: Center(
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: AppColors.kPrimary,
-            ),
-          ),
-        );
-      }
+      // ✅ FIX: Removed the isLoading spinner block entirely.
+      // The home page (Userhome) now controls the single top-level loading gate.
+      // Showing a spinner here caused a second flash: shimmer → spinner → grid.
+      // Since _isLoading in Userhome stays true until data is ready,
+      // by the time CategorySection is visible, categories are already populated.
 
       // ---------- EMPTY ----------
       if (controller.categories.isEmpty) {

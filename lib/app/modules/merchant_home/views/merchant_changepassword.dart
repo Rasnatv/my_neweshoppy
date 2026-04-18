@@ -3,6 +3,8 @@ import 'package:eshoppy/app/common/style/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_text_style.dart';
+import '../../../common/utils/validators.dart';
+import '../../../widgets/networkconnection_checkpage.dart';
 import '../controller/merchant_chnagepasswordcontroller.dart';
 
 class MerchantChangePasswordScreen extends StatelessWidget {
@@ -10,7 +12,8 @@ class MerchantChangePasswordScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return NetworkAwareWrapper(
+        child:Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
         backgroundColor: AppColors.kPrimary,
@@ -20,7 +23,12 @@ class MerchantChangePasswordScreen extends StatelessWidget {
           color: Colors.white, // back arrow color
         ),
         title: Text(
-          "Change Password", style: AppTextStyle.rTextNunitoWhite16w600,
+          "Change Password",  style: TextStyle(
+          color: Colors.white,
+          fontSize: 17,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.1,
+        ),
         ),
       ),
       body: SingleChildScrollView(
@@ -31,7 +39,8 @@ class MerchantChangePasswordScreen extends StatelessWidget {
 
             Padding(
               padding: const EdgeInsets.all(20),
-              child: Column(
+              child: Form(                              // ← add Form here
+              key: controller.formKey,child:Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Header Info Card
@@ -114,7 +123,6 @@ class MerchantChangePasswordScreen extends StatelessWidget {
 
                   Obx(() => Column(
                     children: [
-                      // Current Password
                       _buildPasswordField(
                         controller: controller.currentPasswordCtrl,
                         label: "Current Password",
@@ -122,11 +130,9 @@ class MerchantChangePasswordScreen extends StatelessWidget {
                         icon: Icons.lock_outline_rounded,
                         isObscured: controller.currentPasswordVisible.value,
                         onToggle: () => controller.currentPasswordVisible.toggle(),
+                        validator: (v) => DValidator.validateEmptyText("Current password", v), // ← only empty check
                       ),
-
                       const SizedBox(height: 20),
-
-                      // New Password
                       _buildPasswordField(
                         controller: controller.newPasswordCtrl,
                         label: "New Password",
@@ -134,11 +140,9 @@ class MerchantChangePasswordScreen extends StatelessWidget {
                         icon: Icons.lock_open_rounded,
                         isObscured: controller.newPasswordVisible.value,
                         onToggle: () => controller.newPasswordVisible.toggle(),
+                        validator: DValidator.validatePassword, // ← full password rules
                       ),
-
                       const SizedBox(height: 20),
-
-                      // Confirm Password
                       _buildPasswordField(
                         controller: controller.confirmPasswordCtrl,
                         label: "Confirm New Password",
@@ -146,6 +150,7 @@ class MerchantChangePasswordScreen extends StatelessWidget {
                         icon: Icons.verified_user_rounded,
                         isObscured: controller.confirmPasswordVisible.value,
                         onToggle: () => controller.confirmPasswordVisible.toggle(),
+                        validator: controller.validateConfirmPassword, // ← cross-field check
                       ),
 
                       const SizedBox(height: 32),
@@ -186,6 +191,7 @@ class MerchantChangePasswordScreen extends StatelessWidget {
                             _buildRequirement("At least 8 characters long"),
                             _buildRequirement("Contains uppercase & lowercase letters"),
                             _buildRequirement("Includes at least one number"),
+                            _buildRequirement("Includes at one special character"),
                           ],
                         ),
                       ),
@@ -260,15 +266,15 @@ class MerchantChangePasswordScreen extends StatelessWidget {
                       ),
 
                       const SizedBox(height: 20),
-                    ],
-                  )),
+
+                  ])),
                 ],
               ),
             ),
-          ],
+            )],
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildPasswordField({
@@ -278,6 +284,7 @@ class MerchantChangePasswordScreen extends StatelessWidget {
     required IconData icon,
     required bool isObscured,
     required VoidCallback onToggle,
+    required String? Function(String?) validator, // ← new param
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -291,22 +298,23 @@ class MerchantChangePasswordScreen extends StatelessWidget {
           ),
         ],
       ),
-      child: TextField(
+      child: TextFormField(          // ← TextField → TextFormField
         controller: controller,
         obscureText: isObscured,
+        validator: validator,        // ← wire up validator
+        autovalidateMode: AutovalidateMode.onUserInteraction, // ← live feedback
         style: const TextStyle(fontSize: 15),
         decoration: InputDecoration(
           labelText: label,
           labelStyle: TextStyle(color: Colors.grey.shade600),
           hintText: hint,
           hintStyle: TextStyle(color: Colors.grey.shade400),
-          prefixIcon: Icon(
-            icon,
-            color: Colors.teal,
-          ),
+          prefixIcon: Icon(icon, color: Colors.teal),
           suffixIcon: IconButton(
             icon: Icon(
-              isObscured ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+              isObscured
+                  ? Icons.visibility_off_outlined
+                  : Icons.visibility_outlined,
               color: Colors.grey.shade600,
             ),
             onPressed: onToggle,
@@ -321,10 +329,15 @@ class MerchantChangePasswordScreen extends StatelessWidget {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(
-              color: Colors.teal,
-              width: 2,
-            ),
+            borderSide: const BorderSide(color: Colors.teal, width: 2),
+          ),
+          errorBorder: OutlineInputBorder(        // ← show red border on error
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: Colors.red, width: 1.5),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: Colors.red, width: 2),
           ),
           filled: true,
           fillColor: Colors.white,
@@ -336,7 +349,6 @@ class MerchantChangePasswordScreen extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildRequirement(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),

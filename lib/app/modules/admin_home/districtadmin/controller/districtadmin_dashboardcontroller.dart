@@ -1,7 +1,12 @@
+
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
+
+import '../../../../data/errors/api_error.dart';
+import '../../../../widgets/areaadminsuccesswidget.dart';
+
 
 class DistrictAdminDashboardController extends GetxController {
   final box = GetStorage();
@@ -14,6 +19,13 @@ class DistrictAdminDashboardController extends GetxController {
   final String url =
       "https://rasma.astradevelops.in/e_shoppyy/public/api/district-admin/dashboard-count";
 
+  String get token => box.read('auth_token') ?? '';
+
+  Map<String, String> get headers => {
+    "Accept": "application/json",
+    "Authorization": "Bearer $token",
+  };
+
   @override
   void onInit() {
     fetchDashboardCount();
@@ -24,14 +36,9 @@ class DistrictAdminDashboardController extends GetxController {
     try {
       isLoading(true);
 
-      String? token = box.read('auth_token');
-
       final response = await http.get(
         Uri.parse(url),
-        headers: {
-          "Accept": "application/json",
-          "Authorization": "Bearer $token",
-        },
+        headers: headers,
       );
 
       print("STATUS CODE: ${response.statusCode}");
@@ -40,16 +47,16 @@ class DistrictAdminDashboardController extends GetxController {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
-        totalEvents.value = data['data']['total_events'] ;
+        totalEvents.value = data['data']['total_events'] ?? 0;
         totalAdvertisements.value =
-            data['data']['total_advertisements'] ;
+            data['data']['total_advertisements'] ?? 0;
 
       } else {
-        Get.snackbar("Error", "Failed to load dashboard data");
+        AppSnackbarss.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
       print("ERROR: $e");
-      Get.snackbar("Error", "Something went wrong");
+      AppSnackbarss.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoading(false);
     }

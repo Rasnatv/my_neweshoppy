@@ -46,12 +46,17 @@ class AreaAdminAllEventsPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
+        iconTheme: IconThemeData(color: Colors.white),
         backgroundColor: AppColors.welcomecardclr,
         elevation: 0,
-        centerTitle: true,
         title: const Text(
           'All Events',
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 17),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.1,
+            ),
         ),
         actions: [
           // ✅ Pull-to-refresh button in AppBar

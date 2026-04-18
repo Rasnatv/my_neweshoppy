@@ -9,73 +9,54 @@ import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 
+import '../../../data/errors/api_error.dart';
 import '../../merchantlogin/widget/successwidget.dart';
 
 class MerchantUpdateController extends GetxController {
   final box = GetStorage();
 
-  // ---------- FORM CONTROLLERS ----------
-  final ownerCtrl = TextEditingController();
-  final shopCtrl = TextEditingController();
-  final emailCtrl = TextEditingController();
-  final phone1Ctrl = TextEditingController();
-  final phone2Ctrl = TextEditingController();
-  final whatsappCtrl = TextEditingController();
-  final facebookCtrl = TextEditingController();
+  final ownerCtrl     = TextEditingController();
+  final shopCtrl      = TextEditingController();
+  final emailCtrl     = TextEditingController();
+  final phone1Ctrl    = TextEditingController();
+  final phone2Ctrl    = TextEditingController();
+  final whatsappCtrl  = TextEditingController();
+  final facebookCtrl  = TextEditingController();
   final instagramCtrl = TextEditingController();
-  final websiteCtrl = TextEditingController();
+  final websiteCtrl   = TextEditingController();
 
-  // ---------- LOCATION ----------
-  var latitude = 0.0.obs;
-  var longitude = 0.0.obs;
-  var pickedLocation = "Tap to pick location or use current location".obs;
+  var latitude                 = 0.0.obs;
+  var longitude                = 0.0.obs;
+  var pickedLocation           = "Tap to pick location or use current location".obs;
   var isGettingCurrentLocation = false.obs;
 
-  // ---------- DROPDOWN VARIABLES ----------
-  var selectedState = "".obs;
+  var selectedState    = "".obs;
   var selectedDistrict = "".obs;
   var selectedLocation = "".obs;
-  var states = <String>[].obs;
-  var districts = <String>[].obs;
-  var locations = <String>[].obs;
-  var isLoadingStates = false.obs;
+  var states           = <String>[].obs;
+  var districts        = <String>[].obs;
+  var locations        = <String>[].obs;
+  var isLoadingStates    = false.obs;
   var isLoadingDistricts = false.obs;
   var isLoadingLocations = false.obs;
 
-  // ---------- IMAGE ----------
   final picker = ImagePicker();
-  File? pickedImage;
+  File?  pickedImage;
   String networkImage = "";
 
-  // ---------- STATE ----------
-  final isLoading = false.obs;
-  final isUpdating = false.obs;
-  late String authToken;
+  final isLoading   = false.obs;
+  final isUpdating  = false.obs;
 
-  // ---------- API URLs ----------
-  static const String statesApi =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/merchant/states";
-  static const String districtsApi =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/merchant/districts";
-  static const String locationsApi =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/merchant/locations";
-  static const String updateApi =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/merchant/updatereg";
+  String get authToken => box.read<String?>('auth_token') ?? "";
 
-  // ---------- INIT ----------
+  static const String statesApi    = "https://rasma.astradevelops.in/e_shoppyy/public/api/merchant/states";
+  static const String districtsApi = "https://rasma.astradevelops.in/e_shoppyy/public/api/merchant/districts";
+  static const String locationsApi = "https://rasma.astradevelops.in/e_shoppyy/public/api/merchant/locations";
+  static const String updateApi    = "https://rasma.astradevelops.in/e_shoppyy/public/api/merchant/updatereg";
+
   @override
   void onInit() {
     super.onInit();
-    authToken = box.read("auth_token") ?? "";
-    if (authToken.isEmpty) {
-      Get.snackbar(
-        "Session Expired",
-        "Please login again",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-      return;
-    }
     fetchStates();
     fetchMerchantData();
   }
@@ -99,15 +80,21 @@ class MerchantUpdateController extends GetxController {
           "Accept": "application/json",
         },
       );
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['status'] == 1) {
-          List<String> statesList = List<String>.from(data['data']);
-          states.assignAll(statesList.toSet().toList());
+          states.assignAll(
+            List<String>.from(data['data']).toSet().toList(),
+          );
         }
+      } else {
+        AppSnackbar.error("Failed to load states. Please try again.");
       }
+    } on SocketException {
+      AppSnackbar.error("No internet connection");
     } catch (e) {
-      print("Error fetching states: $e");
+      AppSnackbar.error("Failed to load states");
     } finally {
       isLoadingStates.value = false;
     }
@@ -130,15 +117,21 @@ class MerchantUpdateController extends GetxController {
         },
         body: jsonEncode({"state": state}),
       );
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['status'] == 1) {
-          List<String> districtsList = List<String>.from(data['data']);
-          districts.assignAll(districtsList.toSet().toList());
+          districts.assignAll(
+            List<String>.from(data['data']).toSet().toList(),
+          );
         }
+      } else {
+        AppSnackbar.error("Failed to load districts. Please try again.");
       }
+    } on SocketException {
+      AppSnackbar.error("No internet connection");
     } catch (e) {
-      print("Error fetching districts: $e");
+      AppSnackbar.error("Failed to load districts");
     } finally {
       isLoadingDistricts.value = false;
     }
@@ -159,15 +152,21 @@ class MerchantUpdateController extends GetxController {
         },
         body: jsonEncode({"state": state, "district": district}),
       );
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['status'] == 1) {
-          List<String> locationsList = List<String>.from(data['data']);
-          locations.assignAll(locationsList.toSet().toList());
+          locations.assignAll(
+            List<String>.from(data['data']).toSet().toList(),
+          );
         }
+      } else {
+        AppSnackbar.error("Failed to load locations. Please try again.");
       }
+    } on SocketException {
+      AppSnackbar.error("No internet connection");
     } catch (e) {
-      print("Error fetching locations: $e");
+      AppSnackbar.error("Failed to load locations");
     } finally {
       isLoadingLocations.value = false;
     }
@@ -180,7 +179,7 @@ class MerchantUpdateController extends GetxController {
 
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        AppSnackbar.error("Location services are disabled. Please enable location services.");
+        AppSnackbar.error("Location services are disabled.");
         return;
       }
 
@@ -194,7 +193,7 @@ class MerchantUpdateController extends GetxController {
       }
 
       if (permission == LocationPermission.deniedForever) {
-        AppSnackbar.error("Location permissions are permanently denied. Please enable in settings.");
+        AppSnackbar.error("Location permanently denied. Enable in settings.");
         return;
       }
 
@@ -202,7 +201,7 @@ class MerchantUpdateController extends GetxController {
         desiredAccuracy: LocationAccuracy.high,
       );
 
-      latitude.value = position.latitude;
+      latitude.value  = position.latitude;
       longitude.value = position.longitude;
 
       try {
@@ -211,7 +210,7 @@ class MerchantUpdateController extends GetxController {
           position.longitude,
         );
         if (placemarks.isNotEmpty) {
-          Placemark place = placemarks.first;
+          final place = placemarks.first;
           pickedLocation.value =
           "${place.street ?? ''}, ${place.locality ?? ''}, "
               "${place.administrativeArea ?? ''}, ${place.country ?? ''}";
@@ -220,13 +219,15 @@ class MerchantUpdateController extends GetxController {
           "Lat: ${position.latitude.toStringAsFixed(6)}, "
               "Lng: ${position.longitude.toStringAsFixed(6)}";
         }
-      } catch (e) {
+      } catch (_) {
         pickedLocation.value =
         "Lat: ${position.latitude.toStringAsFixed(6)}, "
             "Lng: ${position.longitude.toStringAsFixed(6)}";
       }
 
       AppSnackbar.success("Current location fetched successfully");
+    } on SocketException {
+      AppSnackbar.error("No internet connection");
     } catch (e) {
       AppSnackbar.error("Failed to get current location: ${e.toString()}");
     } finally {
@@ -236,13 +237,13 @@ class MerchantUpdateController extends GetxController {
 
   // ---------- UPDATE LOCATION FROM MAP ----------
   void updateLocation(double lat, double lng, String address) {
-    latitude.value = lat;
-    longitude.value = lng;
+    latitude.value       = lat;
+    longitude.value      = lng;
     pickedLocation.value = address;
     AppSnackbar.success("Location updated successfully");
   }
 
-  // ---------- GET MERCHANT DATA ----------
+  // ---------- FETCH MERCHANT DATA ----------
   Future<void> fetchMerchantData() async {
     isLoading.value = true;
     try {
@@ -255,24 +256,36 @@ class MerchantUpdateController extends GetxController {
         },
       );
 
+      // ✅ Only 401 triggers logout via ApiErrorHandler
+      if (response.statusCode == 401) {
+        ApiErrorHandler.handleResponse(response);
+        return;
+      }
+
+      // ✅ Any other non-200 shows plain error — no logout risk
+      if (response.statusCode != 200) {
+        AppSnackbar.error("Failed to load profile. Please try again.");
+        return;
+      }
+
       final body = jsonDecode(response.body);
       if (body['status'] != true || body['data'] == null) return;
 
       final m = body['data'];
 
-      ownerCtrl.text = m['owner_name']?.toString() ?? "";
-      shopCtrl.text = m['shop_name']?.toString() ?? "";
-      emailCtrl.text = m['email']?.toString() ?? "";
-      phone1Ctrl.text = m['phone_no_1']?.toString() ?? "";
-      phone2Ctrl.text = m['phone_no_2']?.toString() ?? "";
-      whatsappCtrl.text = m['whatsapp_no']?.toString() ?? "";
-      facebookCtrl.text = m['facebook_link']?.toString() ?? "";
+      ownerCtrl.text     = m['owner_name']?.toString()     ?? "";
+      shopCtrl.text      = m['shop_name']?.toString()      ?? "";
+      emailCtrl.text     = m['email']?.toString()          ?? "";
+      phone1Ctrl.text    = m['phone_no_1']?.toString()     ?? "";
+      phone2Ctrl.text    = m['phone_no_2']?.toString()     ?? "";
+      whatsappCtrl.text  = m['whatsapp_no']?.toString()    ?? "";
+      facebookCtrl.text  = m['facebook_link']?.toString()  ?? "";
       instagramCtrl.text = m['instagram_link']?.toString() ?? "";
-      websiteCtrl.text = m['website_link']?.toString() ?? "";
+      websiteCtrl.text   = m['website_link']?.toString()   ?? "";
 
-      String state = m['state']?.toString() ?? "";
-      String district = m['district']?.toString() ?? "";
-      String location = m['main_location']?.toString() ?? "";
+      final state    = m['state']?.toString()         ?? "";
+      final district = m['district']?.toString()      ?? "";
+      final location = m['main_location']?.toString() ?? "";
 
       if (state.isNotEmpty) {
         selectedState.value = state;
@@ -282,21 +295,18 @@ class MerchantUpdateController extends GetxController {
         selectedDistrict.value = district;
         await fetchLocations(state, district);
       }
-      if (location.isNotEmpty) {
-        selectedLocation.value = location;
-      }
+      if (location.isNotEmpty) selectedLocation.value = location;
 
-      double lat = double.tryParse(m['latitude']?.toString() ?? "0") ?? 0.0;
-      double lng = double.tryParse(m['longitude']?.toString() ?? "0") ?? 0.0;
-      latitude.value = lat;
+      final lat = double.tryParse(m['latitude']?.toString()  ?? "0") ?? 0.0;
+      final lng = double.tryParse(m['longitude']?.toString() ?? "0") ?? 0.0;
+      latitude.value  = lat;
       longitude.value = lng;
 
       if (lat != 0.0 && lng != 0.0) {
         try {
-          List<Placemark> placemarks =
-          await placemarkFromCoordinates(lat, lng);
+          final placemarks = await placemarkFromCoordinates(lat, lng);
           if (placemarks.isNotEmpty) {
-            Placemark place = placemarks.first;
+            final place = placemarks.first;
             pickedLocation.value =
             "${place.street ?? ''}, ${place.locality ?? ''}, "
                 "${place.administrativeArea ?? ''}, ${place.country ?? ''}";
@@ -304,13 +314,17 @@ class MerchantUpdateController extends GetxController {
             pickedLocation.value =
             "Lat: ${lat.toStringAsFixed(6)}, Lng: ${lng.toStringAsFixed(6)}";
           }
-        } catch (e) {
+        } catch (_) {
           pickedLocation.value =
           "Lat: ${lat.toStringAsFixed(6)}, Lng: ${lng.toStringAsFixed(6)}";
         }
       }
 
       networkImage = m['store_image']?.toString() ?? "";
+    } on SocketException {
+      AppSnackbar.error("No internet connection");
+    } catch (e) {
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoading.value = false;
     }
@@ -327,14 +341,12 @@ class MerchantUpdateController extends GetxController {
 
   // ---------- CONVERT IMAGE TO BASE64 ----------
   Future<String> convertImageToBase64(File imageFile) async {
-    List<int> imageBytes = await imageFile.readAsBytes();
-    return "data:image/jpeg;base64,${base64Encode(imageBytes)}";
+    final bytes = await imageFile.readAsBytes();
+    return "data:image/jpeg;base64,${base64Encode(bytes)}";
   }
 
   // ---------- UPDATE MERCHANT ----------
   Future<void> updateMerchant() async {
-
-    // ── Required field validation ──────────────────────────────────────────
     if (ownerCtrl.text.trim().isEmpty) {
       Get.snackbar("Validation Error", "Please enter owner name",
           backgroundColor: Colors.orange, colorText: Colors.white);
@@ -361,118 +373,90 @@ class MerchantUpdateController extends GetxController {
       return;
     }
     if (latitude.value == 0.0 || longitude.value == 0.0) {
-      Get.snackbar(
-        "Validation Error",
-        "Please set shop location (use map or current location)",
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-      );
+      Get.snackbar("Validation Error",
+          "Please set shop location (use map or current location)",
+          backgroundColor: Colors.orange, colorText: Colors.white);
       return;
     }
-
-    // ── URL validation ─────────────────────────────────────────────────────
-    // Empty is fine (optional). Non-empty must start with https:// or http://
     if (!isValidUrl(facebookCtrl.text)) {
-      Get.snackbar(
-        "Invalid Facebook URL",
-        "Enter a valid URL (e.g. https://facebook.com/yourpage) or leave empty",
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
-        duration: const Duration(seconds: 3),
-      );
+      Get.snackbar("Invalid Facebook URL",
+          "Enter a valid URL (e.g. https://facebook.com/yourpage) or leave empty",
+          backgroundColor: Colors.orange, colorText: Colors.white,
+          snackPosition: SnackPosition.BOTTOM,
+          duration: const Duration(seconds: 3));
       return;
     }
     if (!isValidUrl(instagramCtrl.text)) {
-      Get.snackbar(
-        "Invalid Instagram URL",
-        "Enter a valid URL (e.g. https://instagram.com/yourhandle) or leave empty",
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
-        duration: const Duration(seconds: 3),
-      );
+      Get.snackbar("Invalid Instagram URL",
+          "Enter a valid URL (e.g. https://instagram.com/yourhandle) or leave empty",
+          backgroundColor: Colors.orange, colorText: Colors.white,
+          snackPosition: SnackPosition.BOTTOM,
+          duration: const Duration(seconds: 3));
       return;
     }
     if (!isValidUrl(websiteCtrl.text)) {
-      Get.snackbar(
-        "Invalid Website URL",
-        "Enter a valid URL (e.g. https://yourwebsite.com) or leave empty",
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
-        duration: const Duration(seconds: 3),
-      );
+      Get.snackbar("Invalid Website URL",
+          "Enter a valid URL (e.g. https://yourwebsite.com) or leave empty",
+          backgroundColor: Colors.orange, colorText: Colors.white,
+          snackPosition: SnackPosition.BOTTOM,
+          duration: const Duration(seconds: 3));
       return;
     }
 
     try {
       isUpdating.value = true;
+
       final Map<String, dynamic> requestBody = {
-        "owner_name"     : ownerCtrl.text.trim(),
-        "shop_name"      : shopCtrl.text.trim(),
-        "email"          : emailCtrl.text.trim(),
-        "phone_no_1"     : phone1Ctrl.text.trim(),
-        "phone_no_2"     : phone2Ctrl.text.trim(),      // "" when cleared ✅
-        "state"          : selectedState.value,
-        "district"       : selectedDistrict.value,
-        "main_location"  : selectedLocation.value,
-        "latitude"       : latitude.value,
-        "longitude"      : longitude.value,
-        "whatsapp_no"    : whatsappCtrl.text.trim(),    // "" when cleared ✅
-        "facebook_link"  : facebookCtrl.text.trim(),    // "" when cleared ✅
-        "instagram_link" : instagramCtrl.text.trim(),   // "" when cleared ✅
-        "website_link"   : websiteCtrl.text.trim(),     // "" when cleared ✅
-        "user_type"      : "merchant",
+        "owner_name"    : ownerCtrl.text.trim(),
+        "shop_name"     : shopCtrl.text.trim(),
+        "email"         : emailCtrl.text.trim(),
+        "phone_no_1"    : phone1Ctrl.text.trim(),
+        "phone_no_2"    : phone2Ctrl.text.trim(),
+        "state"         : selectedState.value,
+        "district"      : selectedDistrict.value,
+        "main_location" : selectedLocation.value,
+        "latitude"      : latitude.value,
+        "longitude"     : longitude.value,
+        "whatsapp_no"   : whatsappCtrl.text.trim(),
+        "facebook_link" : facebookCtrl.text.trim(),
+        "instagram_link": instagramCtrl.text.trim(),
+        "website_link"  : websiteCtrl.text.trim(),
+        "user_type"     : "merchant",
       };
 
-      // Add image only when the user picked a new one
       if (pickedImage != null) {
         requestBody["store_image"] = await convertImageToBase64(pickedImage!);
       }
 
-      print("➡️ Request: ${jsonEncode(requestBody)}");
-
       final response = await http.post(
         Uri.parse(updateApi),
         headers: {
-          "Authorization" : "Bearer $authToken",
-          "Content-Type"  : "application/json",
-          "Accept"        : "application/json",
+          "Authorization": "Bearer $authToken",
+          "Content-Type" : "application/json",
+          "Accept"       : "application/json",
         },
         body: jsonEncode(requestBody),
       );
 
-      print("⬅️ Status: ${response.statusCode}");
-      print("⬅️ Response: ${response.body}");
-
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode == 200 && data['status'] == true) {
-
-        await fetchMerchantData();
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['status'] == true) {
+          await fetchMerchantData();
+          AppSnackbar.success(data['message'] ?? "Profile updated successfully");
+        } else {
+          AppSnackbar.error(data['message'] ?? "Failed to update profile");
+        }
+      } else if (response.statusCode == 401) {
+        // ✅ Only 401 triggers logout via ApiErrorHandler
+        ApiErrorHandler.handleResponse(response);
       } else {
-        Get.snackbar(
-          "Error",
-          data['message'] ?? "Failed to update profile",
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(16),
-          borderRadius: 12,
-        );
+        // ✅ Any other non-200 shows plain error — no logout risk
+        AppSnackbar.error("Failed to update profile. Please try again.");
       }
+    } on SocketException {
+      AppSnackbar.error("No internet connection");
     } catch (e) {
-      print("Error updating merchant: $e");
-      Get.snackbar(
-        "Error",
-        "Something went wrong: ${e.toString()}",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(16),
-        borderRadius: 12,
-      );
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isUpdating.value = false;
     }

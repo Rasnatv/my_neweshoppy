@@ -1,12 +1,16 @@
 
 import 'dart:ui';
+import 'package:eshoppy/app/modules/userhome/view/searchpage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+
+import '../../../widgets/networkconnection_checkpage.dart';
 import '../../product/controller/cartcontroller.dart';
 import '../../product/view/cartscreen.dart';
 import '../../restarunent/view/restarnent_list.dart';
 import '../controller/district _controller.dart';
+import '../controller/homedatacontroller.dart';
 import '../controller/usercategory_controller.dart';
 import '../widget/categorygrid.dart';
 import '../widget/promotionbanner.dart';
@@ -20,11 +24,14 @@ const kPurplePrimary = Color(0xFF00796B);
 const kPurpleMid     = Color(0xFF00796B);
 const kPurpleLight   = Color(0xFF00796B);
 
-
+// ─────────────────────────────────────────────
+//  SHIMMER BOX
+// ─────────────────────────────────────────────
 class ShimmerBox extends StatefulWidget {
   final double width;
   final double height;
   final double borderRadius;
+
   const ShimmerBox({
     super.key,
     required this.width,
@@ -63,32 +70,30 @@ class _ShimmerBoxState extends State<ShimmerBox>
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _animation,
-      builder: (_, __) {
-        return Container(
-          width: widget.width,
-          height: widget.height,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(widget.borderRadius),
-            gradient: LinearGradient(
-              begin: Alignment(_animation.value - 1, 0),
-              end: Alignment(_animation.value + 1, 0),
-              colors: const [
-                Color(0xFFE8E8E8),
-                Color(0xFFF5F5F5),
-                Color(0xFFFFFFFF),
-                Color(0xFFF5F5F5),
-                Color(0xFFE8E8E8),
-              ],
-            ),
+      builder: (_, __) => Container(
+        width: widget.width,
+        height: widget.height,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(widget.borderRadius),
+          gradient: LinearGradient(
+            begin: Alignment(_animation.value - 1, 0),
+            end: Alignment(_animation.value + 1, 0),
+            colors: const [
+              Color(0xFFE8E8E8),
+              Color(0xFFF5F5F5),
+              Color(0xFFFFFFFF),
+              Color(0xFFF5F5F5),
+              Color(0xFFE8E8E8),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }
 
 // ─────────────────────────────────────────────
-//  SHIMMER SKELETON — Full Page
+//  SHIMMER SKELETON
 // ─────────────────────────────────────────────
 class HomeShimmerSkeleton extends StatelessWidget {
   const HomeShimmerSkeleton({super.key});
@@ -98,8 +103,6 @@ class HomeShimmerSkeleton extends StatelessWidget {
     return CustomScrollView(
       physics: const NeverScrollableScrollPhysics(),
       slivers: [
-
-        // ── 1. HEADER ──────────────────────────────────────────────────────
         SliverToBoxAdapter(
           child: Container(
             decoration: const BoxDecoration(
@@ -142,10 +145,7 @@ class HomeShimmerSkeleton extends StatelessWidget {
             ),
           ),
         ),
-
         const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-        // ── 2. CAROUSEL ────────────────────────────────────────────────────
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -153,10 +153,7 @@ class HomeShimmerSkeleton extends StatelessWidget {
                 width: double.infinity, height: 170, borderRadius: 20),
           ),
         ),
-
         const SliverToBoxAdapter(child: SizedBox(height: 20)),
-
-        // ── 3. CATEGORIES SECTION HEADER ───────────────────────────────────
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -173,10 +170,7 @@ class HomeShimmerSkeleton extends StatelessWidget {
             ),
           ),
         ),
-
         const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-        // ── 4. CATEGORIES GRID ─────────────────────────────────────────────
         SliverToBoxAdapter(
           child: SizedBox(
             height: 110,
@@ -197,10 +191,7 @@ class HomeShimmerSkeleton extends StatelessWidget {
             ),
           ),
         ),
-
         const SliverToBoxAdapter(child: SizedBox(height: 20)),
-
-        // ── 5. RESTAURANT BANNER ───────────────────────────────────────────
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -208,10 +199,7 @@ class HomeShimmerSkeleton extends StatelessWidget {
                 width: double.infinity, height: 165, borderRadius: 24),
           ),
         ),
-
         const SliverToBoxAdapter(child: SizedBox(height: 28)),
-
-        // ── 6. EVENTS SECTION HEADER ───────────────────────────────────────
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -228,10 +216,7 @@ class HomeShimmerSkeleton extends StatelessWidget {
             ),
           ),
         ),
-
         const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-        // ── 7. EVENTS HORIZONTAL LIST ──────────────────────────────────────
         SliverToBoxAdapter(
           child: SizedBox(
             height: 140,
@@ -246,45 +231,6 @@ class HomeShimmerSkeleton extends StatelessWidget {
             ),
           ),
         ),
-
-        const SliverToBoxAdapter(child: SizedBox(height: 28)),
-
-        // ── 8. HOT OFFERS SECTION HEADER ───────────────────────────────────
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(children: [
-                  ShimmerBox(width: 32, height: 32, borderRadius: 10),
-                  const SizedBox(width: 10),
-                  ShimmerBox(width: 100, height: 18, borderRadius: 6),
-                ]),
-                ShimmerBox(width: 60, height: 14, borderRadius: 6),
-              ],
-            ),
-          ),
-        ),
-
-        const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-        // ── 9. HOT OFFERS HORIZONTAL LIST ─────────────────────────────────
-        SliverToBoxAdapter(
-          child: SizedBox(
-            height: 210,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              itemCount: 3,
-              itemBuilder: (_, i) => Padding(
-                padding: const EdgeInsets.only(right: 16),
-                child: ShimmerBox(width: 300, height: 210, borderRadius: 22),
-              ),
-            ),
-          ),
-        ),
-
         const SliverToBoxAdapter(child: SizedBox(height: 80)),
       ],
     );
@@ -314,12 +260,24 @@ class Userhome extends StatefulWidget {
 
 class _UserhomeState extends State<Userhome> with TickerProviderStateMixin {
   bool _isLoading = true;
+
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
+
+  late UserLocationController userLocationController;
+  late UserCategoryController categoryController;
+  late CartController cartController;
+  late HomeDataController homeDataController;
 
   @override
   void initState() {
     super.initState();
+
+    userLocationController = Get.put(UserLocationController());
+    categoryController = Get.put(UserCategoryController(), permanent: true);
+    cartController = Get.put(CartController());
+    homeDataController = Get.put(HomeDataController(), permanent: true);
+
     _fadeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -327,12 +285,57 @@ class _UserhomeState extends State<Userhome> with TickerProviderStateMixin {
     _fadeAnimation =
         CurvedAnimation(parent: _fadeController, curve: Curves.easeIn);
 
-    Future.delayed(const Duration(milliseconds: 2200), () {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _initHomeData();
       if (mounted) {
         setState(() => _isLoading = false);
         _fadeController.forward();
       }
     });
+  }
+
+  Future<void> _initHomeData() async {
+    final box = homeDataController.box;
+    final token = box.read('auth_token');
+    if (token == null) return;
+
+    final state        = box.read('state_$token') ?? '';
+    final district     = box.read('district_$token') ?? '';
+    final mainLocation = box.read('main_location_$token') ?? '';
+
+    // state + district is enough to show events, banners AND categories
+    final hasPartial = state.isNotEmpty && district.isNotEmpty;
+
+    if (hasPartial) {
+      // Run both in parallel — mainLocation may be '' and that's fine
+      await Future.wait([
+        homeDataController.fetchHomeData(
+          state: state,
+          district: district,
+          mainLocation: mainLocation,
+        ),
+        categoryController.fetchCategories(
+          state: state,
+          district: district,
+          mainLocation: mainLocation,
+        ),
+      ]);
+    } else {
+      // Nothing selected — clear everything
+      homeDataController.clearHomeData();
+      categoryController.categories.clear();
+    }
+  }
+
+  /// Called after returning from SelectLocationPage
+  Future<void> _refreshAfterLocationChange() async {
+    setState(() => _isLoading = true);
+    _fadeController.reset();
+    await _initHomeData();
+    if (mounted) {
+      setState(() => _isLoading = false);
+      _fadeController.forward();
+    }
   }
 
   @override
@@ -343,36 +346,28 @@ class _UserhomeState extends State<Userhome> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    final userLocationController = Get.put(UserLocationController());
-    final categoryController =
-    Get.put(UserCategoryController(), permanent: true);
-    final cartController = Get.put(CartController());
-
-    return Scaffold(
-      backgroundColor: const Color(0xFFF4F6F9),
-      body: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: const SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-        ),
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 500),
-          child: _isLoading
-              ? const HomeShimmerSkeleton()
-              : FadeTransition(
-            opacity: _fadeAnimation,
-            child: _buildContent(
-                context, userLocationController, cartController),
+    return NetworkAwareWrapper(
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF4F6F9),
+        body: AnnotatedRegion<SystemUiOverlayStyle>(
+          value: const SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+          ),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 500),
+            child: _isLoading
+                ? const HomeShimmerSkeleton()
+                : FadeTransition(
+              opacity: _fadeAnimation,
+              child: _buildContent(context),
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildContent(
-      BuildContext context,
-      UserLocationController userLocationController,
-      CartController cartController,
-      ) {
+  Widget _buildContent(BuildContext context) {
     return CustomScrollView(
       slivers: [
         SliverAppBar(
@@ -385,6 +380,7 @@ class _UserhomeState extends State<Userhome> with TickerProviderStateMixin {
             background: _PurpleHeader(
               locationController: userLocationController,
               cartController: cartController,
+              onLocationChanged: _refreshAfterLocationChange,
             ),
           ),
           bottom: PreferredSize(
@@ -394,9 +390,22 @@ class _UserhomeState extends State<Userhome> with TickerProviderStateMixin {
         ),
 
         const SliverToBoxAdapter(child: SizedBox(height: 28)),
-        SliverToBoxAdapter(child: HomeCarouselSlider()),
+
+        // ── Banners — location required ──────────────────────────────
+        SliverToBoxAdapter(
+          child: Obx(() {
+            if (homeDataController.advertisements.isEmpty) {
+              return _buildLocationPrompt(
+                icon: Icons.image_outlined,
+                message: "Select a location to see banners",
+              );
+            }
+            return HomeCarouselSlider();
+          }),
+        ),
         const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
+        // ── Categories — location required ───────────────────────────
         SliverToBoxAdapter(
           child: _SectionHeader(
             icon: Icons.category_sharp,
@@ -405,13 +414,27 @@ class _UserhomeState extends State<Userhome> with TickerProviderStateMixin {
             title: "Categories",
           ),
         ),
-        SliverToBoxAdapter(child: SizedBox(height: 5)),
-        SliverToBoxAdapter(child: CategorySection()),
         const SliverToBoxAdapter(child: SizedBox(height: 5)),
 
-        SliverToBoxAdapter(child: const _RestaurantBanner()),
+        // ✅ Shows prompt until location is selected, then shows grid
+        SliverToBoxAdapter(
+          child: Obx(() {
+            if (categoryController.categories.isEmpty) {
+              return _buildLocationPrompt(
+                icon: Icons.category_outlined,
+                message: "Select a location to see categories",
+              );
+            }
+            return CategorySection();
+          }),
+        ),
+        const SliverToBoxAdapter(child: SizedBox(height: 5)),
+
+        // ── Restaurant banner ────────────────────────────────────────
+        const SliverToBoxAdapter(child: _RestaurantBanner()),
         const SliverToBoxAdapter(child: SizedBox(height: 28)),
 
+        // ── Events — location required ───────────────────────────────
         SliverToBoxAdapter(
           child: _SectionHeader(
             icon: Icons.event_rounded,
@@ -419,15 +442,25 @@ class _UserhomeState extends State<Userhome> with TickerProviderStateMixin {
             iconColor: Colors.teal,
             title: "Upcoming Events",
             actionLabel: "See All",
-            onTap: () {
-              Get.to(() => AllEventsPage()); // 👈 NAVIGATION
-            },
+            onTap: () =>Get.toNamed('/allevents'),
           ),
         ),
         const SliverToBoxAdapter(child: SizedBox(height: 12)),
-        SliverToBoxAdapter(child: UpcomingEventsSection()),
+
+        SliverToBoxAdapter(
+          child: Obx(() {
+            if (homeDataController.events.isEmpty) {
+              return _buildLocationPrompt(
+                icon: Icons.event_outlined,
+                message: "Select a location to see events",
+              );
+            }
+            return UpcomingEventsSection();
+          }),
+        ),
         const SliverToBoxAdapter(child: SizedBox(height: 28)),
 
+        // ── Hot Offers ───────────────────────────────────────────────
         SliverToBoxAdapter(
           child: _SectionHeader(
             icon: Icons.local_fire_department_rounded,
@@ -435,17 +468,65 @@ class _UserhomeState extends State<Userhome> with TickerProviderStateMixin {
             iconColor: Colors.red.shade600,
             title: "Hot Offers",
             actionLabel: "Explore",
-            onTap:() {
-              Get.to(() => AllOffersPage());
-            }
+            onTap: () => Get.to(() => AllOffersPage()),
           ),
         ),
         const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
         UserOfferSection(),
 
         const SliverToBoxAdapter(child: SizedBox(height: 80)),
       ],
+    );
+  }
+
+  Widget _buildLocationPrompt({
+    required IconData icon,
+    required String message,
+  }) {
+    return GestureDetector(
+      onTap: () async {
+        await Get.to(() => SelectLocationPage());
+        await _refreshAfterLocationChange();
+      },
+      child: Container(
+        height: 100,
+        margin: const EdgeInsets.symmetric(horizontal: 20),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.location_on_outlined,
+                size: 22, color: Colors.grey.shade400),
+            const SizedBox(width: 10),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  message,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  "Tap to select your location",
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey.shade400,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -456,10 +537,12 @@ class _UserhomeState extends State<Userhome> with TickerProviderStateMixin {
 class _PurpleHeader extends StatelessWidget {
   final UserLocationController locationController;
   final CartController cartController;
+  final VoidCallback onLocationChanged;
 
   const _PurpleHeader({
     required this.locationController,
     required this.cartController,
+    required this.onLocationChanged,
   });
 
   @override
@@ -490,11 +573,27 @@ class _PurpleHeader extends StatelessWidget {
                   children: [
                     Expanded(
                       child: InkWell(
-                        onTap: () => Get.to(() => SelectLocationPage()),
+                        onTap: () async {
+                          await Get.to(() => SelectLocationPage());
+                          // ✅ Use the same refresh logic as the home page
+                          onLocationChanged();
+                        },
                         borderRadius: BorderRadius.circular(8),
-                        child: Obx(() {
-                          final loc =
-                              locationController.selectedMainLocation.value;
+                        child: // In _PurpleHeader build method, inside the Obx:
+                        Obx(() {
+                          final mainLoc = locationController.selectedMainLocation.value;
+                          final district = locationController.selectedDistrict.value;
+                          final state = locationController.selectedState.value;
+
+                          // Show the most specific location available
+                          final displayText = mainLoc.isNotEmpty
+                              ? mainLoc
+                              : district.isNotEmpty
+                              ? district
+                              : state.isNotEmpty
+                              ? state
+                              : "Select Location";
+
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -514,10 +613,9 @@ class _PurpleHeader extends StatelessWidget {
                                       color: Colors.pinkAccent, size: 14),
                                   const SizedBox(width: 3),
                                   ConstrainedBox(
-                                    constraints:
-                                    const BoxConstraints(maxWidth: 160),
+                                    constraints: const BoxConstraints(maxWidth: 160),
                                     child: Text(
-                                      loc.isEmpty ? "Select Location" : loc,
+                                      displayText,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
@@ -527,10 +625,8 @@ class _PurpleHeader extends StatelessWidget {
                                       ),
                                     ),
                                   ),
-                                  const Icon(
-                                      Icons.keyboard_arrow_down_rounded,
-                                      color: Colors.white70,
-                                      size: 16),
+                                  const Icon(Icons.keyboard_arrow_down_rounded,
+                                      color: Colors.white70, size: 16),
                                 ],
                               ),
                             ],
@@ -547,46 +643,52 @@ class _PurpleHeader extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 14),
-                Container(
-                  height: 46,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      const SizedBox(width: 14),
-                      Icon(Icons.search_rounded,
-                          color: Colors.grey.shade400, size: 20),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextField(
-                          decoration: InputDecoration(
-                            hintText: "Search",
-                            hintStyle: TextStyle(
-                              color: Colors.grey.shade400,
-                              fontSize: 14,
+                GestureDetector(
+                  onTap: () => Get.to(() => SearchPage()),
+                  child: Container(
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        const SizedBox(width: 14),
+                        Icon(Icons.search_rounded,
+                            color: Colors.grey.shade400, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: AbsorbPointer(
+                            child: TextField(
+                              readOnly: true,
+                              decoration: InputDecoration(
+                                hintText: "Search",
+                                hintStyle: TextStyle(
+                                  color: Colors.grey.shade400,
+                                  fontSize: 14,
+                                ),
+                                border: InputBorder.none,
+                                isDense: true,
+                                contentPadding: EdgeInsets.zero,
+                              ),
                             ),
-                            border: InputBorder.none,
-                            isDense: true,
-                            contentPadding: EdgeInsets.zero,
                           ),
                         ),
-                      ),
-                      _SearchActionIcon(
-                        icon: Icons.tune_rounded,
-                        onTap: () {},
-                        isPurple: true,
-                      ),
-                      const SizedBox(width: 6),
-                    ],
+                        _SearchActionIcon(
+                          icon: Icons.tune_rounded,
+                          onTap: () {},
+                          isPurple: true,
+                        ),
+                        const SizedBox(width: 6),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -685,13 +787,14 @@ class _HeaderIconButton extends StatelessWidget {
     );
   }
 }
+
 class _SectionHeader extends StatelessWidget {
   final IconData icon;
   final Color iconBg;
   final Color iconColor;
   final String title;
   final String? actionLabel;
-  final VoidCallback? onTap; // 👈 ADD THIS
+  final VoidCallback? onTap;
 
   const _SectionHeader({
     required this.icon,
@@ -699,7 +802,7 @@ class _SectionHeader extends StatelessWidget {
     required this.iconColor,
     required this.title,
     this.actionLabel,
-    this.onTap, // 👈 ADD
+    this.onTap,
   });
 
   @override
@@ -729,8 +832,6 @@ class _SectionHeader extends StatelessWidget {
               ),
             ],
           ),
-
-          // 🔥 CLICK HERE
           GestureDetector(
             onTap: onTap,
             child: Text(
@@ -747,7 +848,6 @@ class _SectionHeader extends StatelessWidget {
     );
   }
 }
-
 
 class _RestaurantBanner extends StatelessWidget {
   const _RestaurantBanner();
@@ -887,4 +987,3 @@ class _RestaurantBanner extends StatelessWidget {
     );
   }
 }
-

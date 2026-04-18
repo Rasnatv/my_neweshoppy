@@ -1,5 +1,4 @@
 part of 'app_pages.dart';
-// DO NOT EDIT. This is code generated via package:get_cli/get_cli.dart
 
 abstract class Routes {
   Routes._();
@@ -19,6 +18,14 @@ abstract class Routes {
   static const DISTRICTADMINHOME= _Paths.DISTRICTADMINHOME;
   static const ADMINADVERTISMENTUPDATION= _Paths.ADMINADVERTISMENTUPDATION;
   static const DISTRICTADMINADVUPDATION= _Paths. DISTRICTADMINADVUPDATION;
+  static const QRPAYMENT= _Paths.QRPAYMENT;
+  static const  MYADVERTISMENT= _Paths. MYADVERTISMENT;
+  static const  MERCHANTOFFERVIEW= _Paths. MERCHANTOFFERVIEW;
+  static const PURCHASEDPRODUCT=_Paths.PURCHASEDPRODUCT;
+  static const MANAGEPRODUCT=_Paths.MANAGEPRODUCT;
+  static const  OFFERPRODUCTS=_Paths.OFFERPRODUCTS;
+
+
 
 
 }
@@ -41,4 +48,11 @@ abstract class _Paths {
   static const DISTRICTADMINHOME='/districtadminhome';
   static const ADMINADVERTISMENTUPDATION='/adminadvertismentupdation';
   static const DISTRICTADMINADVUPDATION='/districtadminadvupdation';
+  static const QRPAYMENT='/payment';
+  static const MYADVERTISMENT='/myadvertisment';
+  static const MERCHANTOFFERVIEW='/merchantofferview';
+  static const PURCHASEDPRODUCT='/purchased-products';
+  static const MANAGEPRODUCT='/manageproduct';
+  static const OFFERPRODUCTS='/offerproduct';
+
 }

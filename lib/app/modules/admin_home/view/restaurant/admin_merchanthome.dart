@@ -19,9 +19,16 @@ class AdminMerchantHomePageUI extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: true,
+        iconTheme: IconThemeData(color: Colors.white),
         title: Text(
           "All Merchants",
-          style: AppTextStyle.rTextNunitoWhite17w700,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.1,
+          ),
         ),
         backgroundColor: AppColors.kPrimary,
         actions: [

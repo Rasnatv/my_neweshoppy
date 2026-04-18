@@ -1,5 +1,4 @@
 
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -7,28 +6,24 @@ import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../data/models/restaruantcartmodel.dart';
-
+import '../../../data/errors/api_error.dart';
+import '../../merchantlogin/widget/successwidget.dart';
 
 class Restaurantcartcontroller extends GetxController {
-  // ── Base URL ──────────────────────────────────────────────────────────────
   static const String _baseUrl =
       'https://rasma.astradevelops.in/e_shoppyy/public/api';
 
-  // ── Observable State ──────────────────────────────────────────────────────
-  // All cart items (all restaurants combined from API)
-  final RxList<RestaurantCartModel> _allCartItems = <RestaurantCartModel>[].obs;
+  final RxList<RestaurantCartModel> _allCartItems =
+      <RestaurantCartModel>[].obs;
 
-  // Current active restaurant id (set when user opens a restaurant)
   final RxInt currentRestaurantId = 0.obs;
 
   final RxDouble _grandTotal = 0.0.obs;
   final RxBool isLoading = false.obs;
   final RxBool isUpdating = false.obs;
 
-  // ── Storage ───────────────────────────────────────────────────────────────
   final _box = GetStorage();
 
-  // ── Auth Token ────────────────────────────────────────────────────────────
   String get _authToken => _box.read('auth_token') ?? '';
 
   Map<String, String> get _headers => {
@@ -37,34 +32,31 @@ class Restaurantcartcontroller extends GetxController {
     if (_authToken.isNotEmpty) 'Authorization': 'Bearer $_authToken',
   };
 
-  // ── Filtered items for CURRENT restaurant ────────────────────────────────
   List<RestaurantCartModel> get cartItems => currentRestaurantId.value == 0
       ? _allCartItems.toList()
       : _allCartItems
       .where((item) => item.restaurantId == currentRestaurantId.value)
       .toList();
 
-  // ── Items for a SPECIFIC restaurant (for icon badge) ─────────────────────
   List<RestaurantCartModel> itemsForRestaurant(int restaurantId) =>
       _allCartItems
           .where((item) => item.restaurantId == restaurantId)
           .toList();
 
-  // ── Grand total for CURRENT restaurant only ───────────────────────────────
-  double get grandTotal => cartItems.fold(0.0, (sum, i) => sum + i.totalPrice);
+  double get grandTotal =>
+      cartItems.fold(0.0, (sum, i) => sum + i.totalPrice);
 
-  // ── Grand total for a SPECIFIC restaurant ────────────────────────────────
-  double grandTotalForRestaurant(int restaurantId) => itemsForRestaurant(restaurantId)
-      .fold(0.0, (sum, i) => sum + i.totalPrice);
+  double grandTotalForRestaurant(int restaurantId) =>
+      itemsForRestaurant(restaurantId)
+          .fold(0.0, (sum, i) => sum + i.totalPrice);
 
-  // ── Computed for CURRENT restaurant ──────────────────────────────────────
   bool get hasItems => cartItems.isNotEmpty;
 
-  int get totalItems => cartItems.fold(0, (sum, item) => sum + item.quantity);
+  int get totalItems =>
+      cartItems.fold(0, (sum, item) => sum + item.quantity);
 
   double get totalAmount => grandTotal;
 
-  // ── hasItems for a SPECIFIC restaurant (for menu tab floating bar) ────────
   bool hasItemsForRestaurant(int restaurantId) =>
       itemsForRestaurant(restaurantId).isNotEmpty;
 
@@ -75,16 +67,18 @@ class Restaurantcartcontroller extends GetxController {
   double totalAmountForRestaurant(int restaurantId) =>
       grandTotalForRestaurant(restaurantId);
 
-  // ── isInCart / itemQty scoped to a restaurant ─────────────────────────────
   bool isInCart(int menuId) =>
       cartItems.any((item) => item.menuId == menuId);
 
   bool isInCartForRestaurant(int menuId, int restaurantId) =>
-      itemsForRestaurant(restaurantId).any((item) => item.menuId == menuId);
+      itemsForRestaurant(restaurantId)
+          .any((item) => item.menuId == menuId);
 
   int itemQty(int menuId) {
     try {
-      return cartItems.firstWhere((item) => item.menuId == menuId).quantity;
+      return cartItems
+          .firstWhere((item) => item.menuId == menuId)
+          .quantity;
     } catch (_) {
       return 0;
     }
@@ -100,21 +94,25 @@ class Restaurantcartcontroller extends GetxController {
     }
   }
 
-  // ── Lifecycle ─────────────────────────────────────────────────────────────
   @override
   void onInit() {
     super.onInit();
     fetchCart();
   }
 
-  // ── Set active restaurant (call when opening restaurant page) ─────────────
   void setRestaurant(int restaurantId) {
     currentRestaurantId.value = restaurantId;
   }
 
-  // ── Fetch ALL cart items from API ─────────────────────────────────────────
+  // ───────────────── FETCH CART ─────────────────
   Future<void> fetchCart() async {
+    if (_authToken.isEmpty) {
+      AppSnackbar.error("Session expired. Please login again.");
+      return;
+    }
+
     isLoading.value = true;
+
     try {
       final response = await http.get(
         Uri.parse('$_baseUrl/getrestaurant-cart'),
@@ -123,23 +121,32 @@ class Restaurantcartcontroller extends GetxController {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+
         if (data['status'] == 1) {
           final List items = data['data'] ?? [];
           _allCartItems.value =
               items.map((e) => RestaurantCartModel.fromJson(e)).toList();
-          // grand total from API is global; we compute per-restaurant locally
+
           _grandTotal.value =
               double.tryParse(data['grand_total']?.toString() ?? '0') ?? 0.0;
+        } else {
+          _allCartItems.clear();
+          // AppSnackbar.error(data['message'] ?? "Failed to load cart");
         }
+      } else {
+        final error = ApiErrorHandler.handleResponse(response);
+        AppSnackbar.error(error);
       }
     } catch (e) {
+      final error = ApiErrorHandler.handleException(e);
+      AppSnackbar.error(error);
       debugPrint('fetchCart error: $e');
     } finally {
       isLoading.value = false;
     }
   }
 
-  // ── Add To Cart ───────────────────────────────────────────────────────────
+  // ───────────────── ADD TO CART ─────────────────
   Future<bool> addToCart({
     required int restaurantId,
     required int menuId,
@@ -162,23 +169,31 @@ class Restaurantcartcontroller extends GetxController {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+
         if (data['status'] == 1) {
           await fetchCart();
           return true;
+        } else {
+          AppSnackbar.error(data['message'] ?? "Add to cart failed");
         }
+      } else {
+        final error = ApiErrorHandler.handleResponse(response);
+        AppSnackbar.error(error);
       }
-      return false;
     } catch (e) {
+      final error = ApiErrorHandler.handleException(e);
+      AppSnackbar.error(error);
       debugPrint('addToCart error: $e');
-      return false;
     }
+    return false;
   }
 
-  // ── Update Quantity ───────────────────────────────────────────────────────
+  // ───────────────── UPDATE QUANTITY ─────────────────
   Future<void> updateQuantity(int menuId, String type) async {
     _updateLocalQty(menuId, type);
 
     isUpdating.value = true;
+
     try {
       final response = await http.post(
         Uri.parse('$_baseUrl/restaurant-cart/update-quantity'),
@@ -191,32 +206,42 @@ class Restaurantcartcontroller extends GetxController {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+
         if (data['status'] == 1 && data['data'] != null) {
           final updated = RestaurantCartModel.fromJson(data['data']);
-          final idx = _allCartItems.indexWhere((i) => i.menuId == menuId);
+          final idx =
+          _allCartItems.indexWhere((i) => i.menuId == menuId);
+
           if (idx != -1) {
             _allCartItems[idx] = updated;
           }
+
           _allCartItems.refresh();
+        } else {
+          AppSnackbar.error(data['message'] ?? "Update failed");
         }
       } else {
+        final error = ApiErrorHandler.handleResponse(response);
+        AppSnackbar.error(error);
         await fetchCart();
       }
     } catch (e) {
-      debugPrint('updateQuantity error: $e');
+      final error = ApiErrorHandler.handleException(e);
+      AppSnackbar.error(error);
       await fetchCart();
     } finally {
       isUpdating.value = false;
     }
   }
 
-  // ── Local optimistic update ───────────────────────────────────────────────
+  // ───────────────── LOCAL UPDATE ─────────────────
   void _updateLocalQty(int menuId, String type) {
     final idx = _allCartItems.indexWhere((i) => i.menuId == menuId);
     if (idx == -1) return;
 
     final item = _allCartItems[idx];
-    int newQty = type == 'increment' ? item.quantity + 1 : item.quantity - 1;
+    int newQty =
+    type == 'increment' ? item.quantity + 1 : item.quantity - 1;
 
     if (newQty <= 0) {
       _allCartItems.removeAt(idx);
@@ -226,10 +251,11 @@ class Restaurantcartcontroller extends GetxController {
         totalPrice: item.price * newQty,
       );
     }
+
     _allCartItems.refresh();
   }
 
-  // ── Clear Cart ────────────────────────────────────────────────────────────
+  // ───────────────── CLEAR CART ─────────────────
   void clearCart() {
     _allCartItems.clear();
     _grandTotal.value = 0.0;

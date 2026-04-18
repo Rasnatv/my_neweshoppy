@@ -1,3 +1,4 @@
+import 'package:eshoppy/app/common/style/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -36,17 +37,18 @@ class OffersListingScreen extends StatelessWidget {
   PreferredSizeWidget _buildAppBar(AdminViewOfferController controller) {
     return AppBar(
       elevation: 0,
-      backgroundColor: Colors.white,
-      foregroundColor: const Color(0xFF1A1D26),
+      backgroundColor: AppColors.kPrimary,
+     iconTheme: IconThemeData(color: Colors.white),
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
             'Offers Management',
             style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF1A1D26),
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.1,
             ),
           ),
           Obx(() => Text(

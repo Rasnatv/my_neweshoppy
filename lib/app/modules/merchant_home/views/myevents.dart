@@ -1,7 +1,10 @@
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:eshoppy/app/common/style/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../widgets/delete_widget.dart';
+import '../../../widgets/networkconnection_checkpage.dart';
 import '../controller/merchant_eventdeletecontroller.dart';
 import '../controller/merchant_myeventcontroller.dart';
 import 'addevents.dart';
@@ -23,79 +26,91 @@ class MerchantEventsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF4F6FA),
-      appBar: AppBar(
-        automaticallyImplyLeading: true,
-        backgroundColor: AppColors.kPrimary,
-        title: Text("My Events", style: TextStyle(color: AppColors.white)),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
-            child: TextButton.icon(
-              onPressed: () => Get.to(() => AddEventPage())
-                  ?.then((_) => controller.fetchEvents()),
-              icon: const Icon(Icons.add_rounded, color: Colors.white, size: 20),
-              label: const Text(
-                "Add Event",
-                style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14),
-              ),
-              style: TextButton.styleFrom(
-                backgroundColor: const Color(0xFF00BFA5).withOpacity(0.10),
-                padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  side: BorderSide(
-                      color: const Color(0xF0FFFFFF).withOpacity(0.3),
-                      width: 1),
+    return NetworkAwareWrapper(
+        child: Scaffold(
+          backgroundColor: const Color(0xFFF4F6FA),
+          appBar: AppBar(
+            automaticallyImplyLeading: true,
+            backgroundColor: AppColors.kPrimary,
+            iconTheme: IconThemeData(color: Colors.white),
+            title: Text("My Events", style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.1,
+            ),),
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
+                child: TextButton.icon(
+                  onPressed: () =>
+                      Get.to(() => AddEventPage())
+                          ?.then((_) => controller.fetchEvents()),
+                  icon: const Icon(
+                      Icons.add_rounded, color: Colors.white, size: 20),
+                  label: const Text(
+                    "Add Event",
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14),
+                  ),
+                  style: TextButton.styleFrom(
+                    backgroundColor: const Color(0xFF00BFA5).withOpacity(0.10),
+                    padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      side: BorderSide(
+                          color: const Color(0xF0FFFFFF).withOpacity(0.3),
+                          width: 1),
+                    ),
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return SizedBox(
-            height: MediaQuery.of(context).size.height * 0.6,
-            child: const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(
-                      color: Color(0xFF00BFA5), strokeWidth: 3),
-                  SizedBox(height: 16),
-                  Text("Loading your events...",
-                      style: TextStyle(
-                          color: Color(0xFF8A95A3),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500)),
-                ],
+          body: Obx(() {
+            if (controller.isLoading.value) {
+              return SizedBox(
+                height: MediaQuery
+                    .of(context)
+                    .size
+                    .height * 0.6,
+                child: const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(
+                          color: Color(0xFF00BFA5), strokeWidth: 3),
+                      SizedBox(height: 16),
+                      Text("Loading your events...",
+                          style: TextStyle(
+                              color: Color(0xFF8A95A3),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500)),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            if (controller.events.isEmpty) return _buildEmptyState();
+
+            return RefreshIndicator(
+              onRefresh: () async => controller.fetchEvents(),
+              color: const Color(0xFF00BFA5),
+              child: ListView.builder(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                itemCount: controller.events.length,
+                itemBuilder: (context, index) {
+                  final event = controller.events[index];
+                  return _buildEventCard(event, index);
+                },
               ),
-            ),
-          );
-        }
-
-        if (controller.events.isEmpty) return _buildEmptyState();
-
-        return RefreshIndicator(
-          onRefresh: () async => controller.fetchEvents(),
-          color: const Color(0xFF00BFA5),
-          child: ListView.builder(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-            itemCount: controller.events.length,
-            itemBuilder: (context, index) {
-              final event = controller.events[index];
-              return _buildEventCard(event, index);
-            },
-          ),
-        );
-      }),
-    );
+            );
+          }),
+        ));
   }
 
   // ── EVENT CARD (Ticket Style) ─────────────────────────────────────────
@@ -124,18 +139,25 @@ class MerchantEventsPage extends StatelessWidget {
               ClipRRect(
                 borderRadius:
                 const BorderRadius.vertical(top: Radius.circular(20)),
-                child: Image.network(
-                  event.bannerImage,
+                child:CachedNetworkImage(
+                  imageUrl: event.bannerImage,
                   width: double.infinity,
                   height: 190,
                   fit: BoxFit.cover,
-                  loadingBuilder: (ctx, child, progress) {
-                    if (progress == null) return child;
-                    return _imagePlaceholder(isLoading: true);
-                  },
-                  errorBuilder: (ctx, _, __) =>
+
+                  placeholder: (context, url) =>
+                      _imagePlaceholder(isLoading: true),
+
+                  errorWidget: (context, url, error) =>
                       _imagePlaceholder(isLoading: false),
+
+                  fadeInDuration: const Duration(milliseconds: 300),
+
+                  // 🔥 important for performance
+                  memCacheWidth: 800,
+                  memCacheHeight: 400,
                 ),
+
               ),
               // ── Gradient Overlay ──────────────────────────────────
               Positioned(
@@ -262,7 +284,7 @@ class MerchantEventsPage extends StatelessWidget {
                 // ── Location Section (two rows) ───────────────────
                 _LocationSection(
                   eventLocation: event.location,
-                   displayLocation: event.displayLocation,
+                  displayLocation: event.displayLocation,
                   accent: accent,
                 ),
               ],
@@ -273,19 +295,27 @@ class MerchantEventsPage extends StatelessWidget {
     );
   }
 
-  // ── Delete Button ─────────────────────────────────────────────────────
   Widget _deleteButton(dynamic event) {
     return Obx(() {
       final isDeleting = ctrl.deletingIds.contains(event.id);
       return GestureDetector(
-        onTap: isDeleting ? null : () => _showDeleteConfirmation(event),
+        onTap: isDeleting
+            ? null
+            : () =>
+            DeleteConfirmDialog.show(
+              context: Get.context!,
+              title: 'Delete Event',
+              message: '"${event.eventName}" will be permanently removed.',
+              onConfirm: () =>
+                  ctrl.deleteEvent(
+                      event.id, () => controller.fetchEvents()),
+            ),
         child: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: Colors.black.withOpacity(0.55),
             borderRadius: BorderRadius.circular(10),
-            border:
-            Border.all(color: Colors.white.withOpacity(0.2), width: 1),
+            border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
           ),
           child: isDeleting
               ? const SizedBox(
@@ -333,7 +363,10 @@ class MerchantEventsPage extends StatelessWidget {
   // ── Empty State ───────────────────────────────────────────────────────
   Widget _buildEmptyState() {
     return SizedBox(
-      height: MediaQuery.of(Get.context!).size.height * 0.65,
+      height: MediaQuery
+          .of(Get.context!)
+          .size
+          .height * 0.65,
       child: Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
@@ -365,8 +398,9 @@ class MerchantEventsPage extends StatelessWidget {
               ),
               const SizedBox(height: 32),
               ElevatedButton.icon(
-                onPressed: () => Get.to(() => AddEventPage())
-                    ?.then((_) => controller.fetchEvents()),
+                onPressed: () =>
+                    Get.to(() => AddEventPage())
+                        ?.then((_) => controller.fetchEvents()),
                 icon: const Icon(Icons.add_rounded, size: 22),
                 label: const Text("Create Event",
                     style: TextStyle(
@@ -389,102 +423,7 @@ class MerchantEventsPage extends StatelessWidget {
       ),
     );
   }
-
-  // ── Delete Confirmation Dialog ────────────────────────────────────────
-  void _showDeleteConfirmation(dynamic event) {
-    Get.dialog(
-      Dialog(
-        shape:
-        RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        child: Padding(
-          padding: const EdgeInsets.all(28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
-                    shape: BoxShape.circle),
-                child: const Icon(Icons.delete_outline_rounded,
-                    color: Colors.red, size: 38),
-              ),
-              const SizedBox(height: 20),
-              const Text("Delete Event?",
-                  style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF0D1B2A))),
-              const SizedBox(height: 10),
-              Text('"${event.eventName}" will be permanently removed.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      fontSize: 14, color: Colors.grey[600], height: 1.5)),
-              const SizedBox(height: 26),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Get.back(),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                        side: const BorderSide(
-                            color: Color(0xFFDDE1E7), width: 1.5),
-                      ),
-                      child: Text("Cancel",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey[700],
-                              fontSize: 15)),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Obx(() {
-                      final isDeleting = ctrl.deletingIds.contains(event.id);
-                      return ElevatedButton(
-                        onPressed: isDeleting
-                            ? null
-                            : () {
-                          Get.back();
-                          ctrl.deleteEvent(
-                              event.id, () => controller.fetchEvents());
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red[600],
-                          disabledBackgroundColor: Colors.red[300],
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                          elevation: 0,
-                        ),
-                        child: isDeleting
-                            ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white))
-                            : const Text("Delete",
-                            style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                                fontSize: 15)),
-                      );
-                    }),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
-
-// ── Location Section (two separate highlighted rows) ──────────────────────
 class _LocationSection extends StatelessWidget {
   final String eventLocation;   // raw event_location (venue/place)
    final String displayLocation; // district or main_location

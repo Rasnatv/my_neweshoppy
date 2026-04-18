@@ -6,9 +6,7 @@ import '../../../common/style/app_colors.dart';
 import '../../../widgets/Headline2.dart';
 import '../controller/forgotpswd_controller.dart';
 
-
-class ForgotPasswordEmailView
-    extends GetView<ForgotPasswordController> {
+class ForgotPasswordEmailView extends GetView<ForgotPasswordController> {
   const ForgotPasswordEmailView({super.key});
 
   @override
@@ -58,15 +56,20 @@ class ForgotPasswordEmailView
                 ],
               ),
               child: Padding(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
                 child: Column(
                   children: [
                     TextField(
                       controller: controller.emailController,
                       keyboardType: TextInputType.emailAddress,
+                      style: const TextStyle(
+                        fontSize: 15,
+                      ),
                       decoration: InputDecoration(
                         labelText: "Email Address",
+                        labelStyle: const TextStyle(
+                          fontSize: 14,
+                        ),
                         prefixIcon: const Icon(Icons.email_rounded),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -94,9 +97,10 @@ class ForgotPasswordEmailView
                             : const Text(
                           "Send OTP",
                           style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600),
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     )),
@@ -125,4 +129,3 @@ class ForgotPasswordEmailView
     );
   }
 }
-

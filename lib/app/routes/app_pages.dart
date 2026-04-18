@@ -1,11 +1,17 @@
 
+import 'package:eshoppy/app/modules/admin_home/offer/views/AdminView_offerpage.dart';
+import 'package:eshoppy/app/modules/merchant_home/views/myadvetisment.dart';
+import 'package:eshoppy/app/modules/product/view/cartscreen.dart';
 import 'package:eshoppy/app/modules/profile/view/profile_view.dart';
+import 'package:eshoppy/app/modules/restarunent/view/userrestaurantqrgettingpage.dart';
+import 'package:eshoppy/app/modules/userhome/view/all_events.dart';
 import 'package:get/get.dart';
 import '../modules/admin_home/banners/views/adminadvertisment.dart';
 import '../modules/admin_home/districtadmin/view/districtadmin_advertismentupdatepage.dart';
 import '../modules/admin_home/districtadmin/view/districtadmin_home.dart';
 import '../modules/admin_home/offer/views/Admin_productdetailscreen.dart';
 import '../modules/admin_home/offer/views/admin_viewofferproduct.dart';
+import '../modules/admin_home/shops/views/admin_userpurchasedprodcutpage.dart';
 import '../modules/forgotpassowrd/binding/checkemailotp_binding.dart';
 import '../modules/forgotpassowrd/binding/forgotpswd_binding.dart';
 import '../modules/forgotpassowrd/binding/newpswd_bindings.dart';
@@ -13,6 +19,8 @@ import '../modules/forgotpassowrd/view/checkemail.dart';
 import '../modules/forgotpassowrd/view/forgotpassword.dart';
 import '../modules/forgotpassowrd/view/newpasswordscreen.dart';
 
+import '../modules/merchant_home/views/manageproducts.dart';
+import '../modules/merchant_home/views/merchant_offerviewpage.dart';
 import '../modules/splashscreen/splashscreen.dart';
 import '../modules/userhome/view/userhome.dart';
 import '../modules/userlogin/bindings/editprofile_binding.dart';
@@ -44,7 +52,7 @@ class AppPages {
     GetPage(
       name: Routes.LOGIN,
       page: () => LoginScreen(),
-      binding: UserLoginBinding (),
+       binding: UserLoginBinding (),
     ),
 
     GetPage(
@@ -65,6 +73,11 @@ class AppPages {
 
     ),
     GetPage(
+      name: _Paths.QRPAYMENT,
+      page: () =>  QRPaymentPage(),
+
+    ),
+    GetPage(
       name: _Paths.SIGNUP,
       page: () => UserSignup(),
       binding: UsersignupBindings(),
@@ -72,7 +85,6 @@ class AppPages {
     GetPage(
       name: Routes.CHECKEMAIL,
       page: () => const CheckemailScreen(),
-      binding: CheckEmailBinding(),
     ),
 
     //
@@ -85,10 +97,8 @@ class AppPages {
     GetPage(
       name: '/offer-products',
       page: () => const AdminOfferProductScreen(),
-      // binding: BindingsBuilder(() {
-      //   Get.lazyPut(() => OfferProductsController());
-      //}),
     ),
+    // In your GetPages list
     GetPage(
       name: '/offer-product-detail',
       page: () => const AdminSingleOfferProductScreen(),
@@ -98,9 +108,34 @@ class AppPages {
       page: () =>  AdminAdvertisementPage(),
     ),
     GetPage(
+      name: '/allevents',
+      page: () =>  AllEventsPage(),
+    ),
+    GetPage(
       name: _Paths.PROFILE,
       page: () =>  ProfileView(),
     ),
+    GetPage(
+      name: _Paths.CART,
+      page: () =>CartScreen(),
+    ),
+    GetPage(
+        name: _Paths.MYADVERTISMENT,
+        page: () => MyAdvertisements ()),
+    GetPage(
+        name: _Paths.MYADVERTISMENT,
+        page: () =>
+    MerchantOfferViewPage()),
+    GetPage(
+        name: _Paths.PURCHASEDPRODUCT,
+        page: () => PurchasedProductsScreen()),
+    GetPage(
+        name: _Paths.OFFERPRODUCTS,
+        page: () => MerchantOfferViewPage()),
+    GetPage(
+        name: _Paths. MANAGEPRODUCT,
+        page: () =>  ManageProductsPage()),
+
     GetPage(
       name: _Paths.DISTRICTADMINHOME,
       page: () => Districtadminhomepage())];

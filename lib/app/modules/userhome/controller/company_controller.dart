@@ -1,10 +1,12 @@
+
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 
+import '../../../data/errors/api_error.dart';
 import '../../../data/models/categoryshoplistmodel.dart';
-
+import '../../merchantlogin/widget/successwidget.dart';
 
 class CompanyController extends GetxController {
   final box = GetStorage();
@@ -41,10 +43,20 @@ class CompanyController extends GetxController {
             list.map((e) => ShoplistModel.fromJson(e)).toList();
       } else {
         shops.clear();
+
+        // ✅ USE YOUR ERROR HANDLER
+        final errorMessage = ApiErrorHandler.handleResponse(response);
+
+        // ✅ SHOW YOUR CUSTOM SNACKBAR
+        AppSnackbar.error(errorMessage);
       }
     } catch (e) {
       shops.clear();
-      print("Shop fetch error: $e");
+
+      // ✅ HANDLE EXCEPTIONS (NO INTERNET, ETC)
+      final errorMessage = ApiErrorHandler.handleException(e);
+
+      AppSnackbar.error(errorMessage);
     } finally {
       isLoading.value = false;
     }

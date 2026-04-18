@@ -1,11 +1,13 @@
 
 import 'dart:convert';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 
+import '../../../../data/errors/api_error.dart';
 import '../../../../data/models/districtadmineventmodel.dart';
+import '../../../../widgets/areaadminsuccesswidget.dart';
+
 
 class DistrictAdminGettingEventController extends GetxController {
 
@@ -18,7 +20,6 @@ class DistrictAdminGettingEventController extends GetxController {
   final RxBool   hasError     = false.obs;
   final RxString errorMessage = ''.obs;
 
-  // ─── Storage / Auth ──────────────────────────
   final _box = GetStorage();
 
   String get token => _box.read('auth_token') ?? '';
@@ -43,100 +44,86 @@ class DistrictAdminGettingEventController extends GetxController {
     fetchEvents();
   }
 
-  // ─── Fetch Events ─────────────────────────────
+  // ─── FETCH EVENTS ─────────────────────────────
   Future<void> fetchEvents() async {
-    if (token.isEmpty) { _handleUnauthorized(); return; }
+
     try {
       isLoading.value    = true;
       hasError.value     = false;
       errorMessage.value = '';
 
-      final res  = await http.get(
+      final res = await http.get(
         Uri.parse('$_baseUrl/events'),
         headers: _headers,
       );
+
       final body = jsonDecode(res.body);
 
       if (res.statusCode == 200 && body['status'] == true) {
+
         final events = (body['data'] as List)
             .map((e) => DistrictAdminEventModel.fromJson(e as Map<String, dynamic>))
             .toList();
+
         allEvents.assignAll(events);
         recentEvents.assignAll(
           events.length > 5 ? events.sublist(0, 5) : events,
         );
-      } else if (res.statusCode == 401) {
-        _handleUnauthorized();
+
       } else {
-        _setError(body['message'] ?? 'Failed to fetch events');
+        final error = ApiErrorHandler.handleResponse(res);
+        _setError(error);
+        AppSnackbarss.error(error);
       }
+
     } catch (e) {
-      _setError(e.toString());
+      final error = ApiErrorHandler.handleException(e);
+      _setError(error);
+      AppSnackbarss.error(error);
     } finally {
       isLoading.value = false;
     }
   }
 
-  // ─── Delete Event ─────────────────────────────
+  // ─── DELETE EVENT ─────────────────────────────
   Future<void> deleteEvent(String id) async {
-    if (token.isEmpty) { _handleUnauthorized(); return; }
+
+
     try {
       isDeleting.value = true;
 
-      // http.delete() silently drops body in Flutter — use http.Request instead
       final request = http.Request(
         'DELETE',
         Uri.parse('$_baseUrl/event/delete'),
       );
+
       request.headers.addAll(_jsonHeaders);
       request.body = jsonEncode({'event_id': int.tryParse(id) ?? id});
 
-      final res  = await http.Response.fromStream(await request.send());
+      final res = await http.Response.fromStream(await request.send());
       final body = jsonDecode(res.body);
 
       if (res.statusCode == 200 && body['status'] == true) {
-        Get.snackbar(
-          'Deleted',
-          body['message'] ?? 'Event deleted successfully',
-          backgroundColor: Colors.green.shade50,
-          colorText      : Colors.green.shade800,
-          snackPosition  : SnackPosition.TOP,
-        );
-        fetchEvents();
-      } else if (res.statusCode == 401) {
-        _handleUnauthorized();
+
+        AppSnackbarss.success(
+            body['message'] ?? 'Event deleted successfully');
+
+        await fetchEvents();
+
       } else {
-        Get.snackbar(
-          'Error',
-          body['message'] ?? 'Failed to delete event',
-          backgroundColor: Colors.red.shade50,
-          colorText      : Colors.red.shade800,
-          snackPosition  : SnackPosition.TOP,
-        );
+        AppSnackbarss.error(ApiErrorHandler.handleResponse(res));
       }
+
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        e.toString(),
-        backgroundColor: Colors.red.shade50,
-        colorText      : Colors.red.shade800,
-        snackPosition  : SnackPosition.TOP,
-      );
+      AppSnackbarss.error(ApiErrorHandler.handleException(e));
     } finally {
       isDeleting.value = false;
     }
   }
 
-  // ─── Helpers ──────────────────────────────────
+  // ─── HELPERS ──────────────────────────────────
   void _setError(String msg) {
     hasError.value     = true;
     errorMessage.value = msg;
   }
-
-  void _handleUnauthorized() {
-    Get.snackbar('Session Expired', 'Please login again');
-    _box.erase();
-    // Get.offAll(() => DistrictAdminLoginPage());
-  }
 }
-

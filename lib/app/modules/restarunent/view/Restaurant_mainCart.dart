@@ -56,9 +56,14 @@ class RestaurantFinalCart extends StatelessWidget {
         );
       }),
 
-      // ── BOTTOM BAR ─────────────────────────────────────────────────────────
+      // ── BOTTOM BAR — only when exactly 1 restaurant ────────────────────────
       bottomNavigationBar: Obx(() {
         if (controller.isLoading.value || controller.isEmpty) {
+          return const SizedBox(height: 0);
+        }
+        // Hide bottom bar when multiple restaurants
+        // (each card has its own button in that case)
+        if (controller.restaurants.length != 1) {
           return const SizedBox(height: 0);
         }
         return _PlaceOrderBar(
@@ -73,10 +78,8 @@ class RestaurantFinalCart extends StatelessWidget {
 
   AppBar _buildAppBar() {
     return AppBar(
-      leading: IconButton(
-        onPressed: () => Get.back(),
-        icon: const Icon(Icons.arrow_back_ios_new_rounded),
-      ),
+      automaticallyImplyLeading: true,
+      iconTheme: const IconThemeData(color: Colors.white),
       backgroundColor: _primary,
       foregroundColor: Colors.white,
       elevation: 0,
@@ -169,8 +172,8 @@ class RestaurantFinalCart extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Obx(() {
-                    final isDeleting =
-                    controller.isDeletingRestaurant(restaurant.restaurantId);
+                    final isDeleting = controller
+                        .isDeletingRestaurant(restaurant.restaurantId);
                     return ElevatedButton(
                       onPressed: isDeleting
                           ? null
@@ -229,6 +232,8 @@ class _RestaurantCard extends StatelessWidget {
     return Obx(() {
       final isDeleting =
       controller.isDeletingRestaurant(restaurant.restaurantId);
+      // Show per-card button only when more than 1 restaurant
+      final showCardButton = controller.restaurants.length > 1;
 
       return AnimatedOpacity(
         opacity: isDeleting ? 0.5 : 1.0,
@@ -267,34 +272,79 @@ class _RestaurantCard extends StatelessWidget {
                   );
                 },
               ),
+
+              // ── Total + optional per-card button ──────────────────────
               Padding(
                 padding: const EdgeInsets.all(14),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: _primary.withOpacity(0.06),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '${restaurant.bookings.length} ${restaurant.bookings.length == 1 ? 'booking' : 'bookings'} · ${restaurant.totalItemCount} items',
-                        style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.grey.shade700),
+                child: Column(
+                  children: [
+                    // Total row
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: _primary.withOpacity(0.06),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      Text(
-                        '₹${FinalCartController.formatPrice(restaurant.restaurantTotal)}',
-                        style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: _primary),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '${restaurant.bookings.length} ${restaurant.bookings.length == 1 ? 'booking' : 'bookings'} · ${restaurant.totalItemCount} items',
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.grey.shade700),
+                          ),
+                          Text(
+                            '₹${FinalCartController.formatPrice(restaurant.restaurantTotal)}',
+                            style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: _primary),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Per-restaurant Confirm Booking button
+                    // shown only when 2+ restaurants
+                    if (showCardButton) ...[
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Get.toNamed(
+                              '/payment',
+                              arguments: [
+                                restaurant.restaurantId.toString()
+                              ],
+                            );
+                          },
+                          icon: const Icon(
+                              Icons.check_circle_outline_rounded,
+                              size: 18),
+                          label: const Text(
+                            'Confirm Booking',
+                            style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.2),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _primary,
+                            foregroundColor: Colors.white,
+                            padding:
+                            const EdgeInsets.symmetric(vertical: 13),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14)),
+                            elevation: 0,
+                          ),
+                        ),
                       ),
                     ],
-                  ),
+                  ],
                 ),
               ),
             ],
@@ -368,7 +418,6 @@ class _RestaurantHeader extends StatelessWidget {
               ],
             ),
           ),
-          // Delete restaurant button
           GestureDetector(
             onTap: isDeleting ? null : onRemove,
             child: Container(
@@ -414,9 +463,10 @@ class _BookingCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Booking Meta ─────────────────────────────────────────────
+          // ── Booking Meta ───────────────────────────────────────────────
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               color: _primary.withOpacity(0.05),
               borderRadius:
@@ -439,8 +489,8 @@ class _BookingCard extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(8),
@@ -465,7 +515,7 @@ class _BookingCard extends StatelessWidget {
             ),
           ),
 
-          // ── Items ────────────────────────────────────────────────────
+          // ── Items ──────────────────────────────────────────────────────
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -483,15 +533,15 @@ class _BookingCard extends StatelessWidget {
             },
           ),
 
-          // ── Booking Total ────────────────────────────────────────────
+          // ── Booking Total ──────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Text('Booking total: ',
-                    style: TextStyle(
-                        fontSize: 12, color: Colors.grey.shade500)),
+                    style:
+                    TextStyle(fontSize: 12, color: Colors.grey.shade500)),
                 Text(
                   '₹${FinalCartController.formatPrice(booking.bookingTotal)}',
                   style: const TextStyle(
@@ -515,93 +565,6 @@ class _BookingCard extends StatelessWidget {
       return dateStr;
     }
   }
-
-  void _confirmRemoveBooking(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.fromLTRB(24, 12, 24, 36),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2)),
-            ),
-            const SizedBox(height: 24),
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.08),
-                  shape: BoxShape.circle),
-              child: const Icon(Icons.event_busy_rounded,
-                  color: Colors.orange, size: 34),
-            ),
-            const SizedBox(height: 16),
-            const Text('Remove Booking?',
-                style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87)),
-            const SizedBox(height: 8),
-            Text(
-              'Booking #${booking.bookingId} (${booking.tableNo} · ${booking.timeSlot}) will be removed.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-            ),
-            const SizedBox(height: 28),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Get.back(),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
-                      side: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    child: const Text('Cancel',
-                        style: TextStyle(
-                            color: Colors.black87,
-                            fontWeight: FontWeight.w600)),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Get.back();
-                      _controller.removeBooking(
-                          restaurantId, booking.bookingId);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
-                      elevation: 0,
-                    ),
-                    child: const Text('Remove',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold)),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 // ── ITEM ROW ──────────────────────────────────────────────────────────────────
@@ -624,8 +587,10 @@ class _ItemRow extends StatelessWidget {
     return Obx(() {
       final isItemDeleting = _controller.isDeletingItem(item.cartId);
       final isQtyUpdating = _controller.isAnyQuantityUpdating(item.cartId);
-      final isDecreasing = _controller.isUpdatingQuantity(item.cartId, 'decrease');
-      final isIncreasing = _controller.isUpdatingQuantity(item.cartId, 'increase');
+      final isDecreasing =
+      _controller.isUpdatingQuantity(item.cartId, 'decrease');
+      final isIncreasing =
+      _controller.isUpdatingQuantity(item.cartId, 'increase');
       final isBusy = isItemDeleting || isQtyUpdating;
 
       return AnimatedOpacity(
@@ -634,11 +599,10 @@ class _ItemRow extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Top Row: Image  +  Name / Unit price  +  Delete ───────
+            // ── Top Row: Image + Name / Unit price + Delete ────────────
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Thumbnail
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: Image.network(
@@ -659,8 +623,6 @@ class _ItemRow extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 10),
-
-                // Name + unit price
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -677,16 +639,13 @@ class _ItemRow extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         '₹${FinalCartController.formatPrice(item.price)} / item',
-                        style: TextStyle(
-                            fontSize: 11, color: Colors.grey.shade500),
+                        style:
+                        TextStyle(fontSize: 11, color: Colors.grey.shade500),
                       ),
                     ],
                   ),
                 ),
-
                 const SizedBox(width: 8),
-
-                // ── Delete button (standalone, top-right) ─────────────
                 GestureDetector(
                   onTap: isBusy ? null : () => _confirmRemoveItem(context),
                   child: Container(
@@ -720,11 +679,10 @@ class _ItemRow extends StatelessWidget {
 
             const SizedBox(height: 10),
 
-            // ── Bottom Row: Stepper (left)  +  Total price (right) ────
+            // ── Bottom Row: Stepper + Total price ──────────────────────
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // ── Quantity stepper ───────────────────────────────────
                 Container(
                   decoration: BoxDecoration(
                     color: _primary.withOpacity(0.05),
@@ -735,7 +693,6 @@ class _ItemRow extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Decrease button
                       _StepperButton(
                         icon: Icons.remove_rounded,
                         iconColor: _primary,
@@ -749,8 +706,6 @@ class _ItemRow extends StatelessWidget {
                           action: 'decrease',
                         ),
                       ),
-
-                      // Quantity display
                       Container(
                         constraints: const BoxConstraints(minWidth: 36),
                         alignment: Alignment.center,
@@ -770,8 +725,6 @@ class _ItemRow extends StatelessWidget {
                               color: _primary),
                         ),
                       ),
-
-                      // Increase button
                       _StepperButton(
                         icon: Icons.add_rounded,
                         iconColor: _primary,
@@ -788,8 +741,6 @@ class _ItemRow extends StatelessWidget {
                     ],
                   ),
                 ),
-
-                // Total price for this item
                 Text(
                   '₹${FinalCartController.formatPrice(item.totalPrice)}',
                   style: const TextStyle(
@@ -830,8 +781,8 @@ class _ItemRow extends StatelessWidget {
               decoration: BoxDecoration(
                   color: Colors.red.withOpacity(0.08),
                   shape: BoxShape.circle),
-              child:
-              const Icon(Icons.fastfood_rounded, color: Colors.red, size: 34),
+              child: const Icon(Icons.fastfood_rounded,
+                  color: Colors.red, size: 34),
             ),
             const SizedBox(height: 16),
             const Text('Remove Item?',
@@ -927,7 +878,9 @@ class _StepperButton extends StatelessWidget {
             color: iconColor,
           ),
         )
-            : Icon(icon, size: 16, color: onTap == null ? Colors.grey : iconColor),
+            : Icon(icon,
+            size: 16,
+            color: onTap == null ? Colors.grey : iconColor),
       ),
     );
   }
@@ -959,7 +912,7 @@ class _MetaRow extends StatelessWidget {
   }
 }
 
-// ── PLACE ORDER BAR ───────────────────────────────────────────────────────────
+// ── PLACE ORDER BAR — shown only when exactly 1 restaurant ───────────────────
 class _PlaceOrderBar extends StatelessWidget {
   final double grandTotal;
   final int restaurantCount;
@@ -1021,8 +974,8 @@ class _PlaceOrderBar extends StatelessWidget {
                   children: [
                     Text(
                       '$restaurantCount ${restaurantCount == 1 ? 'restaurant' : 'restaurants'} · $totalBookings ${totalBookings == 1 ? 'booking' : 'bookings'}',
-                      style:
-                      TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                      style: TextStyle(
+                          fontSize: 11, color: Colors.grey.shade500),
                     ),
                     const SizedBox(height: 2),
                     Text('$totalItems items • incl. GST',
@@ -1037,10 +990,21 @@ class _PlaceOrderBar extends StatelessWidget {
             const SizedBox(height: 14),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
+              child: ElevatedButton.icon(
                 onPressed: () {
-                  // TODO: Navigate to checkout / confirm booking
+                  final controller = Get.find<FinalCartController>();
+                  final List<String> restaurantIds = controller.restaurants
+                      .map((r) => r.restaurantId.toString())
+                      .toList();
+                  Get.toNamed('/payment', arguments: restaurantIds);
                 },
+                icon: const Icon(Icons.check_circle_outline_rounded,
+                    size: 20),
+                label: const Text('Confirm Booking',
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.3)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _primary,
                   foregroundColor: Colors.white,
@@ -1048,18 +1012,6 @@ class _PlaceOrderBar extends StatelessWidget {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(18)),
                   elevation: 0,
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.check_circle_outline_rounded, size: 20),
-                    SizedBox(width: 10),
-                    Text('Confirm Bookings',
-                        style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.3)),
-                  ],
                 ),
               ),
             ),

@@ -2,133 +2,84 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:get/get.dart';
+
+import 'network_trihgiger.dart';
+import 'noconnectionpageview.dart';
 
 class NetworkAwareWrapper extends StatefulWidget {
   final Widget child;
   const NetworkAwareWrapper({super.key, required this.child});
 
   @override
-  State<NetworkAwareWrapper> createState() => _NetworkAwareWrapperState();
+  State<NetworkAwareWrapper> createState() =>
+      _NetworkAwareWrapperState();
 }
 
-class _NetworkAwareWrapperState extends State<NetworkAwareWrapper>
-    with SingleTickerProviderStateMixin {
+class _NetworkAwareWrapperState extends State<NetworkAwareWrapper> {
   bool _isOffline = false;
+  int _reconnectCount = 0;
   late StreamSubscription _subscription;
-  late AnimationController _animController;
-  late Animation<Offset> _slideAnim;
 
   @override
   void initState() {
     super.initState();
-
-    _animController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 350),
-    );
-
-    _slideAnim = Tween<Offset>(
-      begin: const Offset(0, -1),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animController,
-      curve: Curves.easeOut,
-    ));
-
     _checkConnection();
 
-    _subscription = Connectivity().onConnectivityChanged.listen((results) {
-      final offline = results.every((r) => r == ConnectivityResult.none);
-      _updateStatus(offline);
-    });
+    _subscription =
+        Connectivity().onConnectivityChanged.listen((results) {
+          final offline =
+          results.every((r) => r == ConnectivityResult.none);
+          _updateStatus(offline);
+        });
   }
 
   Future<void> _checkConnection() async {
     final results = await Connectivity().checkConnectivity();
-    final offline = results.every((r) => r == ConnectivityResult.none);
+    final offline =
+    results.every((r) => r == ConnectivityResult.none);
     _updateStatus(offline);
   }
 
   void _updateStatus(bool offline) {
     if (!mounted) return;
-    setState(() => _isOffline = offline);
-    offline ? _animController.forward() : _animController.reverse();
+
+    final wasOffline = _isOffline;
+
+    setState(() {
+      _isOffline = offline;
+
+      // ✅ Only trigger when coming back online
+      if (wasOffline && !offline) {
+        _reconnectCount++;
+
+        // ✅ Delay to stabilize internet (IMPORTANT)
+        Future.delayed(const Duration(seconds: 2), () {
+          if (Get.isRegistered<NetworkService>()) {
+            Get.find<NetworkService>().onReconnected();
+          }
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
     _subscription.cancel();
-    _animController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      textDirection: TextDirection.ltr,
-      alignment: Alignment.topCenter,
-      children: [
-        widget.child,
-        SlideTransition(
-          position: _slideAnim,
-          child: _buildBanner(context),
-        ),
-      ],
-    );
-  }
+    // ✅ Show full screen when offline
+    if (_isOffline) {
+      return NoInternetPage(onRetry: _checkConnection);
+    }
 
-  Widget _buildBanner(BuildContext context) {
-    final topPadding = MediaQuery.of(context).padding.top;
-    return Material(
-      color: Colors.transparent,
-      child: Container(
-        width: double.infinity,
-        color: const Color(0xFFD32F2F),
-        padding: EdgeInsets.only(
-          top: topPadding + 10,
-          bottom: 10,
-          left: 16,
-          right: 12,
-        ),
-        child: Row(
-          children: [
-            const Icon(
-              Icons.wifi_off_rounded,
-              color: Colors.white,
-              size: 16,
-            ),
-            const SizedBox(width: 8),
-            const Expanded(
-              child: Text(
-                'No internet connection',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            GestureDetector(
-              onTap: _checkConnection,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.white54),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: const Text(
-                  'Retry',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    // ✅ Normal app (NO red snackbar / NO banner)
+    return KeyedSubtree(
+      key: ValueKey(_reconnectCount), // refresh after reconnect
+      child: widget.child,
     );
   }
 }

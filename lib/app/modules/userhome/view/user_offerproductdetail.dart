@@ -164,16 +164,6 @@ class _UserOfferProductDetailScreenState
           letterSpacing: 0.2,
         ),
       ),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.share_outlined, color: Colors.white),
-          onPressed: () {},
-        ),
-        IconButton(
-          icon: const Icon(Icons.favorite_border_rounded, color: Colors.white),
-          onPressed: () {},
-        ),
-      ],
     );
   }
 

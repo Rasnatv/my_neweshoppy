@@ -1,12 +1,34 @@
+class MerchantOrderAddress {
+  final String name;
+  final String phone;
+  final String address;
+
+  MerchantOrderAddress({
+    required this.name,
+    required this.phone,
+    required this.address,
+  });
+
+  factory MerchantOrderAddress.fromJson(Map<String, dynamic> json) {
+    return MerchantOrderAddress(
+      name: json['name'] ?? '',
+      phone: json['phone'] ?? '',
+      address: json['address'] ?? '',
+    );
+  }
+}
+
 class MerchantOrderModel {
   final int orderId;
   final String orderDate;
+  final MerchantOrderAddress address;
   final List<MerchantOrderProduct> products;
   final double totalAmount;
 
   MerchantOrderModel({
     required this.orderId,
     required this.orderDate,
+    required this.address,
     required this.products,
     required this.totalAmount,
   });
@@ -15,6 +37,7 @@ class MerchantOrderModel {
     return MerchantOrderModel(
       orderId: json['order_id'],
       orderDate: json['order_date'] ?? '',
+      address: MerchantOrderAddress.fromJson(json['address'] ?? {}),
       products: (json['products'] as List)
           .map((e) => MerchantOrderProduct.fromJson(e))
           .toList(),

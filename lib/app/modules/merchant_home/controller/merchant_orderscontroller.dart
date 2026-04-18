@@ -1,16 +1,17 @@
+
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
-import '../../../data/models/merchant_orderrecievedmodel.dart';
 
+import '../../../data/errors/api_error.dart';
+import '../../../data/models/merchant_orderrecievedmodel.dart';
+import '../../merchantlogin/widget/successwidget.dart';
 
 class MerchantOrdersController extends GetxController {
   final _box = GetStorage();
 
   final isLoading = true.obs;
-  final hasError = false.obs;
-  final errorMessage = ''.obs;
   final orders = <MerchantOrderModel>[].obs;
 
   String get _token => _box.read('auth_token') ?? '';
@@ -22,10 +23,9 @@ class MerchantOrdersController extends GetxController {
   }
 
   Future<void> fetchMerchantOrders() async {
+
     try {
       isLoading.value = true;
-      hasError.value = false;
-      errorMessage.value = '';
 
       final response = await http.get(
         Uri.parse(
@@ -38,25 +38,29 @@ class MerchantOrdersController extends GetxController {
         },
       );
 
-      final body = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
 
-      if (response.statusCode == 200 && body['status'] == true) {
-        final List data = body['data'];
-        orders.value =
-            data.map((e) => MerchantOrderModel.fromJson(e)).toList();
+        if (body['status'] == true) {
+          final List data = body['data'];
+          orders.value =
+              data.map((e) => MerchantOrderModel.fromJson(e)).toList();
+        } else {
+          AppSnackbar.error(body['message'] ?? 'Failed to load orders');
+        }
       } else {
-        hasError.value = true;
-        errorMessage.value = body['message'] ?? 'Failed to load orders.';
+        final error = ApiErrorHandler.handleResponse(response);
+        AppSnackbar.error(error);
       }
     } catch (e) {
-      hasError.value = true;
-      errorMessage.value = 'Network error. Please try again.';
+      final error = ApiErrorHandler.handleException(e);
+      AppSnackbar.error(error);
     } finally {
       isLoading.value = false;
     }
   }
 
-  // "2026-04-06 09:29:22" → "06 Apr 2026, 09:29 AM"
+  // ================= DATE FORMAT =================
   String formatDate(String raw) {
     try {
       final dt = DateTime.parse(raw);
@@ -64,15 +68,21 @@ class MerchantOrdersController extends GetxController {
         'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
       ];
-      final hour = dt.hour > 12 ? dt.hour - 12 : dt.hour == 0 ? 12 : dt.hour;
+      final hour = dt.hour > 12
+          ? dt.hour - 12
+          : dt.hour == 0
+          ? 12
+          : dt.hour;
       final minute = dt.minute.toString().padLeft(2, '0');
       final period = dt.hour >= 12 ? 'PM' : 'AM';
+
       return '${dt.day.toString().padLeft(2, '0')} ${months[dt.month - 1]} ${dt.year}  •  $hour:$minute $period';
     } catch (_) {
       return raw;
     }
   }
 
+  // ================= STATS =================
   int get totalOrdersCount => orders.length;
 
   double get totalRevenue =>

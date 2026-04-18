@@ -20,15 +20,31 @@ class SelectLocationPage extends StatelessWidget {
         backgroundColor: AppColors.kPrimary,
         automaticallyImplyLeading: true,
         iconTheme: const IconThemeData(color: Colors.white),
-        title: Text(
+        title: const Text(
           'Select Location',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 17,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.1,
-            ),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.1,
+          ),
         ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              await controller.skipLocation();
+              Get.back();
+            },
+            child: const Text(
+              'Skip',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(
@@ -66,7 +82,9 @@ class SelectLocationPage extends StatelessWidget {
                 const SizedBox(height: 22),
                 _buildFormCard(),
                 Obx(() {
-                  if (controller.selectedMainLocation.value.isEmpty) {
+                  if (controller.selectedMainLocation.value.isEmpty &&
+                      controller.selectedDistrict.value.isEmpty &&
+                      controller.selectedState.value.isEmpty) {
                     return const SizedBox.shrink();
                   }
                   return Column(
@@ -116,14 +134,7 @@ class SelectLocationPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 3),
-              Text(
-                'Select state, district, and area',
-                style: TextStyle(
-                  fontSize: 12.5,
-                  color: Colors.grey.shade500,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
+
             ],
           ),
         ),
@@ -147,9 +158,10 @@ class SelectLocationPage extends StatelessWidget {
       ),
       child: Column(
         children: [
+          // ── State (always enabled) ──────────────────────────────
           Obx(() => _buildDropdownTile(
             label: 'State',
-            hint: 'Select your state',
+            hint: 'Select your state (optional)',
             icon: Icons.map_outlined,
             value: controller.selectedState.value.isEmpty
                 ? null
@@ -161,11 +173,15 @@ class SelectLocationPage extends StatelessWidget {
             },
             showDivider: true,
           )),
+
+          // ── District (enabled only after state is picked) ────────
           Obx(() {
             final enabled = controller.selectedState.value.isNotEmpty;
             return _buildDropdownTile(
               label: 'District',
-              hint: enabled ? 'Select your district' : 'Select state first',
+              hint: enabled
+                  ? 'Select your district (optional)'
+                  : 'Select a state first',
               icon: Icons.location_city_outlined,
               value: controller.selectedDistrict.value.isEmpty
                   ? null
@@ -180,11 +196,15 @@ class SelectLocationPage extends StatelessWidget {
               showDivider: true,
             );
           }),
+
+          // ── Area (enabled only after district is picked) ─────────
           Obx(() {
             final enabled = controller.selectedDistrict.value.isNotEmpty;
             return _buildDropdownTile(
               label: 'Area',
-              hint: enabled ? 'Select your area' : 'Select district first',
+              hint: enabled
+                  ? 'Select your area (optional)'
+                  : 'Select a district first',
               icon: Icons.pin_drop_outlined,
               value: controller.selectedMainLocation.value.isEmpty
                   ? null
@@ -245,14 +265,9 @@ class SelectLocationPage extends StatelessWidget {
                         letterSpacing: 0.1,
                       ),
                     ),
-                    const Text(
-                      '  *',
-                      style: TextStyle(
-                        color: Color(0xFFE53935),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                    const SizedBox(width: 6),
+                    // ── "Optional" badge replaces the red * ──────────
+
                   ],
                 ),
               ),
@@ -293,7 +308,9 @@ class SelectLocationPage extends StatelessWidget {
                 ),
                 icon: Icon(
                   Icons.keyboard_arrow_down_rounded,
-                  color: enabled ? Colors.grey.shade400 : Colors.grey.shade300,
+                  color: enabled
+                      ? Colors.grey.shade400
+                      : Colors.grey.shade300,
                   size: 20,
                 ),
                 dropdownColor: Colors.white,
@@ -319,88 +336,102 @@ class SelectLocationPage extends StatelessWidget {
           ),
         ),
         if (showDivider)
-          Divider(height: 1, thickness: 1, color: const Color(0xFFF0F1F5)),
+          const Divider(
+              height: 1, thickness: 1, color: Color(0xFFF0F1F5)),
       ],
     );
   }
 
   Widget _buildSummaryCard() {
-    return Container(
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFB8EDD6), width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: const Color(0xFFEBF9F2),
-              borderRadius: BorderRadius.circular(10),
+    return Obx(() {
+      // Build a readable summary from whatever fields are filled
+      final parts = [
+        if (controller.selectedMainLocation.value.isNotEmpty)
+          controller.selectedMainLocation.value,
+        if (controller.selectedDistrict.value.isNotEmpty)
+          controller.selectedDistrict.value,
+        if (controller.selectedState.value.isNotEmpty)
+          controller.selectedState.value,
+      ];
+
+      final title = parts.first;
+      final subtitle = parts.length > 1
+          ? parts.sublist(1).join(', ')
+          : 'Location selected';
+
+      return Container(
+        padding: const EdgeInsets.all(15),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFB8EDD6), width: 1.2),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
             ),
-            child: const Icon(
-              Icons.check_circle_rounded,
-              color: Color(0xFF2ECC87),
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  controller.selectedMainLocation.value,
-                  style: const TextStyle(
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF1A1D2E),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '${controller.selectedDistrict.value}, ${controller.selectedState.value}',
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    color: Color(0xFF8B8FA8),
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          GestureDetector(
-            onTap: () {
-              controller.selectedMainLocation.value = '';
-              controller.selectedDistrict.value = '';
-              controller.selectedState.value = '';
-            },
-            child: Container(
-              padding: const EdgeInsets.all(7),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
-                color: const Color(0xFFF3F4F9),
-                borderRadius: BorderRadius.circular(8),
+                color: const Color(0xFFEBF9F2),
+                borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(
-                Icons.edit_outlined,
-                size: 15,
-                color: Color(0xFF8B8FA8),
+                Icons.check_circle_rounded,
+                color: Color(0xFF2ECC87),
+                size: 20,
               ),
             ),
-          ),
-        ],
-      ),
-    );
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1A1D2E),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      color: Color(0xFF8B8FA8),
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            GestureDetector(
+              onTap: () => controller.clearSelected(),
+              child: Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3F4F9),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.edit_outlined,
+                  size: 15,
+                  color: Color(0xFF8B8FA8),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildConfirmButton() {
@@ -410,36 +441,57 @@ class SelectLocationPage extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: Obx(() {
-          final enabled = controller.selectedMainLocation.value.isNotEmpty;
-          return SizedBox(
-            width: double.infinity,
-            height: 50,
-            child: ElevatedButton(
-              onPressed: enabled
-                  ? () async {
-                await controller.saveLocation();
-                Get.back();
-              }
-                  : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.kPrimary,
-                foregroundColor: Colors.white,
-                disabledBackgroundColor: const Color(0xFFF0F1F5),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+          final hasSelection = controller.hasAnySelection;
+
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    if (hasSelection) {
+                      await controller.saveLocation();
+                    } else {
+                      await controller.skipLocation();
+                    }
+                    Get.back();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.kPrimary,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    hasSelection
+                        ? 'Confirm Location'
+                        : 'Continue Without Location',
+                    style: const TextStyle(
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      letterSpacing: 0.1,
+                    ),
+                  ),
                 ),
               ),
-              child: Text(
-                enabled ? 'Confirm Location' : 'Select All Fields to Continue',
-                style: TextStyle(
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.w700,
-                  color: enabled ? Colors.white : const Color(0xFFBBBDD0),
-                  letterSpacing: 0.1,
+              if (!hasSelection) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'You can set your location later from your profile',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    color: Colors.grey.shade400,
+                    fontWeight: FontWeight.w400,
+                  ),
                 ),
-              ),
-            ),
+              ],
+            ],
           );
         }),
       ),

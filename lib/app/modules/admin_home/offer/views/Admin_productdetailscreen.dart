@@ -1,3 +1,4 @@
+import 'package:eshoppy/app/common/style/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -171,7 +172,7 @@ class _ImageGalleryAppBarState extends State<_ImageGalleryAppBar> {
               ],
             ),
             child: const Icon(
-              Icons.arrow_back_ios_new_rounded,
+              Icons.arrow_back,
               size: 18,
               color: Color(0xFF1A1D26),
             ),
@@ -969,10 +970,10 @@ class _ErrorView extends StatelessWidget {
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.kPrimary,
         leading: IconButton(
           icon:
-          const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          const Icon(Icons.arrow_back, size: 20),
           onPressed: () => Get.back(),
         ),
       ),

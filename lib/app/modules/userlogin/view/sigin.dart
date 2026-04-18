@@ -2,13 +2,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_colors.dart';
+import '../../../widgets/networkconnection_checkpage.dart';
 import '../../merchantlogin/view/merchant_registration.dart';
 import '../../userlogin/view/user_signup.dart';
 import '../../userlogin/widget/usersignin_form.dart';
 import '../../forgotpassowrd/view/forgotpassword.dart';
+import '../../userlogin/view/admin_loginpage.dart';
 import '../controller/userlogin_controller.dart';
 
-// ─── Design tokens (mirrors AdminLoginScreen) ─────────────────────────────────
+// ─── Design tokens ────────────────────────────────────────────────────────────
 class _T {
   static const surface = Color(0xFFFFFFFF);
   static const bg      = Color(0xFFF5F7F9);
@@ -53,14 +55,14 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen>
     with TickerProviderStateMixin {
 
-  // ── Stagger animation ─────────────────────────────────────────────────────
   late final AnimationController _enter;
   late final List<Animation<double>> _fades;
   late final List<Animation<Offset>>  _slides;
 
-  static const _count  = 5;
-  static const _delays = [0.00, 0.12, 0.28, 0.42, 0.58];
-  static const _ends   = [0.30, 0.40, 0.56, 0.72, 0.90];
+  // Added 1 more item for admin button (index 5)
+  static const _count  = 6;
+  static const _delays = [0.00, 0.12, 0.28, 0.42, 0.58, 0.68];
+  static const _ends   = [0.30, 0.40, 0.56, 0.72, 0.90, 1.00];
 
   @override
   void initState() {
@@ -68,7 +70,7 @@ class _LoginScreenState extends State<LoginScreen>
 
     _enter = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 900),
+      duration: const Duration(milliseconds: 950),
     );
 
     _fades = List.generate(
@@ -82,12 +84,14 @@ class _LoginScreenState extends State<LoginScreen>
     );
 
     final offsets = [
-      const Offset(0, -0.4),  // badge   – drops from top
-      const Offset(0,  0.3),  // title   – rises from below
-      const Offset(-0.2, 0),  // selector – slides from left
-      const Offset(0,  0.35), // card    – rises from below
-      const Offset(0,  0.2),  // bottom  – gentle rise
+      const Offset(0, -0.4),
+      const Offset(0,  0.3),
+      const Offset(-0.2, 0),
+      const Offset(0,  0.35),
+      const Offset(0,  0.2),
+      const Offset(0,  0.2),  // admin button – gentle rise
     ];
+
     _slides = List.generate(
       _count,
           (i) => Tween<Offset>(begin: offsets[i], end: Offset.zero).animate(
@@ -112,7 +116,6 @@ class _LoginScreenState extends State<LoginScreen>
     child: SlideTransition(position: _slides[i], child: child),
   );
 
-  // ─── Build ────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -141,6 +144,8 @@ class _LoginScreenState extends State<LoginScreen>
                       _buildSignUpSection(),
                     ],
                   )),
+                  const SizedBox(height: 28),
+                  _reveal(5, _buildAdminAccessButton()),
                   const SizedBox(height: 8),
                 ],
               ),
@@ -171,15 +176,15 @@ class _LoginScreenState extends State<LoginScreen>
             ),
           ),
           SizedBox(
-          width: 52,
-          height: 52,
-    child: Center(
-    child: Image.asset(
-    'assets/images/logo/eshoppycatlogo.png',
-    fit: BoxFit.contain,
-    ),
-    ),
-    )
+            width: 52,
+            height: 52,
+            child: Center(
+              child: Image.asset(
+                'assets/images/logo/eshoppycatlogo.png',
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -188,8 +193,8 @@ class _LoginScreenState extends State<LoginScreen>
   // ─── Title block ──────────────────────────────────────────────────────────
   Widget _buildTitleBlock() {
     return Column(
-      children: [
-        const Text(
+      children: const [
+        Text(
           "eShoppy",
           style: TextStyle(
             fontSize: 34,
@@ -199,8 +204,8 @@ class _LoginScreenState extends State<LoginScreen>
             height: 1.1,
           ),
         ),
-        const SizedBox(height: 8),
-        const Text(
+        SizedBox(height: 8),
+        Text(
           "Sign in to your account",
           style: TextStyle(
             fontSize: 15,
@@ -255,15 +260,12 @@ class _LoginScreenState extends State<LoginScreen>
                       margin: EdgeInsets.only(right: isLast ? 0 : 4),
                       padding: const EdgeInsets.symmetric(vertical: 13),
                       decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppColors.kPrimary
-                            : Colors.transparent,
+                        color: isSelected ? AppColors.kPrimary : Colors.transparent,
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: isSelected
                             ? [
                           BoxShadow(
-                            color:
-                            AppColors.kPrimary.withOpacity(0.30),
+                            color: AppColors.kPrimary.withOpacity(0.30),
                             blurRadius: 8,
                             offset: const Offset(0, 4),
                           ),
@@ -276,8 +278,7 @@ class _LoginScreenState extends State<LoginScreen>
                           Icon(
                             role.icon,
                             size: 17,
-                            color:
-                            isSelected ? Colors.white : _T.ink400,
+                            color: isSelected ? Colors.white : _T.ink400,
                           ),
                           const SizedBox(width: 7),
                           Text(
@@ -287,9 +288,7 @@ class _LoginScreenState extends State<LoginScreen>
                               fontWeight: isSelected
                                   ? FontWeight.w700
                                   : FontWeight.w500,
-                              color: isSelected
-                                  ? Colors.white
-                                  : _T.ink400,
+                              color: isSelected ? Colors.white : _T.ink400,
                               letterSpacing: isSelected ? 0.1 : 0,
                             ),
                           ),
@@ -319,8 +318,8 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  // ─── Forgot password ──────────────────────────────────────────────────────
   Widget _buildForgotPassword() {
+    final controller = Get.find<UserloginController>();
     return Align(
       alignment: Alignment.centerRight,
       child: TextButton(
@@ -328,6 +327,7 @@ class _LoginScreenState extends State<LoginScreen>
               () => ForgotPasswordEmailView(),
           transition: Transition.fadeIn,
           duration: const Duration(milliseconds: 280),
+          arguments: controller.selectedRole.value, // ✅ pass role as int
         ),
         style: TextButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
@@ -345,7 +345,6 @@ class _LoginScreenState extends State<LoginScreen>
       ),
     );
   }
-
   // ─── Sign-up section ──────────────────────────────────────────────────────
   Widget _buildSignUpSection() {
     return Container(
@@ -389,6 +388,100 @@ class _LoginScreenState extends State<LoginScreen>
           ),
         ],
       ),
+    );
+  }
+
+  // ─── Admin access button ──────────────────────────────────────────────────
+  Widget _buildAdminAccessButton() {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(child: Divider(color: _T.divider, thickness: 1)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text(
+                "ADMIN ACCESS",
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: _T.ink400,
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ),
+            Expanded(child: Divider(color: _T.divider, thickness: 1)),
+          ],
+        ),
+        const SizedBox(height: 14),
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => Get.to(
+                  () => const AdminLoginScreen(),
+              transition: Transition.fadeIn,
+              duration: const Duration(milliseconds: 300),
+            ),
+            borderRadius: BorderRadius.circular(16),
+            splashColor: _T.ink400.withOpacity(0.06),
+            highlightColor: _T.ink400.withOpacity(0.03),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+              decoration: BoxDecoration(
+                color: _T.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: _T.divider, width: 1),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF3F4F6),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.admin_panel_settings_outlined,
+                      size: 20,
+                      color: Color(0xFF6B7280),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Admin portal",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: _T.ink600,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          "Restricted access · Admin only",
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: _T.ink400,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 14,
+                    color: _T.ink400,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

@@ -5,6 +5,7 @@ import 'package:eshoppy/app/widgets/backarrowwidget.dart';
 import 'package:eshoppy/app/widgets/iconbox.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../widgets/networkconnection_checkpage.dart';
 import '../../userlogin/view/sigin.dart';
 import '../widget/merchant_regform.dart';
 
@@ -56,7 +57,7 @@ class _MerchantRegisterScreenState extends State<MerchantRegisterScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return NetworkAwareWrapper(child:Scaffold(
 
       backgroundColor: const Color(0xFFF8F9FA),
       body: Stack(
@@ -88,7 +89,7 @@ class _MerchantRegisterScreenState extends State<MerchantRegisterScreen>
           _buildBackButton()
         ],
       ),
-    );
+    ));
   }
 
   Widget _buildBackButton() {

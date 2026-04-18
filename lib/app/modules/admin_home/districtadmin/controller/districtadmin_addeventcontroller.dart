@@ -1,47 +1,52 @@
+
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 
+import '../../../../data/errors/api_error.dart';
+import '../../../../widgets/areaadminsuccesswidget.dart';
 import '../view/districtadmin_home.dart';
-
-// import '../controller/district_adminhome_controller.dart'; // OPTIONAL
 
 class DistrictAdminEventAddController extends GetxController {
 
-  // ─── Form Controllers ─────────────────────────────
-  final TextEditingController eventName     = TextEditingController();
+  final TextEditingController eventName = TextEditingController();
   final TextEditingController eventLocation = TextEditingController();
 
-  // ─── Observable Fields ────────────────────────────
-  final RxString startDate        = ''.obs;
-  final RxString endDate          = ''.obs;
-  final RxString startTime        = ''.obs;
-  final RxString endTime          = ''.obs;
+  final RxString startDate = ''.obs;
+  final RxString endDate = ''.obs;
+  final RxString startTime = ''.obs;
+  final RxString endTime = ''.obs;
   final RxString selectedDistrict = ''.obs;
-  final Rx<File?> bannerImage     = Rx<File?>(null);
+  final RxString selectedState = ''.obs;
+  final Rx<File?> bannerImage = Rx<File?>(null);
 
-  // ─── State ────────────────────────────────────────
-  final RxBool isLoading          = false.obs;
+  final RxBool isLoading = false.obs;
   final RxBool isDistrictsLoading = false.obs;
-  final RxList<String> districts  = <String>[].obs;
+  final RxBool isStatesLoading = false.obs;
 
-  // ─── Storage & Picker ─────────────────────────────
-  final _box    = GetStorage();
-  final _picker = ImagePicker();
+  final RxList<String> districts = <String>[].obs;
+  final RxList<String> states = <String>[].obs;
 
-  // ─── API Base ─────────────────────────────────────
+  final _box = GetStorage();
+  var errorBanner = Rx<String?>(null);
+  final ImagePicker picker = ImagePicker();
+
+
   static const String _baseUrl =
       'https://rasma.astradevelops.in/e_shoppyy/public/api/district-admin';
+  static const String _publicBaseUrl =
+      'https://rasma.astradevelops.in/e_shoppyy/public/api';
 
-  // ─── Lifecycle ────────────────────────────────────
   @override
   void onInit() {
     super.onInit();
+    fetchStates();
     fetchDistricts();
   }
 
@@ -52,7 +57,6 @@ class DistrictAdminEventAddController extends GetxController {
     super.onClose();
   }
 
-  // ─── Auth Token ───────────────────────────────────
   String get _authToken => _box.read('auth_token') ?? '';
 
   Map<String, String> get _headers => {
@@ -60,12 +64,36 @@ class DistrictAdminEventAddController extends GetxController {
     'Accept': 'application/json',
   };
 
-  // ─── Fetch Districts ──────────────────────────────
-  Future<void> fetchDistricts() async {
-    if (_authToken.isEmpty) {
-      _handleUnauthorized();
-      return;
+  // ─── FETCH STATES ─────────────────────────────
+  Future<void> fetchStates() async {
+    try {
+      isStatesLoading.value = true;
+
+      final response = await http.get(
+        Uri.parse('$_publicBaseUrl/getStates-fordistrict'),
+        headers: _headers,
+      );
+
+      final body = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && body['status'] == true) {
+        final List data = body['data'] ?? [];
+        states.assignAll(
+          data.map((e) => (e['state'] ?? '').toString()).toList(),
+        );
+      } else {
+        AppSnackbarss.error(ApiErrorHandler.handleResponse(response));
+      }
+    } catch (e) {
+      AppSnackbarss.error(ApiErrorHandler.handleException(e));
+    } finally {
+      isStatesLoading.value = false;
     }
+  }
+
+  // ─── FETCH DISTRICTS ─────────────────────────
+  Future<void> fetchDistricts() async {
+
 
     try {
       isDistrictsLoading.value = true;
@@ -80,19 +108,17 @@ class DistrictAdminEventAddController extends GetxController {
       if (response.statusCode == 200 && body['status'] == true) {
         final List data = body['data'] ?? [];
         districts.assignAll(data.map((e) => e.toString()).toList());
-      } else if (response.statusCode == 401) {
-        _handleUnauthorized();
       } else {
-        _showError('Error', body['message'] ?? 'Failed to load districts');
+        AppSnackbarss.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
-      _showError('Network Error', e.toString());
+      AppSnackbarss.error(ApiErrorHandler.handleException(e));
     } finally {
       isDistrictsLoading.value = false;
     }
   }
 
-  // ─── Date Pickers ─────────────────────────────────
+  // ─── DATE ─────────────────────────────────────
   Future<void> pickStartDate(BuildContext context) async {
     final picked = await showDatePicker(
       context: context,
@@ -105,7 +131,6 @@ class DistrictAdminEventAddController extends GetxController {
     if (picked != null) {
       startDate.value = DateFormat('yyyy-MM-dd').format(picked);
 
-      // Clear end date if it's before the new start date
       if (endDate.value.isNotEmpty) {
         final end = DateTime.parse(endDate.value);
         if (end.isBefore(picked)) endDate.value = '';
@@ -131,7 +156,7 @@ class DistrictAdminEventAddController extends GetxController {
     }
   }
 
-  // ─── Time Pickers ─────────────────────────────────
+  // ─── TIME ─────────────────────────────────────
   Future<void> pickStartTime(BuildContext context) async {
     final picked = await showTimePicker(
       context: context,
@@ -159,64 +184,92 @@ class DistrictAdminEventAddController extends GetxController {
     );
   }
 
-  // ─── Image Picker ─────────────────────────────────
+  // // ─── IMAGE ────────────────────────────────────
+  // Future<void> pickBannerImage() async {
+  //   final file = await _picker.pickImage(
+  //     source: ImageSource.gallery,
+  //     imageQuality: 80,
+  //   );
+  //   if (file != null) bannerImage.value = File(file.path);
+  // }
   Future<void> pickBannerImage() async {
-    final file = await _picker.pickImage(
+    final picked = await picker.pickImage(
       source: ImageSource.gallery,
-      imageQuality: 80,
+      imageQuality: 90,
     );
-    if (file != null) bannerImage.value = File(file.path);
+
+    if (picked == null) return;
+
+    File file = File(picked.path);
+
+    // SIZE CHECK (1MB limit)
+    final int bytes = await file.length();
+    if (bytes > 1024 * 1024) {
+      errorBanner.value = "Image must be less than 1 MB";
+      return;
+    }
+
+    // CROP IMAGE (2:1 ratio)
+    final croppedFile = await ImageCropper().cropImage(
+      sourcePath: file.path,
+      aspectRatio: const CropAspectRatio(ratioX: 2, ratioY: 1),
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: 'Crop Banner',
+          toolbarColor: Colors.black,
+          toolbarWidgetColor: Colors.white,
+          lockAspectRatio: true,
+        ),
+        IOSUiSettings(
+          title: 'Crop Banner',
+          aspectRatioLockEnabled: true,
+        ),
+      ],
+    );
+
+    if (croppedFile == null) return;
+
+    file = File(croppedFile.path);
+
+    bannerImage.value = file;
+    errorBanner.value = null;
   }
 
-  // ─── Validate Form ────────────────────────────────
+  // ─── VALIDATION ───────────────────────────────
   bool _validateForm() {
     if (eventName.text.trim().isEmpty) {
-      _showError('Error', 'Enter event name');
+      AppSnackbarss.warning('Enter event name');
       return false;
-    } else if (startDate.value.isEmpty || endDate.value.isEmpty) {
-      _showError('Error', 'Select dates');
-      return false;
-    } else if (startTime.value.isEmpty || endTime.value.isEmpty) {
-      _showError('Error', 'Select time');
+    } else if (selectedState.value.isEmpty) {
+      AppSnackbarss.warning('Select state');
       return false;
     } else if (selectedDistrict.value.isEmpty) {
-      _showError('Error', 'Select district');
+      AppSnackbarss.warning('Select district');
+      return false;
+    } else if (startDate.value.isEmpty || endDate.value.isEmpty) {
+      AppSnackbarss.warning('Select dates');
+      return false;
+    } else if (startTime.value.isEmpty || endTime.value.isEmpty) {
+      AppSnackbarss.warning('Select time');
       return false;
     } else if (eventLocation.text.trim().isEmpty) {
-      _showError('Error', 'Enter event location');
+      AppSnackbarss.warning('Enter event location');
       return false;
     } else if (bannerImage.value == null) {
-      _showError('Error', 'Select banner image');
+      AppSnackbarss.warning('Select banner image');
       return false;
     }
     return true;
   }
 
-  // ─── Submit Event ─────────────────────────────────
+  // ─── ADD EVENT ────────────────────────────────
   Future<void> addEvent() async {
     if (!_validateForm()) return;
-
-    if (_authToken.isEmpty) {
-      _handleUnauthorized();
-      return;
-    }
-
     try {
       isLoading.value = true;
 
-      final bytes       = await bannerImage.value!.readAsBytes();
+      final bytes = await bannerImage.value!.readAsBytes();
       final base64Image = 'data:image/jpeg;base64,${base64Encode(bytes)}';
-
-      final body = {
-        'event_name'    : eventName.text.trim(),
-        'start_date'    : startDate.value,
-        'end_date'      : endDate.value,
-        'start_time'    : startTime.value,
-        'end_time'      : endTime.value,
-        'district'      : selectedDistrict.value,
-        'event_location': eventLocation.text.trim(),
-        'banner_image'  : base64Image,
-      };
 
       final response = await http.post(
         Uri.parse('$_baseUrl/event/create'),
@@ -224,73 +277,51 @@ class DistrictAdminEventAddController extends GetxController {
           ..._headers,
           'Content-Type': 'application/json',
         },
-        body: jsonEncode(body),
+        body: jsonEncode({
+          'event_name': eventName.text.trim(),
+          'start_date': startDate.value,
+          'end_date': endDate.value,
+          'start_time': startTime.value,
+          'end_time': endTime.value,
+          'state': selectedState.value,
+          'district': selectedDistrict.value,
+          'event_location': eventLocation.text.trim(),
+          'banner_image': base64Image,
+        }),
       );
 
       final responseData = jsonDecode(response.body);
 
-      if (response.statusCode == 200 && responseData['status'] == true) {
-        Get.snackbar(
-          'Success',
-          responseData['message'] ?? 'Event created successfully',
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
+      if (response.statusCode == 200 &&
+          (responseData['status'] == true || responseData['status'] == 1)) {
+
+        AppSnackbarss.success(
+            responseData['message'] ?? 'Event created successfully');
 
         _resetForm();
-
-        // 🔥 Navigate to Home (Clear stack)
         Get.offAll(() => Districtadminhomepage());
 
-        // OPTIONAL: Refresh home data if controller exists
-        // if (Get.isRegistered<DistrictAdminHomeController>()) {
-        //   Get.find<DistrictAdminHomeController>().fetchEvents();
-        // }
-
-      } else if (response.statusCode == 401) {
-        _handleUnauthorized();
       } else {
-        _showError('Error', responseData['message'] ?? 'Failed to create event');
+        AppSnackbarss.error(ApiErrorHandler.handleResponse(response));
       }
 
     } catch (e) {
-      _showError('Error', e.toString());
+      AppSnackbarss.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoading.value = false;
     }
   }
 
-  // ─── Reset ────────────────────────────────────────
+  // ─── RESET ────────────────────────────────────
   void _resetForm() {
     eventName.clear();
     eventLocation.clear();
-    startDate.value        = '';
-    endDate.value          = '';
-    startTime.value        = '';
-    endTime.value          = '';
+    startDate.value = '';
+    endDate.value = '';
+    startTime.value = '';
+    endTime.value = '';
+    selectedState.value = '';
     selectedDistrict.value = '';
-    bannerImage.value      = null;
-  }
-
-  // ─── Unauthorized ─────────────────────────────────
-  void _handleUnauthorized() {
-    Get.snackbar(
-      'Session Expired',
-      'Please login again',
-      backgroundColor: Colors.red,
-      colorText: Colors.white,
-    );
-    _box.erase();
-    Get.offAll(() => Districtadminhomepage());
-  }
-
-  // ─── Error Snackbar ───────────────────────────────
-  void _showError(String title, String message) {
-    Get.snackbar(
-      title,
-      message,
-      backgroundColor: Colors.red,
-      colorText: Colors.white,
-    );
+    bannerImage.value = null;
   }
 }

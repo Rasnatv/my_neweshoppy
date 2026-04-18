@@ -1,8 +1,13 @@
-import 'package:flutter/material.dart';
+
+import 'dart:ui';
+
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+
+import '../../../data/errors/api_error.dart';
+import '../../merchantlogin/widget/successwidget.dart';
 
 class DeleteEventController extends GetxController {
   final RxSet<dynamic> deletingIds = <dynamic>{}.obs;
@@ -10,24 +15,20 @@ class DeleteEventController extends GetxController {
 
   Future<void> deleteEvent(dynamic eventId, VoidCallback onSuccess) async {
     final String? authToken = box.read('auth_token');
-
-    if (authToken == null) {
-      Get.snackbar(
-        'Unauthorized',
-        'Auth token not found. Please login again.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-      return;
-    }
+    //
+    // /// ✅ 1. CHECK TOKEN
+    // if (authToken == null || authToken.toString().isEmpty) {
+    //   ApiErrorHandler.handleUnauthorized();
+    //   return;
+    // }
 
     deletingIds.add(eventId);
 
     try {
       final response = await http.delete(
         Uri.parse(
-            'https://rasma.astradevelops.in/e_shoppyy/public/api/delete-event'),
+          'https://rasma.astradevelops.in/e_shoppyy/public/api/delete-event',
+        ),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -38,35 +39,26 @@ class DeleteEventController extends GetxController {
         }),
       );
 
+      /// ✅ 2. HANDLE HTTP ERRORS (IMPORTANT)
+      if (response.statusCode != 200) {
+        final errorMessage = ApiErrorHandler.handleResponse(response);
+        AppSnackbar.error(errorMessage);
+        return;
+      }
+
       final data = jsonDecode(response.body);
 
+      /// ✅ 3. HANDLE API RESPONSE
       if (data['status'] == '1') {
+        AppSnackbar.success(data['message'] ?? "Event deleted successfully");
         onSuccess();
-        Get.snackbar(
-          'Deleted',
-          data['message'] ?? 'Event deleted successfully',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-          duration: const Duration(seconds: 2),
-        );
       } else {
-        Get.snackbar(
-          'Failed',
-          data['message'] ?? 'Failed to delete event',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        AppSnackbar.error(data['message'] ?? "Failed to delete event");
       }
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Something went wrong. Please try again.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      /// ✅ 4. HANDLE EXCEPTIONS
+      final errorMessage = ApiErrorHandler.handleException(e);
+      AppSnackbar.error(errorMessage);
     } finally {
       deletingIds.remove(eventId);
     }

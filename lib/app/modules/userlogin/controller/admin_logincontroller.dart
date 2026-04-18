@@ -1,26 +1,27 @@
+
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
+
+import '../../../widgets/areaadminsuccesswidget.dart';
 import '../../admin_home/districtadmin/view/districtadmin_home.dart';
 import '../../admin_home/view/admin_home.dart';
-import '../../areaadmin/view/area_adminhome.dart';                     // role 3 – AdminDashboard
-
+import '../../areaadmin/view/area_adminhome.dart';
+import '../../../data/errors/api_error.dart';
 
 class AdminLoginController extends GetxController {
-  // ── Text Controllers ─────────────────────────────────────────────────────
-  final TextEditingController emailCtrl    = TextEditingController();
-  final TextEditingController passwordCtrl = TextEditingController();
+  final emailCtrl = TextEditingController();
+  final passwordCtrl = TextEditingController();
 
-  // ── Reactive state ───────────────────────────────────────────────────────
-  final RxInt  selectedRole      = 3.obs; // default: Admin
-  final RxBool isLoading         = false.obs;
-  final RxBool isPasswordVisible = false.obs;
+  var selectedRole = 3.obs;
+  var isLoading = false.obs;
+  var isPasswordVisible = false.obs;
 
-  // ── Storage & API ────────────────────────────────────────────────────────
-  final GetStorage box      = GetStorage();
-  final String     loginUrl =
+  final GetStorage box = GetStorage();
+
+  final String loginUrl =
       "https://rasma.astradevelops.in/e_shoppyy/public/api/login";
 
   @override
@@ -32,142 +33,143 @@ class AdminLoginController extends GetxController {
 
   void setRole(int role) => selectedRole.value = role;
 
-  void togglePasswordVisibility() =>
-      isPasswordVisible.value = !isPasswordVisible.value;
+  void togglePasswordVisibility() {
+    isPasswordVisible.value = !isPasswordVisible.value;
+  }
 
-  // ─── Submit ──────────────────────────────────────────────────────────────
+  // ───────── LOGIN ─────────
   Future<void> submit() async {
     final email = emailCtrl.text.trim();
-    final pass  = passwordCtrl.text.trim();
+    final password = passwordCtrl.text.trim();
 
-    if (email.isEmpty || pass.isEmpty) {
-      _showError("Email and password are required");
+    if (email.isEmpty || password.isEmpty) {
+      AppSnackbarss.warning("Email and password are required");
       return;
     }
+
     if (!GetUtils.isEmail(email)) {
-      _showError("Enter a valid email address");
+      AppSnackbarss.warning("Enter valid email");
       return;
     }
 
     isLoading.value = true;
 
     try {
-      final response = await http
-          .post(
+      final response = await http.post(
         Uri.parse(loginUrl),
         headers: {
-          "Accept":       "application/json",
+          "Accept": "application/json",
           "Content-Type": "application/json",
         },
         body: jsonEncode({
-          "email":    email,
-          "password": pass,
-          "role":     selectedRole.value, // ← uses reactive selected role
+          "email": email,
+          "password": password,
+          "role": selectedRole.value,
         }),
-      )
-          .timeout(const Duration(seconds: 30));
+      );
 
-      final body   = jsonDecode(response.body);
+      debugPrint("🔐 Login status: ${response.statusCode}");
+      debugPrint("🔐 Login body: ${response.body}");
+
+      // ✅ HANDLE NON-200 RESPONSES
+      if (response.statusCode != 200) {
+        final errorMsg = ApiErrorHandler.handleResponse(response);
+        AppSnackbarss.error(errorMsg);
+        return;
+      }
+
+      final body = jsonDecode(response.body);
+
       final status = body['status'];
+      bool isSuccess = status == 1 || status == "1" || status == true;
 
-      if (status != 1 && status != "1" && status != true) {
-        _showError(body['message'] ?? "Login failed");
+      if (!isSuccess) {
+        AppSnackbarss.error(body['message'] ?? "Login failed");
         return;
       }
 
       final data = body['data'];
       if (data == null) {
-        _showError("Invalid server response");
+        AppSnackbarss.error("Invalid response from server");
         return;
       }
 
-      // Verify server role matches selected role
-      final serverRole = data['role'] is String
-          ? int.tryParse(data['role'].toString())
-          : data['role'] as int?;
+      final int serverRole =
+          int.tryParse(data['role'].toString()) ?? 0;
 
       if (serverRole != selectedRole.value) {
-        _showError("Invalid credentials for this admin type");
+        AppSnackbarss.error("Invalid role selected");
         return;
       }
 
-      await _saveAuthData(data);
-      _navigateToHome(serverRole!);
-      _showSuccess(body['message'] ?? "Login successful");
+      final bool saved = await _saveAuthData(data);
+      if (!saved) return;
+
+      AppSnackbarss.success("Login successful ✅");
+
+      _navigateToHome(serverRole);
+
     } catch (e) {
-      debugPrint("Admin login error [role=${selectedRole.value}]: $e");
-      _showError("Something went wrong. Please try again.");
+      debugPrint("❌ LOGIN ERROR: $e");
+
+      // ✅ HANDLE EXCEPTION (NO INTERNET, ETC)
+      final errorMsg = ApiErrorHandler.handleException(e);
+      AppSnackbarss.error(errorMsg);
     } finally {
       isLoading.value = false;
     }
   }
 
-  Future<void> _saveAuthData(Map<String, dynamic> data) async {
-    final token =
-        data['auth_token'] ?? data['token'] ?? data['access_token'];
-    await box.write("auth_token",   token);
-    await box.write("role",         selectedRole.value);
-    await box.write("user_data",    data);
+  // ───────── SAVE AUTH DATA ─────────
+  Future<bool> _saveAuthData(Map<String, dynamic> data) async {
+    final token = data['auth_token'] ??
+        data['token'] ??
+        data['access_token'];
+
+    if (token == null || token.toString().trim().isEmpty) {
+      AppSnackbarss.error("Authentication token missing in response");
+      return false;
+    }
+
+    final String cleanToken = token.toString().trim();
+
+    await box.write("auth_token", cleanToken);
+    await box.write(
+        "role", int.tryParse(data['role'].toString()) ?? 0);
+    await box.write("user_data", data);
     await box.write("is_logged_in", true);
+
+    final String? savedToken = box.read('auth_token');
+    debugPrint("✅ Token saved: '$savedToken'");
+
+    if (savedToken == null || savedToken.isEmpty) {
+      AppSnackbarss.error("Failed to save session. Please try again.");
+      return false;
+    }
+
+    return true;
   }
 
-  // ─── Navigate to role-specific home ──────────────────────────────────────
+  // ───────── NAVIGATION ─────────
   void _navigateToHome(int role) {
     switch (role) {
-      case 3: // Admin
-        Get.offAll(
-              () => AdminDashboard(),
-          transition: Transition.fadeIn,
-          duration: const Duration(milliseconds: 400),
-        );
+      case 3:
+        Get.offAll(() => AdminDashboard());
         break;
-      case 4: // District Admin
-        Get.offAll(
-              () => Districtadminhomepage(),
-          transition: Transition.fadeIn,
-          duration: const Duration(milliseconds: 400),
-        );
+      case 4:
+        Get.offAll(() => Districtadminhomepage());
         break;
-      case 5: // Area Admin
-        Get.offAll(
-              () => AreaAdminhomepage(),
-          transition: Transition.fadeIn,
-          duration: const Duration(milliseconds: 400),
-        );
+      case 5:
+        Get.offAll(() => AreaAdminhomepage());
         break;
       default:
-        _showError("Unknown admin role");
+        AppSnackbarss.error("Invalid role");
     }
-  }
-
-  void _showError(String message) {
-    Get.snackbar(
-      "Login Failed", message,
-      backgroundColor: Colors.red.shade600,
-      colorText:       Colors.white,
-      icon:            const Icon(Icons.error_outline, color: Colors.white),
-      snackPosition:   SnackPosition.TOP,
-      borderRadius:    12,
-      margin:          const EdgeInsets.all(16),
-      duration:        const Duration(seconds: 4),
-    );
-  }
-
-  void _showSuccess(String message) {
-    Get.snackbar(
-      "Success", message,
-      icon:          const Icon(Icons.check_circle_outline, color: Colors.white),
-      snackPosition: SnackPosition.TOP,
-      borderRadius:  12,
-      margin:        const EdgeInsets.all(16),
-      duration:      const Duration(seconds: 3),
-    );
   }
 
   void clearFields() {
     emailCtrl.clear();
     passwordCtrl.clear();
-    isPasswordVisible.value = false;
-    selectedRole.value      = 3;
+    selectedRole.value = 3;
   }
 }

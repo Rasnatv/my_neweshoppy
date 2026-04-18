@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../data/models/userrestaurantmodel.dart';
 import '../controller/restaurant_controller.dart';
+import '../controller/restaurant_maincartcontroller.dart';
 import 'restaurantdetail_page.dart';
 
 // ── Exact color extracted from reference UI ───────────────────────────────────
@@ -16,7 +17,6 @@ class _P {
 
   // Brand — exact amber from reference image
   static const amber      = Color(0xFF0F5151);
-  //static const amber      = Color(0xFF0F5151);   // #DF7110 sampled from image
   static const amberDeep  = Color(0xFFCB6405);   // darker press state
   static const amberLight = Color(0xFFFDF3E7);   // tinted bg
   static const amberGlow  = Color(0x25DF7110);   // shadow/glow
@@ -30,8 +30,6 @@ class _P {
   static const border     = Color(0xFFECEDF0);
   static const divider    = Color(0xFFF0F1F4);
   static const shadow     = Color(0x10000000);
-  static const starColor  = Color(0xFFFFB800);
-  static const openGreen  = Color(0xFF27AE60);
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -39,6 +37,7 @@ class RestaurantListPage extends StatelessWidget {
   RestaurantListPage({super.key});
 
   final RestaurantController controller = Get.put(RestaurantController());
+  final FinalCartController  cartController=Get.put(FinalCartController());
 
   @override
   Widget build(BuildContext context) {
@@ -57,14 +56,14 @@ class RestaurantListPage extends StatelessWidget {
           title: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
+              mainAxisSize: MainAxisSize.min,   // ✅ CRITICAL fix — was unconstrained
               children: [
-                // Left: amber accent bar + title stack
                 Container(
                   width: 3.5,
                   height: 38,
                   margin: const EdgeInsets.only(right: 12),
                   decoration: BoxDecoration(
-                    color: _P.amber,
+                    color: Colors.amber,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -98,38 +97,52 @@ class RestaurantListPage extends StatelessWidget {
             ),
           ),
           actions: [
-            // Notification bell
-            Stack(
-              children: [
-                IconButton(
-                  icon: const Icon(
-                    Icons.shopping_cart,
-                    color: _P.textDark,
-                    size: 24,
-                  ),
-                  onPressed: ()=>Get.to(()=>RestaurantFinalCart()),),
-
-                Positioned(
-                  top: 10,
-                  right: 10,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: _P.amber,
-                      shape: BoxShape.circle,
+            Obx(() {
+              final cartController = Get.find<FinalCartController>();
+              final count = cartController.totalItemCount;
+              return SizedBox(          // ✅ Constrain the Stack
+                width: 48,
+                height: 56,
+                child: Stack(
+                  children: [
+                    IconButton(
+                      icon: const Icon(
+                        Icons.shopping_cart,
+                        color: _P.textDark,
+                        size: 24,
+                      ),
+                      onPressed: () => Get.to(() => RestaurantFinalCart()),
                     ),
-                  ),
+                    if (count > 0)
+                      Positioned(
+                        top: 8,
+                        right: 6,
+                        child: Container(
+                          width: 18,
+                          height: 18,
+                          decoration: const BoxDecoration(
+                            color: Colors.amber,
+                            shape: BoxShape.circle,
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            count > 99 ? '99+' : '$count',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-              ],
-            ),
+              );
+            }),
             const SizedBox(width: 8),
           ],
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(1),
-            child: Container(height: 1, color: _P.border),
-          ),
         ),
+
         body: Obx(() {
           if (controller.isLoading.value) {
             return const Center(

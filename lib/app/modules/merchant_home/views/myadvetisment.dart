@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
+import '../../../common/style/app_colors.dart';
 import '../../../common/style/app_text_style.dart';
+import '../../../widgets/delete_widget.dart';
+import '../../../widgets/networkconnection_checkpage.dart';
 import '../controller/advertisment_deletemerchantcontroller.dart';
 import '../controller/merchant_advertismentlistcontroller.dart';
 
@@ -29,22 +32,23 @@ class MyAdvertisements extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
-      child: Scaffold(
+      child:NetworkAwareWrapper(
+        child: Scaffold(
         backgroundColor: _bg,
         appBar: AppBar(
           elevation: 0,
-          backgroundColor: _teal,
-          surfaceTintColor: Colors.transparent,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                size: 18, color: Colors.white),
-            onPressed: () => Get.back(),
-          ),
+          backgroundColor: AppColors.kPrimary,
+          automaticallyImplyLeading: true,
+          iconTheme: IconThemeData(color: Colors.white),
           title: Text(
             "My Advertisements",
-            style: AppTextStyle.rTextNunitoWhite16w600,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.1,
+            ),
           ),
-          centerTitle: true,
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 12),
@@ -119,7 +123,7 @@ class MyAdvertisements extends StatelessWidget {
           );
         }),
       ),
-    );
+    ));
   }
 
   // ── EMPTY STATE ──────────────────────────────────────────────────────────
@@ -249,8 +253,6 @@ class MyAdvertisements extends StatelessWidget {
                   ),
                 ),
               ),
-
-              // ── Delete Button ─────────────────────────────────
               Positioned(
                 top: 10,
                 right: 10,
@@ -259,7 +261,13 @@ class MyAdvertisements extends StatelessWidget {
                   return GestureDetector(
                     onTap: isDeleting
                         ? null
-                        : () => _showDeleteDialog(context, ad, index),
+                        : () => DeleteConfirmDialog.show(
+                      context: Get.context!,
+                      title: 'Delete Advertisement?',
+                      message: '"${ad["title"]}" will be permanently removed and cannot be recovered.',
+                      onConfirm: () => deleteCtrl.deleteAdvertisement(
+                          ad["id"], () => controller.fetchAdvertisements()),
+                    ),
                     child: Container(
                       padding: const EdgeInsets.all(7),
                       decoration: BoxDecoration(
@@ -404,43 +412,6 @@ class MyAdvertisements extends StatelessWidget {
     );
   }
 
-  // ── Location Badge (on image) ─────────────────────────────────────────────
-  Widget _locationBadge({required bool isDistrict, required String label}) {
-    final Color bgColor =
-    isDistrict ? const Color(0xFF1565C0) : const Color(0xFF6A1B9A);
-    final IconData icon =
-    isDistrict ? Icons.location_city_rounded : Icons.place_rounded;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: bgColor.withOpacity(0.88),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: bgColor.withOpacity(0.35),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: Colors.white),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   // ── Location Chip (below title) ───────────────────────────────────────────
   Widget _locationChip({required bool isDistrict, required String label}) {
@@ -475,120 +446,4 @@ class MyAdvertisements extends StatelessWidget {
     );
   }
 
-  // ── DELETE DIALOG ─────────────────────────────────────────────────────────
-  void _showDeleteDialog(
-      BuildContext context, Map<String, dynamic> ad, int index) {
-    Get.dialog(
-      Dialog(
-        backgroundColor: Colors.white,
-        shape:
-        RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        insetPadding:
-        const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: Colors.red.shade50,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.delete_outline_rounded,
-                    size: 26, color: Colors.red),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                "Delete Advertisement?",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: _textPrimary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                "\"${ad["title"]}\" will be permanently removed and cannot be recovered.",
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: _textSecondary,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Get.back(),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: _textSecondary,
-                        side: const BorderSide(color: _border, width: 1.4),
-                        padding: const EdgeInsets.symmetric(vertical: 13),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: const Text(
-                        "Cancel",
-                        style: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Obx(() {
-                      final isDeleting =
-                      deleteCtrl.deletingIds.contains(ad['id']);
-                      return ElevatedButton(
-                        onPressed: isDeleting
-                            ? null
-                            : () {
-                          Get.back();
-                          deleteCtrl.deleteAdvertisement(
-                            ad["id"],
-                                () => controller.fetchAdvertisements(),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          disabledBackgroundColor: Colors.red[300],
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 13),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: isDeleting
-                            ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                            : const Text(
-                          "Delete",
-                          style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600),
-                        ),
-                      );
-                    }),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }

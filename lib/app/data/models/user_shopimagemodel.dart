@@ -1,3 +1,4 @@
+
 class UserShopDetailModel {
   final String shopName;
   final String image;

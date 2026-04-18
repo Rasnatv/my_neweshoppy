@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_colors.dart';
 import '../../../data/models/merchant_offerbannermodel.dart';
+import '../../../widgets/delete_widget.dart';
+import '../../../widgets/networkconnection_checkpage.dart';
 import '../controller/merchant_offerbanner_controller.dart';
 import 'merchant_createoffer.dart';
 import 'merchant_offerproductview.dart';
@@ -30,7 +32,8 @@ class MerchantOfferViewPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
-      child: Scaffold(
+      child: NetworkAwareWrapper(
+        child:Scaffold(
         backgroundColor: _bg,
         appBar: _appBar(),
         body: Obx(() {
@@ -39,7 +42,7 @@ class MerchantOfferViewPage extends StatelessWidget {
           return _body();
         }),
       ),
-    );
+    ));
   }
 
   // ── AppBar ────────────────────────────────────────────────────────────────
@@ -51,11 +54,12 @@ class MerchantOfferViewPage extends StatelessWidget {
     title: const Text(
       'My Offers',
       style: TextStyle(
-        fontWeight: FontWeight.w700,
+        color: Colors.white,
         fontSize: 17,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.1,
       ),
     ),
-    centerTitle: true,
     actions: [
       Padding(
         padding: const EdgeInsets.only(right: 16),
@@ -199,6 +203,7 @@ class MerchantOfferViewPage extends StatelessWidget {
     });
   }
 
+
   // ── Section label ─────────────────────────────────────────────────────────
   Widget _buildSectionLabel(String label) => Row(
     children: [
@@ -249,12 +254,12 @@ class MerchantOfferViewPage extends StatelessWidget {
         children: [
           // ── Banner image
           _BannerSection(url: offer.offerBanner),
-
-          // ── Card header row (icon + title style)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                // ── Offer icon
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
@@ -265,40 +270,79 @@ class MerchantOfferViewPage extends StatelessWidget {
                       color: AppColors.kPrimary, size: 20),
                 ),
                 const SizedBox(width: 12),
-                Text(
-                  'Offer #${offer.offerId}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: _textPrimary,
-                  ),
-                ),
-                const Spacer(),
-                // Discount badge
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: _successBg,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                        color: _success.withOpacity(0.25)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+
+                // ── Offer title + discount badge (column)
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.percent_rounded,
-                          size: 12, color: _success),
-                      const SizedBox(width: 4),
                       Text(
-                        'Flat ${offer.discountPercentage.toStringAsFixed(0)}% OFF',
+                        'Offer #${offer.offerId}',
                         style: const TextStyle(
-                          fontSize: 12,
+                          fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: _success,
+                          color: _textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: _successBg,
+                          borderRadius: BorderRadius.circular(20),
+                          border:
+                          Border.all(color: _success.withOpacity(0.25)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.percent_rounded,
+                                size: 11, color: _success),
+                            const SizedBox(width: 3),
+                            Text(
+                              'Flat ${offer.discountPercentage.toStringAsFixed(0)}% OFF',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: _success,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
+                  ),
+                ),
+
+                // ── Delete button
+                Builder(
+                  builder: (context) => GestureDetector(
+                    onTap: () {
+                      DeleteConfirmDialog.show(
+                        context: context,
+                        title: "Delete Offer",
+                        message:
+                        "Are you sure you want to delete this offer?",
+                        onConfirm: () {
+                          controller.deleteOffer(offer.offerId!);
+                        },
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.07),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                            color: Colors.red.withOpacity(0.18)),
+                      ),
+                      child: const Icon(
+                        Icons.delete_outline_rounded,
+                        color: Colors.red,
+                        size: 20,
+                      ),
+                    ),
                   ),
                 ),
               ],

@@ -1,4 +1,5 @@
 
+
 import 'dart:convert';
 import 'dart:io';
 
@@ -8,7 +9,9 @@ import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
-import '../views/myadvetisment.dart';
+import '../../merchantlogin/widget/successwidget.dart';
+import '../../../data/errors/api_error.dart';
+import 'merchant_advertismentlistcontroller.dart';
 
 class MerchantAdvertisementController extends GetxController {
   final adNameController = TextEditingController();
@@ -20,23 +23,36 @@ class MerchantAdvertisementController extends GetxController {
 
   late String authToken;
 
-  // District & Area lists
-  final districts = <String>[].obs;
-  final areas = <String>[].obs;
+  final stateList    = <String>[].obs;
+  final districtList = <String>[].obs;
+  final areaList     = <String>[].obs;
+
+  final isLoadingStates    = false.obs;
   final isLoadingDistricts = false.obs;
-  final isLoadingAreas = false.obs;
+  final isLoadingAreas     = false.obs;
 
-  // Selected values
+  final selectedState    = Rx<String?>(null);
   final selectedDistrict = Rx<String?>(null);
-  final selectedArea = Rx<String?>(null);
+  final selectedArea     = Rx<String?>(null);
 
-  // Toggle: 'district' or 'area' — null = nothing chosen yet
-  final locationType = Rx<String?>(null);
+  final showMode = "district".obs;
 
+  // ── API URLS ──────────────────────────────────────────────
+  final String statesUrl =
+      "https://rasma.astradevelops.in/e_shoppyy/public/api/merchant/states";
+  final String districtsUrl =
+      "https://rasma.astradevelops.in/e_shoppyy/public/api/districts";
+  final String areasUrl =
+      "https://rasma.astradevelops.in/e_shoppyy/public/api/areas";
+  final String apiUrl =
+      "https://rasma.astradevelops.in/e_shoppyy/public/api/advertisement";
+
+  // ── LIFECYCLE ─────────────────────────────────────────────
   @override
   void onInit() {
     super.onInit();
     authToken = box.read("auth_token") ?? "";
+    fetchStates();
     fetchDistricts();
     fetchAreas();
   }
@@ -47,102 +63,152 @@ class MerchantAdvertisementController extends GetxController {
     super.onClose();
   }
 
-  /// Switch location type — resets the other selection
-  void setLocationType(String type) {
-    locationType.value = type;
-    selectedDistrict.value = null;
-    selectedArea.value = null;
-  }
-
-  /// Fetch Districts
-  Future<void> fetchDistricts() async {
-    isLoadingDistricts.value = true;
+  // ── FETCH STATES ──────────────────────────────────────────
+  Future<void> fetchStates() async {
+    isLoadingStates.value = true;
     try {
       final response = await http.get(
-        Uri.parse(
-            "https://rasma.astradevelops.in/e_shoppyy/public/api/districts"),
+        Uri.parse(statesUrl),
         headers: {
           "Authorization": "Bearer $authToken",
           "Accept": "application/json",
         },
       );
-      final body = jsonDecode(response.body);
-      if (body["status"] == true && body["data"] != null) {
-        districts.value = List<String>.from(body["data"]);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final status = data['status'];
+        if ((status == true || status == 1) && data['data'] != null) {
+          stateList.assignAll(List<String>.from(data['data']));
+        }
+      } else {
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
-      Get.snackbar("Error", "Failed to load districts");
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
+    } finally {
+      isLoadingStates.value = false;
+    }
+  }
+
+  // ── FETCH DISTRICTS ───────────────────────────────────────
+  Future<void> fetchDistricts() async {
+    isLoadingDistricts.value = true;
+    try {
+      final response = await http.get(
+        Uri.parse(districtsUrl),
+        headers: {
+          "Authorization": "Bearer $authToken",
+          "Accept": "application/json",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['status'] == true && data['data'] != null) {
+          districtList.assignAll(List<String>.from(data['data']));
+        }
+      } else {
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
+      }
+    } catch (e) {
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoadingDistricts.value = false;
     }
   }
 
-  /// Fetch Areas
+  // ── FETCH AREAS ───────────────────────────────────────────
   Future<void> fetchAreas() async {
     isLoadingAreas.value = true;
     try {
       final response = await http.get(
-        Uri.parse(
-            "https://rasma.astradevelops.in/e_shoppyy/public/api/areas"),
+        Uri.parse(areasUrl),
         headers: {
           "Authorization": "Bearer $authToken",
           "Accept": "application/json",
         },
       );
-      final body = jsonDecode(response.body);
-      if (body["status"] == true && body["data"] != null) {
-        areas.value = List<String>.from(body["data"]);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['status'] == true && data['data'] != null) {
+          areaList.assignAll(List<String>.from(data['data']));
+        }
+      } else {
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
-      Get.snackbar("Error", "Failed to load areas");
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoadingAreas.value = false;
     }
   }
 
-  /// Pick Image
   Future<void> pickBanner() async {
-    final picked = await picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 80,
-    );
-    if (picked != null) {
+    try {
+      final picked = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+
+      if (picked == null) return;
+
+      final file = File(picked.path);
+
+      // ✅ Decode image to get actual width & height
+      final bytes = await file.readAsBytes();
+      final decodedImage = await decodeImageFromList(bytes);
+
+      final width  = decodedImage.width;
+      final height = decodedImage.height;
+      final ratio  = width / height;
+
+      debugPrint(">>> Image size: ${width}x${height}, ratio: $ratio");
+
+      // ✅ Allow only 2:1 ratio (small tolerance ±0.1)
+      if (ratio < 1.9 || ratio > 2.1) {
+        AppSnackbar.error(
+          "Invalid image ratio ${width}x${height}.\nPlease upload a 2:1 ratio image (e.g. 1200x600)",
+        );
+        return;
+      }
+
+      // ✅ Ratio is correct — set directly, no cropper needed
       bannerImage.value = File(picked.path);
+
+    } catch (e) {
+      AppSnackbar.error("Image error: $e");
     }
   }
 
-  /// Convert image to base64
-  Future<String> _toBase64(File file) async {
-    final bytes = await file.readAsBytes();
-    final base64Str = base64Encode(bytes);
-    return "data:image/jpeg;base64,$base64Str";
-  }
+  // ── REMOVE BANNER ─────────────────────────────────────────
+  void removeBanner() => bannerImage.value = null;
 
-  /// POST ADVERTISEMENT
+  // ── IMAGE → BASE64 ────────────────────────────────────────
+  Future<String?> _toBase64(File file) async {
+    try {
+      final bytes = await file.readAsBytes();
+      return "data:image/jpeg;base64,${base64Encode(bytes)}";
+    } catch (e) {
+      return null;
+    }
+  }
   Future<void> postAdvertisement() async {
     if (adNameController.text.trim().isEmpty) {
-      Get.snackbar("Error", "Enter advertisement name");
-      return;
+      return AppSnackbar.error("Enter advertisement name");
     }
-
     if (bannerImage.value == null) {
-      Get.snackbar("Error", "Upload banner image");
-      return;
+      return AppSnackbar.error("Upload banner image");
     }
-
-    if (locationType.value == null) {
-      Get.snackbar("Error", "Select District or Area");
-      return;
+    if (selectedState.value == null) {
+      return AppSnackbar.error("Select a state");
     }
-
-    if (locationType.value == 'district' && selectedDistrict.value == null) {
-      Get.snackbar("Error", "Please select a district");
-      return;
+    if (selectedDistrict.value == null) {
+      return AppSnackbar.error("Select a district");
     }
-
-    if (locationType.value == 'area' && selectedArea.value == null) {
-      Get.snackbar("Error", "Please select an area");
-      return;
+    if (showMode.value == "area" && selectedArea.value == null) {
+      return AppSnackbar.error("Select an area");
     }
 
     isLoading.value = true;
@@ -150,59 +216,58 @@ class MerchantAdvertisementController extends GetxController {
     try {
       final base64Image = await _toBase64(bannerImage.value!);
 
-      final postBody = <String, dynamic>{
-        "advertisement": adNameController.text.trim(),
-        "banner_image": base64Image,
-        "district":
-        locationType.value == 'district' ? selectedDistrict.value : "",
-        "main_location":
-        locationType.value == 'area' ? selectedArea.value : "",
-      };
-
       final response = await http.post(
-        Uri.parse(
-            "https://rasma.astradevelops.in/e_shoppyy/public/api/advertisement"),
+        Uri.parse(apiUrl),
         headers: {
           "Authorization": "Bearer $authToken",
           "Accept": "application/json",
           "Content-Type": "application/json",
         },
-        body: jsonEncode(postBody),
+        body: jsonEncode({
+          "advertisement": adNameController.text.trim(),
+          "banner_image": base64Image,
+          "state": selectedState.value,
+          "district": selectedDistrict.value,
+          "main_location":
+          showMode.value == "area" ? (selectedArea.value ?? "") : "",
+        }),
       );
 
-      final responseBody = jsonDecode(response.body);
+      final message = ApiErrorHandler.handleResponse(response);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        if (responseBody["status"] == "1" || responseBody["status"] == 1) {
-          adNameController.clear();
-          bannerImage.value = null;
-          selectedDistrict.value = null;
-          selectedArea.value = null;
-          locationType.value = null;
+        final data = jsonDecode(response.body);
 
-          Get.snackbar(
-            "Success",
-            responseBody["message"] ?? "Advertisement added successfully",
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
-            snackPosition: SnackPosition.BOTTOM,
-          );
+        if (data["status"] == "1" || data["status"] == 1) {
+          /// ✅ 🔥 REFRESH LIST HERE
+          if (Get.isRegistered<MerchantAdvertisementGetController>()) {
+            Get.find<MerchantAdvertisementGetController>()
+                .fetchAdvertisements();
+          }
 
-          await Future.delayed(const Duration(seconds: 1));
-          Get.offAll(() => MyAdvertisements());
+          _clearForm();
+          AppSnackbar.success(data["message"] ?? "Advertisement posted");
+
+          await Future.delayed(const Duration(milliseconds: 800));
+          Get.back();
         } else {
-          Get.snackbar(
-              "Failed", responseBody["message"] ?? "Something went wrong");
+          AppSnackbar.error(data["message"] ?? message);
         }
-      } else if (response.statusCode == 401) {
-        Get.snackbar("Session Expired", "Login again");
-      } else {
-        Get.snackbar("Error", "Server error: ${response.statusCode}");
       }
     } catch (e) {
-      Get.snackbar("Error", "Something went wrong: $e");
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoading.value = false;
     }
+  }
+
+  // ── CLEAR FORM ────────────────────────────────────────────
+  void _clearForm() {
+    adNameController.clear();
+    bannerImage.value    = null;
+    selectedState.value    = null;
+    selectedDistrict.value = null;
+    selectedArea.value     = null;
+    showMode.value         = "district";
   }
 }

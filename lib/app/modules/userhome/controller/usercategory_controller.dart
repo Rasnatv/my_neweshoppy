@@ -1,87 +1,12 @@
-//
-// import 'dart:convert';
-// import 'package:get/get.dart';
-// import 'package:get_storage/get_storage.dart';
-// import 'package:http/http.dart' as http;
-//
-// import '../../../data/models/user_category model.dart';
-//
-//
-// class UserCategoryController extends GetxController {
-//   final box = GetStorage();
-//
-//   final String api =
-//       "https://rasma.astradevelops.in/e_shoppyy/public/api/usercategoriesget";
-//
-//   var isLoading = false.obs;
-//   var categories = <UserCategoryModel>[].obs;
-//
-//   @override
-//   void onInit() {
-//     super.onInit();
-//     fetchCategoriesFromStorage();
-//   }
-//
-//   Future<void> fetchCategoriesFromStorage() async {
-//     final state = box.read('state') ?? '';
-//     final district = box.read('district') ?? '';
-//     final mainLocation = box.read('main_location') ?? '';
-//
-//     if (state.isEmpty || district.isEmpty || mainLocation.isEmpty) {
-//       categories.clear();
-//       return;
-//     }
-//
-//     await fetchCategories(
-//       state: state,
-//       district: district,
-//       mainLocation: mainLocation,
-//     );
-//   }
-//
-//   Future<void> fetchCategories({
-//     required String state,
-//     required String district,
-//     required String mainLocation,
-//   }) async {
-//     final token = box.read("auth_token");
-//     if (token == null) return;
-//
-//     try {
-//       isLoading.value = true;
-//
-//       final res = await http.post(
-//         Uri.parse(api),
-//         headers: {
-//           "Accept": "application/json",
-//           "Authorization": "Bearer $token",
-//         },
-//         body: {
-//           "state": state,
-//           "district": district,
-//           "main_location": mainLocation,
-//         },
-//       );
-//
-//       if (res.statusCode == 200) {
-//         final List list = json.decode(res.body)['data'];
-//         categories.value =
-//             list.map((e) => UserCategoryModel.fromJson(e)).toList();
-//       } else {
-//         categories.clear();
-//       }
-//     } finally {
-//       isLoading.value = false;
-//     }
-//   }
-// }
+
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 
+import '../../../data/errors/api_error.dart';
 import '../../../data/models/user_category model.dart';
-import 'district _controller.dart';
+import '../../merchantlogin/widget/successwidget.dart';
 
 class UserCategoryController extends GetxController {
   final box = GetStorage();
@@ -92,33 +17,26 @@ class UserCategoryController extends GetxController {
   var isLoading = false.obs;
   var categories = <UserCategoryModel>[].obs;
 
-  late UserLocationController locationController;
-
   @override
   void onInit() {
     super.onInit();
-
-    // 🔗 Link location controller
-    locationController = Get.find<UserLocationController>();
-
-    // 🔥 React when location changes
-    ever(locationController.selectedMainLocation, (_) {
-      fetchCategoriesFromStorage();
-    });
-
-    // 🔁 Load categories on restart
-    fetchCategoriesFromStorage();
+    _fetchFromStorageIfAvailable();
   }
 
-  Future<void> fetchCategoriesFromStorage() async {
+  Future<void> refresh() async {
+    await _fetchFromStorageIfAvailable();
+  }
+
+  Future<void> _fetchFromStorageIfAvailable() async {
     final token = box.read('auth_token');
     if (token == null) return;
 
-    final state = box.read('state_$token') ?? '';
-    final district = box.read('district_$token') ?? '';
+    final state        = box.read('state_$token') ?? '';
+    final district     = box.read('district_$token') ?? '';
     final mainLocation = box.read('main_location_$token') ?? '';
 
-    if (state.isEmpty || district.isEmpty || mainLocation.isEmpty) {
+    // ✅ Fetch when at least state + district is selected
+    if (state.isEmpty || district.isEmpty) {
       categories.clear();
       return;
     }
@@ -126,7 +44,7 @@ class UserCategoryController extends GetxController {
     await fetchCategories(
       state: state,
       district: district,
-      mainLocation: mainLocation,
+      mainLocation: mainLocation, // may be empty — backend filters accordingly
     );
   }
 
@@ -135,8 +53,16 @@ class UserCategoryController extends GetxController {
     required String district,
     required String mainLocation,
   }) async {
+    if (isLoading.value) return;
+
     final token = box.read("auth_token");
     if (token == null) return;
+
+    // ✅ Only require state + district (mainLocation is optional)
+    if (state.isEmpty || district.isEmpty) {
+      categories.clear();
+      return;
+    }
 
     try {
       isLoading.value = true;
@@ -150,17 +76,25 @@ class UserCategoryController extends GetxController {
         body: {
           "state": state,
           "district": district,
-          "main_location": mainLocation,
+          "main_location": mainLocation, // empty string when not selected
         },
       );
 
       if (res.statusCode == 200) {
-        final List list = json.decode(res.body)['data'];
-        categories.value =
-            list.map((e) => UserCategoryModel.fromJson(e)).toList();
+        final decoded = json.decode(res.body);
+        final List list = decoded['data'] ?? [];
+        final newCategories =
+        list.map((e) => UserCategoryModel.fromJson(e)).toList();
+
+        // ✅ Only replace if new data arrived — prevents empty flash
+        if (newCategories.isNotEmpty) {
+          categories.value = newCategories;
+        }
       } else {
-        categories.clear();
+        AppSnackbar.error(ApiErrorHandler.handleResponse(res));
       }
+    } catch (e) {
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoading.value = false;
     }

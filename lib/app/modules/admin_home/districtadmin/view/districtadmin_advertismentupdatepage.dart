@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:eshoppy/app/common/style/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -17,7 +18,7 @@ class DistrictAdvertisementUpdatePage extends StatelessWidget{
       body: Obx(() {
         if (controller.isFetching.value) {
           return const Center(
-            child: CircularProgressIndicator(color: Color(0xFF4F46E5)),
+            child: CircularProgressIndicator(color: Color(0xFF084E43)),
           );
         }
         return _buildBody(context);
@@ -29,27 +30,23 @@ class DistrictAdvertisementUpdatePage extends StatelessWidget{
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: const Color(0xFF4F46E5),
+      backgroundColor: AppColors.welcomecardclr,
       elevation: 0,
-      centerTitle: true,
-      leading: IconButton(
-        onPressed: () => Get.back(),
-        icon: const Icon(Icons.arrow_back_ios_new_rounded,
-            color: Colors.white, size: 20),
-      ),
+      iconTheme: IconThemeData(color: Colors.white),
+      automaticallyImplyLeading: true,
       title: const Text(
         'Update Advertisement',
         style: TextStyle(
           color: Colors.white,
-          fontSize: 18,
+          fontSize: 17,
           fontWeight: FontWeight.w600,
-          letterSpacing: 0.3,
+          letterSpacing: 0.1,
         ),
       ),
       flexibleSpace: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)],
+            colors: [Color(0xFF084E43), Color(0xFF084E43)],
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
           ),
@@ -77,11 +74,15 @@ class DistrictAdvertisementUpdatePage extends StatelessWidget{
             const SizedBox(height: 8),
             _buildAdvertisementField(),
             const SizedBox(height: 20),
-
-            // District field (locked)
-            _buildSectionLabel('District', isRequired: false, isLocked: true),
+            _buildSectionLabel('State', isRequired: true),
             const SizedBox(height: 8),
-            _buildDistrictField(),
+            _buildStateDropdown(),
+            const SizedBox(height: 20),
+
+            _buildSectionLabel('District', isRequired: true),
+            const SizedBox(height: 8),
+            _buildDistrictDropdown(),
+            const SizedBox(height: 20),
             const SizedBox(height: 20),
 
             // Banner Image
@@ -106,14 +107,14 @@ class DistrictAdvertisementUpdatePage extends StatelessWidget{
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)],
+          colors: [Color(0xFF084E43), Color(0xFF084E43)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF4F46E5).withOpacity(0.3),
+            color: const Color(0xFF084E43).withOpacity(0.3),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -145,7 +146,7 @@ class DistrictAdvertisementUpdatePage extends StatelessWidget{
                 ),
                 const SizedBox(height: 4),
                 Obx(() => Text(
-                  'ID: #${controller.advertisementId}  •  District: ${controller.districtName.value.isEmpty ? '...' : controller.districtName.value}',
+                  'ID: #${controller.advertisementId}  •  District: ${controller.selectedDistrict.value.isEmpty ? '...' : controller.selectedDistrict.value}',
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.8),
                     fontSize: 12,
@@ -221,7 +222,7 @@ class DistrictAdvertisementUpdatePage extends StatelessWidget{
         prefixIcon: const Padding(
           padding: EdgeInsets.only(bottom: 40),
           child: Icon(Icons.edit_note_rounded,
-              color: Color(0xFF4F46E5), size: 22),
+              color: Color(0xFF084E43), size: 22),
         ),
         filled: true,
         fillColor: Colors.white,
@@ -235,7 +236,7 @@ class DistrictAdvertisementUpdatePage extends StatelessWidget{
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFF4F46E5), width: 2),
+          borderSide: const BorderSide(color: Color(0xFF084E43), width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -257,50 +258,72 @@ class DistrictAdvertisementUpdatePage extends StatelessWidget{
   }
 
   // ─── DISTRICT FIELD (LOCKED) ──────────────────────────────────────────────────
-
-  Widget _buildDistrictField() {
+  Widget _buildDistrictDropdown() {
     return Obx(() => Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
-      child: ListTile(
-        contentPadding:
-        const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: const Color(0xFFEEF2FF),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: const Icon(Icons.location_on_rounded,
-              color: Color(0xFF4F46E5), size: 20),
+      child: DropdownButtonFormField<String>(
+        value: controller.selectedDistrict.value.isEmpty
+            ? null
+            : controller.selectedDistrict.value,
+        hint: const Text('Select District'),
+        items: controller.districtList.map((district) {
+          return DropdownMenuItem(
+            value: district,
+            child: Text(
+              district.toUpperCase(),
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF374151),
+              ),
+            ),
+          );
+        }).toList(),
+        onChanged: (value) {
+          controller.selectedDistrict.value = value ?? '';
+        },
+        decoration: const InputDecoration(
+          border: InputBorder.none,
         ),
-        title: Text(
-          controller.districtName.value.isEmpty
-              ? 'Loading...'
-              : controller.districtName.value.toUpperCase(),
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF374151),
-            letterSpacing: 0.5,
-          ),
-        ),
-        subtitle: const Text(
-          'District cannot be changed',
-          style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
-        ),
-        trailing: Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF3F4F6),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: const Icon(Icons.lock_rounded,
-              size: 16, color: Color(0xFF9CA3AF)),
-        ),
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'District is required';
+          }
+          return null;
+        },
+      ),
+    ));
+  }
+  Widget _buildStateDropdown() {
+    return Obx(() => Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: DropdownButtonFormField<String>(
+        value: controller.selectedState.value.isEmpty
+            ? null
+            : controller.selectedState.value,
+        hint: const Text('Select State'),
+        items: controller.stateList.map((state) {
+          return DropdownMenuItem(
+            value: state,
+            child: Text(state),
+          );
+        }).toList(),
+        onChanged: (value) {
+          controller.selectedState.value = value ?? '';
+        },
+        decoration: const InputDecoration(border: InputBorder.none),
+        validator: (value) =>
+        value == null || value.isEmpty ? 'State required' : null,
       ),
     ));
   }
@@ -323,7 +346,7 @@ class DistrictAdvertisementUpdatePage extends StatelessWidget{
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: hasNewImage
-                    ? const Color(0xFF4F46E5)
+                    ? const Color(0xFF084E43)
                     : const Color(0xFFE5E7EB),
                 width: hasNewImage ? 2 : 1,
               ),
@@ -368,7 +391,7 @@ class DistrictAdvertisementUpdatePage extends StatelessWidget{
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF4F46E5),
+                        color: const Color(0xFF084E43),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: const Text(
@@ -397,7 +420,7 @@ class DistrictAdvertisementUpdatePage extends StatelessWidget{
                       if (loadingProgress == null) return child;
                       return const Center(
                         child: CircularProgressIndicator(
-                            color: Color(0xFF4F46E5)),
+                            color: Color(0xFF084E43)),
                       );
                     },
                   ),
@@ -435,7 +458,7 @@ class DistrictAdvertisementUpdatePage extends StatelessWidget{
                 child: _buildImageActionButton(
                   icon: Icons.photo_library_rounded,
                   label: 'Gallery',
-                  onTap: controller.pickImage,
+                  onTap: controller.pickBanner,
                   isPrimary: true,
                 ),
               ),
@@ -466,7 +489,7 @@ class DistrictAdvertisementUpdatePage extends StatelessWidget{
             borderRadius: BorderRadius.circular(16),
           ),
           child: const Icon(Icons.add_photo_alternate_outlined,
-              color: Color(0xFF4F46E5), size: 36),
+              color: Color(0xFF084E43), size: 36),
         ),
         const SizedBox(height: 12),
         const Text(
@@ -496,15 +519,15 @@ class DistrictAdvertisementUpdatePage extends StatelessWidget{
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: isPrimary ? const Color(0xFF4F46E5) : Colors.white,
+          color: isPrimary ? const Color(0xFF084E43) : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isPrimary ? const Color(0xFF4F46E5) : const Color(0xFFE5E7EB),
+            color: isPrimary ? const Color(0xFF084E43) : const Color(0xFFE5E7EB),
           ),
           boxShadow: isPrimary
               ? [
             BoxShadow(
-              color: const Color(0xFF4F46E5).withOpacity(0.25),
+              color: const Color(0xFF084E43).withOpacity(0.25),
               blurRadius: 8,
               offset: const Offset(0, 3),
             )
@@ -516,14 +539,14 @@ class DistrictAdvertisementUpdatePage extends StatelessWidget{
           children: [
             Icon(icon,
                 size: 18,
-                color: isPrimary ? Colors.white : const Color(0xFF4F46E5)),
+                color: isPrimary ? Colors.white : const Color(0xFF084E43)),
             const SizedBox(width: 8),
             Text(
               label,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: isPrimary ? Colors.white : const Color(0xFF4F46E5),
+                color: isPrimary ? Colors.white : const Color(0xFF084E43),
               ),
             ),
           ],
@@ -542,10 +565,10 @@ class DistrictAdvertisementUpdatePage extends StatelessWidget{
         onPressed:
         controller.isLoading.value ? null : controller.updateAdvertisement,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF4F46E5),
-          disabledBackgroundColor: const Color(0xFF4F46E5).withOpacity(0.6),
+          backgroundColor: const Color(0xFF084E43),
+          disabledBackgroundColor: const Color(0xFF084E43).withOpacity(0.6),
           elevation: 4,
-          shadowColor: const Color(0xFF4F46E5).withOpacity(0.4),
+          shadowColor: const Color(0xFF084E43).withOpacity(0.4),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),

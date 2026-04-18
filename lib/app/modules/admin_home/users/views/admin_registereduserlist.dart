@@ -15,9 +15,16 @@ class AdminUserListPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        automaticallyImplyLeading: true,
+        iconTheme: IconThemeData(color: Colors.white),
         title: Text(
           "Registered Users",
-          style: AppTextStyle.rTextNunitoWhite17w700,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.1,
+            ),
         ),
         backgroundColor: Colors.teal,
         elevation: 0,
@@ -101,10 +108,7 @@ class AdminUserListPage extends StatelessWidget {
   Widget _buildModernUserCard(BuildContext context, Map<String, dynamic> user) {
     return InkWell(
       onTap: () {
-        Get.to(() => UserPurchasedProductsPage(
-          userId: user["id"],
-          userName: user["name"],
-        ));
+
       },
       borderRadius: BorderRadius.circular(20),
       child: Container(
@@ -267,10 +271,11 @@ class AdminUserListPage extends StatelessWidget {
               height: 50,
               child: ElevatedButton(
                 onPressed: () {
-                  Get.to(() => UserPurchasedProductsPage(
-                    userId: user["id"],
-                    userName: user["name"],
-                  ));
+                  Get.toNamed(
+                    '/purchased-products',
+                    arguments: {
+                      'user_id': user["id"], // 🔥 CORRECT
+                    },);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.teal,

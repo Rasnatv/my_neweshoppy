@@ -1,3 +1,4 @@
+
 import 'dart:convert';
 import 'dart:io';
 
@@ -6,207 +7,245 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import '../../../../data/errors/api_error.dart';
+import '../../../merchantlogin/widget/successwidget.dart';
+import '../views/adminadvertisment.dart';
 
 class AdminaddAdvertisementController extends GetxController {
-  // ─── State ───────────────────────────────────────────────
-  var isLoading    = false.obs;
-  var isTitleEmpty = false.obs;
-
-  // ─── Form Controllers ────────────────────────────────────
-  final adTitle = TextEditingController();
-
-  // ─── Banner Image ────────────────────────────────────────
+  final adNameController = TextEditingController();
   final bannerImage = Rx<File?>(null);
 
-  // ─── Storage & Picker ────────────────────────────────────
-  final box    = GetStorage();
+  final isLoading = false.obs;
   final picker = ImagePicker();
+  final box = GetStorage();
 
-  // ─── District & Area ─────────────────────────────────────
-  final districts          = <String>[].obs;
-  final areas              = <String>[].obs;
+  late String authToken;
+
+  // Lists
+  final stateList = <String>[].obs;
+  final districtList = <String>[].obs;
+  final areaList = <String>[].obs;
+
+  // Loading flags
+  final isLoadingStates = false.obs;
   final isLoadingDistricts = false.obs;
-  final isLoadingAreas     = false.obs;
+  final isLoadingAreas = false.obs;
 
-  // 'district' | 'area' | null
-  final locationType     = Rx<String?>(null);
+  // Selected values
+  final selectedState = Rx<String?>(null);
   final selectedDistrict = Rx<String?>(null);
-  final selectedArea     = Rx<String?>(null);
+  final selectedArea = Rx<String?>(null);
 
-  // ─── Auth token helper ────────────────────────────────────
-  String get _token => box.read('auth_token')?.toString().trim() ?? '';
+  final showMode = "district".obs;
 
-  Map<String, String> get _headers => {
-    'Accept': 'application/json',
-    'Authorization': 'Bearer $_token',
-  };
+  final String statesUrl =
+      "https://rasma.astradevelops.in/e_shoppyy/public/api/merchant/states";
+  final String districtsUrl =
+      "https://rasma.astradevelops.in/e_shoppyy/public/api/districts";
+  final String areasUrl =
+      "https://rasma.astradevelops.in/e_shoppyy/public/api/areas";
+  final String apiUrl =
+      "https://rasma.astradevelops.in/e_shoppyy/public/api/advertisement";
 
-  // ─── Lifecycle ────────────────────────────────────────────
   @override
   void onInit() {
     super.onInit();
+
+    authToken = box.read("auth_token") ?? "";
+
+    fetchStates();
     fetchDistricts();
     fetchAreas();
   }
 
   @override
   void onClose() {
-    adTitle.dispose();
+    adNameController.dispose();
     super.onClose();
   }
 
-  // ─── Set location type (toggle) ───────────────────────────
-  void setLocationType(String type) {
-    // Tapping the same toggle again deselects it
-    if (locationType.value == type) {
-      locationType.value     = null;
-      selectedDistrict.value = null;
-      selectedArea.value     = null;
-    } else {
-      locationType.value     = type;
-      selectedDistrict.value = null;
-      selectedArea.value     = null;
+  // ── COMMON HEADERS ─────────────────────────────
+  Map<String, String> get headers => {
+    "Authorization": "Bearer $authToken",
+    "Accept": "application/json",
+    "Content-Type": "application/json",
+  };
+
+  // ── FETCH STATES ───────────────────────────────
+  Future<void> fetchStates() async {
+    isLoadingStates.value = true;
+
+    try {
+      final res = await http.get(Uri.parse(statesUrl), headers: headers);
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if ((data['status'] == true || data['status'] == 1) &&
+            data['data'] != null) {
+          stateList.assignAll(List<String>.from(data['data']));
+        }
+      } else {
+        AppSnackbar.error(ApiErrorHandler.handleResponse(res));
+      }
+    } catch (e) {
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
+    } finally {
+      isLoadingStates.value = false;
     }
   }
 
-  // ─── Fetch Districts ──────────────────────────────────────
+  // ── FETCH DISTRICTS ────────────────────────────
   Future<void> fetchDistricts() async {
     isLoadingDistricts.value = true;
+
     try {
-      final response = await http.get(
-        Uri.parse(
-            'https://rasma.astradevelops.in/e_shoppyy/public/api/districts'),
-        headers: _headers,
-      );
-      final body = jsonDecode(response.body);
-      if (body['status'] == true && body['data'] != null) {
-        districts.value = List<String>.from(body['data']);
+      final res = await http.get(Uri.parse(districtsUrl), headers: headers);
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (data['status'] == true && data['data'] != null) {
+          districtList.assignAll(List<String>.from(data['data']));
+        }
+      } else {
+        AppSnackbar.error(ApiErrorHandler.handleResponse(res));
       }
-    } catch (_) {
-      Get.snackbar('Error', 'Failed to load districts',
-          backgroundColor: Colors.red, colorText: Colors.white);
+    } catch (e) {
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoadingDistricts.value = false;
     }
   }
 
-  // ─── Fetch Areas ──────────────────────────────────────────
+  // ── FETCH AREAS ────────────────────────────────
   Future<void> fetchAreas() async {
     isLoadingAreas.value = true;
+
     try {
-      final response = await http.get(
-        Uri.parse(
-            'https://rasma.astradevelops.in/e_shoppyy/public/api/areas'),
-        headers: _headers,
-      );
-      final body = jsonDecode(response.body);
-      if (body['status'] == true && body['data'] != null) {
-        areas.value = List<String>.from(body['data']);
+      final res = await http.get(Uri.parse(areasUrl), headers: headers);
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (data['status'] == true && data['data'] != null) {
+          areaList.assignAll(List<String>.from(data['data']));
+        }
+      } else {
+        AppSnackbar.error(ApiErrorHandler.handleResponse(res));
       }
-    } catch (_) {
-      Get.snackbar('Error', 'Failed to load areas',
-          backgroundColor: Colors.red, colorText: Colors.white);
+    } catch (e) {
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoadingAreas.value = false;
     }
   }
 
-  // ─── Image Pick / Remove ──────────────────────────────────
-  Future<void> pickBannerImage() async {
-    final img = await picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 85,
-    );
-    if (img != null) bannerImage.value = File(img.path);
+  // ── PICK IMAGE ────────────────────────────────
+  Future<void> pickBanner() async {
+    try {
+      final picked = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+
+      if (picked == null) return;
+
+      final file = File(picked.path);
+
+      final bytes = await file.readAsBytes();
+      final decoded = await decodeImageFromList(bytes);
+
+      final ratio = decoded.width / decoded.height;
+
+      if (ratio < 1.9 || ratio > 2.1) {
+        AppSnackbar.warning(
+            "Invalid ratio ${decoded.width}x${decoded.height}\nUse 2:1 image");
+        return;
+      }
+
+      bannerImage.value = file;
+    } catch (e) {
+      AppSnackbar.error("Image error");
+    }
   }
 
-  void removeBannerImage() => bannerImage.value = null;
+  void removeBanner() => bannerImage.value = null;
 
-  // ─── Add Advertisement ────────────────────────────────────
-  Future<void> addAdvertisement() async {
-    if (_token.isEmpty) {
-      Get.snackbar('Session Expired', 'Please login again',
-          backgroundColor: Colors.red, colorText: Colors.white);
-      return;
+  // ── BASE64 ────────────────────────────────────
+  Future<String?> _toBase64(File file) async {
+    try {
+      final bytes = await file.readAsBytes();
+      return "data:image/jpeg;base64,${base64Encode(bytes)}";
+    } catch (_) {
+      return null;
     }
+  }
 
+  // ── POST AD ───────────────────────────────────
+  Future<void> postAdvertisement() async {
+    if (adNameController.text.trim().isEmpty) {
+      return AppSnackbar.warning("Enter advertisement name");
+    }
     if (bannerImage.value == null) {
-      Get.snackbar('Validation', 'Please select a banner image',
-          backgroundColor: Colors.orange, colorText: Colors.white);
-      return;
+      return AppSnackbar.warning("Upload banner image");
     }
+    if (selectedState.value == null) {
+      return AppSnackbar.warning("Select state");
+    }
+    if (selectedDistrict.value == null) {
+      return AppSnackbar.warning("Select district");
+    }
+    if (showMode.value == "area" && selectedArea.value == null) {
+      return AppSnackbar.warning("Select area");
+    }
+
+    isLoading.value = true;
 
     try {
-      isLoading.value = true;
+      final base64Image = await _toBase64(bannerImage.value!);
 
-      // Convert image → base64
-      final imgBytes  = await bannerImage.value!.readAsBytes();
-      final imgBase64 = 'data:image/jpeg;base64,${base64Encode(imgBytes)}';
-
-      // Build request body matching the API contract
       final body = {
-        'advertisement': adTitle.text.trim(),
-        'banner_image': imgBase64,
-        'district': locationType.value == 'district'
-            ? selectedDistrict.value ?? ''
-            : '',
-        'main_location':
-        locationType.value == 'area' ? selectedArea.value ?? '' : '',
+        "advertisement": adNameController.text.trim(),
+        "banner_image": base64Image,
+        "state": selectedState.value,
+        "district": selectedDistrict.value,
+        "main_location":
+        showMode.value == "area" ? selectedArea.value : "",
       };
 
-      final response = await http.post(
-        Uri.parse(
-            'https://rasma.astradevelops.in/e_shoppyy/public/api/advertisement'),
-        headers: {
-          ..._headers,
-          'Content-Type': 'application/json',
-        },
+      final res = await http.post(
+        Uri.parse(apiUrl),
+        headers: headers,
         body: jsonEncode(body),
       );
 
-      final res = jsonDecode(response.body);
+      final data = jsonDecode(res.body);
 
-      if (res['status'].toString() == '1' ||
-          response.statusCode == 200 ||
-          response.statusCode == 201) {
-        _clearForm();
-        Get.back(result: true);
-        Get.snackbar(
-          'Success',
-          res['message'] ?? 'Advertisement created successfully',
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(16),
-          borderRadius: 12,
-          icon: const Icon(Icons.check_circle_outline, color: Colors.white),
-        );
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        if (data["status"] == "1" || data["status"] == 1) {
+          _clearForm();
+          AppSnackbar.success(
+              data["message"] ?? "Advertisement added successfully");
+
+         Get.back(result: true);
+        } else {
+          AppSnackbar.error(data["message"] ?? "Failed");
+        }
       } else {
-        Get.snackbar(
-          'Error',
-          res['message'] ?? 'Failed to create advertisement',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(16),
-          borderRadius: 12,
-        );
+        AppSnackbar.error(ApiErrorHandler.handleResponse(res));
       }
     } catch (e) {
-      Get.snackbar('Error', 'Something went wrong: $e',
-          backgroundColor: Colors.red, colorText: Colors.white);
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoading.value = false;
     }
   }
 
-  // ─── Clear Form ───────────────────────────────────────────
+  // ── CLEAR ─────────────────────────────────────
   void _clearForm() {
-    adTitle.clear();
-    bannerImage.value      = null;
-    isTitleEmpty.value     = false;
-    locationType.value     = null;
+    adNameController.clear();
+    bannerImage.value = null;
+    selectedState.value = null;
     selectedDistrict.value = null;
-    selectedArea.value     = null;
+    selectedArea.value = null;
+    showMode.value = "district";
   }
 }

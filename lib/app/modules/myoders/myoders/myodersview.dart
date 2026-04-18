@@ -1,6 +1,9 @@
+import 'package:eshoppy/app/data/models/user_myordersmodel.dart';
+import 'package:eshoppy/app/modules/myoders/controller/my_orderscontroller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_colors.dart';
+import '../../../widgets/networkconnection_checkpage.dart';
 
 
 
@@ -13,10 +16,11 @@ class MyOrdersView extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.put(MyOrdersController());
 
-    return Scaffold(
+    return NetworkAwareWrapper(child:Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
         backgroundColor: primary,
+        iconTheme: IconThemeData(color: Colors.white),
         elevation: 0.5,
         shadowColor: Colors.black12,
         title: const Text(
@@ -66,7 +70,7 @@ class MyOrdersView extends StatelessWidget {
           ),
         );
       }),
-    );
+    ));
   }
 
   // ── Order Card ───────────────────────────────────────────────────────────────

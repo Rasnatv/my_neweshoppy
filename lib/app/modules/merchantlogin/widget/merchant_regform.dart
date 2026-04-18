@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../common/utils/validators.dart';
 import '../controller/merchantreg_controller.dart';
 import '../view/merchantmap.dart';
 import 'package:flutter/services.dart';
@@ -226,16 +227,32 @@ class MerchantRegform extends StatelessWidget {
         ),
         const SizedBox(height: 16),
 
-        TextFormField(
+        Obx(() => TextFormField(
           controller: controller.passwordController,
+          obscureText: !controller.isPasswordVisible.value,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          validator: DValidator.validatePassword,
           style: const TextStyle(
             color: Color(0xFF212121),
             fontSize: 15,
             fontWeight: FontWeight.w500,
           ),
-          obscureText: true,
-          decoration: inputStyle("Password", Icons.lock_outline),
-        ),
+          decoration: inputStyle(
+            "Password",
+            Icons.lock_outline,
+          ).copyWith(
+            suffixIcon: IconButton(
+              icon: Icon(
+                controller.isPasswordVisible.value
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
+                color: const Color(0xFF9CA3AF),
+                size: 22,
+              ),
+              onPressed: controller.togglePasswordVisibility,
+            ),
+          ),
+        )),
         const SizedBox(height: 16),
 
         TextFormField(
@@ -421,6 +438,10 @@ class MerchantRegform extends StatelessWidget {
             fontWeight: FontWeight.w500,
           ),
           keyboardType: TextInputType.phone,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,        // ✅ digits only
+            LengthLimitingTextInputFormatter(10),           // ✅ 10 limit
+          ],
           decoration: inputStyle("WhatsApp Number", Icons.phone_outlined),
         ),
         const SizedBox(height: 16),
@@ -432,10 +453,21 @@ class MerchantRegform extends StatelessWidget {
             fontSize: 15,
             fontWeight: FontWeight.w500,
           ),
+          keyboardType: TextInputType.url,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          validator: (value) {                              // ✅ place here
+            if (value == null || value.trim().isEmpty) return null;
+            final uri = Uri.tryParse(value.trim());
+            if (uri == null || !uri.hasScheme || !uri.scheme.startsWith('http')) {
+              return 'Enter a valid URL (e.g. https://facebook.com/...)';
+            }
+            return null;
+          },
           decoration: inputStyle("Facebook Link", Icons.facebook),
         ),
         const SizedBox(height: 16),
 
+// Instag
         TextFormField(
           controller: controller.instagramController,
           style: const TextStyle(
@@ -443,10 +475,21 @@ class MerchantRegform extends StatelessWidget {
             fontSize: 15,
             fontWeight: FontWeight.w500,
           ),
+          keyboardType: TextInputType.url,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          validator: (value) {                              // ✅ place here
+            if (value == null || value.trim().isEmpty) return null;
+            final uri = Uri.tryParse(value.trim());
+            if (uri == null || !uri.hasScheme || !uri.scheme.startsWith('http')) {
+              return 'Enter a valid URL (e.g. https://instagram.com/...)';
+            }
+            return null;
+          },
           decoration: inputStyle("Instagram Link", Icons.camera_alt_outlined),
         ),
         const SizedBox(height: 16),
 
+// Website
         TextFormField(
           controller: controller.websiteController,
           style: const TextStyle(
@@ -454,9 +497,18 @@ class MerchantRegform extends StatelessWidget {
             fontSize: 15,
             fontWeight: FontWeight.w500,
           ),
+          keyboardType: TextInputType.url,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          validator: (value) {                              // ✅ place here
+            if (value == null || value.trim().isEmpty) return null;
+            final uri = Uri.tryParse(value.trim());
+            if (uri == null || !uri.hasScheme || !uri.scheme.startsWith('http')) {
+              return 'Enter a valid URL (e.g. https://yourwebsite.com)';
+            }
+            return null;
+          },
           decoration: inputStyle("Website Link", Icons.language_outlined),
         ),
-
         const SizedBox(height: 32),
 
         // ------------------ REGISTER BUTTON ------------------

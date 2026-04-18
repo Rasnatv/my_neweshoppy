@@ -1,42 +1,52 @@
 //
-//
 // import 'dart:convert';
 // import 'dart:io';
+// import 'dart:ui' as ui;
 //
 // import 'package:flutter/material.dart';
 // import 'package:get/get.dart';
+// import 'package:image_cropper/image_cropper.dart';
 // import 'package:image_picker/image_picker.dart';
 // import 'package:intl/intl.dart';
 // import 'package:get_storage/get_storage.dart';
 // import 'package:http/http.dart' as http;
 //
 // import '../../../../data/models/merchant_eventupadatemodel.dart';
-// import '../../controller/admin_eventgetcontroller.dart';
 // import '../view/admin_event.dart';
 //
 // class AdminEventUpdateController extends GetxController {
 //   // ─── State ────────────────────────────────────────────────────────────────
-//   final isLoading = false.obs;
+//   final isLoading  = false.obs;
 //   final isUpdating = false.obs;
-//   final event = Rxn<HEventModel>();
+//   final event      = Rxn<HEventModel>();
+//   final showMode   = "district".obs; // ✅ district | area
 //
 //   // ─── Form key & controllers ───────────────────────────────────────────────
 //   final formKey = GlobalKey<FormState>();
 //   late TextEditingController eventNameCtrl;
 //   late TextEditingController locationCtrl;
 //
-//   // ─── Read-only fields (not editable) ─────────────────────────────────────
-//   final mainLocation = RxnString();
-//   final district = RxnString();
+//   // ─── Region dropdowns ─────────────────────────────────────────────────────
+//   final statesList    = <String>[].obs;
+//   final districtsList = <String>[].obs;
+//   final areasList     = <String>[].obs;
+//
+//   final selectedState    = RxnString();
+//   final selectedDistrict = RxnString();
+//   final selectedArea     = RxnString();
+//
+//   final isLoadingStates    = false.obs;
+//   final isLoadingDistricts = false.obs;
+//   final isLoadingAreas     = false.obs;
 //
 //   // ─── Date / time observables ──────────────────────────────────────────────
 //   final startDate = Rxn<DateTime>();
-//   final endDate = Rxn<DateTime>();
+//   final endDate   = Rxn<DateTime>();
 //   final startTime = Rxn<TimeOfDay>();
-//   final endTime = Rxn<TimeOfDay>();
+//   final endTime   = Rxn<TimeOfDay>();
 //
 //   // ─── Banner image ─────────────────────────────────────────────────────────
-//   final pickedImageFile = Rxn<File>();
+//   final pickedImageFile   = Rxn<File>();
 //   final pickedImageBase64 = RxnString();
 //
 //   // ─── API ──────────────────────────────────────────────────────────────────
@@ -58,14 +68,17 @@
 //   void onInit() {
 //     super.onInit();
 //     eventNameCtrl = TextEditingController();
-//     locationCtrl = TextEditingController();
+//     locationCtrl  = TextEditingController();
+//
+//     fetchStates();
+//     fetchDistricts();
+//     fetchAreas();
 //
 //     final Map<String, dynamic>? args = Get.arguments != null
 //         ? Map<String, dynamic>.from(Get.arguments as Map)
 //         : null;
-//
-//     final dynamic raw = args?['event_id'];
-//     final int? eventId = raw == null
+//     final dynamic raw     = args?['event_id'];
+//     final int?    eventId = raw == null
 //         ? null
 //         : raw is int
 //         ? raw
@@ -83,6 +96,98 @@
 //     eventNameCtrl.dispose();
 //     locationCtrl.dispose();
 //     super.onClose();
+//   }
+//
+//   // ─── Fetch dropdowns ──────────────────────────────────────────────────────
+//   Future<void> fetchStates() async {
+//     try {
+//       isLoadingStates.value = true;
+//       final response = await http.get(
+//         Uri.parse('$_baseUrl/get-states'),
+//         headers: _authHeaders,
+//       );
+//       final body = jsonDecode(response.body);
+//       if (response.statusCode == 200 && body['status'] == true) {
+//         statesList.assignAll(List<String>.from(body['data']));
+//         _validateSelectedState();
+//       }
+//     } catch (e) {
+//       _showError('Failed to load states: $e');
+//     } finally {
+//       isLoadingStates.value = false;
+//     }
+//   }
+//
+//   Future<void> fetchDistricts() async {
+//     try {
+//       isLoadingDistricts.value = true;
+//       final response = await http.get(
+//         Uri.parse('$_baseUrl/districts'),
+//         headers: _authHeaders,
+//       );
+//       final body = jsonDecode(response.body);
+//       if (response.statusCode == 200 && body['status'] == true) {
+//         districtsList.assignAll(List<String>.from(body['data']));
+//         _validateSelectedDistrict();
+//       }
+//     } catch (e) {
+//       _showError('Failed to load districts: $e');
+//     } finally {
+//       isLoadingDistricts.value = false;
+//     }
+//   }
+//
+//   Future<void> fetchAreas() async {
+//     try {
+//       isLoadingAreas.value = true;
+//       final response = await http.get(
+//         Uri.parse('$_baseUrl/areas'),
+//         headers: _authHeaders,
+//       );
+//       final body = jsonDecode(response.body);
+//       if (response.statusCode == 200 && body['status'] == true) {
+//         areasList.assignAll(List<String>.from(body['data']));
+//         _validateSelectedArea();
+//       }
+//     } catch (e) {
+//       _showError('Failed to load areas: $e');
+//     } finally {
+//       isLoadingAreas.value = false;
+//     }
+//   }
+//
+//   void _validateSelectedState() {
+//     if (selectedState.value == null) return;
+//     final match = statesList.firstWhereOrNull(
+//           (s) => s.toLowerCase() == selectedState.value!.toLowerCase(),
+//     );
+//     selectedState.value = match ?? selectedState.value;
+//   }
+//
+//   void _validateSelectedDistrict() {
+//     if (selectedDistrict.value == null) return;
+//     final match = districtsList.firstWhereOrNull(
+//           (d) => d.toLowerCase() == selectedDistrict.value!.toLowerCase(),
+//     );
+//     selectedDistrict.value = match ?? selectedDistrict.value;
+//   }
+//
+//   void _validateSelectedArea() {
+//     if (selectedArea.value == null) return;
+//     final match = areasList.firstWhereOrNull(
+//           (a) => a.toLowerCase() == selectedArea.value!.toLowerCase(),
+//     );
+//     selectedArea.value = match ?? selectedArea.value;
+//   }
+//
+//   // ─── Mode toggle ──────────────────────────────────────────────────────────
+//   void switchToDistrict() {
+//     showMode.value     = "district";
+//     selectedArea.value = null;
+//   }
+//
+//   void switchToArea() {
+//     showMode.value = "area";
 //   }
 //
 //   // ─── Display helpers ──────────────────────────────────────────────────────
@@ -110,74 +215,70 @@
 //       ? endTime.value!.format(Get.context!)
 //       : 'Select time';
 //
-//   // ─── Time formatting ──────────────────────────────────────────────────────
-//   // FIX: API expects 24-hr "HH:mm", not "hh:mm a"
 //   String _formatTime(TimeOfDay time) {
 //     final now = DateTime.now();
-//     final dt = DateTime(now.year, now.month, now.day, time.hour, time.minute);
-//     return DateFormat('HH:mm').format(dt);
+//     final dt  = DateTime(now.year, now.month, now.day, time.hour, time.minute);
+//     return DateFormat('hh:mm a').format(dt);
 //   }
 //
-//   // FIX: Handle all time formats returned by the API
-//   TimeOfDay? _parseTime(String? timeStr) {
-//     if (timeStr == null || timeStr.trim().isEmpty) return null;
-//     // Try "hh:mm a" → e.g. "11:00 AM"
+//   TimeOfDay? _parseTime(String? t) {
+//     if (t == null || t.isEmpty) return null;
 //     try {
-//       final dt = DateFormat('hh:mm a').parse(timeStr.trim());
-//       return TimeOfDay(hour: dt.hour, minute: dt.minute);
-//     } catch (_) {}
-//     // Try "HH:mm" → e.g. "09:00"
-//     try {
-//       final dt = DateFormat('HH:mm').parse(timeStr.trim());
-//       return TimeOfDay(hour: dt.hour, minute: dt.minute);
-//     } catch (_) {}
-//     // Try "HH:mm:ss" → e.g. "09:00:00"
-//     try {
-//       final dt = DateFormat('HH:mm:ss').parse(timeStr.trim());
+//       final dt = DateFormat('hh:mm a').parse(t);
 //       return TimeOfDay(hour: dt.hour, minute: dt.minute);
 //     } catch (_) {
-//       return null;
+//       try {
+//         final dt = DateFormat('HH:mm').parse(t);
+//         return TimeOfDay(hour: dt.hour, minute: dt.minute);
+//       } catch (_) {
+//         return null;
+//       }
 //     }
 //   }
 //
-//   // ─── Populate form from model ─────────────────────────────────────────────
+//   // ─── Populate form ────────────────────────────────────────────────────────
 //   void _populateForm(HEventModel e) {
 //     eventNameCtrl.text = e.eventName;
-//     locationCtrl.text = e.eventLocation;
-//     startDate.value = DateTime.tryParse(e.startDate);
-//     endDate.value = DateTime.tryParse(e.endDate);
-//     startTime.value = _parseTime(e.startTime);
-//     endTime.value = _parseTime(e.endTime);
-//     // Read-only: shown in UI but never sent back as edited values
-//     mainLocation.value =
-//     (e.mainLocation?.trim().isEmpty ?? true) ? null : e.mainLocation;
-//     district.value =
-//     (e.district?.trim().isEmpty ?? true) ? null : e.district;
+//     locationCtrl.text  = e.eventLocation;
+//     startDate.value    = DateTime.tryParse(e.startDate);
+//     endDate.value      = DateTime.tryParse(e.endDate);
+//     startTime.value    = _parseTime(e.startTime);
+//     endTime.value      = _parseTime(e.endTime);
+//
+//     selectedState.value    = (e.state != null && e.state!.isNotEmpty)
+//         ? e.state : null;
+//     selectedDistrict.value = (e.district != null && e.district!.isNotEmpty)
+//         ? e.district : null;
+//
+//     // ✅ Auto-detect mode from event data
+//     if (e.mainLocation != null && e.mainLocation!.isNotEmpty) {
+//       showMode.value     = "area";
+//       selectedArea.value = e.mainLocation;
+//     } else {
+//       showMode.value     = "district";
+//       selectedArea.value = null;
+//     }
+//
+//     _validateSelectedState();
+//     _validateSelectedDistrict();
+//     _validateSelectedArea();
 //   }
 //
-//   // ─── Fetch single event ───────────────────────────────────────────────────
+//   // ─── Fetch event ──────────────────────────────────────────────────────────
 //   Future<void> fetchEvent(int eventId) async {
 //     try {
 //       isLoading.value = true;
-//
 //       final response = await http.post(
-//         Uri.parse('$_baseUrl/get-Single-Event-admindisrict'),
+//         Uri.parse('$_baseUrl/get-single-event'),
 //         headers: _authHeaders,
 //         body: jsonEncode({'event_id': eventId}),
 //       );
-//
-//       final body = jsonDecode(response.body) as Map<String, dynamic>;
-//
-//       final isSuccess = body['status'] == true ||
-//           body['status'] == '1' ||
-//           body['status_code'] == 200;
-//
-//       if (response.statusCode == 200 && isSuccess) {
-//         event.value =
-//             HEventModel.fromJson(body['data'] as Map<String, dynamic>);
+//       final body = jsonDecode(response.body);
+//       if (response.statusCode == 200 && body['status'] == '1') {
+//         event.value = HEventModel.fromJson(body['data']);
 //         _populateForm(event.value!);
 //       } else {
-//         _showError(body['message']?.toString() ?? 'Failed to fetch event');
+//         _showError(body['message'] ?? 'Failed to fetch event');
 //       }
 //     } catch (e) {
 //       _showError('Network error: $e');
@@ -186,64 +287,134 @@
 //     }
 //   }
 //
-//   // ─── Pick banner image ────────────────────────────────────────────────────
+//
+// // ───────── ADMIN EVENT IMAGE PICK (2:1 + BASE64) ─────────
 //   Future<void> pickBannerImage() async {
-//     final picker = ImagePicker();
-//     final picked = await picker.pickImage(
-//         source: ImageSource.gallery, imageQuality: 85);
-//     if (picked == null) return;
+//     try {
+//       final picker = ImagePicker();
 //
-//     final file = File(picked.path);
-//     final bytes = await file.readAsBytes();
-//     final ext = picked.path.split('.').last.toLowerCase();
-//     final mime = ext == 'png' ? 'image/png' : 'image/jpeg';
+//       final picked = await picker.pickImage(
+//         source: ImageSource.gallery,
+//         imageQuality: 85,
+//       );
 //
-//     pickedImageFile.value = file;
-//     pickedImageBase64.value = 'data:$mime;base64,${base64Encode(bytes)}';
+//       if (picked == null) return;
+//
+//       File file = File(picked.path);
+//
+//       // 1️⃣ SIZE CHECK (1MB)
+//       final int bytes = await file.length();
+//       if (bytes > 1024 * 1024) {
+//         _showError("Please upload image less than 1 MB");
+//         return;
+//       }
+//
+//       // 2️⃣ CROP TO 2:1 RATIO
+//       final croppedFile = await ImageCropper().cropImage(
+//         sourcePath: file.path,
+//         aspectRatio: const CropAspectRatio(ratioX: 2, ratioY: 1),
+//         uiSettings: [
+//           AndroidUiSettings(
+//             toolbarTitle: 'Crop Banner',
+//             toolbarColor: Colors.black,
+//             toolbarWidgetColor: Colors.white,
+//             lockAspectRatio: true,
+//           ),
+//           IOSUiSettings(
+//             title: 'Crop Banner',
+//             aspectRatioLockEnabled: true,
+//           ),
+//         ],
+//       );
+//
+//       if (croppedFile == null) return;
+//
+//       file = File(croppedFile.path);
+//
+//       // 3️⃣ FINAL SIZE CHECK AGAIN (after crop)
+//       final int newBytes = await file.length();
+//       if (newBytes > 1024 * 1024) {
+//         _showError("Cropped image still exceeds 1 MB");
+//         return;
+//       }
+//
+//       // 4️⃣ CONVERT TO BASE64
+//       final rawBytes = await file.readAsBytes();
+//
+//       final ext = file.path.split('.').last.toLowerCase();
+//       final mime = ext == 'png' ? 'image/png' : 'image/jpeg';
+//
+//       // 5️⃣ ASSIGN VALUES
+//       pickedImageFile.value = file;
+//       pickedImageBase64.value =
+//       'data:$mime;base64,${base64Encode(rawBytes)}';
+//
+//     } catch (e) {
+//       _showError("Something went wrong while picking image");
+//     }
 //   }
 //
 //   // ─── Date pickers ─────────────────────────────────────────────────────────
-//   DateTime get _today => DateTime(
-//     DateTime.now().year,
-//     DateTime.now().month,
-//     DateTime.now().day,
-//   );
-//
 //   Future<void> selectStartDate(BuildContext context) async {
-//     final initialDate =
-//     (startDate.value != null && !startDate.value!.isBefore(_today))
+//     final now   = DateTime.now();
+//     final today = DateTime(now.year, now.month, now.day);
+//
+//     final safeInitial = (startDate.value != null &&
+//         !startDate.value!.isBefore(today))
 //         ? startDate.value!
-//         : _today;
+//         : today;
 //
 //     final picked = await showDatePicker(
 //       context: context,
-//       initialDate: initialDate,
-//       firstDate: _today,
-//       lastDate: DateTime(2035),
+//       initialDate: safeInitial,
+//       firstDate: today,
+//       lastDate: DateTime(2030),
 //     );
 //
 //     if (picked != null) {
 //       startDate.value = picked;
-//       if (endDate.value != null && endDate.value!.isBefore(picked)) {
-//         endDate.value = null;
+//       if (endDate.value != null) {
+//         final endOnly = DateTime(
+//             endDate.value!.year, endDate.value!.month, endDate.value!.day);
+//         if (endOnly.isBefore(picked)) {
+//           endDate.value = null;
+//           endTime.value = null;
+//           Get.snackbar(
+//             'Notice',
+//             'End date & time were reset because they were before the new start date.',
+//             backgroundColor: const Color(0xFFFF9800),
+//             colorText: Colors.white,
+//             snackPosition: SnackPosition.BOTTOM,
+//             margin: const EdgeInsets.all(16),
+//             duration: const Duration(seconds: 3),
+//           );
+//         }
 //       }
 //     }
 //   }
 //
 //   Future<void> selectEndDate(BuildContext context) async {
-//     final first =
-//     (startDate.value != null && !startDate.value!.isBefore(_today))
+//     final now       = DateTime.now();
+//     final today     = DateTime(now.year, now.month, now.day);
+//     final firstDate = (startDate.value != null &&
+//         startDate.value!.isAfter(today))
 //         ? startDate.value!
-//         : _today;
+//         : today;
 //
-//     DateTime initial = endDate.value ?? first;
-//     if (initial.isBefore(first)) initial = first;
+//     DateTime safeInitial;
+//     if (endDate.value != null) {
+//       final endOnly = DateTime(
+//           endDate.value!.year, endDate.value!.month, endDate.value!.day);
+//       safeInitial = endOnly.isBefore(firstDate) ? firstDate : endDate.value!;
+//     } else {
+//       safeInitial = firstDate;
+//     }
 //
 //     final picked = await showDatePicker(
 //       context: context,
-//       initialDate: initial,
-//       firstDate: first,
-//       lastDate: DateTime(2035),
+//       initialDate: safeInitial,
+//       firstDate: firstDate,
+//       lastDate: DateTime(2030),
 //     );
 //     if (picked != null) endDate.value = picked;
 //   }
@@ -254,7 +425,25 @@
 //       context: context,
 //       initialTime: startTime.value ?? TimeOfDay.now(),
 //     );
-//     if (picked != null) startTime.value = picked;
+//     if (picked != null) {
+//       startTime.value = picked;
+//       if (endTime.value != null && _isSameDay()) {
+//         final sMin = picked.hour * 60 + picked.minute;
+//         final eMin = endTime.value!.hour * 60 + endTime.value!.minute;
+//         if (eMin <= sMin) {
+//           endTime.value = null;
+//           Get.snackbar(
+//             'Notice',
+//             'End time was reset because it was not after the new start time.',
+//             backgroundColor: const Color(0xFFFF9800),
+//             colorText: Colors.white,
+//             snackPosition: SnackPosition.BOTTOM,
+//             margin: const EdgeInsets.all(16),
+//             duration: const Duration(seconds: 3),
+//           );
+//         }
+//       }
+//     }
 //   }
 //
 //   Future<void> selectEndTime(BuildContext context) async {
@@ -262,13 +451,36 @@
 //       context: context,
 //       initialTime: endTime.value ?? TimeOfDay.now(),
 //     );
-//     if (picked != null) endTime.value = picked;
+//     if (picked != null) {
+//       if (_isSameDay() && startTime.value != null) {
+//         final sMin = startTime.value!.hour * 60 + startTime.value!.minute;
+//         final eMin = picked.hour * 60 + picked.minute;
+//         if (eMin <= sMin) {
+//           Get.snackbar(
+//             'Invalid Time',
+//             'End time must be after start time.',
+//             backgroundColor: const Color(0xFFF44336),
+//             colorText: Colors.white,
+//             snackPosition: SnackPosition.BOTTOM,
+//             margin: const EdgeInsets.all(16),
+//           );
+//           return;
+//         }
+//       }
+//       endTime.value = picked;
+//     }
+//   }
+//
+//   bool _isSameDay() {
+//     final s = startDate.value;
+//     final e = endDate.value;
+//     if (s == null || e == null) return false;
+//     return s.year == e.year && s.month == e.month && s.day == e.day;
 //   }
 //
 //   // ─── Update event ─────────────────────────────────────────────────────────
 //   Future<void> updateEvent() async {
 //     if (!formKey.currentState!.validate()) return;
-//
 //     if (startDate.value == null || endDate.value == null) {
 //       _showError('Please select start and end dates');
 //       return;
@@ -277,21 +489,30 @@
 //       _showError('Please select start and end times');
 //       return;
 //     }
+//     // ✅ Area required in area mode
+//     if (showMode.value == "area" && selectedArea.value == null) {
+//       _showError('Please select an area');
+//       return;
+//     }
 //
 //     try {
 //       isUpdating.value = true;
 //
 //       final payload = <String, dynamic>{
-//         'event_id': int.parse(event.value!.id),
-//         'event_name': eventNameCtrl.text.trim(),
+//         'event_id'      : int.parse(event.value!.id),
+//         'event_name'    : eventNameCtrl.text.trim(),
+//         'start_date'    : formattedStartDate,
+//         'end_date'      : formattedEndDate,
+//         'start_time'    : _formatTime(startTime.value!),
+//         'end_time'      : _formatTime(endTime.value!),
 //         'event_location': locationCtrl.text.trim(),
-//         // Read-only: always send original values unchanged
-//         'main_location': event.value?.mainLocation ?? '',
-//         'district': event.value?.district ?? '',
-//         'start_date': formattedStartDate,
-//         'end_date': formattedEndDate,
-//         'start_time': _formatTime(startTime.value!),
-//         'end_time': _formatTime(endTime.value!),
+//         if (selectedState.value != null)
+//           'state': selectedState.value!,
+//         if (selectedDistrict.value != null)
+//           'district': selectedDistrict.value!,
+//         // ✅ Only post main_location in area mode
+//         if (showMode.value == "area" && selectedArea.value != null)
+//           'main_location': selectedArea.value!,
 //       };
 //
 //       if (pickedImageBase64.value != null) {
@@ -299,37 +520,25 @@
 //       }
 //
 //       final response = await http.put(
-//         Uri.parse('$_baseUrl/update-Event-admin-district'),
+//         Uri.parse('$_baseUrl/update-event'),
 //         headers: _authHeaders,
 //         body: jsonEncode(payload),
 //       );
 //
-//       final body = jsonDecode(response.body) as Map<String, dynamic>;
-//
-//       final isSuccess = body['status'] == true ||
-//           body['status'] == '1' ||
-//           body['status_code'] == 200;
-//
-//       if (response.statusCode == 200 && isSuccess) {
+//       final body = jsonDecode(response.body);
+//       if (response.statusCode == 200 && body['status'] == '1') {
+//         event.value = HEventModel.fromJson(body['data']);
 //         Get.snackbar(
 //           'Success',
-//           body['message']?.toString() ?? 'Event updated successfully',
+//           body['message'] ?? 'Event updated successfully',
 //           backgroundColor: const Color(0xFF4CAF50),
 //           colorText: Colors.white,
 //           snackPosition: SnackPosition.BOTTOM,
 //           margin: const EdgeInsets.all(16),
 //         );
-//
-//         // FIX: Force-delete the AdminEventPage controller so its onInit
-//         // re-runs and fetchEvents() is called fresh when the page mounts.
-//         // Without this GetX returns the stale cached instance and skips onInit.
-//         try {
-//           Get.delete<AdminEventGetController>(force: true);
-//         } catch (_) {}
-//
-//         Get.offAll(() => AdminEventPage());
+//         Get.back(result: true);
 //       } else {
-//         _showError(body['message']?.toString() ?? 'Failed to update event');
+//         _showError(body['message'] ?? 'Failed to update event');
 //       }
 //     } catch (e) {
 //       _showError('Network error: $e');
@@ -338,7 +547,6 @@
 //     }
 //   }
 //
-//   // ─── Error helper ─────────────────────────────────────────────────────────
 //   void _showError(String message) {
 //     Get.snackbar(
 //       'Error',
@@ -352,41 +560,55 @@
 // }
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 
+import '../../../../data/errors/api_error.dart';
 import '../../../../data/models/merchant_eventupadatemodel.dart';
-import '../../controller/admin_eventgetcontroller.dart';
+  // ← adjust path
+import '../../../merchantlogin/widget/successwidget.dart';
 import '../view/admin_event.dart';
 
 class AdminEventUpdateController extends GetxController {
   // ─── State ────────────────────────────────────────────────────────────────
-  final isLoading = false.obs;
+  final isLoading  = false.obs;
   final isUpdating = false.obs;
-  final event = Rxn<HEventModel>();
+  final event      = Rxn<HEventModel>();
+  final showMode   = "district".obs;
 
   // ─── Form key & controllers ───────────────────────────────────────────────
   final formKey = GlobalKey<FormState>();
   late TextEditingController eventNameCtrl;
   late TextEditingController locationCtrl;
 
-  // ─── Read-only fields (not editable) ─────────────────────────────────────
-  final mainLocation = RxnString();
-  final district = RxnString();
+  // ─── Region dropdowns ─────────────────────────────────────────────────────
+  final statesList    = <String>[].obs;
+  final districtsList = <String>[].obs;
+  final areasList     = <String>[].obs;
+
+  final selectedState    = RxnString();
+  final selectedDistrict = RxnString();
+  final selectedArea     = RxnString();
+
+  final isLoadingStates    = false.obs;
+  final isLoadingDistricts = false.obs;
+  final isLoadingAreas     = false.obs;
 
   // ─── Date / time observables ──────────────────────────────────────────────
   final startDate = Rxn<DateTime>();
-  final endDate = Rxn<DateTime>();
+  final endDate   = Rxn<DateTime>();
   final startTime = Rxn<TimeOfDay>();
-  final endTime = Rxn<TimeOfDay>();
+  final endTime   = Rxn<TimeOfDay>();
 
   // ─── Banner image ─────────────────────────────────────────────────────────
-  final pickedImageFile = Rxn<File>();
+  final pickedImageFile   = Rxn<File>();
   final pickedImageBase64 = RxnString();
 
   // ─── API ──────────────────────────────────────────────────────────────────
@@ -408,14 +630,17 @@ class AdminEventUpdateController extends GetxController {
   void onInit() {
     super.onInit();
     eventNameCtrl = TextEditingController();
-    locationCtrl = TextEditingController();
+    locationCtrl  = TextEditingController();
+
+    fetchStates();
+    fetchDistricts();
+    fetchAreas();
 
     final Map<String, dynamic>? args = Get.arguments != null
         ? Map<String, dynamic>.from(Get.arguments as Map)
         : null;
-
-    final dynamic raw = args?['event_id'];
-    final int? eventId = raw == null
+    final dynamic raw     = args?['event_id'];
+    final int?    eventId = raw == null
         ? null
         : raw is int
         ? raw
@@ -424,7 +649,7 @@ class AdminEventUpdateController extends GetxController {
     if (eventId != null) {
       fetchEvent(eventId);
     } else {
-      _showError('Invalid event ID');
+      AppSnackbar.error('Invalid event ID');
     }
   }
 
@@ -433,6 +658,116 @@ class AdminEventUpdateController extends GetxController {
     eventNameCtrl.dispose();
     locationCtrl.dispose();
     super.onClose();
+  }
+
+  // ─── Fetch dropdowns ──────────────────────────────────────────────────────
+  Future<void> fetchStates() async {
+    try {
+      isLoadingStates.value = true;
+      final response = await http.get(
+        Uri.parse('$_baseUrl/get-states'),
+        headers: _authHeaders,
+      );
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
+        if (body['status'] == true) {
+          statesList.assignAll(List<String>.from(body['data']));
+          _validateSelectedState();
+        } else {
+          AppSnackbar.error(body['message'] ?? 'Failed to load states');
+        }
+      } else {
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
+      }
+    } catch (e) {
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
+    } finally {
+      isLoadingStates.value = false;
+    }
+  }
+
+  Future<void> fetchDistricts() async {
+    try {
+      isLoadingDistricts.value = true;
+      final response = await http.get(
+        Uri.parse('$_baseUrl/districts'),
+        headers: _authHeaders,
+      );
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
+        if (body['status'] == true) {
+          districtsList.assignAll(List<String>.from(body['data']));
+          _validateSelectedDistrict();
+        } else {
+          AppSnackbar.error(body['message'] ?? 'Failed to load districts');
+        }
+      } else {
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
+      }
+    } catch (e) {
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
+    } finally {
+      isLoadingDistricts.value = false;
+    }
+  }
+
+  Future<void> fetchAreas() async {
+    try {
+      isLoadingAreas.value = true;
+      final response = await http.get(
+        Uri.parse('$_baseUrl/areas'),
+        headers: _authHeaders,
+      );
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
+        if (body['status'] == true) {
+          areasList.assignAll(List<String>.from(body['data']));
+          _validateSelectedArea();
+        } else {
+          AppSnackbar.error(body['message'] ?? 'Failed to load areas');
+        }
+      } else {
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
+      }
+    } catch (e) {
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
+    } finally {
+      isLoadingAreas.value = false;
+    }
+  }
+
+  void _validateSelectedState() {
+    if (selectedState.value == null) return;
+    final match = statesList.firstWhereOrNull(
+          (s) => s.toLowerCase() == selectedState.value!.toLowerCase(),
+    );
+    selectedState.value = match ?? selectedState.value;
+  }
+
+  void _validateSelectedDistrict() {
+    if (selectedDistrict.value == null) return;
+    final match = districtsList.firstWhereOrNull(
+          (d) => d.toLowerCase() == selectedDistrict.value!.toLowerCase(),
+    );
+    selectedDistrict.value = match ?? selectedDistrict.value;
+  }
+
+  void _validateSelectedArea() {
+    if (selectedArea.value == null) return;
+    final match = areasList.firstWhereOrNull(
+          (a) => a.toLowerCase() == selectedArea.value!.toLowerCase(),
+    );
+    selectedArea.value = match ?? selectedArea.value;
+  }
+
+  // ─── Mode toggle ──────────────────────────────────────────────────────────
+  void switchToDistrict() {
+    showMode.value     = "district";
+    selectedArea.value = null;
+  }
+
+  void switchToArea() {
+    showMode.value = "area";
   }
 
   // ─── Display helpers ──────────────────────────────────────────────────────
@@ -452,154 +787,196 @@ class AdminEventUpdateController extends GetxController {
       ? DateFormat('MMM dd, yyyy').format(endDate.value!)
       : 'Select date';
 
-  // Always display in 12-hour format (e.g. "1:46 PM") regardless of
-  // the device's system time setting — avoids "13:46" on 24-hr devices.
-  String _displayTime(TimeOfDay time) {
-    final now = DateTime.now();
-    final dt = DateTime(now.year, now.month, now.day, time.hour, time.minute);
-    return DateFormat('h:mm a').format(dt); // h = no leading zero → "1:46 PM"
-  }
+  String get displayStartTime => startTime.value != null
+      ? startTime.value!.format(Get.context!)
+      : 'Select time';
 
-  String get displayStartTime =>
-      startTime.value != null ? _displayTime(startTime.value!) : 'Select time';
+  String get displayEndTime => endTime.value != null
+      ? endTime.value!.format(Get.context!)
+      : 'Select time';
 
-  String get displayEndTime =>
-      endTime.value != null ? _displayTime(endTime.value!) : 'Select time';
-
-  // ─── Time formatting ──────────────────────────────────────────────────────
-  // FIX: API expects 24-hr "HH:mm", not "hh:mm a"
   String _formatTime(TimeOfDay time) {
     final now = DateTime.now();
-    final dt = DateTime(now.year, now.month, now.day, time.hour, time.minute);
-    return DateFormat('HH:mm').format(dt);
+    final dt  = DateTime(now.year, now.month, now.day, time.hour, time.minute);
+    return DateFormat('hh:mm a').format(dt);
   }
 
-  // FIX: Handle all time formats returned by the API
-  TimeOfDay? _parseTime(String? timeStr) {
-    if (timeStr == null || timeStr.trim().isEmpty) return null;
-    // Try "hh:mm a" → e.g. "11:00 AM"
+  TimeOfDay? _parseTime(String? t) {
+    if (t == null || t.isEmpty) return null;
     try {
-      final dt = DateFormat('hh:mm a').parse(timeStr.trim());
-      return TimeOfDay(hour: dt.hour, minute: dt.minute);
-    } catch (_) {}
-    // Try "HH:mm" → e.g. "09:00"
-    try {
-      final dt = DateFormat('HH:mm').parse(timeStr.trim());
-      return TimeOfDay(hour: dt.hour, minute: dt.minute);
-    } catch (_) {}
-    // Try "HH:mm:ss" → e.g. "09:00:00"
-    try {
-      final dt = DateFormat('HH:mm:ss').parse(timeStr.trim());
+      final dt = DateFormat('hh:mm a').parse(t);
       return TimeOfDay(hour: dt.hour, minute: dt.minute);
     } catch (_) {
-      return null;
+      try {
+        final dt = DateFormat('HH:mm').parse(t);
+        return TimeOfDay(hour: dt.hour, minute: dt.minute);
+      } catch (_) {
+        return null;
+      }
     }
   }
 
-  // ─── Populate form from model ─────────────────────────────────────────────
+  // ─── Populate form ────────────────────────────────────────────────────────
   void _populateForm(HEventModel e) {
     eventNameCtrl.text = e.eventName;
-    locationCtrl.text = e.eventLocation;
-    startDate.value = DateTime.tryParse(e.startDate);
-    endDate.value = DateTime.tryParse(e.endDate);
-    startTime.value = _parseTime(e.startTime);
-    endTime.value = _parseTime(e.endTime);
-    // Read-only: shown in UI but never sent back as edited values
-    mainLocation.value =
-    (e.mainLocation?.trim().isEmpty ?? true) ? null : e.mainLocation;
-    district.value =
-    (e.district?.trim().isEmpty ?? true) ? null : e.district;
+    locationCtrl.text  = e.eventLocation;
+    startDate.value    = DateTime.tryParse(e.startDate);
+    endDate.value      = DateTime.tryParse(e.endDate);
+    startTime.value    = _parseTime(e.startTime);
+    endTime.value      = _parseTime(e.endTime);
+
+    selectedState.value    = (e.state != null && e.state!.isNotEmpty)
+        ? e.state : null;
+    selectedDistrict.value = (e.district != null && e.district!.isNotEmpty)
+        ? e.district : null;
+
+    if (e.mainLocation != null && e.mainLocation!.isNotEmpty) {
+      showMode.value     = "area";
+      selectedArea.value = e.mainLocation;
+    } else {
+      showMode.value     = "district";
+      selectedArea.value = null;
+    }
+
+    _validateSelectedState();
+    _validateSelectedDistrict();
+    _validateSelectedArea();
   }
 
-  // ─── Fetch single event ───────────────────────────────────────────────────
+  // ─── Fetch event ──────────────────────────────────────────────────────────
   Future<void> fetchEvent(int eventId) async {
     try {
       isLoading.value = true;
-
       final response = await http.post(
-        Uri.parse('$_baseUrl/get-Single-Event-admindisrict'),
+        Uri.parse('$_baseUrl/get-single-event'),
         headers: _authHeaders,
         body: jsonEncode({'event_id': eventId}),
       );
-
-      final body = jsonDecode(response.body) as Map<String, dynamic>;
-
-      final isSuccess = body['status'] == true ||
-          body['status'] == '1' ||
-          body['status_code'] == 200;
-
-      if (response.statusCode == 200 && isSuccess) {
-        event.value =
-            HEventModel.fromJson(body['data'] as Map<String, dynamic>);
-        _populateForm(event.value!);
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
+        if (body['status'] == '1') {
+          event.value = HEventModel.fromJson(body['data']);
+          _populateForm(event.value!);
+        } else {
+          AppSnackbar.error(body['message'] ?? 'Failed to fetch event');
+        }
       } else {
-        _showError(body['message']?.toString() ?? 'Failed to fetch event');
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
-      _showError('Network error: $e');
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoading.value = false;
     }
   }
 
-  // ─── Pick banner image ────────────────────────────────────────────────────
+  // ─── Banner image pick ────────────────────────────────────────────────────
   Future<void> pickBannerImage() async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(
-        source: ImageSource.gallery, imageQuality: 85);
-    if (picked == null) return;
+    try {
+      final picker  = ImagePicker();
+      final picked  = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+      if (picked == null) return;
 
-    final file = File(picked.path);
-    final bytes = await file.readAsBytes();
-    final ext = picked.path.split('.').last.toLowerCase();
-    final mime = ext == 'png' ? 'image/png' : 'image/jpeg';
+      File file = File(picked.path);
 
-    pickedImageFile.value = file;
-    pickedImageBase64.value = 'data:$mime;base64,${base64Encode(bytes)}';
+      if (await file.length() > 1024 * 1024) {
+        AppSnackbar.error('Please upload image less than 1 MB');
+        return;
+      }
+
+      final croppedFile = await ImageCropper().cropImage(
+        sourcePath: file.path,
+        aspectRatio: const CropAspectRatio(ratioX: 2, ratioY: 1),
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Crop Banner',
+            toolbarColor: Colors.black,
+            toolbarWidgetColor: Colors.white,
+            lockAspectRatio: true,
+          ),
+          IOSUiSettings(
+            title: 'Crop Banner',
+            aspectRatioLockEnabled: true,
+          ),
+        ],
+      );
+      if (croppedFile == null) return;
+
+      file = File(croppedFile.path);
+
+      if (await file.length() > 1024 * 1024) {
+        AppSnackbar.error('Cropped image still exceeds 1 MB');
+        return;
+      }
+
+      final rawBytes = await file.readAsBytes();
+      final ext      = file.path.split('.').last.toLowerCase();
+      final mime     = ext == 'png' ? 'image/png' : 'image/jpeg';
+
+      pickedImageFile.value   = file;
+      pickedImageBase64.value = 'data:$mime;base64,${base64Encode(rawBytes)}';
+    } catch (e) {
+      AppSnackbar.error('Something went wrong while picking image');
+    }
   }
 
   // ─── Date pickers ─────────────────────────────────────────────────────────
-  DateTime get _today => DateTime(
-    DateTime.now().year,
-    DateTime.now().month,
-    DateTime.now().day,
-  );
-
   Future<void> selectStartDate(BuildContext context) async {
-    final initialDate =
-    (startDate.value != null && !startDate.value!.isBefore(_today))
+    final now         = DateTime.now();
+    final today       = DateTime(now.year, now.month, now.day);
+    final safeInitial = (startDate.value != null &&
+        !startDate.value!.isBefore(today))
         ? startDate.value!
-        : _today;
+        : today;
 
     final picked = await showDatePicker(
       context: context,
-      initialDate: initialDate,
-      firstDate: _today,
-      lastDate: DateTime(2035),
+      initialDate: safeInitial,
+      firstDate: today,
+      lastDate: DateTime(2030),
     );
 
     if (picked != null) {
       startDate.value = picked;
-      if (endDate.value != null && endDate.value!.isBefore(picked)) {
-        endDate.value = null;
+      if (endDate.value != null) {
+        final endOnly = DateTime(
+            endDate.value!.year, endDate.value!.month, endDate.value!.day);
+        if (endOnly.isBefore(picked)) {
+          endDate.value = null;
+          endTime.value = null;
+          AppSnackbar.warning(
+            'End date & time were reset because they were before the new start date.',
+          );
+        }
       }
     }
   }
 
   Future<void> selectEndDate(BuildContext context) async {
-    final first =
-    (startDate.value != null && !startDate.value!.isBefore(_today))
+    final now       = DateTime.now();
+    final today     = DateTime(now.year, now.month, now.day);
+    final firstDate = (startDate.value != null &&
+        startDate.value!.isAfter(today))
         ? startDate.value!
-        : _today;
+        : today;
 
-    DateTime initial = endDate.value ?? first;
-    if (initial.isBefore(first)) initial = first;
+    DateTime safeInitial;
+    if (endDate.value != null) {
+      final endOnly = DateTime(
+          endDate.value!.year, endDate.value!.month, endDate.value!.day);
+      safeInitial = endOnly.isBefore(firstDate) ? firstDate : endDate.value!;
+    } else {
+      safeInitial = firstDate;
+    }
 
     final picked = await showDatePicker(
       context: context,
-      initialDate: initial,
-      firstDate: first,
-      lastDate: DateTime(2035),
+      initialDate: safeInitial,
+      firstDate: firstDate,
+      lastDate: DateTime(2030),
     );
     if (picked != null) endDate.value = picked;
   }
@@ -610,7 +987,19 @@ class AdminEventUpdateController extends GetxController {
       context: context,
       initialTime: startTime.value ?? TimeOfDay.now(),
     );
-    if (picked != null) startTime.value = picked;
+    if (picked != null) {
+      startTime.value = picked;
+      if (endTime.value != null && _isSameDay()) {
+        final sMin = picked.hour * 60 + picked.minute;
+        final eMin = endTime.value!.hour * 60 + endTime.value!.minute;
+        if (eMin <= sMin) {
+          endTime.value = null;
+          AppSnackbar.warning(
+            'End time was reset because it was not after the new start time.',
+          );
+        }
+      }
+    }
   }
 
   Future<void> selectEndTime(BuildContext context) async {
@@ -618,19 +1007,39 @@ class AdminEventUpdateController extends GetxController {
       context: context,
       initialTime: endTime.value ?? TimeOfDay.now(),
     );
-    if (picked != null) endTime.value = picked;
+    if (picked != null) {
+      if (_isSameDay() && startTime.value != null) {
+        final sMin = startTime.value!.hour * 60 + startTime.value!.minute;
+        final eMin = picked.hour * 60 + picked.minute;
+        if (eMin <= sMin) {
+          AppSnackbar.error('End time must be after start time.');
+          return;
+        }
+      }
+      endTime.value = picked;
+    }
+  }
+
+  bool _isSameDay() {
+    final s = startDate.value;
+    final e = endDate.value;
+    if (s == null || e == null) return false;
+    return s.year == e.year && s.month == e.month && s.day == e.day;
   }
 
   // ─── Update event ─────────────────────────────────────────────────────────
   Future<void> updateEvent() async {
     if (!formKey.currentState!.validate()) return;
-
     if (startDate.value == null || endDate.value == null) {
-      _showError('Please select start and end dates');
+      AppSnackbar.error('Please select start and end dates');
       return;
     }
     if (startTime.value == null || endTime.value == null) {
-      _showError('Please select start and end times');
+      AppSnackbar.error('Please select start and end times');
+      return;
+    }
+    if (showMode.value == "area" && selectedArea.value == null) {
+      AppSnackbar.error('Please select an area');
       return;
     }
 
@@ -638,16 +1047,17 @@ class AdminEventUpdateController extends GetxController {
       isUpdating.value = true;
 
       final payload = <String, dynamic>{
-        'event_id': int.parse(event.value!.id),
-        'event_name': eventNameCtrl.text.trim(),
+        'event_id'      : int.parse(event.value!.id),
+        'event_name'    : eventNameCtrl.text.trim(),
+        'start_date'    : formattedStartDate,
+        'end_date'      : formattedEndDate,
+        'start_time'    : _formatTime(startTime.value!),
+        'end_time'      : _formatTime(endTime.value!),
         'event_location': locationCtrl.text.trim(),
-        // Read-only: always send original values unchanged
-        'main_location': event.value?.mainLocation ?? '',
-        'district': event.value?.district ?? '',
-        'start_date': formattedStartDate,
-        'end_date': formattedEndDate,
-        'start_time': _formatTime(startTime.value!),
-        'end_time': _formatTime(endTime.value!),
+        if (selectedState.value != null)    'state'    : selectedState.value!,
+        if (selectedDistrict.value != null) 'district' : selectedDistrict.value!,
+        if (showMode.value == "area" && selectedArea.value != null)
+          'main_location': selectedArea.value!,
       };
 
       if (pickedImageBase64.value != null) {
@@ -655,54 +1065,27 @@ class AdminEventUpdateController extends GetxController {
       }
 
       final response = await http.put(
-        Uri.parse('$_baseUrl/update-Event-admin-district'),
+        Uri.parse('$_baseUrl/update-event'),
         headers: _authHeaders,
         body: jsonEncode(payload),
       );
 
-      final body = jsonDecode(response.body) as Map<String, dynamic>;
-
-      final isSuccess = body['status'] == true ||
-          body['status'] == '1' ||
-          body['status_code'] == 200;
-
-      if (response.statusCode == 200 && isSuccess) {
-        Get.snackbar(
-          'Success',
-          body['message']?.toString() ?? 'Event updated successfully',
-          backgroundColor: const Color(0xFF4CAF50),
-          colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(16),
-        );
-
-        // FIX: Force-delete the AdminEventPage controller so its onInit
-        // re-runs and fetchEvents() is called fresh when the page mounts.
-        // Without this GetX returns the stale cached instance and skips onInit.
-        try {
-          Get.delete<AdminEventGetController>(force: true);
-        } catch (_) {}
-
-        Get.offAll(() => AdminEventPage());
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
+        if (body['status'] == '1') {
+          event.value = HEventModel.fromJson(body['data']);
+          AppSnackbar.success(body['message'] ?? 'Event updated successfully');
+          Get.back(result: true);
+        } else {
+          AppSnackbar.error(body['message'] ?? 'Failed to update event');
+        }
       } else {
-        _showError(body['message']?.toString() ?? 'Failed to update event');
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
-      _showError('Network error: $e');
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isUpdating.value = false;
     }
-  }
-
-  // ─── Error helper ─────────────────────────────────────────────────────────
-  void _showError(String message) {
-    Get.snackbar(
-      'Error',
-      message,
-      backgroundColor: const Color(0xFFF44336),
-      colorText: Colors.white,
-      snackPosition: SnackPosition.BOTTOM,
-      margin: const EdgeInsets.all(16),
-    );
   }
 }

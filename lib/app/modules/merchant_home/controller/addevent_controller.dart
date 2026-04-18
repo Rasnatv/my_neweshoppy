@@ -1,363 +1,52 @@
-//
-// import 'dart:io';
-// import 'dart:convert';
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-// import 'package:get_storage/get_storage.dart';
-// import 'package:image_picker/image_picker.dart';
-// import 'package:http/http.dart' as http;
-//
-// import '../views/myevents.dart';
-//
-// class AddEventController extends GetxController {
-//   final eventName     = TextEditingController();
-//   final eventLocation = TextEditingController();
-//
-//   var eventDate      = "".obs;
-//   var eventEndDate   = "".obs;
-//   var eventStartTime = "".obs;
-//   var eventEndTime   = "".obs;
-//   var bannerImage    = Rx<File?>(null);
-//   var isLoading      = false.obs;
-//
-//   var stateList    = <String>[].obs;
-//   var areaList     = <String>[].obs;
-//   var districtList = <String>[].obs;
-//
-//   var selectedState    = Rx<String?>(null);
-//   var selectedArea     = Rx<String?>(null);
-//   var selectedDistrict = Rx<String?>(null);
-//   var selectedLocation = Rx<String?>(null); // for district mode location
-//
-//   var isLoadingStates    = false.obs;
-//   var isLoadingAreas     = false.obs;
-//   var isLoadingDistricts = false.obs;
-//
-//   var showMode = "area".obs;
-//
-//   final ImagePicker picker = ImagePicker();
-//   final box = GetStorage();
-//
-//   final String apiUrl =
-//       "https://rasma.astradevelops.in/e_shoppyy/public/api/create-event";
-//   final String statesUrl =
-//       "https://rasma.astradevelops.in/e_shoppyy/public/api/merchant/states";
-//   final String areasUrl =
-//       "https://rasma.astradevelops.in/e_shoppyy/public/api/areas";
-//   final String districtsUrl =
-//       "https://rasma.astradevelops.in/e_shoppyy/public/api/districts";
-//
-//   @override
-//   void onInit() {
-//     super.onInit();
-//     fetchStates();
-//     fetchAreas();
-//     fetchDistricts();
-//   }
-//
-//   // ── FETCH STATES ─────────────────────────────────────────
-//   fetchStates() async {
-//     isLoadingStates.value = true;
-//     try {
-//       final token = box.read("auth_token") ?? "";
-//       final response = await http.get(
-//         Uri.parse(statesUrl),
-//         headers: {
-//           "Authorization": "Bearer $token",
-//           "Accept": "application/json",
-//         },
-//       );
-//       print("STATE RESPONSE: ${response.body}");
-//       if (response.statusCode == 200) {
-//         final data = jsonDecode(response.body);
-//         // handles both status: 1 (int) and status: true (bool)
-//         final status = data['status'];
-//         if ((status == true || status == 1) && data['data'] != null) {
-//           stateList.assignAll(List<String>.from(data['data']));
-//         }
-//       }
-//     } catch (e) {
-//       debugPrint("State error: $e");
-//     } finally {
-//       isLoadingStates.value = false;
-//     }
-//   }
-//
-//   // ── FETCH AREAS ──────────────────────────────────────────
-//   fetchAreas() async {
-//     isLoadingAreas.value = true;
-//     try {
-//       final token = box.read("auth_token") ?? "";
-//       final response = await http.get(
-//         Uri.parse(areasUrl),
-//         headers: {
-//           "Authorization": "Bearer $token",
-//           "Accept": "application/json",
-//         },
-//       );
-//       print("AREA RESPONSE: ${response.body}");
-//       if (response.statusCode == 200) {
-//         final data = jsonDecode(response.body);
-//         if (data['status'] == true && data['data'] != null) {
-//           areaList.assignAll(List<String>.from(data['data']));
-//         }
-//       }
-//     } catch (e) {
-//       debugPrint("Area error: $e");
-//     } finally {
-//       isLoadingAreas.value = false;
-//     }
-//   }
-//
-//   // ── FETCH DISTRICTS ──────────────────────────────────────
-//   fetchDistricts() async {
-//     isLoadingDistricts.value = true;
-//     try {
-//       final token = box.read("auth_token") ?? "";
-//       final response = await http.get(
-//         Uri.parse(districtsUrl),
-//         headers: {
-//           "Authorization": "Bearer $token",
-//           "Accept": "application/json",
-//         },
-//       );
-//       print("DISTRICT RESPONSE: ${response.body}");
-//       if (response.statusCode == 200) {
-//         final data = jsonDecode(response.body);
-//         if (data['status'] == true && data['data'] != null) {
-//           districtList.assignAll(List<String>.from(data['data']));
-//         }
-//       }
-//     } catch (e) {
-//       debugPrint("District error: $e");
-//     } finally {
-//       isLoadingDistricts.value = false;
-//     }
-//   }
-//
-//   // ── IMAGE PICKER ─────────────────────────────────────────
-//   pickBannerImage() async {
-//     final img = await picker.pickImage(source: ImageSource.gallery);
-//     if (img != null) bannerImage.value = File(img.path);
-//   }
-//
-//   removeBannerImage() => bannerImage.value = null;
-//
-//   // ── DATE PICKERS ─────────────────────────────────────────
-//   pickDate(BuildContext context) async {
-//     final now = DateTime.now();
-//     final date = await showDatePicker(
-//       context: context,
-//       firstDate: now,
-//       lastDate: DateTime(2035),
-//       initialDate: now,
-//     );
-//     if (date != null) {
-//       eventDate.value =
-//       "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
-//       if (eventEndDate.value.isNotEmpty &&
-//           DateTime.parse(eventEndDate.value).isBefore(date)) {
-//         eventEndDate.value = "";
-//       }
-//     }
-//   }
-//
-//   pickEndDate(BuildContext context) async {
-//     final startDate = eventDate.value.isNotEmpty
-//         ? DateTime.parse(eventDate.value)
-//         : DateTime.now();
-//     final date = await showDatePicker(
-//       context: context,
-//       firstDate: startDate,
-//       lastDate: DateTime(2035),
-//       initialDate: startDate,
-//     );
-//     if (date != null) {
-//       eventEndDate.value =
-//       "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
-//     }
-//   }
-//
-//   // ── TIME PICKERS ─────────────────────────────────────────
-//   pickStartTime(BuildContext context) async {
-//     final time = await showTimePicker(
-//       context: context,
-//       initialTime: TimeOfDay.now(),
-//     );
-//     if (time != null) eventStartTime.value = _formatTime(time);
-//   }
-//
-//   pickEndTime(BuildContext context) async {
-//     final time = await showTimePicker(
-//       context: context,
-//       initialTime: TimeOfDay.now(),
-//     );
-//     if (time != null) eventEndTime.value = _formatTime(time);
-//   }
-//
-//   String _formatTime(TimeOfDay time) {
-//     final hour   = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
-//     final minute = time.minute.toString().padLeft(2, '0');
-//     final period = time.period == DayPeriod.am ? 'AM' : 'PM';
-//     return "$hour:$minute $period";
-//   }
-//
-//   // ── IMAGE → BASE64 ───────────────────────────────────────
-//   Future<String?> convertImageToBase64(File imageFile) async {
-//     try {
-//       final bytes = await imageFile.readAsBytes();
-//       return "data:image/jpeg;base64,${base64Encode(bytes)}";
-//     } catch (e) {
-//       debugPrint("Image error: $e");
-//       return null;
-//     }
-//   }
-//
-//   // ── SAVE EVENT ───────────────────────────────────────────
-//   saveEvent() async {
-//     if (eventName.text.isEmpty)       return _error("Enter event name");
-//     if (eventDate.value.isEmpty)      return _error("Select start date");
-//     if (eventEndDate.value.isEmpty)   return _error("Select end date");
-//     if (eventStartTime.value.isEmpty) return _error("Select start time");
-//     if (eventEndTime.value.isEmpty)   return _error("Select end time");
-//     if (eventLocation.text.isEmpty)   return _error("Enter location");
-//     if (bannerImage.value == null)    return _error("Select banner");
-//     if (selectedState.value == null)  return _error("Select state");
-//
-//     if (showMode.value == "area" && selectedArea.value == null) {
-//       return _error("Select area");
-//     }
-//     if (showMode.value == "district") {
-//       if (selectedDistrict.value == null) return _error("Select district");
-//       if (selectedLocation.value == null) return _error("Select location");
-//     }
-//
-//     isLoading.value = true;
-//
-//     final base64Image   = await convertImageToBase64(bannerImage.value!);
-//     final token         = box.read("auth_token") ?? "";
-//
-//     final String  mode            = showMode.value;
-//     final String? stateValue      = selectedState.value;
-//     final String? areaValue       = selectedArea.value;
-//     final String? districtValue   = selectedDistrict.value;
-//     final String? locationValue   = selectedLocation.value;
-//     final String  eventNameVal    = eventName.text.trim();
-//     final String  locationTextVal = eventLocation.text.trim();
-//
-//     final Map<String, dynamic> requestData = {
-//       "event_name"     : eventNameVal,
-//       "start_date"     : eventDate.value,
-//       "end_date"       : eventEndDate.value,
-//       "start_time"     : eventStartTime.value,
-//       "end_time"       : eventEndTime.value,
-//       "event_location" : locationTextVal,
-//       "state"          : stateValue,
-//       "banner_image"   : base64Image,
-//     };
-//
-//     if (mode == "area" && areaValue != null) {
-//       requestData["main_location"] = areaValue;
-//     } else if (mode == "district") {
-//       if (districtValue != null) requestData["district"]      = districtValue;
-//       if (locationValue != null) requestData["main_location"] = locationValue;
-//     }
-//
-//     print("REQUEST PAYLOAD: ${jsonEncode(requestData)}");
-//
-//     try {
-//       final response = await http.post(
-//         Uri.parse(apiUrl),
-//         headers: {
-//           "Authorization": "Bearer $token",
-//           "Content-Type" : "application/json",
-//           "Accept"       : "application/json",
-//         },
-//         body: jsonEncode(requestData),
-//       );
-//
-//       isLoading.value = false;
-//       print("SAVE RESPONSE: ${response.body}");
-//
-//       final data = jsonDecode(response.body);
-//
-//       if (response.statusCode == 200 || response.statusCode == 201) {
-//         Get.snackbar("Success", "Event Created Successfully");
-//         clearForm();
-//         Get.offAll(() => MerchantEventsPage());
-//       } else {
-//         _error(data['message'] ?? data.toString());
-//       }
-//     } catch (e) {
-//       isLoading.value = false;
-//       _error("Error: $e");
-//     }
-//   }
-//
-//   // ── HELPERS ──────────────────────────────────────────────
-//   void _error(String msg) => Get.snackbar(
-//     "Error", msg,
-//     backgroundColor: Colors.red,
-//     colorText: Colors.white,
-//   );
-//
-//   void clearForm() {
-//     eventName.clear();
-//     eventLocation.clear();
-//     eventDate.value        = "";
-//     eventEndDate.value     = "";
-//     eventStartTime.value   = "";
-//     eventEndTime.value     = "";
-//     bannerImage.value      = null;
-//     selectedState.value    = null;
-//     selectedArea.value     = null;
-//     selectedDistrict.value = null;
-//     selectedLocation.value = null;
-//     showMode.value         = "area";
-//   }
-//
-//   @override
-//   void onClose() {
-//     eventName.dispose();
-//     eventLocation.dispose();
-//     super.onClose();
-//   }
-// }
+
 import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 
+import '../../merchantlogin/widget/successwidget.dart';
 import '../views/myevents.dart';
+import '../../../data/errors/api_error.dart';
 
 class AddEventController extends GetxController {
-  final eventName     = TextEditingController();
+
+  final formKey = GlobalKey<FormState>();
+
+  final eventName = TextEditingController();
   final eventLocation = TextEditingController();
 
-  var eventDate      = "".obs;
-  var eventEndDate   = "".obs;
+  var eventDate = "".obs;
+  var eventEndDate = "".obs;
   var eventStartTime = "".obs;
-  var eventEndTime   = "".obs;
-  var bannerImage    = Rx<File?>(null);
-  var isLoading      = false.obs;
+  var eventEndTime = "".obs;
+  var bannerImage = Rx<File?>(null);
+  var isLoading = false.obs;
 
-  var stateList    = <String>[].obs;
-  var areaList     = <String>[].obs;
+  var errorStartDate = Rx<String?>(null);
+  var errorEndDate = Rx<String?>(null);
+  var errorStartTime = Rx<String?>(null);
+  var errorEndTime = Rx<String?>(null);
+  var errorBanner = Rx<String?>(null);
+  var errorState = Rx<String?>(null);
+  var errorDistrict = Rx<String?>(null);
+  var errorArea = Rx<String?>(null);
+
+  var stateList = <String>[].obs;
+  var areaList = <String>[].obs;
   var districtList = <String>[].obs;
 
-  var selectedState    = Rx<String?>(null);
-  var selectedArea     = Rx<String?>(null);
+  var selectedState = Rx<String?>(null);
+  var selectedArea = Rx<String?>(null);
   var selectedDistrict = Rx<String?>(null);
 
-  var isLoadingStates    = false.obs;
-  var isLoadingAreas     = false.obs;
+  var isLoadingStates = false.obs;
+  var isLoadingAreas = false.obs;
   var isLoadingDistricts = false.obs;
 
-  // "district" = State + District only
-  // "area"     = State + District + Area
   var showMode = "district".obs;
 
   final ImagePicker picker = ImagePicker();
@@ -365,10 +54,13 @@ class AddEventController extends GetxController {
 
   final String apiUrl =
       "https://rasma.astradevelops.in/e_shoppyy/public/api/create-event";
+
   final String statesUrl =
       "https://rasma.astradevelops.in/e_shoppyy/public/api/merchant/states";
+
   final String areasUrl =
       "https://rasma.astradevelops.in/e_shoppyy/public/api/areas";
+
   final String districtsUrl =
       "https://rasma.astradevelops.in/e_shoppyy/public/api/districts";
 
@@ -380,11 +72,12 @@ class AddEventController extends GetxController {
     fetchDistricts();
   }
 
-  // ── FETCH STATES ─────────────────────────────────────────
+  // ── FETCH STATES ─────────────────────────────────────
   fetchStates() async {
     isLoadingStates.value = true;
+    final token = box.read("auth_token");
+
     try {
-      final token = box.read("auth_token") ?? "";
       final response = await http.get(
         Uri.parse(statesUrl),
         headers: {
@@ -392,25 +85,30 @@ class AddEventController extends GetxController {
           "Accept": "application/json",
         },
       );
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final status = data['status'];
-        if ((status == true || status == 1) && data['data'] != null) {
+        if ((data['status'] == true || data['status'] == 1) &&
+            data['data'] != null) {
           stateList.assignAll(List<String>.from(data['data']));
         }
       }
+
+      ApiErrorHandler.handleResponse(response);
+
     } catch (e) {
-      debugPrint("State error: $e");
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoadingStates.value = false;
     }
   }
 
-  // ── FETCH AREAS ──────────────────────────────────────────
+  // ── FETCH AREAS ──────────────────────────────────────
   fetchAreas() async {
     isLoadingAreas.value = true;
+    final token = box.read("auth_token");
+
     try {
-      final token = box.read("auth_token") ?? "";
       final response = await http.get(
         Uri.parse(areasUrl),
         headers: {
@@ -418,24 +116,29 @@ class AddEventController extends GetxController {
           "Accept": "application/json",
         },
       );
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['status'] == true && data['data'] != null) {
           areaList.assignAll(List<String>.from(data['data']));
         }
       }
+
+      ApiErrorHandler.handleResponse(response);
+
     } catch (e) {
-      debugPrint("Area error: $e");
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoadingAreas.value = false;
     }
   }
 
-  // ── FETCH DISTRICTS ──────────────────────────────────────
+  // ── FETCH DISTRICTS ──────────────────────────────────
   fetchDistricts() async {
     isLoadingDistricts.value = true;
+    final token = box.read("auth_token");
+
     try {
-      final token = box.read("auth_token") ?? "";
       final response = await http.get(
         Uri.parse(districtsUrl),
         headers: {
@@ -443,42 +146,93 @@ class AddEventController extends GetxController {
           "Accept": "application/json",
         },
       );
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['status'] == true && data['data'] != null) {
           districtList.assignAll(List<String>.from(data['data']));
         }
       }
+
+      ApiErrorHandler.handleResponse(response);
+
     } catch (e) {
-      debugPrint("District error: $e");
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoadingDistricts.value = false;
     }
   }
 
-  // ── IMAGE PICKER ─────────────────────────────────────────
-  pickBannerImage() async {
-    final img = await picker.pickImage(source: ImageSource.gallery);
-    if (img != null) bannerImage.value = File(img.path);
+  // ── PICK BANNER IMAGE ─────────────────────────────────
+  Future<void> pickBannerImage() async {
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 90,
+    );
+
+    if (picked == null) return;
+
+    File file = File(picked.path);
+
+    // SIZE CHECK (1MB limit)
+    final int bytes = await file.length();
+    if (bytes > 1024 * 1024) {
+      errorBanner.value = "Image must be less than 1 MB";
+      return;
+    }
+
+    // CROP IMAGE (2:1 ratio)
+    final croppedFile = await ImageCropper().cropImage(
+      sourcePath: file.path,
+      aspectRatio: const CropAspectRatio(ratioX: 2, ratioY: 1),
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: 'Crop Banner',
+          toolbarColor: Colors.black,
+          toolbarWidgetColor: Colors.white,
+          lockAspectRatio: true,
+        ),
+        IOSUiSettings(
+          title: 'Crop Banner',
+          aspectRatioLockEnabled: true,
+        ),
+      ],
+    );
+
+    if (croppedFile == null) return;
+
+    file = File(croppedFile.path);
+
+    bannerImage.value = file;
+    errorBanner.value = null;
   }
 
-  removeBannerImage() => bannerImage.value = null;
+  removeBannerImage() {
+    bannerImage.value = null;
+    errorBanner.value = "Please select a banner image";
+  }
 
-  // ── DATE PICKERS ─────────────────────────────────────────
+  // ── DATE PICKERS ─────────────────────────────────────
   pickDate(BuildContext context) async {
     final now = DateTime.now();
+
     final date = await showDatePicker(
       context: context,
       firstDate: now,
       lastDate: DateTime(2035),
       initialDate: now,
     );
+
     if (date != null) {
       eventDate.value =
       "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+
+      errorStartDate.value = null;
+
       if (eventEndDate.value.isNotEmpty &&
           DateTime.parse(eventEndDate.value).isBefore(date)) {
         eventEndDate.value = "";
+        errorEndDate.value = "End date must be after start date";
       }
     }
   }
@@ -487,142 +241,165 @@ class AddEventController extends GetxController {
     final startDate = eventDate.value.isNotEmpty
         ? DateTime.parse(eventDate.value)
         : DateTime.now();
+
     final date = await showDatePicker(
       context: context,
       firstDate: startDate,
       lastDate: DateTime(2035),
       initialDate: startDate,
     );
+
     if (date != null) {
       eventEndDate.value =
       "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+
+      errorEndDate.value = null;
     }
   }
 
-  // ── TIME PICKERS ─────────────────────────────────────────
+  // ── TIME PICKERS ─────────────────────────────────────
   pickStartTime(BuildContext context) async {
-    final time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-    );
-    if (time != null) eventStartTime.value = _formatTime(time);
+    final time =
+    await showTimePicker(context: context, initialTime: TimeOfDay.now());
+
+    if (time != null) {
+      eventStartTime.value = _formatTime(time);
+      errorStartTime.value = null;
+    }
   }
 
   pickEndTime(BuildContext context) async {
-    final time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-    );
-    if (time != null) eventEndTime.value = _formatTime(time);
+    final time =
+    await showTimePicker(context: context, initialTime: TimeOfDay.now());
+
+    if (time != null) {
+      eventEndTime.value = _formatTime(time);
+      errorEndTime.value = null;
+    }
   }
 
   String _formatTime(TimeOfDay time) {
-    final hour   = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
+    final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
     final minute = time.minute.toString().padLeft(2, '0');
     final period = time.period == DayPeriod.am ? 'AM' : 'PM';
     return "$hour:$minute $period";
   }
 
-  // ── IMAGE → BASE64 ───────────────────────────────────────
+  // ── BASE64 ───────────────────────────────────────────
   Future<String?> convertImageToBase64(File imageFile) async {
-    try {
-      final bytes = await imageFile.readAsBytes();
-      return "data:image/jpeg;base64,${base64Encode(bytes)}";
-    } catch (e) {
-      debugPrint("Image error: $e");
-      return null;
-    }
+    final bytes = await imageFile.readAsBytes();
+    return "data:image/jpeg;base64,${base64Encode(bytes)}";
   }
 
-  // ── SAVE EVENT ───────────────────────────────────────────
-  saveEvent() async {
-    if (eventName.text.isEmpty)       return _error("Enter event name");
-    if (eventDate.value.isEmpty)      return _error("Select start date");
-    if (eventEndDate.value.isEmpty)   return _error("Select end date");
-    if (eventStartTime.value.isEmpty) return _error("Select start time");
-    if (eventEndTime.value.isEmpty)   return _error("Select end time");
-    if (eventLocation.text.isEmpty)   return _error("Enter location");
-    if (bannerImage.value == null)    return _error("Select banner");
-    if (selectedState.value == null)  return _error("Select state");
-    if (selectedDistrict.value == null) return _error("Select district");
+  // ── VALIDATION ───────────────────────────────────────
+  bool _validatePickerFields() {
+    bool valid = true;
 
-    // Area is only required in area mode
-    if (showMode.value == "area" && selectedArea.value == null) {
-      return _error("Select area");
+    if (eventDate.value.isEmpty) {
+      errorStartDate.value = "Start date is required";
+      valid = false;
     }
+    if (eventEndDate.value.isEmpty) {
+      errorEndDate.value = "End date is required";
+      valid = false;
+    }
+    if (eventStartTime.value.isEmpty) {
+      errorStartTime.value = "Start time is required";
+      valid = false;
+    }
+    if (eventEndTime.value.isEmpty) {
+      errorEndTime.value = "End time is required";
+      valid = false;
+    }
+    if (bannerImage.value == null) {
+      errorBanner.value = "Please select a banner image";
+      valid = false;
+    }
+    if (selectedState.value == null) {
+      errorState.value = "State is required";
+      valid = false;
+    }
+    if (selectedDistrict.value == null) {
+      errorDistrict.value = "District is required";
+      valid = false;
+    }
+    if (showMode.value == "area" && selectedArea.value == null) {
+      errorArea.value = "Area is required";
+      valid = false;
+    }
+
+    return valid;
+  }
+
+  // ── SAVE EVENT ───────────────────────────────────────
+  saveEvent() async {
+    final formValid = formKey.currentState?.validate() ?? false;
+    final pickersValid = _validatePickerFields();
+
+    if (!formValid || !pickersValid) return;
 
     isLoading.value = true;
 
+    final token = box.read("auth_token");
     final base64Image = await convertImageToBase64(bannerImage.value!);
-    final token       = box.read("auth_token") ?? "";
 
-    final Map<String, dynamic> requestData = {
-      "event_name"     : eventName.text.trim(),
-      "start_date"     : eventDate.value,
-      "end_date"       : eventEndDate.value,
-      "start_time"     : eventStartTime.value,
-      "end_time"       : eventEndTime.value,
-      "event_location" : eventLocation.text.trim(),
-      "state"          : selectedState.value,
-      "district"       : selectedDistrict.value,
-      "banner_image"   : base64Image,
+    final requestData = {
+      "event_name": eventName.text.trim(),
+      "start_date": eventDate.value,
+      "end_date": eventEndDate.value,
+      "start_time": eventStartTime.value,
+      "end_time": eventEndTime.value,
+      "event_location": eventLocation.text.trim(),
+      "state": selectedState.value,
+      "district": selectedDistrict.value,
+      "banner_image": base64Image,
     };
 
-    // Add area only in area mode
     if (showMode.value == "area" && selectedArea.value != null) {
       requestData["main_location"] = selectedArea.value;
     }
-
-    print("REQUEST PAYLOAD: ${jsonEncode(requestData)}");
 
     try {
       final response = await http.post(
         Uri.parse(apiUrl),
         headers: {
           "Authorization": "Bearer $token",
-          "Content-Type" : "application/json",
-          "Accept"       : "application/json",
+          "Content-Type": "application/json",
+          "Accept": "application/json",
         },
         body: jsonEncode(requestData),
       );
 
       isLoading.value = false;
-      print("SAVE RESPONSE: ${response.body}");
 
-      final data = jsonDecode(response.body);
+      final message = ApiErrorHandler.handleResponse(response);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        Get.snackbar("Success", "Event Created Successfully");
+        AppSnackbar.success(message);
         clearForm();
-        Get.offAll(() => MerchantEventsPage());
-      } else {
-        _error(data['message'] ?? data.toString());
+        Get.off(() => MerchantEventsPage());
       }
+
     } catch (e) {
       isLoading.value = false;
-      _error("Error: $e");
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     }
   }
 
-  // ── HELPERS ──────────────────────────────────────────────
-  void _error(String msg) => Get.snackbar(
-    "Error", msg,
-    backgroundColor: Colors.red,
-    colorText: Colors.white,
-  );
-
+  // ── CLEAR ────────────────────────────────────────────
   void clearForm() {
+    formKey.currentState?.reset();
     eventName.clear();
     eventLocation.clear();
-    eventDate.value        = "";
-    eventEndDate.value     = "";
-    eventStartTime.value   = "";
-    eventEndTime.value     = "";
-    bannerImage.value      = null;
-    selectedState.value    = null;
-    selectedArea.value     = null;
+    eventDate.value = "";
+    eventEndDate.value = "";
+    eventStartTime.value = "";
+    eventEndTime.value = "";
+    bannerImage.value = null;
+    selectedState.value = null;
+    selectedArea.value = null;
     selectedDistrict.value = null;
-    showMode.value         = "district";
+    showMode.value = "district";
   }
 
   @override

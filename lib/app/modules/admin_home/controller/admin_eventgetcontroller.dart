@@ -5,6 +5,9 @@ import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
+import '../../../data/errors/api_error.dart';
+import '../../merchantlogin/widget/successwidget.dart';
+
 class AdminEventGetController extends GetxController {
   var events = <Map<String, dynamic>>[].obs;
   var filteredEvents = <Map<String, dynamic>>[].obs;
@@ -16,22 +19,34 @@ class AdminEventGetController extends GetxController {
   final String apiUrl =
       "https://rasma.astradevelops.in/e_shoppyy/public/api/get-all-events-admin-district";
 
+  String get _token => box.read('auth_token')?.toString().trim() ?? '';
+
+  bool _checkAuth() {
+    if (_token.isEmpty) {
+      Get.offAllNamed('/login');
+      return false;
+    }
+    return true;
+  }
+
   @override
   void onInit() {
     super.onInit();
     fetchEvents();
   }
 
+  // ───────────────── FETCH EVENTS ─────────────────
   Future<void> fetchEvents() async {
+    if (!_checkAuth()) return;
+
     try {
       isLoading.value = true;
-      final token = box.read('auth_token');
 
       final response = await http.get(
         Uri.parse(apiUrl),
         headers: {
           "Accept": "application/json",
-          "Authorization": "Bearer $token",
+          "Authorization": "Bearer $_token",
         },
       );
 
@@ -43,16 +58,21 @@ class AdminEventGetController extends GetxController {
       } else {
         events.clear();
         filteredEvents.clear();
+        AppSnackbar.error(
+          ApiErrorHandler.handleResponse(response),
+        );
       }
     } catch (e) {
-      Get.snackbar("Error", "Failed to load events");
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoading.value = false;
     }
   }
 
+  // ───────────────── FILTER ─────────────────
   void applyFilter(String filter) {
     selectedFilter.value = filter;
+
     if (filter == 'all') {
       filteredEvents.value = events;
     } else {
@@ -76,7 +96,8 @@ class AdminEventGetController extends GetxController {
     }
   }
 
-  String getCreatorType(Map event) => event['created_by_type'] ?? 'unknown';
+  String getCreatorType(Map event) =>
+      event['created_by_type'] ?? 'unknown';
 
   String getAreaInfo(Map event) {
     final district = (event['district'] ?? '').toString().trim();
@@ -95,78 +116,39 @@ class AdminEventGetController extends GetxController {
     return 'N/A';
   }
 
-  // ─── Time display formatter ───────────────────────────────────────────────
-  // Converts any API time string to 12-hour format.
-  // "14:46" → "2:46 PM" | "09:00" → "9:00 AM" | "11:00 AM" → "11:00 AM"
+  // ───────────────── TIME FORMAT ─────────────────
   String formatDisplayTime(String? timeStr) {
     if (timeStr == null || timeStr.trim().isEmpty) return '--';
 
     final formats = [
-      'hh:mm a',  // "09:00 AM" / "01:46 PM"
-      'h:mm a',   // "9:00 AM"  / "1:46 PM"
-      'HH:mm:ss', // "14:46:00"
-      'HH:mm',    // "14:46"
-      'H:mm',     // "9:00"
+      'hh:mm a',
+      'h:mm a',
+      'HH:mm:ss',
+      'HH:mm',
+      'H:mm',
     ];
 
     for (final fmt in formats) {
       try {
         final dt = DateFormat(fmt).parse(timeStr.trim());
-        return DateFormat('h:mm a').format(dt); // h = no leading zero
+        return DateFormat('h:mm a').format(dt);
       } catch (_) {}
     }
 
-    return timeStr; // fallback: return raw if all parsers fail
+    return timeStr;
   }
-  // Future<void> deleteEvent(int eventId) async {
-  //   try {
-  //     final token = box.read('auth_token');
-  //
-  //     isLoading.value = true;
-  //
-  //     final response = await http.delete(
-  //       Uri.parse(
-  //           "https://rasma.astradevelops.in/e_shoppyy/public/api/delete-Event-admindistrict"),
-  //       headers: {
-  //         "Accept": "application/json",
-  //         "Authorization": "Bearer $token",
-  //       },
-  //       body: {
-  //         "event_id": eventId.toString(),
-  //       },
-  //     );
-  //
-  //     final data = jsonDecode(response.body);
-  //
-  //     if (response.statusCode == 200 && data['status'] == true) {
-  //       Get.snackbar("Success", data['message']);
-  //
-  //       // Remove deleted event locally (fast UI update)
-  //       events.removeWhere((e) => e['id'] == eventId);
-  //       filteredEvents.removeWhere((e) => e['id'] == eventId);
-  //
-  //       // OR you can refresh from API:
-  //       // await fetchEvents();
-  //
-  //     } else {
-  //       Get.snackbar("Error", data['message'] ?? "Delete failed");
-  //     }
-  //   } catch (e) {
-  //     Get.snackbar("Error", "Failed to delete event");
-  //   } finally {
-  //     isLoading.value = false;
-  //   }
-  // }
-  Future<void> deleteEvent(int eventId) async {
-    try {
-      final token = box.read('auth_token');
 
+  // ───────────────── DELETE EVENT ─────────────────
+  Future<void> deleteEvent(int eventId) async {
+    if (!_checkAuth()) return;
+
+    try {
       final response = await http.delete(
         Uri.parse(
             "https://rasma.astradevelops.in/e_shoppyy/public/api/delete-Event-admindistrict"),
         headers: {
           "Accept": "application/json",
-          "Authorization": "Bearer $token",
+          "Authorization": "Bearer $_token",
         },
         body: {
           "event_id": eventId.toString(),
@@ -176,9 +158,8 @@ class AdminEventGetController extends GetxController {
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200 && data['status'] == true) {
-        Get.snackbar("Success", data['message']);
+        AppSnackbar.success(data['message'] ?? "Deleted successfully");
 
-        // ✅ 1. Remove instantly from UI
         events.removeWhere(
               (e) => int.tryParse(e['id'].toString()) == eventId,
         );
@@ -187,17 +168,14 @@ class AdminEventGetController extends GetxController {
               (e) => int.tryParse(e['id'].toString()) == eventId,
         );
 
-        // ✅ 2. Refresh from API (IMPORTANT)
         await fetchEvents();
-
       } else {
-        Get.snackbar("Error", data['message'] ?? "Delete failed");
+        AppSnackbar.error(
+          ApiErrorHandler.handleResponse(response),
+        );
       }
     } catch (e) {
-      Get.snackbar("Error", "Failed to delete event");
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     }
   }
-
-
-
 }

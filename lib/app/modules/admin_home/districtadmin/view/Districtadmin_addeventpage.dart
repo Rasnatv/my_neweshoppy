@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -6,14 +7,12 @@ import '../../../../common/style/app_text_style.dart';
 import '../../../../common/utils/validators.dart';
 import '../controller/districtadmin_addeventcontroller.dart';
 
-
-
 class DistrictAdminAddEventPage extends StatelessWidget {
   DistrictAdminAddEventPage({super.key});
 
   final DistrictAdminEventAddController controller =
   Get.put(DistrictAdminEventAddController());
-  final _formKey  = GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>();
   final RxBool _submitted = false.obs;
 
   @override
@@ -21,10 +20,16 @@ class DistrictAdminAddEventPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
+        iconTheme: IconThemeData(color: Colors.white),
         automaticallyImplyLeading: true,
         title: Text(
           "Create District Event",
-          style: AppTextStyle.rTextNunitoWhite17w700,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.1,
+            ),
         ),
         backgroundColor: AppColors.welcomecardclr,
         elevation: 0,
@@ -62,7 +67,11 @@ class DistrictAdminAddEventPage extends StatelessWidget {
                           ),
                           const SizedBox(height: 16),
 
-                          // District Dropdown
+                          // ─── State Dropdown ──────────────────── NEW
+                          _stateDropdown(),
+                          const SizedBox(height: 16),
+
+                          // ─── District Dropdown ───────────────────
                           _districtDropdown(),
                           const SizedBox(height: 16),
 
@@ -149,7 +158,8 @@ class DistrictAdminAddEventPage extends StatelessWidget {
                               decoration: BoxDecoration(
                                 border: Border.all(
                                   color: _submitted.value &&
-                                      controller.bannerImage.value == null
+                                      controller.bannerImage.value ==
+                                          null
                                       ? Colors.red.shade300
                                       : Colors.grey.shade300,
                                   width: 2,
@@ -160,12 +170,14 @@ class DistrictAdminAddEventPage extends StatelessWidget {
                               ),
                               child: controller.bannerImage.value == null
                                   ? Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisAlignment:
+                                MainAxisAlignment.center,
                                 children: [
                                   Container(
                                     padding: const EdgeInsets.all(16),
                                     decoration: BoxDecoration(
-                                      color: AppColors.kPrimary.withOpacity(0.1),
+                                      color: AppColors.kPrimary
+                                          .withOpacity(0.1),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Icon(
@@ -196,7 +208,8 @@ class DistrictAdminAddEventPage extends StatelessWidget {
                                   : Stack(
                                 children: [
                                   ClipRRect(
-                                    borderRadius: BorderRadius.circular(10),
+                                    borderRadius:
+                                    BorderRadius.circular(10),
                                     child: Image.file(
                                       controller.bannerImage.value!,
                                       fit: BoxFit.cover,
@@ -208,10 +221,12 @@ class DistrictAdminAddEventPage extends StatelessWidget {
                                     top: 8,
                                     right: 8,
                                     child: Container(
-                                      padding: const EdgeInsets.all(8),
+                                      padding:
+                                      const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
                                         color: Colors.black54,
-                                        borderRadius: BorderRadius.circular(8),
+                                        borderRadius:
+                                        BorderRadius.circular(8),
                                       ),
                                       child: const Icon(
                                         Icons.edit,
@@ -229,11 +244,13 @@ class DistrictAdminAddEventPage extends StatelessWidget {
                           Obx(() => _submitted.value &&
                               controller.bannerImage.value == null
                               ? Padding(
-                            padding: const EdgeInsets.only(top: 8, left: 12),
+                            padding: const EdgeInsets.only(
+                                top: 8, left: 12),
                             child: Row(
                               children: [
                                 Icon(Icons.error_outline,
-                                    size: 14, color: Colors.red.shade700),
+                                    size: 14,
+                                    color: Colors.red.shade700),
                                 const SizedBox(width: 6),
                                 Text(
                                   "Banner image is required",
@@ -278,9 +295,13 @@ class DistrictAdminAddEventPage extends StatelessWidget {
                           final bool fieldsValid =
                               controller.startDate.value.isNotEmpty &&
                                   controller.endDate.value.isNotEmpty &&
-                                  controller.startTime.value.isNotEmpty &&
+                                  controller
+                                      .startTime.value.isNotEmpty &&
                                   controller.endTime.value.isNotEmpty &&
-                                  controller.selectedDistrict.value.isNotEmpty &&
+                                  controller.selectedState.value
+                                      .isNotEmpty && // ← NEW
+                                  controller.selectedDistrict.value
+                                      .isNotEmpty &&
                                   controller.bannerImage.value != null;
 
                           if (formValid && fieldsValid) {
@@ -339,7 +360,118 @@ class DistrictAdminAddEventPage extends StatelessWidget {
     );
   }
 
-  /// ================= DISTRICT DROPDOWN =================
+  // ================================================================
+  //  STATE DROPDOWN  ← NEW
+  // ================================================================
+  Widget _stateDropdown() {
+    return Obx(() {
+      final bool hasError =
+          _submitted.value && controller.selectedState.value.isEmpty;
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InputDecorator(
+            decoration: InputDecoration(
+              labelText: "State",
+              prefixIcon: const Icon(Icons.flag_outlined, size: 22),
+              suffixIcon: controller.isStatesLoading.value
+                  ? const Padding(
+                padding: EdgeInsets.all(12),
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              )
+                  : const Icon(Icons.arrow_drop_down, size: 28),
+              filled: true,
+              fillColor: Colors.grey.shade50,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: hasError ? Colors.red.shade300 : Colors.grey.shade300,
+                  width: hasError ? 2 : 1,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: AppColors.kPrimary, width: 2),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.red.shade300, width: 2),
+              ),
+              contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: controller.selectedState.value.isEmpty
+                    ? null
+                    : controller.selectedState.value,
+                hint: Text(
+                  "Select State",
+                  style:
+                  TextStyle(fontSize: 15, color: Colors.grey.shade600),
+                ),
+                isExpanded: true,
+                icon: const SizedBox.shrink(),
+                items: controller.states
+                    .map(
+                      (state) => DropdownMenuItem<String>(
+                    value: state,
+                    child: Text(
+                      state[0].toUpperCase() + state.substring(1),
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                )
+                    .toList(),
+                onChanged: controller.isStatesLoading.value
+                    ? null
+                    : (value) {
+                  if (value != null) {
+                    controller.selectedState.value = value;
+                  }
+                },
+              ),
+            ),
+          ),
+
+          // Error message
+          if (hasError)
+            Padding(
+              padding: const EdgeInsets.only(top: 6, left: 12),
+              child: Row(
+                children: [
+                  Icon(Icons.error_outline,
+                      size: 14, color: Colors.red.shade700),
+                  const SizedBox(width: 6),
+                  Text(
+                    "State is required",
+                    style:
+                    TextStyle(color: Colors.red.shade700, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      );
+    });
+  }
+
+  // ================================================================
+  //  DISTRICT DROPDOWN
+  // ================================================================
   Widget _districtDropdown() {
     return Obx(() {
       final bool hasError =
@@ -393,7 +525,8 @@ class DistrictAdminAddEventPage extends StatelessWidget {
                     : controller.selectedDistrict.value,
                 hint: Text(
                   "Select District",
-                  style: TextStyle(fontSize: 15, color: Colors.grey.shade600),
+                  style:
+                  TextStyle(fontSize: 15, color: Colors.grey.shade600),
                 ),
                 isExpanded: true,
                 icon: const SizedBox.shrink(),
@@ -402,7 +535,6 @@ class DistrictAdminAddEventPage extends StatelessWidget {
                       (district) => DropdownMenuItem<String>(
                     value: district,
                     child: Text(
-                      // Capitalize first letter for display
                       district[0].toUpperCase() + district.substring(1),
                       style: const TextStyle(
                         fontSize: 15,
@@ -435,7 +567,8 @@ class DistrictAdminAddEventPage extends StatelessWidget {
                   const SizedBox(width: 6),
                   Text(
                     "District is required",
-                    style: TextStyle(color: Colors.red.shade700, fontSize: 12),
+                    style:
+                    TextStyle(color: Colors.red.shade700, fontSize: 12),
                   ),
                 ],
               ),
@@ -578,8 +711,9 @@ class DistrictAdminAddEventPage extends StatelessWidget {
             fontSize: 15,
             color:
             value.value.isEmpty ? Colors.grey.shade600 : Colors.black87,
-            fontWeight:
-            value.value.isEmpty ? FontWeight.w400 : FontWeight.w500,
+            fontWeight: value.value.isEmpty
+                ? FontWeight.w400
+                : FontWeight.w500,
           ),
         ),
       ),

@@ -1,10 +1,228 @@
-
+//
+// import 'dart:convert';
+// import 'package:flutter/material.dart';
+// import 'package:get/get.dart';
+// import 'package:get_storage/get_storage.dart';
+// import 'package:http/http.dart' as http;
+// import '../../../data/models/user_productdetailmodel.dart';
+// import 'cartcontroller.dart';
+// import '../view/cartscreen.dart';
+//
+// class ProductDetailController extends GetxController {
+//   final box = GetStorage();
+//   final int productId;
+//
+//   ProductDetailController({required this.productId});
+//
+//   var isLoading = false.obs;
+//   var product = Rxn<ProductDetailModel>();
+//   var selectedVariant = Rxn<ProductVariantModel>();
+//   var quantity = 1.obs;
+//   var isAddedToCart = false.obs;
+//
+//   Worker? _cartWorker;
+//
+//   final String api =
+//       "https://rasma.astradevelops.in/e_shoppyy/public/api/product-details";
+//
+//   @override
+//   void onInit() {
+//     super.onInit();
+//     fetchProduct(productId);
+//   }
+//
+//   @override
+//   void onClose() {
+//     _cartWorker?.dispose();
+//     super.onClose();
+//   }
+//
+//   // ✅ FETCH PRODUCT
+//   Future<void> fetchProduct(int productId) async {
+//     final token = box.read('auth_token');
+//     if (token == null) return;
+//
+//     try {
+//       isLoading.value = true;
+//       isAddedToCart.value = false;
+//
+//       final response = await http.post(
+//         Uri.parse(api),
+//         headers: {
+//           "Accept": "application/json",
+//           "Authorization": "Bearer $token",
+//         },
+//         body: {"product_id": productId.toString()},
+//       );
+//
+//       final decoded = json.decode(response.body);
+//
+//       if (decoded['status'] == true) {
+//         final productData =
+//         ProductDetailModel.fromJson(decoded['data']);
+//
+//         product.value = productData;
+//
+//         // ✅ VERY IMPORTANT
+//         if (productData.variants.isNotEmpty) {
+//           selectedVariant.value = productData.variants.first;
+//         }
+//
+//         _syncCartState();
+//       } else {
+//         product.value = null;
+//       }
+//     } catch (e) {
+//       product.value = null;
+//       debugPrint("Product detail error: $e");
+//     } finally {
+//       isLoading.value = false;
+//     }
+//   }
+//
+//   // ✅ CART SYNC
+//   void _syncCartState() {
+//     if (product.value == null) return;
+//
+//     final pid = product.value!.productId.toString();
+//
+//     if (Get.isRegistered<CartController>()) {
+//       final cart = Get.find<CartController>();
+//
+//       isAddedToCart.value =
+//           cart.cartItems.any((item) => item.productId.toString() == pid);
+//
+//       _cartWorker?.dispose();
+//       _cartWorker = ever(cart.cartItems, (_) {
+//         isAddedToCart.value =
+//             cart.cartItems.any((item) => item.productId.toString() == pid);
+//       });
+//     } else {
+//       _checkIfAlreadyInCart();
+//     }
+//   }
+//
+//   Future<void> _checkIfAlreadyInCart() async {
+//     try {
+//       final token = box.read('auth_token');
+//       if (token == null) return;
+//
+//       final response = await http.get(
+//         Uri.parse(
+//             "https://rasma.astradevelops.in/e_shoppyy/public/api/cart"),
+//         headers: {
+//           "Accept": "application/json",
+//           "Authorization": "Bearer $token",
+//         },
+//       );
+//
+//       final body = jsonDecode(response.body);
+//
+//       if (body['status'] == true) {
+//         final List items = body['items'] ?? [];
+//         final pid = product.value!.productId.toString();
+//
+//         isAddedToCart.value =
+//             items.any((item) => item['product_id'].toString() == pid);
+//       }
+//     } catch (_) {}
+//   }
+//
+//   // ✅ ADD TO CART
+//   Future<void> addToCart() async {
+//     if (selectedVariant.value == null) {
+//       Get.snackbar("Error", "Select variant first");
+//       return;
+//     }
+//
+//     final stockCount = selectedVariant.value!.stock;
+//
+//     if (stockCount <= 0) {
+//       Get.snackbar("Out of Stock", "No stock available");
+//       return;
+//     }
+//
+//     try {
+//       final token = box.read('auth_token');
+//       if (token == null) return;
+//
+//       final response = await http.post(
+//         Uri.parse(
+//             "https://rasma.astradevelops.in/e_shoppyy/public/api/cart/add"),
+//         headers: {
+//           "Accept": "application/json",
+//           "Authorization": "Bearer $token",
+//         },
+//         body: {
+//           "product_id": product.value!.productId.toString(),
+//           "product_name": product.value!.productName,
+//           "product_image": selectedVariant.value!.image,
+//           "price": selectedVariant.value!.price.toString(),
+//           "quantity": quantity.value.toString(),
+//         },
+//       );
+//
+//       final data = jsonDecode(response.body);
+//
+//       if (data['status'] == true) {
+//         isAddedToCart.value = true;
+//
+//         if (Get.isRegistered<CartController>()) {
+//           await Get.find<CartController>().fetchCart();
+//         }
+//
+//         Get.snackbar("Success", "Added to cart");
+//       }
+//     } catch (e) {
+//       Get.snackbar("Error", "Something went wrong");
+//     }
+//   }
+//
+//   void goToCart() {
+//     Get.to(() => CartScreen());
+//   }
+//
+//   // ✅ VARIANTS
+//   Map<String, Set<String>> getVariantAttributes() {
+//     final Map<String, Set<String>> map = {};
+//
+//     final variants = product.value?.variants ?? [];
+//
+//     for (var v in variants) {
+//       v.attributes.forEach((key, value) {
+//         map.putIfAbsent(key, () => {});
+//         map[key]!.add(value.toString());
+//       });
+//     }
+//
+//     return map;
+//   }
+//
+//   void selectVariant(ProductVariantModel variant) {
+//     selectedVariant.value = variant;
+//     quantity.value = 1;
+//   }
+//
+//   void increaseQty() {
+//     final stock = selectedVariant.value?.stock ?? 0;
+//     if (quantity.value < stock) {
+//       quantity.value++;
+//     }
+//   }
+//
+//   void decreaseQty() {
+//     if (quantity.value > 1) quantity.value--;
+//   }
+// }
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
+import '../../../data/errors/api_error.dart';
 import '../../../data/models/user_productdetailmodel.dart';
+
+import '../../merchantlogin/widget/successwidget.dart';
 import 'cartcontroller.dart';
 import '../view/cartscreen.dart';
 
@@ -20,11 +238,10 @@ class ProductDetailController extends GetxController {
   var quantity = 1.obs;
   var isAddedToCart = false.obs;
 
-  // Worker reference — prevents duplicate listeners
   Worker? _cartWorker;
 
-  final String api =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/product-details";
+  final String _baseUrl =
+      "https://rasma.astradevelops.in/e_shoppyy/public/api";
 
   @override
   void onInit() {
@@ -38,17 +255,16 @@ class ProductDetailController extends GetxController {
     super.onClose();
   }
 
-  // ── Fetch product details ──────────────────────────────────
+  // ✅ FETCH PRODUCT
   Future<void> fetchProduct(int productId) async {
     final token = box.read('auth_token');
-    if (token == null) return;
 
     try {
       isLoading.value = true;
       isAddedToCart.value = false;
 
       final response = await http.post(
-        Uri.parse(api),
+        Uri.parse("$_baseUrl/product-details"),
         headers: {
           "Accept": "application/json",
           "Authorization": "Bearer $token",
@@ -56,29 +272,41 @@ class ProductDetailController extends GetxController {
         body: {"product_id": productId.toString()},
       );
 
-      final decoded = json.decode(response.body);
-      product.value = ProductDetailModel.fromJson(decoded['data']);
-
-      if (product.value!.variants.isNotEmpty) {
-        selectedVariant.value = product.value!.variants.first;
+      // ✅ Handle non-2xx HTTP errors
+      if (response.statusCode != 200) {
+        final errorMsg = ApiErrorHandler.handleResponse(response);
+        AppSnackbar.error(errorMsg);
+        product.value = null;
+        return;
       }
 
-      // ── Sync cart state & watch for changes ──
-      _syncCartState();
+      final decoded = json.decode(response.body);
+
+      if (decoded['status'] == true) {
+        final productData = ProductDetailModel.fromJson(decoded['data']);
+        product.value = productData;
+
+        if (productData.variants.isNotEmpty) {
+          selectedVariant.value = productData.variants.first;
+        }
+
+        _syncCartState();
+      } else {
+        product.value = null;
+        final msg = decoded['message']?.toString() ?? "Failed to load product";
+        AppSnackbar.error(msg);
+      }
     } catch (e) {
       product.value = null;
+      final errorMsg = ApiErrorHandler.handleException(e);
+      AppSnackbar.error(errorMsg);
       debugPrint("Product detail error: $e");
     } finally {
       isLoading.value = false;
     }
   }
 
-  // ── Sync isAddedToCart with CartController in real-time ────
-  //
-  // 1. Immediately checks current cart items on screen open.
-  // 2. Uses ever() to watch CartController.cartItems — so if the user
-  //    removes this product from the cart screen, the button here
-  //    automatically reverts from "Go to Cart" → "Add to Cart".
+  // ✅ CART SYNC
   void _syncCartState() {
     if (product.value == null) return;
 
@@ -87,82 +315,72 @@ class ProductDetailController extends GetxController {
     if (Get.isRegistered<CartController>()) {
       final cart = Get.find<CartController>();
 
-      // Step 1: Check immediately against current cart list
       isAddedToCart.value =
           cart.cartItems.any((item) => item.productId.toString() == pid);
 
-      // Step 2: Dispose old worker if any, then watch for future changes
       _cartWorker?.dispose();
       _cartWorker = ever(cart.cartItems, (_) {
-        if (product.value != null) {
-          isAddedToCart.value =
-              cart.cartItems.any((item) => item.productId.toString() == pid);
-        }
+        isAddedToCart.value =
+            cart.cartItems.any((item) => item.productId.toString() == pid);
       });
     } else {
-      // CartController not yet registered — fall back to API check
       _checkIfAlreadyInCart();
     }
   }
 
-  // ── Fallback: check cart via API (if CartController not found) ──
   Future<void> _checkIfAlreadyInCart() async {
-    if (product.value == null) return;
     try {
       final token = box.read('auth_token');
       if (token == null) return;
 
       final response = await http.get(
-        Uri.parse(
-            "https://rasma.astradevelops.in/e_shoppyy/public/api/cart"),
+        Uri.parse("$_baseUrl/cart"),
         headers: {
           "Accept": "application/json",
           "Authorization": "Bearer $token",
         },
       );
 
-      if (response.statusCode == 200) {
-        final body = jsonDecode(response.body);
-        if (body['status'] == true) {
-          final List items = body['items'] ?? [];
-          final pid = product.value!.productId.toString();
-          isAddedToCart.value =
-              items.any((item) => item['product_id'].toString() == pid);
-        }
-      }
-    } catch (e) {
-      debugPrint("Could not check cart status: $e");
-    }
-  }
-
-  // ── Add to Cart ────────────────────────────────────────────
-  Future<void> addToCart() async {
-    if (selectedVariant.value == null) {
-      Get.snackbar("Error", "Please select a variant",
-          backgroundColor: Colors.red, colorText: Colors.white);
-      return;
-    }
-
-    final stockCount = int.tryParse(selectedVariant.value!.stock) ?? 0;
-    if (stockCount <= 0) {
-      Get.snackbar("Out of Stock", "This variant is currently out of stock",
-          backgroundColor: Colors.red, colorText: Colors.white);
-      return;
-    }
-
-    isLoading.value = true;
-
-    try {
-      final token = box.read('auth_token');
-      if (token == null) {
-        Get.snackbar("Unauthorized", "Please login first",
-            backgroundColor: Colors.red, colorText: Colors.white);
+      if (response.statusCode != 200) {
+        // Silent fail — not shown to user, just logged
+        debugPrint("Cart check failed: ${response.statusCode}");
         return;
       }
 
+      final body = jsonDecode(response.body);
+
+      if (body['status'] == true) {
+        final List items = body['items'] ?? [];
+        final pid = product.value!.productId.toString();
+
+        isAddedToCart.value =
+            items.any((item) => item['product_id'].toString() == pid);
+      }
+    } catch (e) {
+      debugPrint("Cart check exception: $e");
+    }
+  }
+
+  // ✅ ADD TO CART
+  Future<void> addToCart() async {
+    if (selectedVariant.value == null) {
+      AppSnackbar.warning("Please select a variant first");
+      return;
+    }
+
+    final stockCount = selectedVariant.value!.stock;
+
+    if (stockCount <= 0) {
+      AppSnackbar.warning("This item is currently out of stock");
+      return;
+    }
+
+    try {
+      final token = box.read('auth_token');
+      if (token == null) return;
+
       final response = await http.post(
-        Uri.parse(
-            "https://rasma.astradevelops.in/e_shoppyy/public/api/cart/add"),
+        Uri.parse("$_baseUrl/cart/add"),
         headers: {
           "Accept": "application/json",
           "Authorization": "Bearer $token",
@@ -176,56 +394,50 @@ class ProductDetailController extends GetxController {
         },
       );
 
+      // ✅ Handle non-2xx HTTP errors
+      if (response.statusCode != 200) {
+        final errorMsg = ApiErrorHandler.handleResponse(response);
+        AppSnackbar.error(errorMsg);
+        return;
+      }
+
       final data = jsonDecode(response.body);
 
       if (data['status'] == true) {
-        // Flip button to "Go to Cart"
         isAddedToCart.value = true;
 
-        // Refresh CartController — also triggers ever() above to confirm
         if (Get.isRegistered<CartController>()) {
           await Get.find<CartController>().fetchCart();
         }
 
-        Get.snackbar(
-          "Added to Cart",
-          data['message'] ?? "${product.value!.productName} added to cart",
-          backgroundColor: const Color(0xFF009688),
-          colorText: Colors.white,
-        );
+        AppSnackbar.success("Item added to cart successfully");
       } else {
-        Get.snackbar(
-          "Error",
-          data['message'] ?? "Failed to add product",
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        final msg = data['message']?.toString() ?? "Failed to add to cart";
+        AppSnackbar.error(msg);
       }
     } catch (e) {
-      debugPrint("Error adding to cart: $e");
-      Get.snackbar("Error", "Something went wrong",
-          backgroundColor: Colors.red, colorText: Colors.white);
-    } finally {
-      isLoading.value = false;
+      final errorMsg = ApiErrorHandler.handleException(e);
+      AppSnackbar.error(errorMsg);
     }
   }
 
-  // ── Navigate to Cart ───────────────────────────────────────
   void goToCart() {
     Get.to(() => CartScreen());
   }
 
-  // ── Variant helpers ────────────────────────────────────────
+  // ✅ VARIANTS
   Map<String, Set<String>> getVariantAttributes() {
-    final Map<String, Set<String>> attributeMap = {};
+    final Map<String, Set<String>> map = {};
     final variants = product.value?.variants ?? [];
-    for (var variant in variants) {
-      variant.attributes.forEach((key, value) {
-        attributeMap.putIfAbsent(key, () => <String>{});
-        attributeMap[key]!.add(value.toString());
+
+    for (var v in variants) {
+      v.attributes.forEach((key, value) {
+        map.putIfAbsent(key, () => {});
+        map[key]!.add(value.toString());
       });
     }
-    return attributeMap;
+
+    return map;
   }
 
   void selectVariant(ProductVariantModel variant) {
@@ -234,11 +446,9 @@ class ProductDetailController extends GetxController {
   }
 
   void increaseQty() {
-    final stock = int.tryParse(selectedVariant.value?.stock ?? "0") ?? 0;
+    final stock = selectedVariant.value?.stock ?? 0;
     if (quantity.value < stock) {
       quantity.value++;
-    } else {
-      Get.snackbar("Max Stock", "Only $stock items available");
     }
   }
 

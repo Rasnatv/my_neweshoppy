@@ -6,22 +6,33 @@ import '../../../common/style/app_colors.dart';
 import '../controller/user_offer_controller.dart';
 import '../view/user_offerproductlistpage.dart';
 
+class UserOfferSection extends StatefulWidget {
+  const UserOfferSection({super.key});
 
+  @override
+  State<UserOfferSection> createState() => _UserOfferSectionState();
+}
 
-class UserOfferSection extends StatelessWidget {
-  UserOfferSection({super.key});
+class _UserOfferSectionState extends State<UserOfferSection> {
+  late UserOfferController controller;
 
-  final UserOfferController controller = Get.put(UserOfferController());
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.put(UserOfferController());
+    controller.refresh();
+  }
 
   @override
   Widget build(BuildContext context) {
     return SliverToBoxAdapter(
       child: GetX<UserOfferController>(
         builder: (controller) {
+
           // ---------- LOADING ----------
           if (controller.isLoading.value) {
             return SizedBox(
-              height: 210,
+              height: 160, // ✅ FIXED
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -30,7 +41,7 @@ class UserOfferSection extends StatelessWidget {
                   padding: const EdgeInsets.only(right: 16),
                   child: Container(
                     width: 300,
-                    height: 210,
+                    height: 160, // ✅ FIXED
                     decoration: BoxDecoration(
                       color: Colors.grey.shade200,
                       borderRadius: BorderRadius.circular(22),
@@ -67,7 +78,7 @@ class UserOfferSection extends StatelessWidget {
 
           // ---------- LIST ----------
           return SizedBox(
-            height: 210,
+            height: 160, // ✅ FIXED
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -84,9 +95,9 @@ class UserOfferSection extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 // Offer Card
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 class _OfferCard extends StatefulWidget {
   final dynamic offer;
   final int index;
@@ -123,6 +134,7 @@ class _OfferCardState extends State<_OfferCard>
         curve: Interval(delay, end, curve: Curves.easeOut),
       ),
     );
+
     _slide = Tween<Offset>(
       begin: const Offset(0.15, 0),
       end: Offset.zero,
@@ -163,9 +175,9 @@ class _OfferCardState extends State<_OfferCard>
             child: AnimatedScale(
               scale: _pressed ? 0.97 : 1.0,
               duration: const Duration(milliseconds: 130),
-              curve: Curves.easeOut,
               child: Container(
                 width: 300,
+                height: 160, // ✅ FIXED
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(22),
                   boxShadow: [
@@ -186,23 +198,14 @@ class _OfferCardState extends State<_OfferCard>
                   borderRadius: BorderRadius.circular(22),
                   child: Stack(
                     children: [
-                      // ── Background image ──────────────────────────────
                       Positioned.fill(
                         child: Image.network(
                           widget.offer.image,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
-                            color: AppColors.kPrimary.withOpacity(0.08),
-                            child: Icon(
-                              Icons.store_outlined,
-                              size: 48,
-                              color: AppColors.kPrimary.withOpacity(0.3),
-                            ),
-                          ),
                         ),
                       ),
 
-                      // ── Gradient overlay ──────────────────────────────
+                      // Gradient
                       Positioned.fill(
                         child: DecoratedBox(
                           decoration: BoxDecoration(
@@ -212,64 +215,43 @@ class _OfferCardState extends State<_OfferCard>
                               colors: [
                                 Colors.transparent,
                                 Colors.black.withOpacity(0.55),
-                                Colors.black.withOpacity(0.82),
+                                Colors.black.withOpacity(0.85),
                               ],
-                              stops: const [0.3, 0.65, 1.0],
                             ),
                           ),
                         ),
                       ),
 
-                      // ── Discount badge ────────────────────────────────
+                      // Discount Badge
                       Positioned(
-                        top: 14,
-                        left: 14,
+                        top: 12,
+                        left: 12,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
                             color: Colors.orange,
                             borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.kPrimary.withOpacity(0.35),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.local_offer_rounded,
-                                size: 11,
-                                color: Colors.white,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                "${double.parse(widget.offer.discountPercentage.toString()).toInt()}% OFF",
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.3,
-                                ),
-                              ),
-                            ],
+                          child: Text(
+                            "${double.parse(widget.offer.discountPercentage.toString()).toInt()}% OFF",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ),
 
-                      // ── Bottom content ────────────────────────────────
+                      // Bottom Content (FIXED)
                       Positioned(
-                        left: 16,
-                        right: 16,
-                        bottom: 16,
+                        left: 14,
+                        right: 14,
+                        bottom: 12,
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            // Shop name + label
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -281,74 +263,47 @@ class _OfferCardState extends State<_OfferCard>
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
                                       color: Colors.white,
-                                      fontSize: 18,
+                                      fontSize: 16,
                                       fontWeight: FontWeight.w800,
-                                      letterSpacing: -0.3,
-                                      height: 1.1,
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      Container(
-                                        width: 6,
-                                        height: 6,
-                                        decoration: BoxDecoration(
-                                          color: AppColors.kPrimary,
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 5),
-                                      Text(
-                                        "Limited Time Offer",
-                                        style: TextStyle(
-                                          color:
-                                          Colors.white.withOpacity(0.80),
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w500,
-                                          letterSpacing: 0.2,
-                                        ),
-                                      ),
-                                    ],
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    "Limited Time Offer",
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.8),
+                                      fontSize: 11,
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
 
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 8),
 
-                            // Shop Now button
+                            // ✅ FIXED BUTTON
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 14, vertical: 9),
+                                  horizontal: 12, vertical: 7),
                               decoration: BoxDecoration(
                                 color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.15),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 3),
-                                  ),
-                                ],
+                                borderRadius: BorderRadius.circular(10),
                               ),
                               child: Row(
-                                mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
                                     "Shop Now",
                                     style: TextStyle(
                                       color: AppColors.kPrimary,
-                                      fontSize: 12,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.w700,
-                                      letterSpacing: 0.2,
                                     ),
                                   ),
                                   const SizedBox(width: 4),
                                   Icon(
                                     Icons.arrow_forward_rounded,
+                                    size: 12,
                                     color: AppColors.kPrimary,
-                                    size: 13,
                                   ),
                                 ],
                               ),

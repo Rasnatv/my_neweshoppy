@@ -17,9 +17,15 @@ class AdminAddLocationPage extends StatelessWidget {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: AppColors.kPrimary,
+        iconTheme: IconThemeData(color: Colors.white),
         title: Text(
           "Add Location",
-          style: AppTextStyle.rTextNunitoWhite17w700,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.1,
+            ),
         ),
         actions: [
           IconButton(

@@ -7,7 +7,6 @@ class UserLoginBinding extends Bindings {
   void dependencies() {
     Get.put<UserloginController>(
       UserloginController(),
-      permanent: true,
     );
   }
 }

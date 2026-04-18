@@ -30,14 +30,28 @@ class SetNewPasswordView extends GetView<NewPasswordController> {
 
             const Text(
               "Password",
-              style: TextStyle(fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
             ),
+
+            const SizedBox(height: 6),
 
             Obx(() => TextField(
               controller: controller.passwordController,
               obscureText: controller.isPasswordHidden.value,
+              style: const TextStyle(
+                fontSize: 15,
+              ),
               decoration: InputDecoration(
                 hintText: "Enter new password",
+                hintStyle: const TextStyle(
+                  fontSize: 14,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 suffixIcon: IconButton(
                   icon: Icon(
                     controller.isPasswordHidden.value
@@ -53,23 +67,35 @@ class SetNewPasswordView extends GetView<NewPasswordController> {
 
             const Text(
               "Confirm Password",
-              style: TextStyle(fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
             ),
+
+            const SizedBox(height: 6),
 
             Obx(() => TextField(
               controller: controller.confirmPasswordController,
-              obscureText:
-              controller.isConfirmPasswordHidden.value,
+              obscureText: controller.isConfirmPasswordHidden.value,
+              style: const TextStyle(
+                fontSize: 15,
+              ),
               decoration: InputDecoration(
                 hintText: "Re-enter password",
+                hintStyle: const TextStyle(
+                  fontSize: 14,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 suffixIcon: IconButton(
                   icon: Icon(
                     controller.isConfirmPasswordHidden.value
                         ? Icons.visibility_off
                         : Icons.visibility,
                   ),
-                  onPressed:
-                  controller.toggleConfirmPasswordVisibility,
+                  onPressed: controller.toggleConfirmPasswordVisibility,
                 ),
               ),
             )),
@@ -84,8 +110,10 @@ class SetNewPasswordView extends GetView<NewPasswordController> {
                     : controller.updatePassword,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.kPrimary,
-                  padding:
-                  const EdgeInsets.symmetric(vertical: 14),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 child: controller.isLoading.value
                     ? const SizedBox(
@@ -99,6 +127,7 @@ class SetNewPasswordView extends GetView<NewPasswordController> {
                     : const Text(
                   "Update Password",
                   style: TextStyle(
+                    fontSize: 16,
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
                   ),

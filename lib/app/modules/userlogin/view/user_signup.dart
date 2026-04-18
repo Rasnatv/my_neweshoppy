@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 import '../../../common/style/themes/textform_theme.dart';
 import '../../../common/utils/validators.dart';
 import '../../../widgets/backarrowwidget.dart';
+import '../../../widgets/networkconnection_checkpage.dart';
 import '../controller/usersignup_controller.dart';
 // 👈 import your theme
 
@@ -54,7 +55,7 @@ class _UserSignupState extends State<UserSignup> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return NetworkAwareWrapper(child:Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       body: Stack(
         children: [
@@ -86,7 +87,7 @@ class _UserSignupState extends State<UserSignup> with TickerProviderStateMixin {
           _buildBackButton(),
         ],
       ),
-    );
+    ));
   }
 
   Widget _buildBackButton() {

@@ -1,12 +1,14 @@
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 
+import '../../../../data/errors/api_error.dart';
 import '../../../../data/models/admin_merchantdetailedmodel.dart';
+import '../../../merchantlogin/widget/successwidget.dart';
 import '../../manage_merchants/controller/mervchant_approvalstatus_controller.dart';
+
 
 class AdminMerchantDetailController extends GetxController {
   final box = GetStorage();
@@ -15,27 +17,40 @@ class AdminMerchantDetailController extends GetxController {
   var merchant = Rxn<AdminMerchantDetail>();
 
   /// ===============================
+  /// AUTH CHECK
+  /// ===============================
+  bool _checkAuth() {
+    final token = box.read("auth_token");
+
+    if (token == null || token.toString().isEmpty) {
+      Get.offAllNamed('/login');
+      return false;
+    }
+    return true;
+  }
+
+  Map<String, String> _headers() {
+    final token = box.read("auth_token") ?? '';
+    return {
+      "Accept": "application/json",
+      "Authorization": "Bearer $token",
+    };
+  }
+
+  /// ===============================
   /// FETCH MERCHANT DETAILS
   /// ===============================
   Future<void> fetchMerchantDetail(int merchantId) async {
-    isLoading.value = true;
+    if (!_checkAuth()) return;
 
-    final token = box.read("auth_token");
-    if (token == null) {
-      Get.snackbar("Error", "Admin token missing");
-      isLoading.value = false;
-      return;
-    }
+    isLoading.value = true;
 
     try {
       final response = await http.post(
         Uri.parse(
           "https://rasma.astradevelops.in/e_shoppyy/public/api/admin/merchant/details",
         ),
-        headers: {
-          "Accept": "application/json",
-          "Authorization": "Bearer $token",
-        },
+        headers: _headers(),
         body: {
           "merchant_id": merchantId.toString(),
         },
@@ -48,11 +63,13 @@ class AdminMerchantDetailController extends GetxController {
           merchant.value =
               AdminMerchantDetail.fromJson(body['data']);
         } else {
-          Get.snackbar("Error", body['message'] ?? "Failed");
+          AppSnackbar.error(body['message'] ?? "Failed");
         }
+      } else {
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
-      Get.snackbar("Error", "Failed to load merchant");
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoading.value = false;
     }
@@ -65,21 +82,14 @@ class AdminMerchantDetailController extends GetxController {
     required int merchantId,
     required String status, // approved | rejected
   }) async {
-    final token = box.read("auth_token");
-    if (token == null) {
-      Get.snackbar("Error", "Admin token missing");
-      return;
-    }
+    if (!_checkAuth()) return;
 
     try {
       final response = await http.post(
         Uri.parse(
           "https://rasma.astradevelops.in/e_shoppyy/public/api/admin/merchant/approve-reject",
         ),
-        headers: {
-          "Accept": "application/json",
-          "Authorization": "Bearer $token",
-        },
+        headers: _headers(),
         body: {
           "merchant_id": merchantId.toString(),
           "approval_status": status,
@@ -94,26 +104,20 @@ class AdminMerchantDetailController extends GetxController {
           merchant.value =
               merchant.value!.copyWith(approvalStatus: status);
 
-          /// ✅ VERY IMPORTANT
-          /// REFRESH HOME MERCHANT LIST
+          /// ✅ REFRESH LIST
           if (Get.isRegistered<AdminMerchantController>()) {
             Get.find<AdminMerchantController>().fetchMerchants();
           }
 
-          Get.snackbar(
-            "Success",
-            body['message'],
-            backgroundColor:
-            status == "approved" ? Colors.green : Colors.red,
-            colorText: Colors.white,
-            snackPosition: SnackPosition.BOTTOM,
-          );
+          AppSnackbar.success(body['message'] ?? "Updated successfully");
         } else {
-          Get.snackbar("Error", body['message'] ?? "Update failed");
+          AppSnackbar.error(body['message'] ?? "Update failed");
         }
+      } else {
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
-      Get.snackbar("Error", "Approval update failed");
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     }
   }
 }

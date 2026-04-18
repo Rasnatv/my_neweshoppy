@@ -356,7 +356,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen>
             const SizedBox(height: 8),
             _buildTextField(
               controller: _ctrl.emailCtrl,
-              icon: Icons.alternate_email_rounded,
+              icon: Icons.email,
               keyboardType: TextInputType.emailAddress,
               activeColor: activeRole.color,
               validator: (v) {

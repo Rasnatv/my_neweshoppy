@@ -28,9 +28,10 @@ class UserOfferProductDetail {
   int get stockQty => variants.fold(0, (sum, v) => sum + v.stock);
 
   factory UserOfferProductDetail.fromJson(Map<String, dynamic> json) {
-    // ── common_attributes: directly under data ─────────────
+
     Map<String, String> commonAttrs = {};
-    if (json['common_attributes'] != null) {
+    if (json['common_attributes'] != null &&
+        json['common_attributes'] is Map) {
       (json['common_attributes'] as Map).forEach((key, value) {
         commonAttrs[key.toString()] = value.toString();
       });

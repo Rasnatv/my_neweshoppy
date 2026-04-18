@@ -1,10 +1,10 @@
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../common/style/app_colors.dart';
 import '../../../common/style/app_text_style.dart';
 import '../controller/areaadmin_advertismentcontroller.dart';
-
 
 class AreaAdminAddAdvertisementPage extends StatelessWidget {
   AreaAdminAddAdvertisementPage({super.key});
@@ -16,11 +16,17 @@ class AreaAdminAddAdvertisementPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        iconTheme: IconThemeData(color: Colors.white),
         title: Text(
           "Add Advertisement",
-          style: AppTextStyle.rTextNunitoWhite17w700,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.1,
+            ),
         ),
-        backgroundColor: AppColors.kPrimary,
+        backgroundColor: AppColors.welcomecardclr,
         elevation: 0,
       ),
       body: Stack(
@@ -32,15 +38,7 @@ class AreaAdminAddAdvertisementPage extends StatelessWidget {
               children: [
 
                 /// ─── Banner Image ─────────────────────────
-                Row(
-                  children: const [
-                    Text("Banner Image",
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600)),
-                    SizedBox(width: 4),
-                    Text("*", style: TextStyle(color: Colors.red)),
-                  ],
-                ),
+                _sectionLabel("Banner Image"),
                 const SizedBox(height: 10),
 
                 Obx(() => GestureDetector(
@@ -82,8 +80,7 @@ class AreaAdminAddAdvertisementPage extends StatelessWidget {
                           top: 8,
                           right: 8,
                           child: IconButton(
-                            onPressed:
-                            controller.removeBannerImage,
+                            onPressed: controller.removeBannerImage,
                             icon: const Icon(Icons.close,
                                 color: Colors.white),
                           ),
@@ -95,24 +92,16 @@ class AreaAdminAddAdvertisementPage extends StatelessWidget {
 
                 const SizedBox(height: 25),
 
-                /// ─── Advertisement Title ─────────────────
-                Row(
-                  children: const [
-                    Text("Advertisement Title",
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600)),
-                    SizedBox(width: 4),
-                    Text("*", style: TextStyle(color: Colors.red)),
-                  ],
-                ),
+                /// ─── Advertisement Title ──────────────────
+                _sectionLabel("Advertisement Title"),
                 const SizedBox(height: 10),
 
                 Obx(() => TextField(
                   controller: controller.adName,
                   decoration: InputDecoration(
                     hintText: "Enter title",
-                    prefixIcon: Icon(Icons.campaign,
-                        color: AppColors.kPrimary),
+                    prefixIcon:
+                    Icon(Icons.campaign, color: AppColors.kPrimary),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -127,52 +116,75 @@ class AreaAdminAddAdvertisementPage extends StatelessWidget {
 
                 const SizedBox(height: 25),
 
-                /// ─── Location Dropdown ─────────────────
-                Row(
-                  children: const [
-                    Text("Select Location",
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600)),
-                    SizedBox(width: 4),
-                    Text("*", style: TextStyle(color: Colors.red)),
-                  ],
-                ),
+                /// ─── State Dropdown ───────────────────────
+                _sectionLabel("Select State"),
+                const SizedBox(height: 10),
+
+                Obx(() {
+                  if (controller.isStateLoading.value) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  return _buildDropdown(
+                    hint: "Select State",
+                    value: controller.selectedState.value.isEmpty
+                        ? null
+                        : controller.selectedState.value,
+                    items: controller.states,
+                    onChanged: controller.onStateChanged,
+                  );
+                }),
+
+                const SizedBox(height: 25),
+
+                /// ─── District Dropdown ────────────────────
+                _sectionLabel("Select District"),
+                const SizedBox(height: 10),
+
+                Obx(() {
+                  if (controller.isDistrictLoading.value) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  return _buildDropdown(
+                    hint: controller.selectedState.value.isEmpty
+                        ? "Select state first"
+                        : "Select District",
+                    value: controller.selectedDistrict.value.isEmpty
+                        ? null
+                        : controller.selectedDistrict.value,
+                    items: controller.districts,
+                    onChanged: controller.districts.isEmpty
+                        ? null
+                        : (val) {
+                      controller.selectedDistrict.value = val ?? '';
+                    },
+                  );
+                }),
+
+                const SizedBox(height: 25),
+
+                /// ─── Location Dropdown ────────────────────
+                _sectionLabel("Select Location"),
                 const SizedBox(height: 10),
 
                 Obx(() {
                   if (controller.isLocationLoading.value) {
                     return const Center(child: CircularProgressIndicator());
                   }
-
-                  return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: DropdownButton<String>(
-                      value: controller.selectedLocation.value.isEmpty
-                          ? null
-                          : controller.selectedLocation.value,
-                      hint: const Text("Select Location"),
-                      isExpanded: true,
-                      underline: const SizedBox(),
-                      items: controller.locations.map((loc) {
-                        return DropdownMenuItem(
-                          value: loc,
-                          child: Text(loc),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        controller.selectedLocation.value = val ?? '';
-                      },
-                    ),
+                  return _buildDropdown(
+                    hint: "Select Location",
+                    value: controller.selectedLocation.value.isEmpty
+                        ? null
+                        : controller.selectedLocation.value,
+                    items: controller.locations,
+                    onChanged: (val) {
+                      controller.selectedLocation.value = val ?? '';
+                    },
                   );
                 }),
 
                 const SizedBox(height: 35),
 
-                /// ─── Submit Button ─────────────────────
+                /// ─── Submit Button ────────────────────────
                 Obx(() => SizedBox(
                   width: double.infinity,
                   height: 55,
@@ -181,15 +193,14 @@ class AreaAdminAddAdvertisementPage extends StatelessWidget {
                         ? null
                         : controller.addAdvertisement,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.kPrimary,
+                      backgroundColor: AppColors.welcomecardclr,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     child: controller.isLoading.value
                         ? const CircularProgressIndicator(
-                      color: Colors.white,
-                    )
+                        color: Colors.white)
                         : const Text(
                       "Add Advertisement",
                       style: TextStyle(fontSize: 16),
@@ -206,12 +217,54 @@ class AreaAdminAddAdvertisementPage extends StatelessWidget {
           Obx(() => controller.isLoading.value
               ? Container(
             color: Colors.black45,
-            child: const Center(
-              child: CircularProgressIndicator(),
-            ),
+            child: const Center(child: CircularProgressIndicator()),
           )
               : const SizedBox()),
         ],
+      ),
+    );
+  }
+
+  // ─── Shared Widgets ───────────────────────────
+  Widget _sectionLabel(String label) {
+    return Row(
+      children: [
+        Text(label,
+            style:
+            const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+        const SizedBox(width: 4),
+        const Text("*", style: TextStyle(color: Colors.red)),
+      ],
+    );
+  }
+
+  Widget _buildDropdown({
+    required String hint,
+    required String? value,
+    required List<String> items,
+    required ValueChanged<String?>? onChanged,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(12),
+        color: onChanged == null ? Colors.grey.shade100 : Colors.white,
+      ),
+      child: DropdownButton<String>(
+        value: value,
+        hint: Text(hint,
+            style: TextStyle(
+                color: onChanged == null
+                    ? Colors.grey.shade400
+                    : Colors.grey.shade600)),
+        isExpanded: true,
+        underline: const SizedBox(),
+        items: items
+            .map((item) =>
+            DropdownMenuItem(value: item, child: Text(item)))
+            .toList(),
+        onChanged: onChanged,
       ),
     );
   }

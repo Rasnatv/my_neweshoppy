@@ -3,7 +3,11 @@ import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
+
+import '../../../data/errors/api_error.dart';
 import '../../../data/models/usermerchantoffermodel.dart';
+import '../../../widgets/network_trihgiger.dart';
+import '../../merchantlogin/widget/successwidget.dart';
 
 class UserOfferController extends GetxController {
   var isLoading = false.obs;
@@ -17,7 +21,17 @@ class UserOfferController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+
+    ever(Get.find<NetworkService>().reconnectTrigger, (_) {
+      refresh();
+    });
+
     fetchOffers();
+  }
+
+  Future<void> refresh() async {
+    offerList.clear();
+    await fetchOffers();
   }
 
   Future<void> fetchOffers() async {
@@ -39,24 +53,33 @@ class UserOfferController extends GetxController {
 
         if (decoded['status'] == 1) {
           final List data = decoded['data'];
-
-          // ✅ Filter out items where merchant_id or shop_name is null
-          // These are invalid/incomplete offer entries from the backend
           offerList.value = data
               .map((e) => UserOfferModel.fromJson(e))
               .where((offer) =>
           offer.merchantId != null && offer.shopName != null)
               .toList();
-
         } else {
-          Get.snackbar('Error', decoded['message'] ?? 'Something went wrong');
+          offerList.clear();
+
+          // ✅ LOGICAL ERROR (status != 1)
+          final message = decoded['message'] ?? "Failed to load offers";
+          AppSnackbar.error(message);
         }
       } else {
-        Get.snackbar('Error', 'Server error: ${response.statusCode}');
+        offerList.clear();
+
+        // ✅ API ERROR HANDLER
+        final errorMessage = ApiErrorHandler.handleResponse(response);
+        AppSnackbar.error(errorMessage);
       }
     } catch (e) {
-      print('fetchOffers error: $e');  // 👈 check this in console
-      Get.snackbar('Error', 'Failed to load offers: $e');
+      offerList.clear();
+
+      // ✅ EXCEPTION HANDLER (Socket, etc.)
+      final errorMessage = ApiErrorHandler.handleException(e);
+      AppSnackbar.error(errorMessage);
+
+      print('fetchOffers error: $e');
     } finally {
       isLoading(false);
     }

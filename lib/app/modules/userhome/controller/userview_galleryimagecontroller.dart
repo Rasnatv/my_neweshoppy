@@ -3,7 +3,9 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:get_storage/get_storage.dart';
 
+import '../../../data/errors/api_error.dart';
 import '../../../data/models/merchant_gallerymode.dart';
+import '../../merchantlogin/widget/successwidget.dart';
 
 class MerchantGalleryViewController extends GetxController {
   final int merchantId;
@@ -40,16 +42,28 @@ class MerchantGalleryViewController extends GetxController {
       final data = jsonDecode(response.body);
       print("==> GALLERY RESPONSE: $data");
 
-      if (response.statusCode == 200 && data["status"] == 1) {
-        images.value = (data["data"] as List)
-            .map((e) => MerchantImage.fromJson(e))
-            .toList();
+      if (response.statusCode == 200) {
+        if (data["status"] == 1) {
+          images.value = (data["data"] as List)
+              .map((e) => MerchantImage.fromJson(e))
+              .toList();
+        } else {
+          // ✅ LOGICAL ERROR
+          final message =
+              data["message"] ?? "Failed to load gallery";
+          AppSnackbar.error(message);
+        }
       } else {
-        Get.snackbar("Error", data["message"] ?? "Failed to load gallery");
+        // ✅ API ERROR HANDLER
+        final errorMessage = ApiErrorHandler.handleResponse(response);
+        AppSnackbar.error(errorMessage);
       }
     } catch (e) {
+      // ✅ EXCEPTION HANDLER
+      final errorMessage = ApiErrorHandler.handleException(e);
+      AppSnackbar.error(errorMessage);
+
       print("==> Gallery fetch error: $e");
-      Get.snackbar("Error", "Failed to load gallery");
     } finally {
       isLoading(false);
     }

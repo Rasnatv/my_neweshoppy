@@ -1,155 +1,28 @@
-//
-// import 'dart:convert';
-// import 'dart:io';
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-// import 'package:get_storage/get_storage.dart';
-// import 'package:http/http.dart' as http;
-// import 'package:image_picker/image_picker.dart';
-// import '../../../data/models/restaurent_adminregmodel.dart';
-// import '../view/restaurant/restaurant_menumanagment.dart';
-//
-// class RestaurantRegController extends GetxController {
-//   final box = GetStorage();
-//   final picker = ImagePicker();
-//
-//   Rx<File?> restaurantImage = Rx<File?>(null);
-//   RxList<File> additionalImages = <File>[].obs;
-//   RxBool isLoading = false.obs;
-//
-//   final ownerCtrl = TextEditingController();
-//   final restaurantNameCtrl = TextEditingController();
-//   final addressCtrl = TextEditingController();
-//   final phoneCtrl = TextEditingController();
-//   final emailCtrl = TextEditingController();
-//   final websiteCtrl = TextEditingController();
-//   final whatsappCtrl = TextEditingController();
-//   final facebookCtrl = TextEditingController();
-//   final instaCtrl = TextEditingController();
-//
-//   String get token => box.read('auth_token') ?? '';
-//
-//   // PICK MAIN IMAGE
-//   Future<void> pickRestaurantImage() async {
-//     final XFile? image =
-//     await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
-//     if (image != null) restaurantImage.value = File(image.path);
-//   }
-//
-//   // PICK ADDITIONAL IMAGES
-//   Future<void> pickAdditionalImages() async {
-//     final List<XFile>? images =
-//     await picker.pickMultiImage(imageQuality: 70);
-//     if (images != null) {
-//       additionalImages.addAll(images.map((e) => File(e.path)));
-//     }
-//   }
-//
-//   // FILE → BASE64
-//   Future<String> _fileToBase64(File file) async {
-//     final bytes = await file.readAsBytes();
-//     return "data:image/jpeg;base64,${base64Encode(bytes)}";
-//   }
-//
-//   // SUBMIT
-//   Future<void> submit() async {
-//     if (token.isEmpty) {
-//       Get.snackbar("Session Expired", "Please login again");
-//       return;
-//     }
-//
-//     if (restaurantImage.value == null ||
-//         ownerCtrl.text.isEmpty ||
-//         restaurantNameCtrl.text.isEmpty ||
-//         addressCtrl.text.isEmpty ||
-//         phoneCtrl.text.isEmpty) {
-//       Get.snackbar("Error", "Please fill mandatory fields");
-//       return;
-//     }
-//
-//     isLoading.value = true;
-//
-//     try {
-//       final mainImage = await _fileToBase64(restaurantImage.value!);
-//
-//       final List<String> additionalBase64 = [];
-//       for (var img in additionalImages) {
-//         additionalBase64.add(await _fileToBase64(img));
-//       }
-//
-//       final request = RestaurantRegisterRequest(
-//         ownerName: ownerCtrl.text.trim(),
-//         restaurantName: restaurantNameCtrl.text.trim(),
-//         address: addressCtrl.text.trim(),
-//         phone: phoneCtrl.text.trim(),
-//         email: emailCtrl.text.trim(),
-//         website: websiteCtrl.text.trim(),
-//         whatsapp: whatsappCtrl.text.trim(),
-//         facebook: facebookCtrl.text.trim(),
-//         instagram: instaCtrl.text.trim(),
-//         restaurantImage: mainImage,
-//         additionalImages: additionalBase64,
-//       );
-//
-//       final response = await http.post(
-//         Uri.parse(
-//             "https://rasma.astradevelops.in/e_shoppyy/public/api/restaurant/register"),
-//         headers: {
-//           "Accept": "application/json",
-//           "Content-Type": "application/json",
-//           "Authorization": "Bearer $token",
-//         },
-//         body: jsonEncode(request.toJson()),
-//       );
-//
-//       final data = jsonDecode(response.body);
-//
-//       if ((response.statusCode == 200 || response.statusCode == 201) &&
-//           (data['status'] == "1" || data['status'] == true)) {
-//         Get.snackbar("Success", data['message'] ?? "Registered successfully");
-//         Get.off(() => MenuManagementPage());
-//       } else {
-//         Get.snackbar("Error", data['message'] ?? "Failed to register restaurant");
-//       }
-//     } catch (e) {
-//       Get.snackbar("Error", "Something went wrong");
-//       print("Submit Exception: $e");
-//     } finally {
-//       isLoading.value = false;
-//     }
-//   }
-//
-//   @override
-//   void onClose() {
-//     ownerCtrl.dispose();
-//     restaurantNameCtrl.dispose();
-//     addressCtrl.dispose();
-//     phoneCtrl.dispose();
-//     emailCtrl.dispose();
-//     websiteCtrl.dispose();
-//     whatsappCtrl.dispose();
-//     facebookCtrl.dispose();
-//     instaCtrl.dispose();
-//     super.onClose();
-//   }
-// }
+
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
-import '../../../data/models/restaurent_adminregmodel.dart';
+
+import '../../../data/errors/api_error.dart';
+
+import '../../merchantlogin/widget/successwidget.dart';
 import '../view/restaurant/restaurant_menumanagment.dart';
 
 class RestaurantRegController extends GetxController {
-  final box = GetStorage();
-  final picker = ImagePicker();
+  final GetStorage box = GetStorage();
+  final ImagePicker picker = ImagePicker();
 
   Rx<File?> restaurantImage = Rx<File?>(null);
+  Rx<File?> qrCodeImage = Rx<File?>(null);
   RxList<File> additionalImages = <File>[].obs;
   RxBool isLoading = false.obs;
+
+  final formKey = GlobalKey<FormState>();
 
   final ownerCtrl = TextEditingController();
   final restaurantNameCtrl = TextEditingController();
@@ -160,60 +33,85 @@ class RestaurantRegController extends GetxController {
   final whatsappCtrl = TextEditingController();
   final facebookCtrl = TextEditingController();
   final instaCtrl = TextEditingController();
+  final upiCtrl = TextEditingController();
 
-  String get token => box.read('auth_token') ?? '';
+  RxString restaurantImageError = ''.obs;
+  RxString qrCodeImageError = ''.obs;
 
-  // -------------------- PICK MAIN IMAGE --------------------
+  // ── Token ─────────────────────────────
+  String get token {
+    final t = box.read('auth_token');
+    return t?.toString().trim() ?? '';
+  }
+
+  // ── Image Pickers ─────────────────────
   Future<void> pickRestaurantImage() async {
     final XFile? image = await picker.pickImage(
       source: ImageSource.gallery,
       imageQuality: 70,
     );
-    if (image != null) restaurantImage.value = File(image.path);
+
+    if (image != null) {
+      restaurantImage.value = File(image.path);
+      restaurantImageError.value = '';
+    }
   }
 
-  // -------------------- PICK ADDITIONAL IMAGES --------------------
+  Future<void> pickQrCodeImage() async {
+    final XFile? image = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 90,
+    );
+
+    if (image != null) {
+      qrCodeImage.value = File(image.path);
+      qrCodeImageError.value = '';
+    }
+  }
+
   Future<void> pickAdditionalImages() async {
-    final List<XFile>? images =
-    await picker.pickMultiImage(imageQuality: 70);
+    final List<XFile>? images = await picker.pickMultiImage(
+      imageQuality: 70,
+    );
+
     if (images != null) {
       additionalImages.addAll(images.map((e) => File(e.path)));
     }
   }
 
-  // -------------------- FILE TO BASE64 --------------------
-  Future<String> _fileToBase64(File file) async {
+  // ── Base64 Convert ────────────────────
+  Future<String> _fileToBase64(File file, {bool isPng = false}) async {
     final bytes = await file.readAsBytes();
-    return "data:image/jpeg;base64,${base64Encode(bytes)}";
+    final mime = isPng ? "image/png" : "image/jpeg";
+    return "data:$mime;base64,${base64Encode(bytes)}";
   }
 
-  // -------------------- SUBMIT --------------------
+
   Future<void> submit() async {
-    if (token.isEmpty) {
-      Get.snackbar(
-        "Session Expired",
-        "Please login again",
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+    if (restaurantImage.value == null) {
+      _showWarning('Please upload a restaurant image');
       return;
     }
 
-    if (restaurantImage.value == null ||
-        ownerCtrl.text.trim().isEmpty ||
-        restaurantNameCtrl.text.trim().isEmpty ||
-        addressCtrl.text.trim().isEmpty ||
-        phoneCtrl.text.trim().isEmpty) {
-      Get.snackbar(
-        "Error",
-        "Please fill all mandatory fields",
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-      );
+    if (qrCodeImage.value == null) {
+      qrCodeImageError.value = 'QR code image is required';
+      _showWarning('Please upload a payment QR code image');
       return;
     }
+
+    if (!(formKey.currentState?.validate() ?? false)) return;
+
+    if (emailCtrl.text.trim().isEmpty) {
+      AppSnackbar.warning('Email is required');
+      return;
+    }
+
+    if (upiCtrl.text.trim().isEmpty) {
+      AppSnackbar.warning('UPI ID is required');
+      return;
+    }
+
+    final currentToken = token;
 
     isLoading.value = true;
 
@@ -225,93 +123,89 @@ class RestaurantRegController extends GetxController {
         additionalBase64.add(await _fileToBase64(img));
       }
 
-      final request = RestaurantRegisterRequest(
-        ownerName: ownerCtrl.text.trim(),
-        restaurantName: restaurantNameCtrl.text.trim(),
-        address: addressCtrl.text.trim(),
-        phone: phoneCtrl.text.trim(),
-        email: emailCtrl.text.trim(),
-        website: websiteCtrl.text.trim(),
-        whatsapp: whatsappCtrl.text.trim(),
-        facebook: facebookCtrl.text.trim(),
-        instagram: instaCtrl.text.trim(),
-        restaurantImage: mainImage,
-        additionalImages: additionalBase64,
-      );
+      final Map<String, dynamic> body = {
+        "owner_name": ownerCtrl.text.trim(),
+        "restaurant_name": restaurantNameCtrl.text.trim(),
+        "address": addressCtrl.text.trim(),
+        "phone": phoneCtrl.text.trim(),
+        "email": emailCtrl.text.trim(),
+        "website": websiteCtrl.text.trim(),
+        "whatsapp": whatsappCtrl.text.trim(),
+        "facebook_link": facebookCtrl.text.trim(),
+        "instagram_link": instaCtrl.text.trim(),
+        "upi_id": upiCtrl.text.trim(),
+        "restaurant_image": mainImage,
+        "additional_images": additionalBase64,
+      };
+
+      if (qrCodeImage.value != null) {
+        body["qr_code"] =
+        await _fileToBase64(qrCodeImage.value!, isPng: true);
+      }
 
       final response = await http.post(
         Uri.parse(
-            "https://rasma.astradevelops.in/e_shoppyy/public/api/restaurant/register"),
+          "https://rasma.astradevelops.in/e_shoppyy/public/api/restaurant/register",
+        ),
         headers: {
           "Accept": "application/json",
           "Content-Type": "application/json",
-          "Authorization": "Bearer $token",
+          "Authorization": "Bearer $currentToken",
         },
-        body: jsonEncode(request.toJson()),
+        body: jsonEncode(body),
       );
 
-      debugPrint("Register Status: ${response.statusCode}");
-      debugPrint("Register Body: ${response.body}");
+      /// ✅ HTTP Error handling
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        final errMsg = ApiErrorHandler.handleResponse(response);
+        AppSnackbar.error(errMsg);
+        return;
+      }
 
-      final data = jsonDecode(response.body);
+      /// ✅ Safe JSON parse
+      Map<String, dynamic> data = {};
+      try {
+        data = jsonDecode(response.body);
+      } catch (_) {
+        AppSnackbar.error("Invalid server response");
+        return;
+      }
 
-      if ((response.statusCode == 200 || response.statusCode == 201) &&
-          (data['status'] == "1" || data['status'] == true)) {
+      final status = data['status'];
+      final isSuccess = status == true || status == 1 || status == "1";
 
-        // ✅ Save restaurant_id to GetStorage so MenuController can use it
-        final dynamic rawId =
+      if (isSuccess) {
+        final rawId =
             data['data']?['id'] ?? data['data']?['restaurant_id'];
+
         if (rawId != null) {
-          final int? parsedId =
-          rawId is int ? rawId : int.tryParse(rawId.toString());
+          final parsedId = int.tryParse(rawId.toString());
           if (parsedId != null) {
             box.write('restaurant_id', parsedId);
-            debugPrint("✅ restaurant_id saved: $parsedId");
           }
-        } else {
-          debugPrint("⚠️ No restaurant_id in response: ${data['data']}");
         }
 
-        Get.snackbar(
-          "Success",
+        AppSnackbar.success(
           data['message'] ?? "Restaurant registered successfully",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
         );
 
-        // ✅ Navigate to MenuManagementPage, remove reg page from stack
-        Get.off(() => const MenuManagementPage());
-
-      } else if (response.statusCode == 401) {
-        Get.snackbar(
-          "Unauthorized",
-          "Session expired. Please login again.",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        Get.off(() => MenuManagementPage());
       } else {
-        Get.snackbar(
-          "Error",
-          data['message'] ?? "Failed to register restaurant",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
+        AppSnackbar.error(
+          data['message'] ?? "Request failed",
         );
       }
     } catch (e) {
-      Get.snackbar(
-        "Error",
-        "Something went wrong. Please try again.",
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-      debugPrint("Submit Exception: $e");
+      /// ✅ Exception handling
+      final errorMessage = ApiErrorHandler.handleException(e);
+      AppSnackbar.error(errorMessage);
     } finally {
       isLoading.value = false;
     }
+  }
+
+  void _showWarning(String msg) {
+    AppSnackbar.warning(msg);
   }
 
   @override
@@ -325,6 +219,7 @@ class RestaurantRegController extends GetxController {
     whatsappCtrl.dispose();
     facebookCtrl.dispose();
     instaCtrl.dispose();
+    upiCtrl.dispose();
     super.onClose();
   }
 }

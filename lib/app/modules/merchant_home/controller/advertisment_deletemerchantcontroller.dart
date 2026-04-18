@@ -1,8 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
+
+import '../../../data/errors/api_error.dart';
+import '../../merchantlogin/widget/successwidget.dart';
 
 class DeleteAdvertisementController extends GetxController {
   final RxSet<dynamic> deletingIds = <dynamic>{}.obs;
@@ -11,17 +14,6 @@ class DeleteAdvertisementController extends GetxController {
   Future<void> deleteAdvertisement(
       dynamic advertisementId, VoidCallback onSuccess) async {
     final String? authToken = box.read('auth_token');
-
-    if (authToken == null) {
-      Get.snackbar(
-        'Unauthorized',
-        'Auth token not found. Please login again.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-      return;
-    }
 
     deletingIds.add(advertisementId);
 
@@ -39,35 +31,24 @@ class DeleteAdvertisementController extends GetxController {
         }),
       );
 
-      final data = jsonDecode(response.body);
+      final decoded = jsonDecode(response.body);
 
-      if (data['status'] == '1') {
+      /// ✅ SUCCESS (HTTP 200 + API status = 1)
+      if (response.statusCode == 200 && decoded['status'] == '1') {
         onSuccess();
-        Get.snackbar(
-          'Deleted',
-          data['message'] ?? 'Advertisement deleted successfully',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-          duration: const Duration(seconds: 2),
+
+        AppSnackbar.success(
+          decoded['message'] ?? "Advertisement deleted successfully",
         );
       } else {
-        Get.snackbar(
-          'Failed',
-          data['message'] ?? 'Failed to delete advertisement',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        /// ❌ API or HTTP ERROR
+        final errorMessage = ApiErrorHandler.handleResponse(response);
+        AppSnackbar.error(errorMessage);
       }
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Something went wrong. Please try again.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      /// ❌ NETWORK / UNKNOWN ERROR
+      final errorMessage = ApiErrorHandler.handleException(e);
+      AppSnackbar.error(errorMessage);
     } finally {
       deletingIds.remove(advertisementId);
     }

@@ -1,4 +1,5 @@
 
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_colors.dart';
@@ -7,13 +8,11 @@ import '../controller/cartcontroller.dart';
 import '../controller/userproductdetail_controller.dart';
 import '../../../data/models/user_productdetailmodel.dart';
 
-
 class ProductDetailPage extends StatelessWidget {
   final int productId;
   const ProductDetailPage({super.key, required this.productId});
 
   static const _primary      = Color(0xFF3D5A99);
-  static const _primaryDark  = Color(0xFF2C4178);
   static const _primaryLight = Color(0xFFEEF1F9);
   static const _accent       = Color(0xFFE8A020);
   static const _accentLight  = Color(0xFFFFF8EC);
@@ -40,7 +39,6 @@ class ProductDetailPage extends StatelessWidget {
       tag: productId.toString(),
     );
 
-    // Get CartController — already registered from CartScreen
     final cartController = Get.find<CartController>();
 
     return Scaffold(
@@ -58,23 +56,11 @@ class ProductDetailPage extends StatelessWidget {
             letterSpacing: 0.2,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.share_outlined, color: Colors.white),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.favorite_border_rounded,
-                color: Colors.white),
-            onPressed: () {},
-          ),
-        ],
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
           return const Center(
-            child: CircularProgressIndicator(
-                color: _primary, strokeWidth: 2.5),
+            child: CircularProgressIndicator(color: _primary, strokeWidth: 2.5),
           );
         }
 
@@ -186,7 +172,7 @@ class ProductDetailPage extends StatelessWidget {
   // ── Product Info ────────────────────────────────────────────
   Widget _buildProductInfo(
       ProductDetailModel product, ProductVariantModel variant) {
-    final stockCount = int.tryParse(variant.stock) ?? 0;
+    final stockCount = variant.stock;
     final isLow      = stockCount > 0 && stockCount <= 5;
     final isOut      = stockCount <= 0;
     final color      = isOut ? _red : (isLow ? _amber : _green);
@@ -195,8 +181,7 @@ class ProductDetailPage extends StatelessWidget {
         : isLow
         ? 'Only $stockCount left'
         : 'In Stock';
-    final icon =
-    isOut ? Icons.cancel_rounded : Icons.check_circle_rounded;
+    final icon = isOut ? Icons.cancel_rounded : Icons.check_circle_rounded;
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -221,8 +206,8 @@ class ProductDetailPage extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 9, vertical: 5),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.09),
                   borderRadius: BorderRadius.circular(20),
@@ -295,8 +280,8 @@ class ProductDetailPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   Obx(() {
-                    final selected = controller
-                        .selectedVariant.value?.attributes[attribute];
+                    final selected =
+                    controller.selectedVariant.value?.attributes[attribute];
 
                     return Wrap(
                       spacing: 8,
@@ -316,22 +301,18 @@ class ProductDetailPage extends StatelessWidget {
 
                         return GestureDetector(
                           onTap: isAvailable
-                              ? () =>
-                              controller.selectVariant(matchedVariant!)
+                              ? () => controller.selectVariant(matchedVariant!)
                               : null,
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 180),
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 18, vertical: 10),
                             decoration: BoxDecoration(
-                              color: isSelected
-                                  ? AppColors.kPrimary
-                                  : _surface,
+                              color: isSelected ? AppColors.kPrimary : _surface,
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                color: isSelected
-                                    ? AppColors.kPrimary
-                                    : _divider,
+                                color:
+                                isSelected ? AppColors.kPrimary : _divider,
                                 width: isSelected ? 2 : 1.5,
                               ),
                               boxShadow: isSelected
@@ -349,9 +330,8 @@ class ProductDetailPage extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
-                                color: isSelected
-                                    ? Colors.white
-                                    : _textDark,
+                                color:
+                                isSelected ? Colors.white : _textDark,
                               ),
                             ),
                           ),
@@ -370,12 +350,9 @@ class ProductDetailPage extends StatelessWidget {
 
   // ── Common Attributes ───────────────────────────────────────
   Widget _buildCommonAttributes(ProductDetailModel product) {
-    if (product.commonAttributes == null ||
-        product.commonAttributes!.isEmpty) {
-      return const SizedBox.shrink();
-    }
+    if (product.commonAttributes.isEmpty) return const SizedBox.shrink();
 
-    final entries = product.commonAttributes!.entries.toList();
+    final entries = product.commonAttributes.entries.toList();
 
     return Container(
       color: _surface,
@@ -403,8 +380,7 @@ class ProductDetailPage extends StatelessWidget {
                   Expanded(
                     flex: 2,
                     child: Text(
-                      entry.key[0].toUpperCase() +
-                          entry.key.substring(1),
+                      entry.key[0].toUpperCase() + entry.key.substring(1),
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -461,19 +437,16 @@ class ProductDetailPage extends StatelessWidget {
       ProductDetailController controller,
       CartController cartController,
       ProductDetailModel product,
-      ProductVariantModel variant,
-      ) {
+      ProductVariantModel variant) {
     return Positioned(
       left: 0,
       right: 0,
       bottom: 0,
       child: Obx(() {
-        final currentVariant =
-            controller.selectedVariant.value ?? variant;
-        final stockCount   = int.tryParse(currentVariant.stock) ?? 0;
-        final isOutOfStock = stockCount <= 0;
+        final currentVariant = controller.selectedVariant.value ?? variant;
+        final stockCount     = currentVariant.stock;
+        final isOutOfStock   = stockCount <= 0;
 
-        // Reactively check if this product is in cart
         final cartItem = cartController.cartItems.firstWhereOrNull(
               (item) => item.productId == productId.toString(),
         );
@@ -496,10 +469,8 @@ class ProductDetailPage extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (isInCart && !isOutOfStock)
-                // ── Stepper row when item is in cart ────────
                   _buildCartStepper(cartItem!, cartController)
                 else
-                // ── Add to Cart + Buy Now ────────────────────
                   Row(
                     children: [
                       // Add to Cart
@@ -510,13 +481,12 @@ class ProductDetailPage extends StatelessWidget {
                               : () async {
                             await cartController.addToCart(
                               productId: productId,
-                              type: 0, // normal product
+                              type: 0,
                             );
                           },
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 220),
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 14),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
                             decoration: BoxDecoration(
                               color: _surface,
                               borderRadius: BorderRadius.circular(14),
@@ -528,8 +498,7 @@ class ProductDetailPage extends StatelessWidget {
                               ),
                             ),
                             child: Row(
-                              mainAxisAlignment:
-                              MainAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
                                   isOutOfStock
@@ -542,9 +511,7 @@ class ProductDetailPage extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
-                                  isOutOfStock
-                                      ? 'Out of Stock'
-                                      : 'Add to Cart',
+                                  isOutOfStock ? 'Out of Stock' : 'Add to Cart',
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w800,
@@ -572,8 +539,7 @@ class ProductDetailPage extends StatelessWidget {
                             Get.toNamed('/cart');
                           },
                           child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 14),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
                             decoration: BoxDecoration(
                               gradient: isOutOfStock
                                   ? null
@@ -591,16 +557,14 @@ class ProductDetailPage extends StatelessWidget {
                                   ? []
                                   : [
                                 BoxShadow(
-                                  color:
-                                  _primary.withOpacity(0.32),
+                                  color: _primary.withOpacity(0.32),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 ),
                               ],
                             ),
                             child: Row(
-                              mainAxisAlignment:
-                              MainAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
                                   isOutOfStock
@@ -613,9 +577,7 @@ class ProductDetailPage extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
-                                  isOutOfStock
-                                      ? 'Unavailable'
-                                      : 'Buy Now',
+                                  isOutOfStock ? 'Unavailable' : 'Buy Now',
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w800,
@@ -640,14 +602,12 @@ class ProductDetailPage extends StatelessWidget {
     );
   }
 
-  // ── Cart Stepper — no spinner, pure optimistic UI ───────────
-  Widget _buildCartStepper(
-      CartItem cartItem, CartController cartController) {
+  // ── Cart Stepper ────────────────────────────────────────────
+  Widget _buildCartStepper(CartItem cartItem, CartController cartController) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-          // Go to Cart button
           Expanded(
             child: GestureDetector(
               onTap: () => Get.toNamed('/cart'),
@@ -656,14 +616,12 @@ class ProductDetailPage extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: _accentLight,
                   borderRadius: BorderRadius.circular(14),
-                  border:
-                  Border.all(color: _accent.withOpacity(0.4)),
+                  border: Border.all(color: _accent.withOpacity(0.4)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.shopping_cart_rounded,
-                        size: 17, color: _accent),
+                    Icon(Icons.shopping_cart_rounded, size: 17, color: _accent),
                     const SizedBox(width: 6),
                     Text(
                       'Go to Cart',
@@ -679,7 +637,6 @@ class ProductDetailPage extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          // Quantity stepper — animated number, never a spinner
           Container(
             height: 48,
             decoration: BoxDecoration(
@@ -696,12 +653,9 @@ class ProductDetailPage extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Decrement
                 GestureDetector(
-                  onTap: () => cartController.updateQuantity(
-                    productId,
-                    "decrement",
-                  ),
+                  onTap: () =>
+                      cartController.updateQuantity(productId, "decrement"),
                   child: Container(
                     width: 48,
                     height: 48,
@@ -711,14 +665,10 @@ class ProductDetailPage extends StatelessWidget {
                         bottomLeft: Radius.circular(14),
                       ),
                     ),
-                    child: const Icon(
-                      Icons.remove_rounded,
-                      color: Colors.white,
-                      size: 20,
-                    ),
+                    child: const Icon(Icons.remove_rounded,
+                        color: Colors.white, size: 20),
                   ),
                 ),
-                // Animated quantity number — zero spinners
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 150),
                   transitionBuilder: (child, anim) =>
@@ -738,12 +688,9 @@ class ProductDetailPage extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Increment
                 GestureDetector(
-                  onTap: () => cartController.updateQuantity(
-                    productId,
-                    "increment",
-                  ),
+                  onTap: () =>
+                      cartController.updateQuantity(productId, "increment"),
                   child: Container(
                     width: 48,
                     height: 48,
@@ -753,11 +700,8 @@ class ProductDetailPage extends StatelessWidget {
                         bottomRight: Radius.circular(14),
                       ),
                     ),
-                    child: const Icon(
-                      Icons.add_rounded,
-                      color: Colors.white,
-                      size: 20,
-                    ),
+                    child: const Icon(Icons.add_rounded,
+                        color: Colors.white, size: 20),
                   ),
                 ),
               ],

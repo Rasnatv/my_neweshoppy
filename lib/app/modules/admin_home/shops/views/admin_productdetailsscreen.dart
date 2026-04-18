@@ -1,13 +1,10 @@
+
+import 'package:eshoppy/app/common/style/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
 
 import '../../../../data/models/admin_shopproductdetailsmodel.dart';
 import '../controller/admin_productdetailcontroller.dart';
-
-
-
 
 class AdminProductDetailScreen extends StatelessWidget {
   const AdminProductDetailScreen({super.key});
@@ -18,7 +15,7 @@ class AdminProductDetailScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
-      appBar: _buildAppBar(controller),
+      appBar: _buildAppBar(),
       body: Obx(() {
         if (controller.isLoading.value) {
           return const _LoadingView();
@@ -42,83 +39,25 @@ class AdminProductDetailScreen extends StatelessWidget {
     );
   }
 
-  PreferredSizeWidget _buildAppBar(mAdminProductDetailController controller) {
+  PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.kPrimary,
       elevation: 0,
-      centerTitle: false,
+     automaticallyImplyLeading: true,
+      iconTheme: IconThemeData(color: Colors.white),
       title: const Text(
         'Product Details',
         style: TextStyle(
-          color: Color(0xFF1A1A2E),
-          fontWeight: FontWeight.w700,
-          fontSize: 20,
+          color: Colors.white,
+          fontSize: 17,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.1,
         ),
-      ),
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new_rounded,
-            color: Color(0xFF1A1A2E), size: 20),
-        onPressed: () => Get.back(),
       ),
 
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1),
         child: Container(color: const Color(0xFFE8E8F0), height: 1),
-      ),
-    );
-  }
-}
-
-// ─── Auth Token Badge ─────────────────────────────────────────────────────────
-
-class _AuthTokenBadge extends StatelessWidget {
-  final String token;
-  const _AuthTokenBadge({required this.token});
-
-  String get _masked => token.length > 10
-      ? '${token.substring(0, 6)}...${token.substring(token.length - 4)}'
-      : token;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Clipboard.setData(ClipboardData(text: token));
-        Get.snackbar(
-          'Copied',
-          'Auth token copied to clipboard',
-          backgroundColor: const Color(0xFF4CAF50),
-          colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
-          duration: const Duration(seconds: 2),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: const Color(0xFFEEF2FF),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFF6366F1).withOpacity(0.3)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.key_rounded, size: 13, color: Color(0xFF6366F1)),
-            const SizedBox(width: 4),
-            Flexible(
-              child: Text(
-                _masked,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: Color(0xFF6366F1),
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.3,
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -140,11 +79,11 @@ class _ProductDetailBody extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Variant Image Carousel
+          // ── Variant Image Carousel ──
           _VariantImageCard(controller: controller),
           const SizedBox(height: 16),
 
-          // Product Info Card
+          // ── Product Info ──
           _InfoCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -176,49 +115,76 @@ class _ProductDetailBody extends StatelessWidget {
                     _ProductIdBadge(id: product.productId),
                   ],
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  product.description,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF6B7280),
-                    height: 1.5,
+                if (product.description.trim().isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    product.description,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF6B7280),
+                      height: 1.5,
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
           const SizedBox(height: 12),
 
-          // Common Attributes
-          _SectionHeader(title: 'Common Attributes'),
-          const SizedBox(height: 8),
-          _InfoCard(
-            child: Row(
-              children: [
-                _AttributeTile(
-                  icon: Icons.checkroom_rounded,
-                  label: 'Material',
-                  value: product.commonAttributes.material,
-                ),
-                const _VerticalDivider(),
-                _AttributeTile(
-                  icon: Icons.branding_watermark_rounded,
-                  label: 'Brand',
-                  value: product.commonAttributes.brand,
-                ),
-                const _VerticalDivider(),
-                _AttributeTile(
-                  icon: Icons.person_rounded,
-                  label: 'Type',
-                  value: product.commonAttributes.type,
-                ),
-              ],
+          // ── Common Attributes (hidden when empty) ──
+          if (product.commonAttributes.isNotEmpty) ...[
+            _SectionHeader(title: 'Specifications'),
+            const SizedBox(height: 8),
+            _InfoCard(
+              child: Column(
+                children: product.commonAttributes.entries
+                    .toList()
+                    .asMap()
+                    .entries
+                    .map((entry) {
+                  final isEven = entry.key.isEven;
+                  final e = entry.value;
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isEven
+                          ? const Color(0xFFF5F6FA)
+                          : Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.label_outline_rounded,
+                            size: 14, color: Color(0xFF6366F1)),
+                        const SizedBox(width: 8),
+                        Text(
+                          e.key[0].toUpperCase() + e.key.substring(1),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF6B7280),
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          e.value,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1A1A2E),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
+            const SizedBox(height: 12),
+          ],
 
-          // Variants Section
+          // ── Variants ──
           _SectionHeader(
             title: 'Variants',
             trailing: _Chip(
@@ -272,14 +238,15 @@ class _VariantImageCard extends StatelessWidget {
             ClipRRect(
               borderRadius:
               const BorderRadius.vertical(top: Radius.circular(16)),
-              child: variant != null
+              child: variant != null && variant.image.isNotEmpty
                   ? Image.network(
                 variant.image,
                 height: 280,
                 width: double.infinity,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => const _ImagePlaceholder(),
-                loadingBuilder: (_, child, progress) => progress == null
+                loadingBuilder: (_, child, progress) =>
+                progress == null
                     ? child
                     : Container(
                   height: 280,
@@ -361,7 +328,8 @@ class _VariantCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final stockInt = int.tryParse(variant.stock) ?? 0;
-    final isLowStock = stockInt <= 3;
+    final isOutOfStock = stockInt <= 0;
+    final isLowStock = stockInt > 0 && stockInt <= 3;
 
     return GestureDetector(
       onTap: onTap,
@@ -397,27 +365,27 @@ class _VariantCard extends StatelessWidget {
           padding: const EdgeInsets.all(14),
           child: Row(
             children: [
+              // ── Thumbnail ──
               ClipRRect(
                 borderRadius: BorderRadius.circular(10),
-                child: Image.network(
+                child: variant.image.isNotEmpty
+                    ? Image.network(
                   variant.image,
                   width: 60,
                   height: 60,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    width: 60,
-                    height: 60,
-                    color: const Color(0xFFF5F6FA),
-                    child: const Icon(Icons.image_rounded,
-                        color: Color(0xFFD1D5DB)),
-                  ),
-                ),
+                  errorBuilder: (_, __, ___) => _imageFallback(),
+                )
+                    : _imageFallback(),
               ),
               const SizedBox(width: 14),
+
+              // ── Details ──
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Variant ID + Price
                     Row(
                       children: [
                         Text(
@@ -439,24 +407,62 @@ class _VariantCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
+
+                    // Dynamic attributes + stock badge
                     Row(
                       children: [
-                        _MiniChip(
-                          label: variant.attributes.colour,
-                          icon: Icons.circle,
-                          color: _colorFromName(variant.attributes.colour),
+                        // Show all variant attributes dynamically
+                        Expanded(
+                          child: Wrap(
+                            spacing: 6,
+                            runSpacing: 4,
+                            children: variant.attributes.entries.map((e) {
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEEF2FF),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  '${e.key[0].toUpperCase()}${e.key.substring(1)}: ${e.value}',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF6366F1),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
                         ),
-                        const SizedBox(width: 6),
-                        _MiniChip(
-                          label: variant.attributes.size.toUpperCase(),
-                          icon: Icons.straighten_rounded,
-                          color: const Color(0xFF6B7280),
-                        ),
-                        const Spacer(),
-                        _StockBadge(
-                          stock: variant.stock,
-                          isLow: isLowStock,
+                        const SizedBox(width: 8),
+
+                        // Stock badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: isOutOfStock
+                                ? const Color(0xFFFFEBEE)
+                                : isLowStock
+                                ? const Color(0xFFFEF3C7)
+                                : const Color(0xFFD1FAE5),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            isOutOfStock ? 'Out of Stock' : 'Stock: $stockInt',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: isOutOfStock
+                                  ? const Color(0xFFE53935)
+                                  : isLowStock
+                                  ? const Color(0xFFD97706)
+                                  : const Color(0xFF059669),
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -470,23 +476,13 @@ class _VariantCard extends StatelessWidget {
     );
   }
 
-  Color _colorFromName(String name) {
-    switch (name.toLowerCase()) {
-      case 'blue':
-        return Colors.blue;
-      case 'red':
-        return Colors.red;
-      case 'green':
-        return Colors.green;
-      case 'black':
-        return Colors.black87;
-      case 'white':
-        return Colors.grey;
-      case 'yellow':
-        return Colors.amber;
-      default:
-        return const Color(0xFF6B7280);
-    }
+  Widget _imageFallback() {
+    return Container(
+      width: 60,
+      height: 60,
+      color: const Color(0xFFF5F6FA),
+      child: const Icon(Icons.image_rounded, color: Color(0xFFD1D5DB)),
+    );
   }
 }
 
@@ -568,58 +564,6 @@ class _Chip extends StatelessWidget {
   }
 }
 
-class _MiniChip extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final Color color;
-  const _MiniChip(
-      {required this.label, required this.icon, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 11, color: color),
-        const SizedBox(width: 3),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: color,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _StockBadge extends StatelessWidget {
-  final String stock;
-  final bool isLow;
-  const _StockBadge({required this.stock, required this.isLow});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: isLow ? const Color(0xFFFEF3C7) : const Color(0xFFD1FAE5),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        'Stock: $stock',
-        style: TextStyle(
-          fontSize: 11,
-          color: isLow ? const Color(0xFFD97706) : const Color(0xFF059669),
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
-
 class _ProductIdBadge extends StatelessWidget {
   final int id;
   const _ProductIdBadge({required this.id});
@@ -640,58 +584,6 @@ class _ProductIdBadge extends StatelessWidget {
           fontSize: 13,
         ),
       ),
-    );
-  }
-}
-
-class _AttributeTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  const _AttributeTile(
-      {required this.icon, required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Column(
-        children: [
-          Icon(icon, size: 22, color: const Color(0xFF6366F1)),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              color: Color(0xFF9CA3AF),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 13,
-              color: Color(0xFF1A1A2E),
-              fontWeight: FontWeight.w700,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _VerticalDivider extends StatelessWidget {
-  const _VerticalDivider();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 1,
-      height: 50,
-      color: const Color(0xFFE8E8F0),
-      margin: const EdgeInsets.symmetric(horizontal: 8),
     );
   }
 }

@@ -16,11 +16,17 @@ class DistrictAdminAddAdvertisementPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        iconTheme: IconThemeData(color: Colors.white),
         title: Text(
           "Add Advertisement",
-          style: AppTextStyle.rTextNunitoWhite17w700,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.1,
+          ),
         ),
-        backgroundColor: AppColors.kPrimary,
+        backgroundColor: AppColors.welcomecardclr,
         elevation: 0,
       ),
       body: Stack(
@@ -32,20 +38,11 @@ class DistrictAdminAddAdvertisementPage extends StatelessWidget {
               children: [
 
                 /// ─── Banner Image ─────────────────────────
-                Row(
-                  children: const [
-                    Text(
-                      "Banner Image",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
-                    SizedBox(width: 4),
-                    Text("*", style: TextStyle(color: Colors.red)),
-                  ],
-                ),
+                _requiredLabel("Banner Image"),
                 const SizedBox(height: 10),
 
                 Obx(() => GestureDetector(
-                  onTap: controller.pickBannerImage,
+                  onTap: controller.pickBanner,
                   child: Container(
                     height: 200,
                     width: double.infinity,
@@ -62,8 +59,7 @@ class DistrictAdminAddAdvertisementPage extends StatelessWidget {
                         ? Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: const [
-                        Icon(Icons.add_photo_alternate_outlined,
-                            size: 60),
+                        Icon(Icons.add_photo_alternate_outlined, size: 60),
                         SizedBox(height: 10),
                         Text("Tap to upload image"),
                       ],
@@ -95,29 +91,18 @@ class DistrictAdminAddAdvertisementPage extends StatelessWidget {
 
                 const SizedBox(height: 25),
 
-                /// ─── Advertisement Title ─────────────────
-                Row(
-                  children: const [
-                    Text(
-                      "Advertisement Title",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
-                    SizedBox(width: 4),
-                    Text("*", style: TextStyle(color: Colors.red)),
-                  ],
-                ),
+                /// ─── Advertisement Title ──────────────────
+                _requiredLabel("Advertisement Title"),
                 const SizedBox(height: 10),
 
                 Obx(() => TextField(
                   controller: controller.adName,
                   decoration: InputDecoration(
-                    hintText: "Enter title",
-                    prefixIcon:
-                    Icon(Icons.campaign, color: AppColors.kPrimary),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    errorText: controller.isTitleEmpty.value
+                    hintText   : "Enter title",
+                    prefixIcon : Icon(Icons.campaign, color: AppColors.kPrimary),
+                    border     : OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    errorText  : controller.isTitleEmpty.value
                         ? "Title required"
                         : null,
                   ),
@@ -128,101 +113,80 @@ class DistrictAdminAddAdvertisementPage extends StatelessWidget {
 
                 const SizedBox(height: 25),
 
+                /// ─── State Dropdown ───────────────────────
+                _requiredLabel("Select State"),
+                const SizedBox(height: 10),
+
+                Obx(() {
+                  if (controller.isStatesLoading.value) {
+                    return _loadingField("Loading states...");
+                  }
+
+                  if (controller.states.isEmpty) {
+                    return _emptyField("No states available");
+                  }
+
+                  return _dropdownField(
+                    hint    : "Select State",
+                    value   : controller.selectedState.value.isEmpty
+                        ? null
+                        : controller.selectedState.value,
+                    items   : controller.states,
+                    onChanged: (val) {
+                      if (val != null) {
+                        controller.selectedState.value    = val;
+                        controller.selectedDistrict.value = ''; // reset district
+                      }
+                    },
+                  );
+                }),
+
+                const SizedBox(height: 25),
+
                 /// ─── District Dropdown ────────────────────
-                Row(
-                  children: const [
-                    Text(
-                      "Select District",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
-                    SizedBox(width: 4),
-                    Text("*", style: TextStyle(color: Colors.red)),
-                  ],
-                ),
+                _requiredLabel("Select District"),
                 const SizedBox(height: 10),
 
                 Obx(() {
                   if (controller.isDistrictLoading.value) {
-                    return const Center(child: CircularProgressIndicator());
+                    return _loadingField("Loading districts...");
                   }
 
                   if (controller.districts.isEmpty) {
-                    return Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.info_outline,
-                              color: Colors.grey.shade400, size: 18),
-                          const SizedBox(width: 8),
-                          const Text(
-                            "No districts available",
-                            style: TextStyle(color: Colors.grey),
-                          ),
-                        ],
-                      ),
-                    );
+                    return _emptyField("No districts available");
                   }
 
-                  // Districts are plain strings: ["kasaragod", "mram"]
-                  return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: DropdownButton<String>(
-                      value: controller.selectedDistrict.value.isEmpty
-                          ? null
-                          : controller.selectedDistrict.value,
-                      hint: const Text("Select District"),
-                      isExpanded: true,
-                      underline: const SizedBox(),
-                      items: controller.districts.map((district) {
-                        return DropdownMenuItem<String>(
-                          value: district,
-                          // Capitalize first letter for display
-                          child: Text(
-                            district[0].toUpperCase() + district.substring(1),
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        if (val != null) {
-                          controller.selectedDistrict.value = val;
-                        }
-                      },
-                    ),
+                  return _dropdownField(
+                    hint    : "Select District",
+                    value   : controller.selectedDistrict.value.isEmpty
+                        ? null
+                        : controller.selectedDistrict.value,
+                    items   : controller.districts,
+                    onChanged: (val) {
+                      if (val != null) controller.selectedDistrict.value = val;
+                    },
                   );
                 }),
 
                 const SizedBox(height: 35),
 
-                /// ─── Submit Button ─────────────────────
+                /// ─── Submit Button ────────────────────────
                 Obx(() => SizedBox(
-                  width: double.infinity,
+                  width : double.infinity,
                   height: 55,
-                  child: ElevatedButton(
+                  child : ElevatedButton(
                     onPressed: controller.isLoading.value
                         ? null
                         : controller.addAdvertisement,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.kPrimary,
+                      backgroundColor: AppColors.welcomecardclr,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                     child: controller.isLoading.value
-                        ? const CircularProgressIndicator(
-                      color: Colors.white,
-                    )
-                        : const Text(
-                      "Add Advertisement",
-                      style: TextStyle(fontSize: 16),
-                    ),
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text("Add Advertisement",
+                        style: TextStyle(fontSize: 16)),
                   ),
                 )),
 
@@ -235,13 +199,82 @@ class DistrictAdminAddAdvertisementPage extends StatelessWidget {
           Obx(() => controller.isLoading.value
               ? Container(
             color: Colors.black45,
-            child: const Center(
-              child: CircularProgressIndicator(),
-            ),
+            child: const Center(child: CircularProgressIndicator()),
           )
               : const SizedBox()),
         ],
       ),
     );
   }
+
+  // ── Reusable Widgets ────────────────────────────
+
+  Widget _requiredLabel(String text) => Row(
+    children: [
+      Text(text,
+          style: const TextStyle(
+              fontSize: 16, fontWeight: FontWeight.w600)),
+      const SizedBox(width: 4),
+      const Text("*", style: TextStyle(color: Colors.red)),
+    ],
+  );
+
+  Widget _dropdownField({
+    required String hint,
+    required String? value,
+    required List<String> items,
+    required void Function(String?) onChanged,
+  }) =>
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          border      : Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: DropdownButton<String>(
+          value     : value,
+          hint      : Text(hint),
+          isExpanded: true,
+          underline : const SizedBox(),
+          items     : items.map((item) {
+            return DropdownMenuItem<String>(
+              value: item,
+              child: Text(
+                item[0].toUpperCase() + item.substring(1),
+              ),
+            );
+          }).toList(),
+          onChanged : onChanged,
+        ),
+      );
+
+  Widget _loadingField(String label) => Container(
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      border      : Border.all(color: Colors.grey.shade300),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Row(children: [
+      const SizedBox(
+        width : 16,
+        height: 16,
+        child : CircularProgressIndicator(strokeWidth: 2),
+      ),
+      const SizedBox(width: 10),
+      Text(label, style: const TextStyle(color: Colors.grey)),
+    ]),
+  );
+
+  Widget _emptyField(String label) => Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      border      : Border.all(color: Colors.grey.shade300),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Row(children: [
+      Icon(Icons.info_outline, color: Colors.grey.shade400, size: 18),
+      const SizedBox(width: 8),
+      Text(label, style: const TextStyle(color: Colors.grey)),
+    ]),
+  );
 }

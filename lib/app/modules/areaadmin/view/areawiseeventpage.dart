@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -9,7 +10,8 @@ import '../controller/areaadmin_eventcontroller.dart';
 class AreaAdminAddEventPage extends StatelessWidget {
   AreaAdminAddEventPage({super.key});
 
-  final AreaAdminEventAddController controller = Get.put(AreaAdminEventAddController());
+  final AreaAdminEventAddController controller =
+  Get.put(AreaAdminEventAddController());
   final _formKey = GlobalKey<FormState>();
   final RxBool _submitted = false.obs;
 
@@ -19,9 +21,15 @@ class AreaAdminAddEventPage extends StatelessWidget {
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
         automaticallyImplyLeading: true,
+        iconTheme: IconThemeData(color: Colors.white),
         title: Text(
           "Create Event",
-          style: AppTextStyle.rTextNunitoWhite17w700,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.1,
+            ),
         ),
         backgroundColor: AppColors.welcomecardclr,
         elevation: 0,
@@ -56,6 +64,14 @@ class AreaAdminAddEventPage extends StatelessWidget {
                           ),
                           const SizedBox(height: 16),
 
+                          /// ---- State Dropdown ----
+                          _stateDropdown(),
+                          const SizedBox(height: 16),
+
+                          /// ---- District Dropdown ----
+                          _districtDropdown(),
+                          const SizedBox(height: 16),
+
                           /// ---- Main Location Dropdown ----
                           _mainLocationDropdown(),
                           const SizedBox(height: 16),
@@ -65,8 +81,8 @@ class AreaAdminAddEventPage extends StatelessWidget {
                             label: "Event Location",
                             hint: "Enter specific event location",
                             icon: Icons.location_on_outlined,
-                            validator: (v) =>
-                                DValidator.validateEmptyText("Event Location", v),
+                            validator: (v) => DValidator.validateEmptyText(
+                                "Event Location", v),
                           ),
                         ],
                       ),
@@ -145,7 +161,8 @@ class AreaAdminAddEventPage extends StatelessWidget {
                                       ? Colors.red.shade300
                                       : Colors.grey.shade300,
                                   width: 2,
-                                  strokeAlign: BorderSide.strokeAlignInside,
+                                  strokeAlign:
+                                  BorderSide.strokeAlignInside,
                                 ),
                                 borderRadius: BorderRadius.circular(12),
                                 color: Colors.grey.shade50,
@@ -156,7 +173,8 @@ class AreaAdminAddEventPage extends StatelessWidget {
                                 MainAxisAlignment.center,
                                 children: [
                                   Container(
-                                    padding: const EdgeInsets.all(16),
+                                    padding:
+                                    const EdgeInsets.all(16),
                                     decoration: BoxDecoration(
                                       color: AppColors.kPrimary
                                           .withOpacity(0.1),
@@ -228,11 +246,9 @@ class AreaAdminAddEventPage extends StatelessWidget {
                                 top: 8, left: 12),
                             child: Row(
                               children: [
-                                Icon(
-                                  Icons.error_outline,
-                                  size: 14,
-                                  color: Colors.red.shade700,
-                                ),
+                                Icon(Icons.error_outline,
+                                    size: 14,
+                                    color: Colors.red.shade700),
                                 const SizedBox(width: 6),
                                 Text(
                                   "Banner image is required",
@@ -257,7 +273,7 @@ class AreaAdminAddEventPage extends StatelessWidget {
                       height: 54,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
-                       color:AppColors.welcomecardclr
+                        color: AppColors.welcomecardclr,
                       ),
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
@@ -276,6 +292,10 @@ class AreaAdminAddEventPage extends StatelessWidget {
                               controller.endDate.value.isNotEmpty &&
                               controller.startTime.value.isNotEmpty &&
                               controller.endTime.value.isNotEmpty &&
+                              controller
+                                  .selectedState.value.isNotEmpty &&
+                              controller.selectedDistrict.value
+                                  .isNotEmpty &&
                               controller.selectedMainLocation.value
                                   .isNotEmpty &&
                               controller.bannerImage.value != null) {
@@ -308,10 +328,8 @@ class AreaAdminAddEventPage extends StatelessWidget {
                             : Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: const [
-                            Icon(
-                              Icons.check_circle_outline,
-                              size: 22,
-                            ),
+                            Icon(Icons.check_circle_outline,
+                                size: 22),
                             SizedBox(width: 10),
                             Text(
                               "CREATE EVENT",
@@ -337,11 +355,173 @@ class AreaAdminAddEventPage extends StatelessWidget {
     );
   }
 
-  /// ================= MAIN LOCATION DROPDOWN =================
+  // ─────────────────────────────────────────────────
+  /// STATE DROPDOWN
+  // ─────────────────────────────────────────────────
+  Widget _stateDropdown() {
+    return Obx(() {
+      final bool hasError =
+          _submitted.value && controller.selectedState.value.isEmpty;
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InputDecorator(
+            decoration: InputDecoration(
+              labelText: "State",
+              prefixIcon: const Icon(Icons.flag_outlined, size: 22),
+              suffixIcon: controller.isStatesLoading.value
+                  ? const Padding(
+                padding: EdgeInsets.all(12),
+                child: SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2)),
+              )
+                  : const Icon(Icons.arrow_drop_down, size: 28),
+              filled: true,
+              fillColor: Colors.grey.shade50,
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade300)),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: hasError ? Colors.red.shade300 : Colors.grey.shade300,
+                  width: hasError ? 2 : 1,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: AppColors.kPrimary, width: 2)),
+              contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: controller.selectedState.value.isEmpty
+                    ? null
+                    : controller.selectedState.value,
+                hint: Text("Select State",
+                    style: TextStyle(
+                        fontSize: 15, color: Colors.grey.shade600)),
+                isExpanded: true,
+                icon: const SizedBox.shrink(),
+                items: controller.states
+                    .map((s) => DropdownMenuItem<String>(
+                  value: s,
+                  child: Text(s,
+                      style: const TextStyle(
+                          fontSize: 15,
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w500)),
+                ))
+                    .toList(),
+                onChanged: controller.isStatesLoading.value
+                    ? null
+                    : (value) {
+                  if (value != null) controller.onStateSelected(value);
+                },
+              ),
+            ),
+          ),
+          if (hasError)
+            _errorLabel("State is required"),
+        ],
+      );
+    });
+  }
+
+  // ─────────────────────────────────────────────────
+  /// DISTRICT DROPDOWN
+  // ─────────────────────────────────────────────────
+  Widget _districtDropdown() {
+    return Obx(() {
+      final bool hasError =
+          _submitted.value && controller.selectedDistrict.value.isEmpty;
+      final bool isDisabled = controller.selectedState.value.isEmpty;
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InputDecorator(
+            decoration: InputDecoration(
+              labelText: "District",
+              prefixIcon: const Icon(Icons.location_city_outlined, size: 22),
+              suffixIcon: controller.isDistrictsLoading.value
+                  ? const Padding(
+                padding: EdgeInsets.all(12),
+                child: SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2)),
+              )
+                  : const Icon(Icons.arrow_drop_down, size: 28),
+              filled: true,
+              fillColor:
+              isDisabled ? Colors.grey.shade100 : Colors.grey.shade50,
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade300)),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: hasError ? Colors.red.shade300 : Colors.grey.shade300,
+                  width: hasError ? 2 : 1,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: AppColors.kPrimary, width: 2)),
+              contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: controller.selectedDistrict.value.isEmpty
+                    ? null
+                    : controller.selectedDistrict.value,
+                hint: Text(
+                  isDisabled ? "Select State first" : "Select District",
+                  style: TextStyle(
+                      fontSize: 15, color: Colors.grey.shade600),
+                ),
+                isExpanded: true,
+                icon: const SizedBox.shrink(),
+                items: controller.districts
+                    .map((d) => DropdownMenuItem<String>(
+                  value: d,
+                  child: Text(d,
+                      style: const TextStyle(
+                          fontSize: 15,
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w500)),
+                ))
+                    .toList(),
+                onChanged: isDisabled || controller.isDistrictsLoading.value
+                    ? null
+                    : (value) {
+                  if (value != null) {
+                    controller.selectedDistrict.value = value;
+                  }
+                },
+              ),
+            ),
+          ),
+          if (hasError)
+            _errorLabel("District is required"),
+        ],
+      );
+    });
+  }
+
+  // ─────────────────────────────────────────────────
+  /// MAIN LOCATION DROPDOWN
+  // ─────────────────────────────────────────────────
   Widget _mainLocationDropdown() {
     return Obx(() {
-      final bool hasError = _submitted.value &&
-          controller.selectedMainLocation.value.isEmpty;
+      final bool hasError =
+          _submitted.value && controller.selectedMainLocation.value.isEmpty;
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -354,18 +534,16 @@ class AreaAdminAddEventPage extends StatelessWidget {
                   ? const Padding(
                 padding: EdgeInsets.all(12),
                 child: SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2)),
               )
                   : const Icon(Icons.arrow_drop_down, size: 28),
               filled: true,
               fillColor: Colors.grey.shade50,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade300)),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(
@@ -374,15 +552,8 @@ class AreaAdminAddEventPage extends StatelessWidget {
                 ),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide:
-                BorderSide(color: AppColors.kPrimary, width: 2),
-              ),
-              errorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide:
-                BorderSide(color: Colors.red.shade300, width: 2),
-              ),
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: AppColors.kPrimary, width: 2)),
               contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             ),
@@ -391,26 +562,19 @@ class AreaAdminAddEventPage extends StatelessWidget {
                 value: controller.selectedMainLocation.value.isEmpty
                     ? null
                     : controller.selectedMainLocation.value,
-                hint: Text(
-                  "Select Main Location",
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
+                hint: Text("Select Main Location",
+                    style: TextStyle(
+                        fontSize: 15, color: Colors.grey.shade600)),
                 isExpanded: true,
                 icon: const SizedBox.shrink(),
                 items: controller.mainLocations
-                    .map((location) => DropdownMenuItem<String>(
-                  value: location,
-                  child: Text(
-                    location,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      color: Colors.black87,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+                    .map((loc) => DropdownMenuItem<String>(
+                  value: loc,
+                  child: Text(loc,
+                      style: const TextStyle(
+                          fontSize: 15,
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w500)),
                 ))
                     .toList(),
                 onChanged: controller.isLocationsLoading.value
@@ -424,29 +588,29 @@ class AreaAdminAddEventPage extends StatelessWidget {
             ),
           ),
           if (hasError)
-            Padding(
-              padding: const EdgeInsets.only(top: 6, left: 12),
-              child: Row(
-                children: [
-                  Icon(Icons.error_outline,
-                      size: 14, color: Colors.red.shade700),
-                  const SizedBox(width: 6),
-                  Text(
-                    "Main Location is required",
-                    style: TextStyle(
-                      color: Colors.red.shade700,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            _errorLabel("Main Location is required"),
         ],
       );
     });
   }
 
-  /// ================= CARD WRAPPER =================
+  // ─────────────────────────────────────────────────
+  /// HELPERS
+  // ─────────────────────────────────────────────────
+  Widget _errorLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6, left: 12),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline, size: 14, color: Colors.red.shade700),
+          const SizedBox(width: 6),
+          Text(text,
+              style: TextStyle(color: Colors.red.shade700, fontSize: 12)),
+        ],
+      ),
+    );
+  }
+
   Widget _buildCard({required Widget child}) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -455,17 +619,15 @@ class AreaAdminAddEventPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 2)),
         ],
       ),
       child: child,
     );
   }
 
-  /// ================= SECTION HEADER =================
   Widget _sectionHeader({required IconData icon, required String title}) {
     return Row(
       children: [
@@ -475,26 +637,18 @@ class AreaAdminAddEventPage extends StatelessWidget {
             color: AppColors.kPrimary.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(
-            icon,
-            color: AppColors.kPrimary,
-            size: 20,
-          ),
+          child: Icon(icon, color: AppColors.kPrimary, size: 20),
         ),
         const SizedBox(width: 12),
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w700,
-            color: Colors.black87,
-          ),
-        ),
+        Text(title,
+            style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                color: Colors.black87)),
       ],
     );
   }
 
-  /// ================= MODERN TEXT FIELD =================
   Widget _modernTextField({
     required TextEditingController controller,
     required String label,
@@ -513,32 +667,26 @@ class AreaAdminAddEventPage extends StatelessWidget {
         filled: true,
         fillColor: Colors.grey.shade50,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300),
-        ),
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade300)),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300),
-        ),
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade300)),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.kPrimary, width: 2),
-        ),
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.kPrimary, width: 2)),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.red.shade300, width: 2),
-        ),
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.red.shade300, width: 2)),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.red.shade400, width: 2),
-        ),
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.red.shade400, width: 2)),
         contentPadding:
         const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
     );
   }
 
-  /// ================= MODERN PICKER FIELD =================
   Widget _modernPickerField({
     required String label,
     required RxString value,
@@ -557,25 +705,19 @@ class AreaAdminAddEventPage extends StatelessWidget {
           filled: true,
           fillColor: Colors.grey.shade50,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.shade300),
-          ),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade300)),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.shade300),
-          ),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade300)),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppColors.kPrimary, width: 2),
-          ),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.kPrimary, width: 2)),
           errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide:
-            BorderSide(color: Colors.red.shade300, width: 2),
-          ),
-          errorText: _submitted.value && value.value.isEmpty
-              ? errorText
-              : null,
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.red.shade300, width: 2)),
+          errorText:
+          _submitted.value && value.value.isEmpty ? errorText : null,
           contentPadding:
           const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),

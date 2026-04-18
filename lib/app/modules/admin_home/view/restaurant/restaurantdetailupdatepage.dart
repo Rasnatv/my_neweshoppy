@@ -133,6 +133,52 @@ class AdminRestaurantUpdatePage extends StatelessWidget {
               const SizedBox(height: 24),
               _buildAdditionalImagesSection(),
               const SizedBox(height: 32),
+              const SizedBox(height: 24),
+              _buildSectionTitle("Payment Information"),
+              const SizedBox(height: 12),
+
+              _buildTextField(
+                controller: controller.upiIdController,
+                label: "UPI ID",
+                icon: Icons.account_balance,
+              ),
+
+              const SizedBox(height: 16),
+
+              Obx(() {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionTitle("QR Code"),
+                    const SizedBox(height: 12),
+
+                    GestureDetector(
+                      onTap: controller.pickQrImage,
+                      child: Container(
+                        height: 160,
+                        width: 160,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: controller.qrImage.value != null
+                            ? Image.file(controller.qrImage.value!, fit: BoxFit.cover)
+                            : controller.qrImageUrl.value.isNotEmpty
+                            ? Image.network(
+                          _getImageUrl(controller.qrImageUrl.value),
+                          fit: BoxFit.cover,
+                        )
+                            : const Icon(Icons.qr_code, size: 50),
+                      ),
+                    ),
+
+                    TextButton(
+                      onPressed: controller.pickQrImage,
+                      child: const Text("Change QR Code"),
+                    ),
+                  ],
+                );
+              }),
               SizedBox(
                 width: double.infinity,
                 height: 54,
@@ -226,10 +272,6 @@ class AdminRestaurantUpdatePage extends StatelessWidget {
       ],
     );
   }
-
-  /// =========================================================
-  /// Additional Images Section
-  /// =========================================================
   Widget _buildAdditionalImagesSection() {
     return Obx(() {
       return Column(

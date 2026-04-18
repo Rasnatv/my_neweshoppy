@@ -27,13 +27,15 @@ class AreaAdminhomepage extends StatelessWidget {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         elevation: 0,
+        iconTheme: IconThemeData(color: Colors.white),
         backgroundColor: AppColors.welcomecardclr,
         title: const Text(
           "Area Admin",
           style: TextStyle(
             color: Colors.white,
             fontSize: 17,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.1,
           ),
         ),
         actions: [

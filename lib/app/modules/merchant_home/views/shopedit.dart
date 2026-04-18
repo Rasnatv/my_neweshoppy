@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_colors.dart';
+import '../../../widgets/networkconnection_checkpage.dart';
 import '../../merchantlogin/view/merchantmap.dart';
 import '../controller/merchantsetting_controller.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -15,14 +16,15 @@ class MerchantSettingPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
-      child: Scaffold(
+      child:NetworkAwareWrapper(
+        child:  Scaffold(
         backgroundColor: AppColors.bg,
         appBar: _appBar(),
         body: Obx(() => controller.isLoading.value
             ? _loadingView()
             : _body()),
       ),
-    );
+    ));
   }
 
   // ── AppBar ────────────────────────────────────────────────────────────────
@@ -131,13 +133,8 @@ class MerchantSettingPage extends StatelessWidget {
               const SizedBox(height: 36),
               _saveButton(),
               const SizedBox(height: 10),
-              const Center(
-                child: Text(
-                  "Only you can see your account details",
-                  style: TextStyle(
-                      fontSize: 11, color: AppColors.textMuted),
-                ),
-              ),
+
+
             ],
           ),
         ),

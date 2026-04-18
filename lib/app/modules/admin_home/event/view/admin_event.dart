@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../common/style/app_colors.dart';
 import '../../../../common/style/app_text_style.dart';
+import '../../../../widgets/delete_widget.dart';
 import '../../controller/admin_eventgetcontroller.dart';
 import 'admin_addevent.dart';
 import 'admin_updateevent.dart';
@@ -27,8 +28,14 @@ class AdminEventPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xfff2f6fa),
       appBar: AppBar(
+        iconTheme: IconThemeData(color: Colors.white),
         backgroundColor: AppColors.kPrimary,
-        title: Text("All Events", style: AppTextStyle.rTextNunitoWhite17w700),
+        title: Text("All Events", style: TextStyle(
+          color: Colors.white,
+          fontSize: 17,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.1,
+        )),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12),
@@ -474,27 +481,15 @@ class AdminEventPage extends StatelessWidget {
   }
 
   void _confirmDelete(Map event) {
-    Get.defaultDialog(
+    DeleteConfirmDialog.show(
+      context: Get.context!,
       title: "Delete Event",
-      titleStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-      middleText:
-      "Are you sure you want to delete \"${event['event_name'] ?? 'this event'}\"?",
-      middleTextStyle:
-      const TextStyle(fontSize: 14, color: Colors.black54),
-      barrierDismissible: true,
-      radius: 12,
-      confirmTextColor: Colors.white,
-      cancelTextColor: Colors.black54,
-      buttonColor: Colors.red,
-      textConfirm: "Delete",
-      textCancel: "Cancel",
+      message: "Are you sure you want to delete \"${event['event_name'] ?? 'this event'}\"?",
       onConfirm: () {
-        Get.back();
-        controller.deleteEvent(int.parse(event['id'].toString())); // ✅ correct
+        controller.deleteEvent(int.parse(event['id'].toString()));
       },
     );
   }
-
   Widget _imageFallback() {
     return Container(
       height: 160,

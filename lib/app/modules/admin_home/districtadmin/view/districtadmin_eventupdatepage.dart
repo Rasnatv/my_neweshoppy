@@ -1,14 +1,15 @@
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../common/style/app_colors.dart';
 import '../controller/districtadmin_eventupdatecontroller.dart';
-
 
 class DistrictAdminUpdateEventPage extends StatelessWidget {
   final String eventId;
   const DistrictAdminUpdateEventPage({super.key, required this.eventId});
 
-  static const _indigo   = Color(0xFF4F46E5);
+  static const _indigo   = Color(0xFF084E43);
   static const _slate900 = Color(0xFF0F172A);
   static const _slate500 = Color(0xFF64748B);
   static const _slate200 = Color(0xFFE2E8F0);
@@ -25,21 +26,18 @@ class DistrictAdminUpdateEventPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        backgroundColor : Colors.white,
+        backgroundColor : AppColors.welcomecardclr,
         elevation       : 0,
         surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon     : const Icon(Icons.arrow_back_ios_new_rounded,
-              size: 18, color: _slate900),
-          onPressed: () => Get.back(),
-        ),
+       automaticallyImplyLeading: true,
+        iconTheme: IconThemeData(color: Colors.white),
         title: const Text('Update Event',
-            style: TextStyle(
-                fontSize  : 17,
-                fontWeight: FontWeight.w700,
-                color     : _slate900)),
-        centerTitle: true,
-      ),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.1,
+          ),)),
 
       body: Obx(() {
         if (controller.isEventLoading.value) {
@@ -61,7 +59,7 @@ class DistrictAdminUpdateEventPage extends StatelessWidget {
                 final hasNew      = controller.pickedImage.value != null;
                 final hasExisting = controller.existingBannerUrl.value != null;
                 return GestureDetector(
-                  onTap: controller.pickImage,
+                  onTap: controller.pickBannerImage,
                   child: Container(
                     height: 160,
                     width : double.infinity,
@@ -132,13 +130,39 @@ class DistrictAdminUpdateEventPage extends StatelessWidget {
                   hint      : 'Enter event name'),
               const SizedBox(height: 16),
 
-              // ── District (LOCKED) ─────────────────
+              // ── State Dropdown ────────────────────
+              _label('State'),
+              const SizedBox(height: 8),
+              Obx(() {
+                if (controller.isStatesLoading.value) {
+                  return _loadingField('Loading states...');
+                }
+                return _dropdownField(
+                  hint    : 'Select state',
+                  value   : controller.selectedState.value,
+                  items   : controller.states,
+                  onChanged: (val) {
+                    controller.selectedState.value    = val;
+                    controller.selectedDistrict.value = null; // reset district
+                  },
+                );
+              }),
+              const SizedBox(height: 16),
+
+              // ── District Dropdown ─────────────────
               _label('District'),
               const SizedBox(height: 8),
-              Obx(() => _lockedField(
-                icon : Icons.lock_outline_rounded,
-                value: controller.lockedDistrict.value ?? '—',
-              )),
+              Obx(() {
+                if (controller.isDistrictsLoading.value) {
+                  return _loadingField('Loading districts...');
+                }
+                return _dropdownField(
+                  hint    : 'Select district',
+                  value   : controller.selectedDistrict.value,
+                  items   : controller.districts,
+                  onChanged: (val) => controller.selectedDistrict.value = val,
+                );
+              }),
               const SizedBox(height: 16),
 
               // ── Event Location ────────────────────
@@ -301,48 +325,63 @@ class DistrictAdminUpdateEventPage extends StatelessWidget {
         ),
       );
 
-  /// Non-interactive locked field — shown for district
-  Widget _lockedField({
-    required IconData icon,
-    required String value,
-  }) =>
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        decoration: BoxDecoration(
-          // slightly grey background to signal "not editable"
-          color       : _slate100,
-          borderRadius: BorderRadius.circular(12),
-          border      : Border.all(color: _slate200, width: 1.5),
-        ),
-        child: Row(children: [
-          Icon(icon, size: 15, color: _slate500),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(
-                  fontSize  : 13,
-                  color     : _slate500,          // greyed-out text
-                  fontWeight: FontWeight.w500),
-            ),
-          ),
-          // small badge to make it obvious it's locked
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color       : _slate200,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Text('Locked',
-                style: TextStyle(
-                    fontSize  : 10,
-                    fontWeight: FontWeight.w600,
-                    color     : _slate500)),
-          ),
-        ]),
-      );
+  /// Editable dropdown field for state / district
+  Widget _dropdownField({
+    required String hint,
+    required String? value,
+    required List<String> items,
+    required void Function(String?) onChanged,
+  }) {
+    // If pre-filled value from API isn't in the list yet, still show it
+    final effectiveValue = (value != null && value.isNotEmpty) ? value : null;
 
-  /// Tappable field for date / time pickers
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color       : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border      : Border.all(color: _slate200, width: 1.5),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          isExpanded  : true,
+          value       : (effectiveValue != null && items.contains(effectiveValue))
+              ? effectiveValue
+              : null,
+          hint        : Text(hint,
+              style: const TextStyle(color: _slate500, fontSize: 14)),
+          icon        : const Icon(Icons.keyboard_arrow_down_rounded,
+              color: _slate500),
+          style       : const TextStyle(fontSize: 14, color: _slate900),
+          items: items
+              .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+              .toList(),
+          onChanged   : onChanged,
+        ),
+      ),
+    );
+  }
+
+  /// Shown while states/districts are loading
+  Widget _loadingField(String label) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+    decoration: BoxDecoration(
+      color       : _slate100,
+      borderRadius: BorderRadius.circular(12),
+      border      : Border.all(color: _slate200, width: 1.5),
+    ),
+    child: Row(children: [
+      const SizedBox(
+        width : 14,
+        height: 14,
+        child : CircularProgressIndicator(strokeWidth: 2, color: _slate500),
+      ),
+      const SizedBox(width: 10),
+      Text(label,
+          style: const TextStyle(fontSize: 13, color: _slate500)),
+    ]),
+  );
+
   Widget _tappableField({
     required IconData icon,
     required String value,
@@ -374,5 +413,3 @@ class DistrictAdminUpdateEventPage extends StatelessWidget {
         ),
       );
 }
-
-

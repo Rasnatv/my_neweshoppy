@@ -14,9 +14,15 @@ class DistrictLocationListPage extends StatelessWidget {
       backgroundColor: const Color(0xffF4F6FA),
       appBar: AppBar(
         backgroundColor: AppColors.kPrimary,
+        iconTheme: IconThemeData(color: Colors.white),
         title: Text(
           "Location Management",
-          style: AppTextStyle.rTextNunitoWhite17w700,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.1,
+            ),
         ),
         actions: [
           IconButton(

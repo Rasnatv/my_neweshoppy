@@ -2,24 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_colors.dart';
 import '../../../data/models/merchant_orderrecievedmodel.dart';
+import '../../../widgets/networkconnection_checkpage.dart';
 import '../controller/merchant_orderscontroller.dart';
-
 
 class MerchantOrdersView extends StatelessWidget {
   const MerchantOrdersView({super.key});
 
-  static Color get primary => AppColors.kPrimary;
 
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(MerchantOrdersController());
 
-    return Scaffold(
+    return NetworkAwareWrapper(
+        child:Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
-        backgroundColor: primary,
-        elevation: 0.5,
-        shadowColor: Colors.black12,
+        backgroundColor: AppColors.kPrimary,
+        automaticallyImplyLeading: true,
+        iconTheme: IconThemeData(color: Colors.white),
         title: const Text(
           'Received Orders',
           style: TextStyle(
@@ -42,24 +42,25 @@ class MerchantOrdersView extends StatelessWidget {
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
-          return Center(child: CircularProgressIndicator(color: primary));
+          return Center(child: CircularProgressIndicator(color: AppColors.kPrimary));
         }
-        if (controller.hasError.value) {
-          return _buildErrorState(controller);
+        if (controller.orders.isEmpty) {
+          return _buildEmptyStateWithRetry(controller);
         }
+
         if (controller.orders.isEmpty) {
           return _buildEmptyState();
         }
         return RefreshIndicator(
-          color: primary,
+          color: AppColors.kPrimary,
           onRefresh: controller.fetchMerchantOrders,
           child: CustomScrollView(
             slivers: [
-              // ── Summary Header ────────────────────────────────────────
+              // ── Summary Header ─────────────────────────────────────
               SliverToBoxAdapter(
                 child: _buildSummaryHeader(controller),
               ),
-              // ── Orders List ───────────────────────────────────────────
+              // ── Orders List ────────────────────────────────────────
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                 sliver: SliverList(
@@ -76,7 +77,7 @@ class MerchantOrdersView extends StatelessWidget {
           ),
         );
       }),
-    );
+    ));
   }
 
   // ── Summary Header ────────────────────────────────────────────────────────
@@ -86,14 +87,14 @@ class MerchantOrdersView extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [primary, primary.withOpacity(0.80)],
+          colors: [AppColors.kPrimary, AppColors.kPrimary.withOpacity(0.80)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: primary.withOpacity(0.3),
+            color: AppColors.kPrimary.withOpacity(0.3),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -187,11 +188,11 @@ class MerchantOrdersView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Card Header ──────────────────────────────────────────────
+          // ── Card Header ────────────────────────────────────────────
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              color: primary.withOpacity(0.05),
+              color: AppColors.kPrimary.withOpacity(0.05),
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(18),
               ),
@@ -202,12 +203,12 @@ class MerchantOrdersView extends StatelessWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: primary.withOpacity(0.12),
+                    color:AppColors.kPrimary.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     Icons.storefront_rounded,
-                    color: primary,
+                    color:AppColors.kPrimary,
                     size: 20,
                   ),
                 ),
@@ -247,45 +248,12 @@ class MerchantOrdersView extends StatelessWidget {
                   ),
                 ),
                 // New badge
-                Container(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEFF6FF),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: const Color(0xFFBFDBFE),
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Color(0xFF2563EB),
-                        ),
-                      ),
-                      const SizedBox(width: 5),
-                      const Text(
-                        'New',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF1D4ED8),
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+
               ],
             ),
           ),
 
-          // ── Products ─────────────────────────────────────────────────
+          // ── Products ──────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
             child: Column(
@@ -307,11 +275,13 @@ class MerchantOrdersView extends StatelessWidget {
             ),
           ),
 
-          // ── Footer ───────────────────────────────────────────────────
+          // ── Delivery Address ───────────────────────────────────────
+          _buildAddressSection(order.address),
+
+          // ── Footer ────────────────────────────────────────────────
           Container(
-            margin: const EdgeInsets.only(top: 14),
-            padding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            margin: const EdgeInsets.only(top: 0),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: const BoxDecoration(
               color: Color(0xFFF9FAFB),
               borderRadius: BorderRadius.vertical(
@@ -357,11 +327,69 @@ class MerchantOrdersView extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
-                        color: primary,
+                        color: AppColors.kPrimary,
                         letterSpacing: 0.2,
                       ),
                     ),
                   ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Address Section ───────────────────────────────────────────────────────
+  Widget _buildAddressSection(MerchantOrderAddress address) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(14, 12, 14, 0),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0FDF4),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFBBF7D0), width: 1),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      address.name,
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1879AE),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(Icons.phone_rounded,
+                        size: 11, color: Colors.grey.shade500),
+                    const SizedBox(width: 3),
+                    Text(
+                      address.phone,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  address.address,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    color: Colors.grey.shade600,
+                    height: 1.4,
+                  ),
                 ),
               ],
             ),
@@ -407,7 +435,7 @@ class MerchantOrdersView extends StatelessWidget {
               child: Center(
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: primary,
+                  color:AppColors.kPrimary,
                   value: progress.expectedTotalBytes != null
                       ? progress.cumulativeBytesLoaded /
                       progress.expectedTotalBytes!
@@ -446,7 +474,7 @@ class MerchantOrdersView extends StatelessWidget {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w700,
-            color: primary,
+            color: AppColors.kPrimary,
           ),
         ),
       ],
@@ -465,13 +493,13 @@ class MerchantOrdersView extends StatelessWidget {
               width: 100,
               height: 100,
               decoration: BoxDecoration(
-                color: primary.withOpacity(0.08),
+                color:AppColors.kPrimary.withOpacity(0.08),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.inbox_rounded,
                 size: 46,
-                color: primary.withOpacity(0.5),
+                color: AppColors.kPrimary.withOpacity(0.5),
               ),
             ),
             const SizedBox(height: 24),
@@ -498,22 +526,44 @@ class MerchantOrdersView extends StatelessWidget {
       ),
     );
   }
-
-  // ── Error State ───────────────────────────────────────────────────────────
-  Widget _buildErrorState(MerchantOrdersController controller) {
+  Widget _buildEmptyStateWithRetry(MerchantOrdersController controller) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(40),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline_rounded,
-                size: 60, color: Colors.red.shade300),
-            const SizedBox(height: 16),
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                color: AppColors.kPrimary.withOpacity(0.08),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.inbox_rounded,
+                size: 46,
+                color: AppColors.kPrimary.withOpacity(0.5),
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'No Orders Yet',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF2D3748),
+              ),
+            ),
+            const SizedBox(height: 10),
             Text(
-              controller.errorMessage.value,
+              'Pull down to refresh or try again.',
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 14, color: Color(0xFF555555)),
+              style: TextStyle(
+                fontSize: 13.5,
+                color: Colors.grey.shade500,
+                height: 1.6,
+              ),
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
@@ -521,7 +571,7 @@ class MerchantOrdersView extends StatelessWidget {
               icon: const Icon(Icons.refresh_rounded),
               label: const Text('Retry'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: primary,
+                backgroundColor: AppColors.kPrimary,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 28,
@@ -537,4 +587,5 @@ class MerchantOrdersView extends StatelessWidget {
       ),
     );
   }
+
 }

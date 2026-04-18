@@ -23,13 +23,16 @@ class AdminMerchantDetailPageUI extends StatelessWidget {
         elevation: 0,
         title: Text(
           "Merchant Details",
-          style: AppTextStyle.rTextNunitoWhite17w700,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.1,
+            )
         ),
         backgroundColor: AppColors.kPrimary,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-          onPressed: () => Get.back(),
-        ),
+       automaticallyImplyLeading: true,
+        iconTheme: IconThemeData(color: Colors.white),
       ),
       body: Obx(() {
         if (controller.isLoading.value) {

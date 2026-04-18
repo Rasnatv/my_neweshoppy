@@ -1,59 +1,86 @@
-
 import 'dart:io';
+import 'dart:convert';
+
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:get_storage/get_storage.dart';
-import 'dart:convert';
-
+import '../../../data/errors/api_error.dart';
+import '../../merchantlogin/widget/successwidget.dart';
 import '../banners/views/adminadvertisment.dart';
 
 class AdminAdvertisementController extends GetxController {
-  // ── Add form fields ──
+
+  // ── STORAGE ──
+  final box = GetStorage();
+  String get authToken => box.read('auth_token') ?? '';
+
+  Map<String, String> get _headers => {
+    'Authorization': 'Bearer $authToken',
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+  };
+
+  static const _base =
+      'https://rasma.astradevelops.in/e_shoppyy/public/api';
+
+  final ImagePicker picker = ImagePicker();
+
+  // ── STATE ──
   final adName = TextEditingController();
   var bannerImage = Rx<File?>(null);
+
   var advertisements = <Map<String, dynamic>>[].obs;
   var isLoading = false.obs;
   var isTitleEmpty = false.obs;
 
-  // ── Filter ──
+  // ── FILTER ──
   var selectedFilter = 'all'.obs;
   var expandedId = ''.obs;
 
-  // ── Edit / Update state ──
+  // ── EDIT STATE ──
   var editAdId = ''.obs;
   var isEditLoading = false.obs;
   var isFetchingAd = false.obs;
 
-  // Edit form controllers
   final editAdName = TextEditingController();
   var editBannerImage = Rx<File?>(null);
 
-  // Locked / read-only fields loaded from GET single
-  var editMainLocation = ''.obs;
-  var editDistrict = ''.obs;
-  var editEventLocation = ''.obs;
   var editCreatedByType = ''.obs;
   var editCreatedById = ''.obs;
   var editCreatedAt = ''.obs;
   var editNetworkBannerUrl = ''.obs;
   var editIsTitleEmpty = false.obs;
 
-  final ImagePicker picker = ImagePicker();
-  final box = GetStorage();
+  // ── DROPDOWNS ──
+  final statesList = <String>[].obs;
+  final districtsList = <String>[].obs;
+  final areasList = <String>[].obs;
 
-  String get authToken => box.read('auth_token') ?? '';
+  final selectedEditState = RxnString();
+  final selectedEditDistrict = RxnString();
+  final selectedEditArea = RxnString();
 
+  final isLoadingStates = false.obs;
+  final isLoadingDistricts = false.obs;
+  final isLoadingAreas = false.obs;
+
+  bool get showMainLocationDropdown =>
+      editCreatedByType.value != 'district_admin';
+
+  // ───────────────── INIT ─────────────────
   @override
   void onInit() {
     super.onInit();
+
     fetchAdvertisements();
+    fetchStates();
+    fetchDistricts();
+    fetchAreas();
   }
 
-  // ─────────────────────────────────────────────
-  //  Filter helpers
-  // ─────────────────────────────────────────────
+  // ───────────────── FILTER ─────────────────
   List<Map<String, dynamic>> get filteredAdvertisements {
     if (selectedFilter.value == 'all') return advertisements;
     return advertisements
@@ -70,345 +97,222 @@ class AdminAdvertisementController extends GetxController {
     expandedId.value = (expandedId.value == id) ? '' : id;
   }
 
-  // ─────────────────────────────────────────────
-  //  Add advertisement
-  // ─────────────────────────────────────────────
+  // ───────────────── STATES ─────────────────
+  Future<void> fetchStates() async {
+    isLoadingStates.value = true;
+
+    try {
+      final res =
+      await http.get(Uri.parse('$_base/get-states'), headers: _headers);
+
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body);
+        if (body['status'] == true) {
+          statesList.assignAll(List<String>.from(body['data']));
+        }
+      } else {
+        AppSnackbar.error(ApiErrorHandler.handleResponse(res));
+      }
+    } catch (e) {
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
+    }
+
+    isLoadingStates.value = false;
+  }
+
+  Future<void> fetchDistricts() async {
+    isLoadingDistricts.value = true;
+
+    try {
+      final res =
+      await http.get(Uri.parse('$_base/districts'), headers: _headers);
+
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body);
+        if (body['status'] == true) {
+          districtsList.assignAll(List<String>.from(body['data']));
+        }
+      } else {
+        AppSnackbar.error(ApiErrorHandler.handleResponse(res));
+      }
+    } catch (e) {
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
+    }
+
+    isLoadingDistricts.value = false;
+  }
+
+  Future<void> fetchAreas() async {
+    isLoadingAreas.value = true;
+
+    try {
+      final res =
+      await http.get(Uri.parse('$_base/areas'), headers: _headers);
+
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body);
+        if (body['status'] == true) {
+          areasList.assignAll(List<String>.from(body['data']));
+        }
+      } else {
+        AppSnackbar.error(ApiErrorHandler.handleResponse(res));
+      }
+    } catch (e) {
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
+    }
+
+    isLoadingAreas.value = false;
+  }
+
+  // ───────────────── IMAGE ─────────────────
   Future<void> pickBannerImage() async {
     try {
       final img = await picker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: 1200,
-        maxHeight: 800,
         imageQuality: 85,
       );
-      if (img != null) bannerImage.value = File(img.path);
+
+      if (img != null) {
+        bannerImage.value = File(img.path);
+      }
     } catch (e) {
-      Get.snackbar("Error", "Failed to pick image");
+      AppSnackbar.error("Failed to pick image");
     }
   }
 
   void removeBannerImage() => bannerImage.value = null;
 
-  Future<String> imageToBase64WithDataUri(File imageFile) async {
-    List<int> imageBytes = await imageFile.readAsBytes();
-    String base64Image = base64Encode(imageBytes);
-    String ext = imageFile.path.split('.').last.toLowerCase();
-    String mime = 'image/jpeg';
-    if (ext == 'png') mime = 'image/png';
-    if (ext == 'gif') mime = 'image/gif';
-    if (ext == 'webp') mime = 'image/webp';
-    return 'data:$mime;base64,$base64Image';
+  Future<String> imageToBase64(File file) async {
+    final bytes = await file.readAsBytes();
+    final ext = file.path.split('.').last.toLowerCase();
+
+    final mime = {
+      'png': 'image/png',
+      'gif': 'image/gif',
+      'webp': 'image/webp',
+    }[ext] ??
+        'image/jpeg';
+
+    return 'data:$mime;base64,${base64Encode(bytes)}';
   }
 
+  // ───────────────── ADD ─────────────────
   Future<void> addAdvertisement() async {
     if (adName.text.trim().isEmpty) {
       isTitleEmpty.value = true;
-      Get.snackbar("Error", "Please enter advertisement title");
-      return;
-    } else {
-      isTitleEmpty.value = false;
+      return AppSnackbar.warning("Enter advertisement title");
     }
+
     if (bannerImage.value == null) {
-      Get.snackbar("Error", "Please select banner image");
-      return;
-    }
-    if (authToken.isEmpty) {
-      Get.snackbar("Auth Error", "Please login again");
-      return;
+      return AppSnackbar.warning("Select banner image");
     }
 
     try {
       isLoading.value = true;
-      String base64Image = await imageToBase64WithDataUri(bannerImage.value!);
 
-      final response = await http.post(
-        Uri.parse(
-            'https://rasma.astradevelops.in/e_shoppyy/public/api/advertisement'),
-        headers: {
-          'Authorization': 'Bearer $authToken',
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
+      final base64Image = await imageToBase64(bannerImage.value!);
+
+      final res = await http.post(
+        Uri.parse('$_base/advertisement'),
+        headers: _headers,
+        body: jsonEncode({
           'advertisement': adName.text.trim(),
           'banner_image': base64Image,
         }),
       );
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final jsonResponse = json.decode(response.body);
-        if (jsonResponse['status'] == "1" ||
-            jsonResponse['status'] == true) {
+      final body = jsonDecode(res.body);
+
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        if (body['status'] == "1" || body['status'] == true) {
           adName.clear();
           bannerImage.value = null;
-          fetchAdvertisements();
-          Get.snackbar("Success", jsonResponse['message'] ?? "Ad added");
-          Get.offAll(() => AdminAdvertisementPage());
+
+          await fetchAdvertisements();
+
+          AppSnackbar.success(body['message'] ?? "Advertisement added");
+
+          Get.back(result: true);
         } else {
-          Get.snackbar(
-              "Failed", jsonResponse['message'] ?? "Error adding ad");
+          AppSnackbar.error(body['message'] ?? "Failed");
         }
-      } else if (response.statusCode == 401) {
-        Get.snackbar("Auth Error", "Session expired, please login again");
       } else {
-        Get.snackbar("Error", "Server error ${response.statusCode}");
+        AppSnackbar.error(ApiErrorHandler.handleResponse(res));
       }
     } catch (e) {
-      Get.snackbar("Error", "Something went wrong");
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoading.value = false;
     }
   }
 
-  // ─────────────────────────────────────────────
-  //  Fetch all advertisements
-  // ─────────────────────────────────────────────
+  // ───────────────── FETCH LIST ─────────────────
   Future<void> fetchAdvertisements() async {
     try {
       isLoading.value = true;
-      final response = await http.get(
-        Uri.parse(
-            'https://rasma.astradevelops.in/e_shoppyy/public/api/admin/advertisements'),
-        headers: {
-          'Authorization': 'Bearer $authToken',
-          'Accept': 'application/json',
-        },
+
+      final res = await http.get(
+        Uri.parse('$_base/admin/advertisements'),
+        headers: _headers,
       );
 
-      if (response.statusCode == 200) {
-        final jsonResponse = json.decode(response.body);
-        final status = jsonResponse['status'];
-        final isSuccess = status == true || status == "1" || status == 1;
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body);
+
+        final isSuccess =
+            body['status'] == true || body['status'] == "1";
 
         if (isSuccess) {
           advertisements.value = List<Map<String, dynamic>>.from(
-            jsonResponse['data'].map((ad) => {
+            body['data'].map((ad) => {
               "id": ad['id'].toString(),
               "name": ad['advertisement'] ?? '',
               "banner": ad['banner_image'] ?? '',
-              "main_location": ad['main_location'] ?? '',
+              "state": ad['state'] ?? '',
               "district": ad['district'] ?? '',
-              "event_location": ad['event_location'] ?? '',
+              "main_location": ad['main_location'] ?? '',
               "created_by_type": ad['created_by_type'] ?? '',
-              "created_by_id": ad['created_by_id']?.toString() ?? '',
-              "created_at": ad['created_at'] ?? '',
             }),
           );
         }
-      } else if (response.statusCode == 401) {
-        Get.snackbar("Auth Error", "Session expired, please login again");
+      } else {
+        AppSnackbar.error(ApiErrorHandler.handleResponse(res));
       }
     } catch (e) {
-      Get.snackbar("Error", "Failed to fetch advertisements");
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoading.value = false;
     }
   }
 
-  // ─────────────────────────────────────────────
-  //  GET single advertisement
-  //  POST /api/get-Single-Advertisement-Admin
-  //  body: { "advertisement_id": 65 }
-  // ─────────────────────────────────────────────
-  Future<void> fetchSingleAdvertisement(String adId) async {
-    try {
-      isFetchingAd.value = true;
-      _clearEditState();
-      editAdId.value = adId;
-
-      final response = await http.post(
-        Uri.parse(
-            'https://rasma.astradevelops.in/e_shoppyy/public/api/get-Single-Advertisement-Admin'),
-        headers: {
-          'Authorization': 'Bearer $authToken',
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({'advertisement_id': int.tryParse(adId) ?? adId}),
-      );
-
-      if (response.statusCode == 200) {
-        final jsonResponse = json.decode(response.body);
-        final isSuccess = jsonResponse['status'] == true ||
-            jsonResponse['status'] == "1" ||
-            jsonResponse['status'] == 1;
-
-        if (isSuccess) {
-          final data = jsonResponse['data'];
-          editAdName.text = data['advertisement'] ?? '';
-          editMainLocation.value = data['main_location'] ?? '';
-          editDistrict.value = data['district'] ?? '';
-          editEventLocation.value = data['event_location'] ?? '';
-          editCreatedByType.value = data['created_by_type'] ?? '';
-          editCreatedById.value = data['created_by_id']?.toString() ?? '';
-          editCreatedAt.value = data['created_at'] ?? '';
-          editNetworkBannerUrl.value = data['banner_image'] ?? '';
-          editBannerImage.value = null;
-        } else {
-          Get.snackbar(
-              "Error", jsonResponse['message'] ?? "Failed to load ad");
-        }
-      } else if (response.statusCode == 401) {
-        Get.snackbar("Auth Error", "Session expired");
-      } else {
-        Get.snackbar("Error", "Server error ${response.statusCode}");
-      }
-    } catch (e) {
-      Get.snackbar("Error", "Failed to fetch advertisement details");
-    } finally {
-      isFetchingAd.value = false;
-    }
-  }
-
-  // ─────────────────────────────────────────────
-  //  UPDATE advertisement
-  //  POST /api/update-Advertisement-Admin
-  //  body: { advertisement_id, advertisement, district,
-  //          main_location, banner_image (optional) }
-  // ─────────────────────────────────────────────
-  Future<void> updateAdvertisement() async {
-    if (editAdName.text.trim().isEmpty) {
-      editIsTitleEmpty.value = true;
-      Get.snackbar("Error", "Please enter advertisement title");
-      return;
-    } else {
-      editIsTitleEmpty.value = false;
-    }
-
-    if (authToken.isEmpty) {
-      Get.snackbar("Auth Error", "Please login again");
-      return;
-    }
-
-    try {
-      isEditLoading.value = true;
-
-      Map<String, dynamic> body = {
-        'advertisement_id':
-        int.tryParse(editAdId.value) ?? editAdId.value,
-        'advertisement': editAdName.text.trim(),
-        // send back the locked fields as-is
-        'district': editDistrict.value,
-        'main_location': editMainLocation.value,
-        'event_location': editEventLocation.value,
-      };
-
-      // Only include banner_image if user picked a new local file
-      if (editBannerImage.value != null) {
-        body['banner_image'] =
-        await imageToBase64WithDataUri(editBannerImage.value!);
-      }
-
-      final response = await http.put(
-        Uri.parse(
-            'https://rasma.astradevelops.in/e_shoppyy/public/api/update-Advertisement-Admin'),
-        headers: {
-          'Authorization': 'Bearer $authToken',
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode(body),
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final jsonResponse = json.decode(response.body);
-        final isSuccess = jsonResponse['status'] == true ||
-            jsonResponse['status'] == "1" ||
-            jsonResponse['status'] == 1;
-
-        if (isSuccess) {
-          _clearEditState();
-          fetchAdvertisements();
-          Get.snackbar(
-              "Success", jsonResponse['message'] ?? "Ad updated successfully");
-          // Pop edit page and go back to list
-          Get.toNamed('/adminadvertismentupdation');
-        } else {
-          Get.snackbar(
-              "Failed", jsonResponse['message'] ?? "Error updating ad");
-        }
-      } else if (response.statusCode == 401) {
-        Get.snackbar("Auth Error", "Session expired, please login again");
-      } else {
-        Get.snackbar("Error", "Server error ${response.statusCode}");
-      }
-    } catch (e) {
-      Get.snackbar("Error", "Something went wrong");
-    } finally {
-      isEditLoading.value = false;
-    }
-  }
-
-  // ─────────────────────────────────────────────
-  //  Edit image picker (separate from add)
-  // ─────────────────────────────────────────────
-  Future<void> pickEditBannerImage() async {
-    try {
-      final img = await picker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 1200,
-        maxHeight: 800,
-        imageQuality: 85,
-      );
-      if (img != null) editBannerImage.value = File(img.path);
-    } catch (e) {
-      Get.snackbar("Error", "Failed to pick image");
-    }
-  }
-
-  void removeEditBannerImage() => editBannerImage.value = null;
-
-  void _clearEditState() {
-    editAdName.clear();
-    editBannerImage.value = null;
-    editMainLocation.value = '';
-    editDistrict.value = '';
-    editEventLocation.value = '';
-    editCreatedByType.value = '';
-    editCreatedById.value = '';
-    editCreatedAt.value = '';
-    editNetworkBannerUrl.value = '';
-    editIsTitleEmpty.value = false;
-  }
-
-  // ─────────────────────────────────────────────
-  //  Delete advertisement
-  // ─────────────────────────────────────────────
+  // ───────────────── DELETE ─────────────────
   Future<void> deleteAdvertisement(int index) async {
-    if (index >= 0 && index < advertisements.length) {
-      final ad = advertisements[index];
-      final adId = ad['id'];
+    if (index >= advertisements.length) return;
 
+    final adId = advertisements[index]['id'];
 
-      try {
-        final response = await http.delete(
-          Uri.parse(
-            'https://rasma.astradevelops.in/e_shoppyy/public/api/delete-advertisement-admin',
-          ),
-          headers: {
-            'Authorization': 'Bearer $authToken',
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-          body: jsonEncode({
-            "advertisement_id": adId, // ✅ required field
-          }),
-        );
+    try {
+      final res = await http.delete(
+        Uri.parse('$_base/delete-advertisement-admin'),
+        headers: _headers,
+        body: jsonEncode({"advertisement_id": adId}),
+      );
 
-        final data = jsonDecode(response.body);
+      final body = jsonDecode(res.body);
 
-        if (response.statusCode == 200 && data['status'] == true) {
-          advertisements.removeAt(index);
-          Get.snackbar("Success", data['message']);
-        } else {
-          Get.snackbar("Error", data['message'] ?? "Delete failed");
-        }
-      } catch (e) {
-        Get.snackbar("Error", "Something went wrong");
+      if (res.statusCode == 200 && body['status'] == true) {
+        advertisements.removeAt(index);
+        AppSnackbar.success(body['message'] ?? "Deleted");
+      } else {
+        AppSnackbar.error(
+            body['message'] ?? ApiErrorHandler.handleResponse(res));
       }
+    } catch (e) {
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     }
   }
 
+  // ───────────────── CLEANUP ─────────────────
   @override
   void onClose() {
     adName.dispose();

@@ -3,6 +3,8 @@ import 'package:eshoppy/app/modules/userhome/controller/userwithshopaboutmodel.d
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:get_storage/get_storage.dart';
+import '../../../data/errors/api_error.dart';
+import '../../merchantlogin/widget/successwidget.dart';
 
 class MerchantAboutController extends GetxController {
   final isLoading = false.obs;
@@ -14,7 +16,7 @@ class MerchantAboutController extends GetxController {
     try {
       isLoading.value = true;
 
-      final token = box.read('auth_token'); // 🔐 your saved auth token
+      final token = box.read('auth_token');
 
       final response = await http.post(
         Uri.parse(
@@ -31,14 +33,25 @@ class MerchantAboutController extends GetxController {
 
       final jsonData = json.decode(response.body);
 
-      if (jsonData['status'] == "1") {
-        about.value =
-            MerchantAboutModel.fromJson(jsonData['data']);
+      if (response.statusCode == 200) {
+        if (jsonData['status'] == "1") {
+          about.value =
+              MerchantAboutModel.fromJson(jsonData['data']);
+        } else {
+          // ✅ LOGICAL ERROR (status != 1)
+          final message =
+              jsonData['message'] ?? "Something went wrong";
+          AppSnackbar.error(message);
+        }
       } else {
-        Get.snackbar("Error", jsonData['message'] ?? "Something went wrong");
+        // ✅ API ERROR HANDLER
+        final errorMessage = ApiErrorHandler.handleResponse(response);
+        AppSnackbar.error(errorMessage);
       }
     } catch (e) {
-      Get.snackbar("Error", "Failed to load merchant details");
+      // ✅ EXCEPTION HANDLER
+      final errorMessage = ApiErrorHandler.handleException(e);
+      AppSnackbar.error(errorMessage);
     } finally {
       isLoading.value = false;
     }

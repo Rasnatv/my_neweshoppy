@@ -1,7 +1,11 @@
+
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
+
+import '../../../data/errors/api_error.dart';
+import '../../../widgets/areaadminsuccesswidget.dart';
 
 class AreaAdminDashboardController extends GetxController {
   final box = GetStorage();
@@ -24,8 +28,15 @@ class AreaAdminDashboardController extends GetxController {
     try {
       isLoading(true);
 
+      /// ✅ 1. Token check
       String? token = box.read('auth_token');
 
+      // if (token == null || token.toString().isEmpty) {
+      //   ApiErrorHandler.handleUnauthorized();
+      //   return;
+      // }
+
+      /// ✅ 2. API Call
       final response = await http.get(
         Uri.parse(url),
         headers: {
@@ -34,21 +45,27 @@ class AreaAdminDashboardController extends GetxController {
         },
       );
 
-      print("STATUS CODE: ${response.statusCode}");
-      print("RESPONSE: ${response.body}");
 
+      /// ✅ 3. Success
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
         totalEvents.value = data['data']['total_events'] ?? 0;
         totalAdvertisements.value =
             data['data']['total_advertisements'] ?? 0;
+
       } else {
-        Get.snackbar("Error", "Failed to load dashboard data");
+        /// ❌ 4. Handle API Errors centrally
+        final errorMessage = ApiErrorHandler.handleResponse(response);
+        AppSnackbarss.error(errorMessage);
       }
+
     } catch (e) {
-      print("ERROR: $e");
-      Get.snackbar("Error", "Something went wrong");
+
+      /// ❌ 6. Other Exceptions
+      final errorMessage = ApiErrorHandler.handleException(e);
+      AppSnackbarss.error(errorMessage);
+
     } finally {
       isLoading(false);
     }

@@ -5,28 +5,25 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 
-import '../../admin_home/view/admin_home.dart';
 import '../../landingview/view/landing_screen.dart';
 import '../../merchant_home/views/merchant_home.dart';
+import '../../merchantlogin/widget/successwidget.dart';
+import '../../product/controller/cartcontroller.dart';
+import '../../profile/controller/editprofile_controller.dart';
 
 class UserloginController extends GetxController {
-  // // Text Controllers
   final TextEditingController username = TextEditingController();
   final TextEditingController password = TextEditingController();
 
-  // Reactive states
   final RxBool isLoading = false.obs;
   final RxBool isPasswordVisible = false.obs;
-  final RxInt selectedRole = 1.obs; // Default to User (1)
+  final RxInt selectedRole = 1.obs;
 
-  // Storage
   final GetStorage box = GetStorage();
 
-  // API URL
   final String loginUrl =
       "https://rasma.astradevelops.in/e_shoppyy/public/api/login";
 
-  // Role definitions
   final Map<int, RoleInfo> roles = {
     1: RoleInfo(
       id: 1,
@@ -42,13 +39,12 @@ class UserloginController extends GetxController {
       description: 'Manage your store',
       color: const Color(0xFFFF9800),
     ),
-
   };
 
   @override
   void onClose() {
-    username.dispose();
-    password.dispose();
+    // username.dispose();
+    // password.dispose();
     super.onClose();
   }
 
@@ -59,18 +55,18 @@ class UserloginController extends GetxController {
   void setRole(int role) {
     selectedRole.value = role;
   }
+
   Future<void> submit() async {
     final email = username.text.trim();
     final pass = password.text.trim();
 
-    // Validation
     if (email.isEmpty || pass.isEmpty) {
-      _showError("Email and password are required");
+      AppSnackbar.warning("Email and password are required");
       return;
     }
 
     if (!GetUtils.isEmail(email)) {
-      _showError("Enter a valid email address");
+      AppSnackbar.warning("Enter a valid email address");
       return;
     }
 
@@ -88,59 +84,84 @@ class UserloginController extends GetxController {
           "password": pass,
           "role": selectedRole.value,
         }),
-      ).timeout(const Duration(seconds: 30));
+      ).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () =>
+        throw Exception("Connection timed out. Please try again."),
+      );
 
       final body = jsonDecode(response.body);
       final status = body['status'];
 
       if (status != 1 && status != "1" && status != true) {
-        _showError(body['message'] ?? "Login failed");
+        AppSnackbar.error(body['message'] ?? "Login failed");
         return;
       }
 
       final data = body['data'];
       if (data == null) {
-        _showError("Invalid server response");
+        AppSnackbar.error("Invalid server response");
         return;
       }
 
-      // Verify role matches
-      final serverRole = data['role'];
+      final int serverRole = int.tryParse(data['role'].toString()) ?? 0;
+
       if (serverRole != selectedRole.value) {
-        _showError("Invalid credentials for selected role");
+        AppSnackbar.error("Invalid credentials for selected role");
         return;
       }
 
-      // Save auth data
-      await _saveAuthData(data);
+      // ✅ Save session data first — token must be written before any controller reads it
+      final bool saved = await _saveAuthData(data);
+      if (!saved) return;
 
-      // Navigate automatically based on role
-      _navigateToHome(data['role']);
+      // ✅ Register auth-dependent controllers AFTER token is confirmed saved
+      // _registerAuthControllers();
 
-      // _showSuccess(body['message'] ?? "Login successful");
-
+      AppSnackbar.success(body['message'] ?? "Login successful");
+      _navigateToHome(serverRole);
     } catch (e) {
       debugPrint("Login error: $e");
-      _showError("Something went wrong. Please try again.");
+      AppSnackbar.error(e.toString().contains("timed out")
+          ? "Connection timed out. Please try again."
+          : "Something went wrong. Please try again.");
     } finally {
       isLoading.value = false;
     }
   }
 
-
-  Future<void> _saveAuthData(Map<String, dynamic> data) async {
+  Future<bool> _saveAuthData(Map<String, dynamic> data) async {
     final token =
-        data['auth_token'] ??
-            data['token'] ??
-            data['access_token'];
+        data['auth_token'] ?? data['token'] ?? data['access_token'];
 
-    await box.write("auth_token", token);
-    await box.write("role", data['role']);
+    if (token == null || token.toString().trim().isEmpty) {
+      AppSnackbar.error("Authentication token missing");
+      return false;
+    }
+
+    final String cleanToken = token.toString().trim();
+
+    await box.write("auth_token", cleanToken);
+    await box.write("role", int.tryParse(data['role'].toString()) ?? 0);
     await box.write("user_data", data);
     await box.write("is_logged_in", true);
+
+    // ✅ Shield flag — prevents handleUnauthorized() from
+    // redirecting to login right after a fresh login
+    await box.write("just_logged_in", true);
+
+    final String? saved = box.read<String?>('auth_token');
+    debugPrint("✅ Token saved: $saved");
+
+    if (saved == null || saved.isEmpty) {
+      AppSnackbar.error("Failed to save session. Please try again.");
+      return false;
+    }
+
+    return true;
   }
 
-  /// Navigate to the correct home screen based on role
+
   void _navigateToHome(int role) {
     switch (role) {
       case 1:
@@ -157,25 +178,9 @@ class UserloginController extends GetxController {
           duration: const Duration(milliseconds: 400),
         );
         break;
-
       default:
-        _showError("Invalid user role");
+        AppSnackbar.error("Invalid user role");
     }
-  }
-
-  /// Show error snackbar
-  void _showError(String message) {
-    Get.snackbar(
-      "Login Failed",
-      message,
-      backgroundColor: Colors.red.shade600,
-      colorText: Colors.white,
-      icon: const Icon(Icons.error_outline, color: Colors.white),
-      snackPosition: SnackPosition.TOP,
-      borderRadius: 12,
-      margin: const EdgeInsets.all(16),
-      duration: const Duration(seconds: 4),
-    );
   }
 
   void clearFields() {
@@ -186,7 +191,6 @@ class UserloginController extends GetxController {
   }
 }
 
-/// Role information model
 class RoleInfo {
   final int id;
   final String name;
@@ -202,4 +206,3 @@ class RoleInfo {
     required this.color,
   });
 }
-

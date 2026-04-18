@@ -4,8 +4,8 @@ import 'package:get/get.dart';
 import '../../../common/style/app_colors.dart';
 import '../../../common/style/app_text_style.dart';
 import '../../../data/models/merchant_offerproductviewmodel.dart';
+import '../../../widgets/delete_widget.dart';
 import '../controller/merchant_offerproduct_view_controller.dart';
-import 'merchant_offerproduct_detailsscreen.dart';
 import 'merchant_offerproductupdatepage.dart';
 
 class OfferProductScreen extends StatelessWidget {
@@ -27,16 +27,34 @@ class OfferProductScreen extends StatelessWidget {
       appBar: AppBar(
         automaticallyImplyLeading: true,
         backgroundColor: AppColors.kPrimary,
-        title: Text(
+        title: const Text(
           "Offer Products",
-          style: AppTextStyle.rTextNunitoWhite17w700,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.1,
+          ),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
+          // ✅ Show subtle refresh indicator when silently refreshing
+          Obx(() => controller.isRefreshing.value
+              ? const Padding(
+            padding: EdgeInsets.all(16),
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            ),
+          )
+              : IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white),
             onPressed: controller.fetchOfferProduct,
-          ),
+          )),
         ],
       ),
       body: Obx(() {
@@ -77,13 +95,7 @@ class OfferProductScreen extends StatelessWidget {
   Widget _productCard(
       BuildContext context, NMerchantOfferProductModels product) {
     return GestureDetector(
-      onTap: () {
-        Get.to(
-              () => MerchnantOfferProductDetailScreen (
-            productId: product.productId,
-          ),
-        );
-      },
+      onTap: () {},
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -103,8 +115,8 @@ class OfferProductScreen extends StatelessWidget {
             Stack(
               children: [
                 ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(16)),
+                  borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(16)),
                   child: Image.network(
                     product.productImage,
                     height: 130,
@@ -118,7 +130,7 @@ class OfferProductScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                // DISCOUNT BADGE  — uses discount_percentage from API
+                // DISCOUNT BADGE
                 Positioned(
                   top: 8,
                   left: 8,
@@ -149,7 +161,6 @@ class OfferProductScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // product_name
                     Text(
                       product.productName,
                       maxLines: 2,
@@ -162,10 +173,8 @@ class OfferProductScreen extends StatelessWidget {
 
                     const SizedBox(height: 4),
 
-                    // original_price (struck through) + saved amount
                     Row(
-                      mainAxisAlignment:
-                      MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           "₹${product.realPrice.toStringAsFixed(0)}",
@@ -188,7 +197,6 @@ class OfferProductScreen extends StatelessWidget {
 
                     const SizedBox(height: 2),
 
-                    // discount_price (offer price)
                     Text(
                       "₹${product.offerPrice.toStringAsFixed(0)}",
                       style: TextStyle(
@@ -206,31 +214,37 @@ class OfferProductScreen extends StatelessWidget {
                         // EDIT
                         Expanded(
                           child: GestureDetector(
-                            onTap: () {
-                              Get.to(() => EditOfferProductPage(
-                                productId: product.productId,
-                                offerId: offerId,
-                              ));
+                            onTap: () async {
+                              final result = await Get.to(
+                                    () => const UpdateOfferProductPage(),
+                                arguments: {
+                                  'offer_product_id': product.productId,
+                                  'offer_id': offerId, // ✅ pass offerId so update controller can find parent
+                                },
+                              );
+
+                              // Fallback: if refresh wasn't done inside updateProduct, do it here
+                              if (result == true) {
+                                await Get.find<MerchantOfferProductController>(
+                                  tag: offerId.toString(),
+                                ).fetchOfferProduct();
+                              }
                             },
                             child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 7),
+                              padding:
+                              const EdgeInsets.symmetric(vertical: 7),
                               decoration: BoxDecoration(
-                                color: AppColors.kPrimary
-                                    .withOpacity(0.1),
-                                borderRadius:
-                                BorderRadius.circular(8),
+                                color: AppColors.kPrimary.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                    color: AppColors.kPrimary
-                                        .withOpacity(0.4)),
+                                    color:
+                                    AppColors.kPrimary.withOpacity(0.4)),
                               ),
                               child: Row(
-                                mainAxisAlignment:
-                                MainAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(Icons.edit_outlined,
-                                      color: AppColors.kPrimary,
-                                      size: 13),
+                                      color: AppColors.kPrimary, size: 13),
                                   const SizedBox(width: 4),
                                   Text(
                                     "Edit",
@@ -251,46 +265,28 @@ class OfferProductScreen extends StatelessWidget {
                         // DELETE
                         Expanded(
                           child: GestureDetector(
-                            onTap: () {
-                              Get.defaultDialog(
-                                title: "Delete",
-                                titleStyle: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                                middleText:
-                                "Are you sure you want to delete this product?",
-                                middleTextStyle:
-                                const TextStyle(fontSize: 13),
-                                textConfirm: "Delete",
-                                textCancel: "Cancel",
-                                confirmTextColor: Colors.white,
-                                buttonColor: Colors.red,
-                                cancelTextColor: Colors.grey.shade700,
-                                onConfirm: () {
-                                  Get.back();
-                                  controller.deleteOfferProduct(
-                                      product.productId);
-                                },
-                              );
-                            },
+                            onTap: () => DeleteConfirmDialog.show(
+                              context: Get.context!,
+                              title: 'Delete Product',
+                              message:
+                              '"${product.productName}" will be permanently removed.',
+                              onConfirm: () =>
+                                  controller.deleteOfferProduct(product.productId),
+                            ),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 7),
+                              padding:
+                              const EdgeInsets.symmetric(vertical: 7),
                               decoration: BoxDecoration(
                                 color: Colors.red.shade50,
-                                borderRadius:
-                                BorderRadius.circular(8),
-                                border: Border.all(
-                                    color: Colors.red.shade300),
+                                borderRadius: BorderRadius.circular(8),
+                                border:
+                                Border.all(color: Colors.red.shade300),
                               ),
                               child: Row(
-                                mainAxisAlignment:
-                                MainAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(Icons.delete_outline,
-                                      color: Colors.red.shade600,
-                                      size: 13),
+                                      color: Colors.red.shade600, size: 13),
                                   const SizedBox(width: 4),
                                   Text(
                                     "Delete",
@@ -324,19 +320,16 @@ class OfferProductScreen extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.inbox_outlined,
-              size: 64, color: Colors.grey.shade400),
+          Icon(Icons.inbox_outlined, size: 64, color: Colors.grey.shade400),
           const SizedBox(height: 12),
           const Text(
             "No Product Found",
-            style:
-            TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 6),
           Text(
             "Pull down to refresh",
-            style:
-            TextStyle(fontSize: 13, color: Colors.grey.shade500),
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
           ),
         ],
       ),

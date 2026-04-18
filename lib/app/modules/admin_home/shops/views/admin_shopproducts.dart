@@ -1,4 +1,5 @@
 
+import 'package:eshoppy/app/common/style/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -28,22 +29,18 @@ class ShopProductPage extends StatelessWidget {
         backgroundColor: _bg,
         appBar: AppBar(
           elevation: 0,
-          backgroundColor: _teal,
-          surfaceTintColor: Colors.transparent,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                size: 18, color: Colors.white),
-            onPressed: () => Get.back(),
-          ),
+          backgroundColor:AppColors.kPrimary,
+         automaticallyImplyLeading: true,
+          iconTheme: IconThemeData(color: Colors.white),
           title: const Text(
             "Shop Products",
             style: TextStyle(
               color: Colors.white,
-              fontSize: 16,
+              fontSize: 17,
               fontWeight: FontWeight.w600,
+              letterSpacing: 0.1,
             ),
           ),
-          centerTitle: true,
           actions: [
             Obx(() => Padding(
               padding: const EdgeInsets.only(right: 16),

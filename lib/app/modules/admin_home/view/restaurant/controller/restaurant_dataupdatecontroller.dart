@@ -7,6 +7,10 @@ import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
+import '../../../../../data/errors/api_error.dart';
+import '../../../../merchantlogin/widget/successwidget.dart';
+
+
 class AdminRestaurantUpdateController extends GetxController {
   final restaurantNameController = TextEditingController();
   final ownerNameController = TextEditingController();
@@ -17,12 +21,16 @@ class AdminRestaurantUpdateController extends GetxController {
   final whatsappController = TextEditingController();
   final facebookController = TextEditingController();
   final instagramController = TextEditingController();
+  final upiIdController = TextEditingController();
 
-  var isLoading = false.obs;
   var isUpdating = false.obs;
 
   var restaurantImage = Rxn<File>();
   var restaurantImageUrl = ''.obs;
+
+  var qrImage = Rxn<File>();
+  var qrImageUrl = ''.obs;
+
   var additionalImages = <File>[].obs;
   var existingAdditionalImageUrls = <String>[].obs;
 
@@ -30,8 +38,6 @@ class AdminRestaurantUpdateController extends GetxController {
   final ImagePicker _picker = ImagePicker();
 
   String? restaurantId;
-
-  // FIX: Guard to prevent loadRestaurantData from running more than once
   bool _isDataLoaded = false;
 
   static const String _baseUrl =
@@ -48,101 +54,74 @@ class AdminRestaurantUpdateController extends GetxController {
     whatsappController.dispose();
     facebookController.dispose();
     instagramController.dispose();
+    upiIdController.dispose();
     super.onClose();
   }
 
-  void loadRestaurantData(Map<String, dynamic> restaurantData) {
-    // FIX: Only load once
+  void loadRestaurantData(Map<String, dynamic> data) {
     if (_isDataLoaded) return;
     _isDataLoaded = true;
 
-    restaurantNameController.text = restaurantData['restaurant_name'] ?? '';
-    ownerNameController.text = restaurantData['owner_name'] ?? '';
-    addressController.text = restaurantData['address'] ?? '';
-    phoneController.text = restaurantData['phone'] ?? '';
-    emailController.text = restaurantData['email'] ?? '';
-    websiteController.text = restaurantData['website'] ?? '';
-    whatsappController.text = restaurantData['whatsapp'] ?? '';
-    facebookController.text = restaurantData['facebook_link'] ?? '';
-    instagramController.text = restaurantData['instagram_link'] ?? '';
+    restaurantNameController.text = data['restaurant_name'] ?? '';
+    ownerNameController.text = data['owner_name'] ?? '';
+    addressController.text = data['address'] ?? '';
+    phoneController.text = data['phone'] ?? '';
+    emailController.text = data['email'] ?? '';
+    websiteController.text = data['website'] ?? '';
+    whatsappController.text = data['whatsapp'] ?? '';
+    facebookController.text = data['facebook_link'] ?? '';
+    instagramController.text = data['instagram_link'] ?? '';
+    upiIdController.text = data['upi_id'] ?? '';
 
-    restaurantImageUrl.value = restaurantData['restaurant_image'] ?? '';
+    restaurantImageUrl.value = data['restaurant_image'] ?? '';
+    qrImageUrl.value = data['qr_code'] ?? '';
 
-    if (restaurantData['additional_images'] != null) {
+    if (data['additional_images'] != null) {
       existingAdditionalImageUrls.value =
-      List<String>.from(restaurantData['additional_images']);
+      List<String>.from(data['additional_images']);
     }
   }
 
-  // FIX: Strip base URL to get relative path for sending to server
   String _stripBaseUrl(String url) {
-    if (url.startsWith(_baseUrl)) {
-      return url.replaceFirst(_baseUrl, '');
-    }
-    return url;
+    return url.startsWith(_baseUrl)
+        ? url.replaceFirst(_baseUrl, '')
+        : url;
   }
 
   Future<void> pickRestaurantImage() async {
-    try {
-      final XFile? pickedFile = await _picker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 80,
-      );
-      if (pickedFile != null) {
-        restaurantImage.value = File(pickedFile.path);
-      }
-    } catch (e) {
-      Get.snackbar("Error", "Failed to pick image: ${e.toString()}",
-          snackPosition: SnackPosition.BOTTOM);
-    }
+    final file = await _picker.pickImage(source: ImageSource.gallery);
+    if (file != null) restaurantImage.value = File(file.path);
+  }
+
+  Future<void> pickQrImage() async {
+    final file = await _picker.pickImage(source: ImageSource.gallery);
+    if (file != null) qrImage.value = File(file.path);
   }
 
   Future<void> pickAdditionalImages() async {
-    try {
-      final List<XFile> pickedFiles =
-      await _picker.pickMultiImage(imageQuality: 80);
-      if (pickedFiles.isNotEmpty) {
-        additionalImages
-            .addAll(pickedFiles.map((file) => File(file.path)).toList());
-      }
-    } catch (e) {
-      Get.snackbar("Error", "Failed to pick images: ${e.toString()}",
-          snackPosition: SnackPosition.BOTTOM);
-    }
+    final files = await _picker.pickMultiImage();
+    additionalImages.addAll(files.map((e) => File(e.path)));
   }
 
-  void removeAdditionalImage(int index) {
-    additionalImages.removeAt(index);
-  }
-
-  void removeExistingAdditionalImage(int index) {
-    existingAdditionalImageUrls.removeAt(index);
-  }
+  void removeAdditionalImage(int i) => additionalImages.removeAt(i);
+  void removeExistingAdditionalImage(int i) =>
+      existingAdditionalImageUrls.removeAt(i);
 
   bool validateForm() {
-    if (restaurantNameController.text.trim().isEmpty) {
-      Get.snackbar("Validation Error", "Restaurant name is required");
+    if (restaurantNameController.text.isEmpty) {
+      AppSnackbar.warning("Restaurant name required");
       return false;
     }
-    if (ownerNameController.text.trim().isEmpty) {
-      Get.snackbar("Validation Error", "Owner name is required");
+    if (ownerNameController.text.isEmpty) {
+      AppSnackbar.warning("Owner name required");
       return false;
     }
-    if (addressController.text.trim().isEmpty) {
-      Get.snackbar("Validation Error", "Address is required");
+    if (phoneController.text.isEmpty) {
+      AppSnackbar.warning("Phone required");
       return false;
     }
-    if (phoneController.text.trim().isEmpty) {
-      Get.snackbar("Validation Error", "Phone number is required");
-      return false;
-    }
-    if (emailController.text.trim().isEmpty) {
-      Get.snackbar("Validation Error", "Email is required");
-      return false;
-    }
-    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-    if (!emailRegex.hasMatch(emailController.text.trim())) {
-      Get.snackbar("Validation Error", "Please enter a valid email");
+    if (emailController.text.isEmpty) {
+      AppSnackbar.warning("Email required");
       return false;
     }
     return true;
@@ -151,34 +130,23 @@ class AdminRestaurantUpdateController extends GetxController {
   Future<void> updateRestaurant() async {
     if (!validateForm()) return;
 
-    isUpdating.value = true;
-
-    final token = box.read("auth_token");
-    if (token == null) {
-      Get.snackbar("Error", "Auth token not found. Please login again.");
-      isUpdating.value = false;
-      return;
-    }
-
-    if (restaurantId == null) {
-      Get.snackbar("Error", "Restaurant ID is missing");
-      isUpdating.value = false;
-      return;
-    }
-
-    final url = Uri.parse(
-        "https://rasma.astradevelops.in/e_shoppyy/public/api/admin/restaurant/update");
-
     try {
+      isUpdating.value = true;
+
+      final token = box.read("auth_token");
+
+      final url = Uri.parse(
+          "https://rasma.astradevelops.in/e_shoppyy/public/api/admin/restaurant/update");
+
       var request = http.MultipartRequest('POST', url);
 
       request.headers.addAll({
         "Authorization": "Bearer $token",
         "Accept": "application/json",
       });
-      request.fields['restaurant_id'] = restaurantId.toString(); // ✅ Correct
-      // FIX: Ensure ID is always sent as string
-      // request.fields['id'] = restaurantId.toString();
+
+      // ── Fields ─────────────────────────────
+      request.fields['restaurant_id'] = restaurantId.toString();
       request.fields['restaurant_name'] =
           restaurantNameController.text.trim();
       request.fields['owner_name'] = ownerNameController.text.trim();
@@ -189,80 +157,65 @@ class AdminRestaurantUpdateController extends GetxController {
       request.fields['whatsapp'] = whatsappController.text.trim();
       request.fields['facebook_link'] = facebookController.text.trim();
       request.fields['instagram_link'] = instagramController.text.trim();
+      request.fields['upi_id'] = upiIdController.text.trim();
 
-      // FIX: Send existing image path stripped of base URL
-      // Only send if no new image was picked (server keeps existing if not sent,
-      // but some APIs require you to re-send it)
+      // ── Main Image ─────────────────────────
       if (restaurantImage.value == null &&
           restaurantImageUrl.value.isNotEmpty) {
         request.fields['existing_restaurant_image'] =
             _stripBaseUrl(restaurantImageUrl.value);
       }
 
-      // New main image
       if (restaurantImage.value != null) {
-        request.files.add(
-          await http.MultipartFile.fromPath(
-            'restaurant_image',
-            restaurantImage.value!.path,
-          ),
-        );
+        request.files.add(await http.MultipartFile.fromPath(
+            'restaurant_image', restaurantImage.value!.path));
       }
 
-      // FIX: Send existing additional image paths stripped of base URL
-      final strippedExisting = existingAdditionalImageUrls
-          .map((url) => _stripBaseUrl(url))
-          .toList();
-
-      for (var i = 0; i < strippedExisting.length; i++) {
-        request.fields['existing_additional_images[$i]'] = strippedExisting[i];
+      // ── QR Image ───────────────────────────
+      if (qrImage.value == null && qrImageUrl.value.isNotEmpty) {
+        request.fields['existing_qr_code'] =
+            _stripBaseUrl(qrImageUrl.value);
       }
 
-      // New additional images
-      for (var i = 0; i < additionalImages.length; i++) {
-        request.files.add(
-          await http.MultipartFile.fromPath(
-            'additional_images[]',
-            additionalImages[i].path,
-          ),
-        );
+      if (qrImage.value != null) {
+        request.files.add(await http.MultipartFile.fromPath(
+            'qr_code', qrImage.value!.path));
       }
 
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
+      // ── Additional Images ──────────────────
+      for (int i = 0; i < existingAdditionalImageUrls.length; i++) {
+        request.fields['existing_additional_images[$i]'] =
+            _stripBaseUrl(existingAdditionalImageUrls[i]);
+      }
 
-      // FIX: Log response for debugging
-      debugPrint('Update response [${response.statusCode}]: ${response.body}');
+      for (var file in additionalImages) {
+        request.files.add(await http.MultipartFile.fromPath(
+            'additional_images[]', file.path));
+      }
 
-      if (response.statusCode == 200) {
-        final body = jsonDecode(response.body);
+      // ── Send Request ───────────────────────
+      final streamed = await request.send();
+      final response = await http.Response.fromStream(streamed);
 
-        if (body["status"].toString() == "1") {
-          Get.snackbar(
-            "Success",
-            body["message"] ?? "Restaurant updated successfully",
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
-          );
-          Get.back();
-        } else {
-          Get.snackbar(
-            "Error",
-            body["message"] ?? "Failed to update restaurant",
-            snackPosition: SnackPosition.BOTTOM,
-          );
-        }
+      // ✅ Handle non-200
+      if (response.statusCode != 200) {
+        final error = ApiErrorHandler.handleResponse(response);
+        if (error.isNotEmpty) AppSnackbar.error(error);
+        return;
+      }
+
+      final body = jsonDecode(response.body);
+
+      if (body['status'].toString() == "1") {
+        AppSnackbar.success(body['message'] ?? "Updated successfully");
+        Get.back();
       } else {
-        Get.snackbar(
-          "Error",
-          "Server returned ${response.statusCode}: ${response.body}",
-          snackPosition: SnackPosition.BOTTOM,
-        );
+        AppSnackbar.error(
+            body['message'] ?? "Failed to update restaurant");
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString(),
-          snackPosition: SnackPosition.BOTTOM);
+      final error = ApiErrorHandler.handleException(e);
+      AppSnackbar.error(error);
     } finally {
       isUpdating.value = false;
     }

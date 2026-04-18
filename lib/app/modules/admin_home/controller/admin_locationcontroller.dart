@@ -1,156 +1,13 @@
-//
-// import 'dart:convert';
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-// import 'package:get_storage/get_storage.dart';
-// import 'package:http/http.dart' as http;
-// import '../../../data/models/locationmodel.dart';
-//
-// class LocationController extends GetxController {
-//   final box = GetStorage();
-//   final String apiUrl = "https://rasma.astradevelops.in/e_shoppyy/public/api/admin/location/add";
-//
-//   RxList<StateItem> stateList = <StateItem>[].obs;
-//   RxString selectedState = "".obs;
-//   RxString selectedDistrict = "".obs;
-//   RxList<String> tempLocations = <String>[].obs;
-//   var isLoading = false.obs;
-//
-//   // Add location to temporary list
-//   void addTempLocation(String name) {
-//     if (name.trim().isNotEmpty) {
-//       tempLocations.add(name.trim());
-//     }
-//   }
-//
-//   String get authToken => box.read('auth_token') ?? '';
-//
-//   Map<String, String> get authHeader => {
-//     'Accept': 'application/json',
-//     'Authorization': 'Bearer $authToken',
-//     'Content-Type': 'application/json',
-//   };
-//
-//   // SAVE All locations under existing state/district if present
-//   Future<void> saveAll() async {
-//     if (selectedState.value.isEmpty ||
-//         selectedDistrict.value.isEmpty ||
-//         tempLocations.isEmpty) {
-//       Get.snackbar("Error", "State, District & Locations are required");
-//       return;
-//     }
-//
-//     isLoading.value = true;
-//
-//     try {
-//       for (var loc in tempLocations) {
-//         // Call API
-//         final response = await http.post(
-//           Uri.parse(apiUrl),
-//           headers: authHeader,
-//           body: jsonEncode({
-//             "state": selectedState.value,
-//             "district": selectedDistrict.value,
-//             "location": loc,
-//           }),
-//         );
-//
-//         if (response.statusCode == 200) {
-//           final body = jsonDecode(response.body);
-//           if (body['status'] == 1) {
-//             // Update local stateList
-//             _updateLocalState(loc);
-//             Get.snackbar(
-//               "Success",
-//               "${loc} added successfully",
-//               backgroundColor: Colors.green,
-//               colorText: Colors.white,
-//             );
-//           } else {
-//             Get.snackbar(
-//               "Error",
-//               body['message'] ?? "Failed to add ${loc}",
-//               backgroundColor: Colors.red,
-//               colorText: Colors.white,
-//             );
-//           }
-//         } else if (response.statusCode == 401) {
-//           Get.snackbar(
-//             "Error",
-//             "Session expired. Please login again.",
-//             backgroundColor: Colors.red,
-//             colorText: Colors.white,
-//           );
-//         } else {
-//           Get.snackbar(
-//             "Error",
-//             "Server error: ${response.statusCode}",
-//             backgroundColor: Colors.red,
-//             colorText: Colors.white,
-//           );
-//         }
-//       }
-//
-//       tempLocations.clear();
-//       update();
-//     } catch (e) {
-//       Get.snackbar("Error", "Something went wrong: $e",
-//           backgroundColor: Colors.red, colorText: Colors.white);
-//     } finally {
-//       isLoading.value = false;
-//     }
-//   }
-//
-//   void _updateLocalState(String loc) {
-//     // Check if state exists
-//     StateItem? existingState = stateList.firstWhereOrNull(
-//           (s) => s.state == selectedState.value,
-//     );
-//
-//     if (existingState == null) {
-//       // Create new state
-//       stateList.add(
-//         StateItem(
-//           state: selectedState.value,
-//           districts: [
-//             DistrictItem(
-//               district: selectedDistrict.value,
-//               locations: [LocationItem(location: loc)],
-//             )
-//           ],
-//         ),
-//       );
-//     } else {
-//       // State exists → check district
-//       DistrictItem? existingDistrict = existingState.districts
-//           .firstWhereOrNull((d) => d.district == selectedDistrict.value);
-//
-//       if (existingDistrict == null) {
-//         // District doesn't exist → add new district
-//         existingState.districts.add(
-//           DistrictItem(
-//             district: selectedDistrict.value,
-//             locations: [LocationItem(location: loc)],
-//           ),
-//         );
-//       } else {
-//         // District exists → add new location if not duplicate
-//         bool exists = existingDistrict.locations
-//             .any((item) => item.location == loc);
-//
-//         if (!exists) {
-//           existingDistrict.locations.add(LocationItem(location: loc));
-//         }
-//       }
-//     }
-//   }
-// }
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
+
 import '../../../data/models/locationmodel.dart';
+import '../../../data/errors/api_error.dart';
+import '../../merchantlogin/widget/successwidget.dart';
+
 
 class LocationController extends GetxController {
   final box = GetStorage();
@@ -171,7 +28,7 @@ class LocationController extends GetxController {
 
   RxBool isLoading = false.obs;
 
-  // Auth
+  // ================= AUTH =================
   String get authToken => box.read('auth_token') ?? '';
 
   Map<String, String> get authHeader => {
@@ -189,18 +46,33 @@ class LocationController extends GetxController {
   // ================= ADD TEMP LOCATION =================
   void addTempLocation(String name) {
     final value = name.trim();
-    if (value.isEmpty) return;
+
+    if (value.isEmpty) {
+      AppSnackbar.warning("Location cannot be empty");
+      return;
+    }
+
     if (!tempLocations.contains(value)) {
       tempLocations.add(value);
+    } else {
+      AppSnackbar.warning("Location already added");
     }
   }
 
   // ================= SAVE ALL =================
   Future<void> saveAll() async {
+    /// ✅ Validation
     if (selectedState.value.isEmpty ||
         selectedDistrict.value.isEmpty ||
         tempLocations.isEmpty) {
-      Get.snackbar("Error", "State, District & Locations are required");
+      AppSnackbar.warning("State, District & Locations are required");
+      return;
+    }
+
+    /// ✅ Auth check
+    if (authToken.isEmpty) {
+      AppSnackbar.error("Session expired. Please login again");
+      Get.offAllNamed('/login');
       return;
     }
 
@@ -218,22 +90,31 @@ class LocationController extends GetxController {
           }),
         );
 
+        /// ✅ Success
         if (response.statusCode == 200) {
           final body = jsonDecode(response.body);
 
           if (body['status'] == 1) {
             _updateLocalState(loc);
+          } else {
+            AppSnackbar.error(body['message'] ?? "Failed to add location");
           }
-        } else if (response.statusCode == 401) {
-          Get.snackbar("Session Expired", "Please login again");
-          break;
+        } else {
+          /// ✅ API Error Handler
+          final errorMessage = ApiErrorHandler.handleResponse(response);
+          AppSnackbar.error(errorMessage);
+
+          /// Stop loop if unauthorized
+          if (response.statusCode == 401) break;
         }
       }
 
       tempLocations.clear();
-      Get.snackbar("Success", "Locations added successfully");
+      AppSnackbar.success("Locations added successfully");
     } catch (e) {
-      Get.snackbar("Error", "Something went wrong");
+      /// ✅ Exception Handling
+      final errorMessage = ApiErrorHandler.handleException(e);
+      AppSnackbar.error(errorMessage);
     } finally {
       isLoading.value = false;
     }
@@ -241,6 +122,12 @@ class LocationController extends GetxController {
 
   // ================= FETCH LOCATIONS =================
   Future<void> fetchLocations() async {
+    /// ✅ Auth check
+    if (authToken.isEmpty) {
+      Get.offAllNamed('/login');
+      return;
+    }
+
     isLoading.value = true;
     stateList.clear();
 
@@ -281,12 +168,18 @@ class LocationController extends GetxController {
               ),
             );
           });
+        } else {
+          AppSnackbar.error(body['message'] ?? "Failed to load locations");
         }
-      } else if (response.statusCode == 401) {
-        Get.snackbar("Session Expired", "Please login again");
+      } else {
+        /// ✅ API Error Handler
+        final errorMessage = ApiErrorHandler.handleResponse(response);
+        AppSnackbar.error(errorMessage);
       }
     } catch (e) {
-      Get.snackbar("Error", "Failed to load locations");
+      /// ✅ Exception Handling
+      final errorMessage = ApiErrorHandler.handleException(e);
+      AppSnackbar.error(errorMessage);
     } finally {
       isLoading.value = false;
     }

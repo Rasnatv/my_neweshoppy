@@ -2,7 +2,10 @@ import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
+
+import '../../../data/errors/api_error.dart';
 import '../../../data/models/userrestaurantmodel.dart';
+import '../../merchantlogin/widget/successwidget.dart';
 
 class RestaurantController extends GetxController {
   final restaurants = <Restaurant>[].obs;
@@ -24,11 +27,10 @@ class RestaurantController extends GetxController {
     try {
       isLoading(true);
 
-      /// 🔐 Get token from storage
       final token = box.read('auth_token');
 
       if (token == null || token.isEmpty) {
-        Get.snackbar("Session Expired", "Please login again");
+        AppSnackbar.error("Session expired. Please login again");
         return;
       }
 
@@ -42,17 +44,19 @@ class RestaurantController extends GetxController {
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
-        final List list = body['data'];
+        final List list = body['data'] ?? [];
 
         restaurants.value =
             list.map((e) => Restaurant.fromJson(e)).toList();
-      } else if (response.statusCode == 401) {
-        Get.snackbar("Unauthorized", "Login required");
       } else {
-        Get.snackbar("Error", "Failed to load restaurants");
+        // ✅ API ERROR HANDLER (covers 401 also)
+        final errorMessage = ApiErrorHandler.handleResponse(response);
+        AppSnackbar.error(errorMessage);
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      // ✅ EXCEPTION HANDLER
+      final errorMessage = ApiErrorHandler.handleException(e);
+      AppSnackbar.error(errorMessage);
     } finally {
       isLoading(false);
     }

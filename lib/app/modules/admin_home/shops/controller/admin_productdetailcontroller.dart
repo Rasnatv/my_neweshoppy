@@ -1,77 +1,79 @@
+
 import 'dart:convert';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 
+import '../../../../data/errors/api_error.dart';
 import '../../../../data/models/admin_shopproductdetailsmodel.dart';
 
-
-
-
-
+import '../../../merchantlogin/widget/successwidget.dart';
 
 class mAdminProductDetailController extends GetxController {
   final GetStorage box = GetStorage();
 
-  // Observable state
   final Rx<mAdminProductDetailModel?> productDetailResponse =
   Rx<mAdminProductDetailModel?>(null);
+
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
   final RxInt selectedVariantIndex = 0.obs;
 
-  // API endpoint
   static const String _baseUrl =
       'https://rasma.astradevelops.in/e_shoppyy/public/api/product/detailss';
 
-  // GetStorage keys
   static const String _authTokenKey = 'auth_token';
-  static const String authTokenKey = _authTokenKey; // public alias for UI
+  static const String authTokenKey = _authTokenKey;
 
-  /// Retrieve auth token from GetStorage
+  /// ✅ AUTH CHECK (EMPTY TOKEN)
+  bool _checkAuth() {
+    final token = box.read(_authTokenKey);
+
+    if (token == null || token.toString().isEmpty) {
+      Get.offAllNamed('/login');
+      return false;
+    }
+    return true;
+  }
+
   String? get authToken => box.read<String>(_authTokenKey);
 
-  /// Save auth token to GetStorage
   void saveAuthToken(String token) {
     box.write(_authTokenKey, token);
   }
 
-  /// Shortcut getter for product data
+  Map<String, String> _headers() {
+    final token = authToken ?? '';
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+      'Accept': 'application/json',
+    };
+  }
+
   mProductDetail? get product => productDetailResponse.value?.data;
 
-  /// Currently selected variant
   mProductVariant? get selectedVariant {
     final variants = product?.variants;
     if (variants == null || variants.isEmpty) return null;
-    if (selectedVariantIndex.value >= variants.length) return null;
-    return variants[selectedVariantIndex.value];
+
+    final index = selectedVariantIndex.value;
+    return index < variants.length ? variants[index] : null;
   }
 
   @override
   void onInit() {
     super.onInit();
-    // Optionally auto-fetch on init if productId is passed via arguments
+
     final args = Get.arguments;
     if (args != null && args is Map && args['product_id'] != null) {
       fetchProductDetail(productId: args['product_id']);
     }
   }
 
-  /// Fetch product details from the API
+  /// ✅ FETCH PRODUCT (WITH 401 AUTO LOGOUT)
   Future<void> fetchProductDetail({required int productId}) async {
-    final token = authToken;
-    if (token == null || token.isEmpty) {
-      errorMessage.value = 'Authentication token not found. Please login again.';
-      Get.snackbar(
-        'Auth Error',
-        errorMessage.value,
-        backgroundColor: Colors.red.shade700,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return;
-    }
+    if (!_checkAuth()) return;
 
     try {
       isLoading.value = true;
@@ -79,13 +81,15 @@ class mAdminProductDetailController extends GetxController {
 
       final response = await http.post(
         Uri.parse(_baseUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-          'Accept': 'application/json',
-        },
+        headers: _headers(),
         body: jsonEncode({'product_id': productId}),
       );
+
+      /// 🔥 IMPORTANT FIX
+      if (response.statusCode == 401) {
+        ApiErrorHandler.handleResponse(response); // triggers logout
+        return;
+      }
 
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body) as Map<String, dynamic>;
@@ -96,43 +100,29 @@ class mAdminProductDetailController extends GetxController {
           selectedVariantIndex.value = 0;
         } else {
           errorMessage.value = model.message;
-          _showErrorSnackbar(model.message);
+          AppSnackbar.error(errorMessage.value);
         }
-      } else if (response.statusCode == 401) {
-        errorMessage.value = 'Unauthorized. Please login again.';
-        _showErrorSnackbar(errorMessage.value);
       } else {
-        errorMessage.value = 'Server error: ${response.statusCode}';
-        _showErrorSnackbar(errorMessage.value);
+        errorMessage.value =
+            ApiErrorHandler.handleResponse(response);
+        AppSnackbar.error(errorMessage.value);
       }
     } catch (e) {
-      errorMessage.value = 'Network error: ${e.toString()}';
-      _showErrorSnackbar(errorMessage.value);
+      errorMessage.value =
+          ApiErrorHandler.handleException(e);
+      AppSnackbar.error(errorMessage.value);
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Select a variant by index
   void selectVariant(int index) {
     selectedVariantIndex.value = index;
   }
 
-  /// Clear product detail from state
   void clearProductDetail() {
     productDetailResponse.value = null;
     errorMessage.value = '';
     selectedVariantIndex.value = 0;
-  }
-
-  void _showErrorSnackbar(String message) {
-    Get.snackbar(
-      'Error',
-      message,
-      backgroundColor: Colors.red.shade700,
-      colorText: Colors.white,
-      snackPosition: SnackPosition.BOTTOM,
-      duration: const Duration(seconds: 3),
-    );
   }
 }

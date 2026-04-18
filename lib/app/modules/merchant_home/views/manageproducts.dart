@@ -1,29 +1,31 @@
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../../common/style/app_text_style.dart';
+
+import '../../../common/style/app_colors.dart';
+import '../../../widgets/delete_widget.dart';
+import '../../../widgets/networkconnection_checkpage.dart';
 import '../../merchant_home/controller/manageproduct_controller.dart';
 import 'merchnatproductediting.dart';
 
 class ManageProductsPage extends StatelessWidget {
-  final ManageproductController controller = Get.put(ManageproductController());
+   final ManageproductController controller = Get.put(ManageproductController());
 
   ManageProductsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF2F4F7),
-      appBar: _buildAppBar(),
-      body: Obx(() => _buildBody()),
-    );
+    return NetworkAwareWrapper(
+        child: Scaffold(
+          backgroundColor: const Color(0xFFF2F4F7),
+          appBar: _buildAppBar(),
+          body: Obx(() => _buildBody()),
+        ));
   }
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      systemOverlayStyle: SystemUiOverlayStyle.light,
       automaticallyImplyLeading: true,
       iconTheme: const IconThemeData(color: Colors.white),
       titleSpacing: 0,
@@ -36,21 +38,21 @@ class ManageProductsPage extends StatelessWidget {
           letterSpacing: 0.1,
         ),
       ),
-      backgroundColor: const Color(0xFF00796B),
+      backgroundColor: AppColors.kPrimary,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(0),
         child: Container(height: 0.5, color: Colors.white.withOpacity(0.2)),
       ),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.refresh_rounded, color: Colors.white, size: 22),
-          onPressed: () => controller.refreshProducts(),
-          tooltip: 'Refresh',
-        ),
-        const SizedBox(width: 4),
-      ],
+      // actions: [
+      //   IconButton(
+      //     icon: const Icon(Icons.refresh_rounded, color: Colors.white, size: 22),
+      //     onPressed: () => controller.refreshProducts(),
+      //     tooltip: 'Refresh',
+      //   ),
+      //   const SizedBox(width: 4),
+      // ],
     );
   }
 
@@ -131,7 +133,8 @@ class ManageProductsPage extends StatelessWidget {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   elevation: 0,
                 ),
-                child: const Text('Retry', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                child: const Text('Retry',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
               ),
             ),
           ],
@@ -151,14 +154,16 @@ class ManageProductsPage extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(24),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 20, offset: const Offset(0, 4))],
             ),
             child: const Icon(Icons.inventory_2_outlined, size: 44, color: Color(0xFF00796B)),
           ),
           const SizedBox(height: 24),
-          const Text('No products yet', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFF263238))),
+          const Text('No products yet',
+              style: TextStyle(
+                  fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFF263238))),
           const SizedBox(height: 8),
-          const Text('Your product list will appear here', style: TextStyle(fontSize: 14, color: Color(0xFF90A4AE))),
+          const Text('Your product list will appear here',
+              style: TextStyle(fontSize: 14, color: Color(0xFF90A4AE))),
         ],
       ),
     );
@@ -181,7 +186,8 @@ class ManageProductsPage extends StatelessWidget {
                   final product = controller.products[index];
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12),
-                    child: _ProductCard(product: product, index: index, controller: controller),
+                    child: _ProductCard(
+                        product: product, index: index, controller: controller),
                   );
                 },
                 childCount: controller.products.length,
@@ -207,22 +213,7 @@ class ManageProductsPage extends StatelessWidget {
               letterSpacing: 0.2,
             ),
           ),
-          const Spacer(),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFE0E0E0)),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.sort_rounded, size: 14, color: Color(0xFF546E7A)),
-                SizedBox(width: 4),
-                Text('Latest', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Color(0xFF546E7A))),
-              ],
-            ),
-          ),
+
         ],
       ),
     );
@@ -234,7 +225,8 @@ class _ProductCard extends StatelessWidget {
   final int index;
   final ManageproductController controller;
 
-  const _ProductCard({required this.product, required this.index, required this.controller});
+  const _ProductCard(
+      {required this.product, required this.index, required this.controller});
 
   @override
   Widget build(BuildContext context) {
@@ -253,25 +245,18 @@ class _ProductCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Main product row
           Padding(
             padding: const EdgeInsets.all(14),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Product image
                 _buildProductImage(),
                 const SizedBox(width: 14),
-                // Product info
                 Expanded(child: _buildProductInfo()),
               ],
             ),
           ),
-
-          // Divider
           const Divider(height: 1, thickness: 1, color: Color(0xFFF5F5F5)),
-
-          // Action bar
           _buildActionBar(context),
         ],
       ),
@@ -299,18 +284,19 @@ class _ProductCard extends StatelessWidget {
                   child: SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 1.5, color: Color(0xFF00796B)),
+                    child: CircularProgressIndicator(
+                        strokeWidth: 1.5, color: Color(0xFF00796B)),
                   ),
                 ),
               ),
               errorWidget: (context, url, error) => Container(
                 color: const Color(0xFFF5F5F5),
-                child: const Icon(Icons.image_not_supported_outlined, size: 28, color: Color(0xFFBDBDBD)),
+                child: const Icon(Icons.image_not_supported_outlined,
+                    size: 28, color: Color(0xFFBDBDBD)),
               ),
             ),
           ),
         ),
-        // In stock dot
         Positioned(
           bottom: 4,
           right: 4,
@@ -332,7 +318,6 @@ class _ProductCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Product name
         Text(
           product.name,
           style: const TextStyle(
@@ -345,20 +330,23 @@ class _ProductCard extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: 6),
-
-        // Price row
         Row(
           children: [
-            const Text('₹', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF00796B))),
+            const Text('₹',
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF00796B))),
             Text(
               product.price,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF00796B)),
+              style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF00796B)),
             ),
           ],
         ),
         const SizedBox(height: 8),
-
-        // Chips row
         Wrap(
           spacing: 6,
           runSpacing: 4,
@@ -380,7 +368,10 @@ class _ProductCard extends StatelessWidget {
     );
   }
 
-  Widget _buildChip({required String label, required Color bgColor, required Color textColor}) {
+  Widget _buildChip(
+      {required String label,
+        required Color bgColor,
+        required Color textColor}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
@@ -389,10 +380,12 @@ class _ProductCard extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: textColor),
+        style:
+        TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: textColor),
       ),
     );
   }
+
 
   Widget _buildActionBar(BuildContext context) {
     return Padding(
@@ -405,133 +398,59 @@ class _ProductCard extends StatelessWidget {
               label: 'Edit Product',
               icon: Icons.edit_outlined,
               color: const Color(0xFF1565C0),
-              onTap: () async {
-                if (product.id == null) {
-                  _showSnackbar('Error', 'Product ID not found', isError: true);
-                  return;
-                }
-                final result = await Get.to(
-                      () => UpdateProductPage(),
-                  arguments: {'product_id': product.id},
-                );
-                if (result == true) {
-                  controller.refreshProducts();
-                  _showSnackbar('Updated', 'Product updated successfully');
-                }
-              },
+
+          onTap: () async {
+            if (product.id == null) return;
+            final result = await Get.to(
+                  () => MerchantProductDetailPage(),
+              arguments: {'product_id': product.id},
+            );
+  }
+
+
+
             ),
           ),
           const SizedBox(width: 10),
-          // Delete button - icon only
-          GestureDetector(
-            onTap: () => _confirmDelete(context),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFEBEE),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFFFCDD2)),
+
+          // Delete button
+          Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: () {
+                if (product.id != null) {
+                  DeleteConfirmDialog.show(
+                    context: context,
+                    title: "Delete Product",
+                    message: "Are you sure you want to delete this product?",
+                    onConfirm: () {
+                      controller.deleteProduct(product.id!); // ✅ FIXED
+                    },
+                  );
+                }
+              },
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFEBEE),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFFFCDD2)),
+                ),
+                child: const Icon(
+                  Icons.delete_outline_rounded,
+                  size: 18,
+                  color: Color(0xFFC62828),
+                ),
               ),
-              child: const Icon(Icons.delete_outline_rounded, size: 18, color: Color(0xFFC62828)),
             ),
           ),
         ],
       ),
     );
-  }
-
-  void _confirmDelete(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 36),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Handle
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE0E0E0),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Delete Product?',
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Color(0xFF212121)),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'This will permanently remove "${product.name}" from your store.',
-              style: const TextStyle(fontSize: 14, color: Color(0xFF78909C), height: 1.5),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Get.back(),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF546E7A),
-                      side: const BorderSide(color: Color(0xFFE0E0E0)),
-                      padding: const EdgeInsets.symmetric(vertical: 13),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
-                    ),
-                    child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600)),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Get.back();
-                      controller.deleteProduct(index);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFC62828),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 13),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
-                      elevation: 0,
-                    ),
-                    child: const Text('Delete', style: TextStyle(fontWeight: FontWeight.w600)),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showSnackbar(String title, String message, {bool isError = false}) {
-    Get.snackbar(
-      title,
-      message,
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: isError ? const Color(0xFFC62828) : const Color(0xFF2E7D32),
-      colorText: Colors.white,
-      borderRadius: 12,
-      margin: const EdgeInsets.all(16),
-      duration: const Duration(seconds: 2),
-      icon: Icon(
-        isError ? Icons.error_outline_rounded : Icons.check_circle_outline_rounded,
-        color: Colors.white,
-      ),
-    );
-  }
-}
+  }}
 
 class _OutlinedActionButton extends StatelessWidget {
   final String label;

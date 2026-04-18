@@ -1,11 +1,13 @@
 
-
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
-import '../../../data/models/cartmodel.dart';
 import 'package:flutter/material.dart';
+
+import '../../../data/models/cartmodel.dart';
+import '../../../data/errors/api_error.dart';
+import '../../merchantlogin/widget/successwidget.dart';
 
 class CartController extends GetxController {
   final box = GetStorage();
@@ -20,7 +22,20 @@ class CartController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchCart();
+
+    // ✅ Guard: only fetch if token actually exists
+    // Prevents triggering a 401 immediately after login
+    // which would cause handleUnauthorized() to fire
+    final token = box.read<String?>('auth_token') ?? "";
+    if (token.isNotEmpty) {
+      fetchCart();
+    }
+  }
+
+  Future<void> refresh() async {
+    cartItems.clear();
+    total.value = 0.0;
+    await fetchCart();
   }
 
   bool isProductInCart(int productId) {
@@ -30,8 +45,12 @@ class CartController extends GetxController {
   bool isItemRemoving(String productId) => removingItems[productId] == true;
 
   Future<void> fetchCart() async {
-    if (authToken.isEmpty) {
+    final token = box.read<String?>('auth_token') ?? "";
+
+    // ✅ Silent return — no snackbar, no redirect
+    if (token.isEmpty) {
       cartItems.clear();
+      total.value = 0.0;
       return;
     }
 
@@ -39,38 +58,35 @@ class CartController extends GetxController {
 
     try {
       final response = await http.get(
-        Uri.parse("https://rasma.astradevelops.in/e_shoppyy/public/api/cart"),
+        Uri.parse(
+            "https://rasma.astradevelops.in/e_shoppyy/public/api/cart"),
         headers: {
           "Accept": "application/json",
-          "Authorization": "Bearer $authToken",
+          "Authorization": "Bearer $token",
         },
-      );
+      ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> body = jsonDecode(response.body);
+        final body = jsonDecode(response.body);
         if (body['status'] == true) {
-          final List<dynamic> items = body['items'] ?? [];
-          cartItems.value = items.map((e) => CartItem.fromJson(e)).toList();
-          total.value = double.tryParse(body['total'].toString()) ?? 0.0;
+          final items = body['items'] ?? [];
+          cartItems.value =
+              items.map<CartItem>((e) => CartItem.fromJson(e)).toList();
+          total.value =
+              double.tryParse(body['total'].toString()) ?? 0.0;
         } else {
           cartItems.clear();
           total.value = 0.0;
         }
-      } else if (response.statusCode == 401) {
-        cartItems.clear();
-        total.value = 0.0;
       } else {
+        // ✅ Don't call ApiErrorHandler here — silent fail for cart fetch
+        // Avoids triggering handleUnauthorized() on background cart load
+        debugPrint("Cart fetch failed: ${response.statusCode}");
         cartItems.clear();
         total.value = 0.0;
-        Get.snackbar("Error", "Failed to fetch cart",
-            backgroundColor: Colors.red,
-            colorText: Colors.white,
-            snackPosition: SnackPosition.BOTTOM,
-            margin: const EdgeInsets.all(16),
-            borderRadius: 12);
       }
     } catch (e) {
-      debugPrint("Error fetching cart: $e");
+      debugPrint("Cart fetch error: $e");
       cartItems.clear();
       total.value = 0.0;
     } finally {
@@ -78,21 +94,10 @@ class CartController extends GetxController {
     }
   }
 
-  /// [type] → 0 for normal product, 1 for offer product
   Future<bool> addToCart({
     required int productId,
     required int type,
   }) async {
-    if (authToken.isEmpty) {
-      Get.snackbar("Unauthorized", "Please login first",
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(16),
-          borderRadius: 12);
-      return false;
-    }
-
     isLoading.value = true;
 
     try {
@@ -105,75 +110,52 @@ class CartController extends GetxController {
         },
         body: {
           "product_id": productId.toString(),
-          "type": type.toString(), // 0 = normal, 1 = offer
+          "type": type.toString(),
         },
-      );
+      ).timeout(const Duration(seconds: 15));
 
-      final Map<String, dynamic> data = jsonDecode(response.body);
-
-      if (data['status'] == true) {
-        Get.snackbar(
-          "Added to Cart",
-          data['message'] ?? "Product added successfully",
-          backgroundColor: Colors.green.shade600,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(16),
-          borderRadius: 12,
-        );
-        await fetchCart();
-        return true;
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['status'] == true) {
+          AppSnackbar.success(data['message'] ?? "Product added successfully");
+          await fetchCart();
+          return true;
+        } else {
+          AppSnackbar.error(data['message'] ?? "Failed to add product");
+          return false;
+        }
       } else {
-        Get.snackbar(
-          "Error",
-          data['message'] ?? "Failed to add product",
-          backgroundColor: Colors.red.shade400,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(16),
-          borderRadius: 12,
-        );
+        final error = ApiErrorHandler.handleResponse(response);
+        AppSnackbar.error(error);
         return false;
       }
     } catch (e) {
-      debugPrint("Error adding to cart: $e");
-      Get.snackbar("Error", "Something went wrong",
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(16),
-          borderRadius: 12);
+      final error = ApiErrorHandler.handleException(e);
+      AppSnackbar.error(error);
       return false;
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Optimistic UI update — reverts only on failure
   Future<void> updateQuantity(int productId, String action) async {
     final key = productId.toString();
     final index = cartItems.indexWhere((item) => item.productId == key);
-
     if (index == -1) return;
 
     final item = cartItems[index];
 
-    // If decrement at qty 1 → remove instead
     if (action == "decrement" && item.quantity == 1) {
       await removeFromCart(productId);
       return;
     }
 
-    final oldQuantity = item.quantity;
-    final oldItemTotal = item.itemTotal;
     final newQuantity =
     action == "increment" ? item.quantity + 1 : item.quantity - 1;
-    final newItemTotal = item.finalPrice * newQuantity;
 
-    // Instant UI update
     cartItems[index] = item.copyWith(
       quantity: newQuantity,
-      itemTotal: newItemTotal,
+      itemTotal: item.finalPrice * newQuantity,
     );
     _recalculateTotal();
 
@@ -189,43 +171,21 @@ class CartController extends GetxController {
           "product_id": key,
           "action": action,
         },
-      );
+      ).timeout(const Duration(seconds: 15));
 
-      final Map<String, dynamic> data = jsonDecode(response.body);
-
-      if (data['status'] != true) {
-        // Revert on failure
-        final revertIndex =
-        cartItems.indexWhere((i) => i.productId == key);
-        if (revertIndex != -1) {
-          cartItems[revertIndex] = item.copyWith(
-            quantity: oldQuantity,
-            itemTotal: oldItemTotal,
-          );
-          _recalculateTotal();
+      if (response.statusCode != 200) {
+        _revertItem(index, item);
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
+      } else {
+        final data = jsonDecode(response.body);
+        if (data['status'] != true) {
+          _revertItem(index, item);
+          AppSnackbar.error(data['message'] ?? "Failed to update cart");
         }
-        Get.snackbar(
-          "Error",
-          data['message'] ?? "Failed to update cart",
-          backgroundColor: Colors.red.shade400,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(16),
-          borderRadius: 12,
-        );
       }
     } catch (e) {
-      // Revert on network error
-      final revertIndex =
-      cartItems.indexWhere((i) => i.productId == key);
-      if (revertIndex != -1) {
-        cartItems[revertIndex] = item.copyWith(
-          quantity: oldQuantity,
-          itemTotal: oldItemTotal,
-        );
-        _recalculateTotal();
-      }
-      debugPrint("Error updating quantity: $e");
+      _revertItem(index, item);
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     }
   }
 
@@ -242,38 +202,23 @@ class CartController extends GetxController {
           "Accept": "application/json",
           "Authorization": "Bearer $authToken",
         },
-        body: {
-          "product_id": key,
-        },
-      );
+        body: {"product_id": key},
+      ).timeout(const Duration(seconds: 15));
 
-      final Map<String, dynamic> data = jsonDecode(response.body);
-      if (data['status'] == true) {
-        cartItems.removeWhere((item) => item.productId == key);
-        _recalculateTotal();
-        Get.snackbar(
-          "Removed",
-          data['message'] ?? "Item removed from cart",
-          backgroundColor: Colors.grey.shade800,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(16),
-          borderRadius: 12,
-          duration: const Duration(seconds: 2),
-        );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['status'] == true) {
+          cartItems.removeWhere((item) => item.productId == key);
+          _recalculateTotal();
+          AppSnackbar.success(data['message'] ?? "Item removed");
+        } else {
+          AppSnackbar.error(data['message'] ?? "Failed to remove");
+        }
       } else {
-        Get.snackbar(
-          "Error",
-          data['message'] ?? "Failed to remove",
-          backgroundColor: Colors.red.shade400,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(16),
-          borderRadius: 12,
-        );
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
-      debugPrint("Error removing from cart: $e");
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       removingItems.remove(key);
       removingItems.refresh();
@@ -281,8 +226,12 @@ class CartController extends GetxController {
   }
 
   void _recalculateTotal() {
-    // Use finalPrice (the actual price paid) × quantity
     total.value = cartItems.fold(
         0.0, (sum, item) => sum + (item.finalPrice * item.quantity));
+  }
+
+  void _revertItem(int index, CartItem oldItem) {
+    cartItems[index] = oldItem;
+    _recalculateTotal();
   }
 }

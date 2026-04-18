@@ -1,9 +1,10 @@
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-
 import '../../../../common/style/app_colors.dart';
 import '../../../../data/models/districtadmineventmodel.dart';
+import '../../../../widgets/areaadminsuccesswidget.dart';
 import '../controller/districtadmin_eventgettingcontroller.dart';
 import '../widget/recent_eventwidget.dart';
 import 'districtadmin_eventupdatepage.dart';
@@ -12,7 +13,6 @@ import 'districtadmin_eventupdatepage.dart';
 class DistrictAdminAllEventsPage extends StatelessWidget {
   DistrictAdminAllEventsPage({super.key});
 
-  // Use Get.find — controller already registered from dashboard/recent widget
   final controller = Get.find<DistrictAdminGettingEventController>();
 
   String _formatDate(String raw) {
@@ -29,7 +29,6 @@ class DistrictAdminAllEventsPage extends StatelessWidget {
     }
   }
 
-  // No created_at in district admin API — passthrough
   String _formatCreatedAt(String raw) => raw;
 
   @override
@@ -37,28 +36,36 @@ class DistrictAdminAllEventsPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        backgroundColor: AppColors.kPrimary,
+        backgroundColor: AppColors.welcomecardclr,
         elevation: 0,
-        centerTitle: true,
+        automaticallyImplyLeading: true,
+        iconTheme: IconThemeData(color: Colors.white),
         title: const Text(
           'All Events',
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 17),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.1,
+            ),
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
-            onPressed: controller.fetchEvents,
-            tooltip: 'Refresh',
+            onPressed: () async {
+              await controller.fetchEvents();
+              AppSnackbarss.success("Events refreshed");
+            },
           ),
         ],
       ),
       body: Obx(() {
-        // ── Loading ──────────────────────────────────────────────────────────
+        // ── LOADING ──
         if (controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        // ── Error ────────────────────────────────────────────────────────────
+        // ── ERROR ──
         if (controller.hasError.value) {
           return Center(
             child: Padding(
@@ -77,7 +84,10 @@ class DistrictAdminAllEventsPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton.icon(
-                    onPressed: controller.fetchEvents,
+                    onPressed: () async {
+                      await controller.fetchEvents();
+                      AppSnackbarss.success("Retry successful");
+                    },
                     icon: const Icon(Icons.refresh),
                     label: const Text('Retry'),
                   ),
@@ -87,7 +97,7 @@ class DistrictAdminAllEventsPage extends StatelessWidget {
           );
         }
 
-        // ── Empty ────────────────────────────────────────────────────────────
+        // ── EMPTY ──
         if (controller.allEvents.isEmpty) {
           return Center(
             child: Column(
@@ -113,9 +123,12 @@ class DistrictAdminAllEventsPage extends StatelessWidget {
           );
         }
 
-        // ── List ─────────────────────────────────────────────────────────────
+        // ── LIST ──
         return RefreshIndicator(
-          onRefresh: controller.fetchEvents,
+          onRefresh: () async {
+            await controller.fetchEvents();
+            AppSnackbarss.success("Refreshed");
+          },
           child: ListView.separated(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
             itemCount: controller.allEvents.length,
@@ -127,7 +140,7 @@ class DistrictAdminAllEventsPage extends StatelessWidget {
                 formatDate: _formatDate,
                 formatCreatedAt: _formatCreatedAt,
                 onDelete: () => _confirmDelete(context, event),
-                onEdit:   () => _navigateToEdit(event),
+                onEdit: () => _navigateToEdit(event),
               );
             },
           ),
@@ -136,8 +149,7 @@ class DistrictAdminAllEventsPage extends StatelessWidget {
     );
   }
 
-  // ─── Helpers ──────────────────────────────────────────────────────────────
-
+  // ─── DELETE CONFIRM ──
   void _confirmDelete(BuildContext context, DistrictAdminEventModel event) {
     showDialog(
       context: context,
@@ -151,23 +163,32 @@ class DistrictAdminAllEventsPage extends StatelessWidget {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              controller.deleteEvent(event.id);
+
+              try {
+                await controller.deleteEvent(event.id);
+                AppSnackbarss.success("Event deleted");
+              } catch (e) {
+                AppSnackbarss.error("Delete failed");
+              }
             },
-            child:
-            const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: const Text('Delete',
+                style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
     );
   }
 
+  // ─── NAVIGATE EDIT ──
   void _navigateToEdit(DistrictAdminEventModel event) {
-    // TODO: Uncomment when update page is ready
     Get.to(() => DistrictAdminUpdateEventPage(eventId: event.id))
-        ?.then((result) {
-      if (result == true) controller.fetchEvents();
+        ?.then((result) async {
+      if (result == true) {
+        await controller.fetchEvents();
+        AppSnackbarss.success("Updated successfully");
+      }
     });
   }
 }

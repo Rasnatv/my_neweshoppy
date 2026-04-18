@@ -1,6 +1,7 @@
 
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../../common/style/app_colors.dart';
@@ -12,463 +13,330 @@ class MerchantAddAdvertisementPage extends StatelessWidget {
 
   final controller = Get.put(MerchantAdvertisementController());
 
+  static const Color _bg = Color(0xFFF5F6FA);
+  static const Color _card = Colors.white;
+  static const Color _textPrimary = Color(0xFF1C1C1E);
+  static const Color _textSecondary = Color(0xFF6B7280);
+  static const Color _border = Color(0xFFE5E7EB);
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey.shade50,
-      appBar: AppBar(
-        automaticallyImplyLeading: true,
-        iconTheme: const IconThemeData(color: Colors.white),
-        backgroundColor: AppColors.kPrimary,
-        title: Text(
-          "Create Advertisement",
-          style: AppTextStyle.rTextNunitoWhite16w600,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.dark,
+      child: Scaffold(
+        backgroundColor: _bg,
+        appBar: AppBar(
+          elevation: 0,
+          backgroundColor: AppColors.kPrimary,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, size: 18, color: Colors.white),
+            onPressed: () => Get.back(),
+          ),
+          title: Text(
+            "Create Advertisement",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.1,
+              ),
+          ),
         ),
-      ),
-      body: SingleChildScrollView(
-        child: Column(
+
+        body: Stack(
           children: [
-            const SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.all(20),
+
+            // ── MAIN UI ───────────────────────────────
+            SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 110),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Banner Upload ──────────────────────────────────
-                  Text(
-                    "Advertisement Banner",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade800,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
 
-                  Obx(() => GestureDetector(
-                    onTap: controller.pickBanner,
-                    child: Container(
-                      height: 200,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: controller.bannerImage.value == null
-                              ? Colors.grey.shade300
-                              : AppColors.kPrimary.withOpacity(0.3),
-                          width: 2,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: controller.bannerImage.value == null
-                          ? Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: AppColors.kPrimary
-                                  .withOpacity(0.1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.cloud_upload_outlined,
-                              size: 48,
-                              color: AppColors.kPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            "Tap to upload banner",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.grey.shade700,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            "Recommended: 1200 x 628 pixels",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade500,
-                            ),
-                          ),
-                        ],
-                      )
-                          : Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(14),
-                            child: Image.file(
-                              controller.bannerImage.value!,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              height: double.infinity,
-                            ),
-                          ),
-                          Positioned(
-                            top: 12,
-                            right: 12,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.6),
-                                shape: BoxShape.circle,
-                              ),
-                              child: IconButton(
-                                icon: const Icon(
-                                  Icons.edit,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                                onPressed: controller.pickBanner,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )),
-
-                  const SizedBox(height: 32),
-
-                  // ── Advertisement Details ──────────────────────────
-                  Text(
-                    "Advertisement Details",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade800,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Ad Name
-                  _buildCard(
-                    child: TextField(
-                      controller: controller.adNameController,
-                      style: const TextStyle(fontSize: 15),
-                      decoration: _inputDecoration(
-                        label: "Advertisement Name",
-                        hint: "Enter a catchy name",
-                        icon: Icons.campaign_outlined,
-                      ),
-                    ),
+                  _sectionCard(
+                    title: "ADVERTISEMENT BANNER",
+                    icon: Icons.image_outlined,
+                    children: [_buildBanner()],
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 14),
 
-                  // ── Location Type Label ────────────────────────────
-                  Text(
-                    "Location Type",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade800,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // ── Toggle Buttons: District | Area ────────────────
-                  Obx(() => Row(
+                  _sectionCard(
+                    title: "ADVERTISEMENT DETAILS",
+                    icon: Icons.campaign_outlined,
                     children: [
-                      Expanded(
-                        child: _locationToggleButton(
-                          label: "District",
-                          icon: Icons.location_city_outlined,
-                          isSelected:
-                          controller.locationType.value == 'district',
-                          onTap: () =>
-                              controller.setLocationType('district'),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _locationToggleButton(
-                          label: "Area",
-                          icon: Icons.place_outlined,
-                          isSelected:
-                          controller.locationType.value == 'area',
-                          onTap: () => controller.setLocationType('area'),
-                        ),
+                      _fieldLabel("Advertisement Name"),
+                      const SizedBox(height: 6),
+                      _inputField(
+                        ctrl: controller.adNameController,
+                        hint: "Enter advertisement name",
+                        icon: Icons.title,
                       ),
                     ],
-                  )),
+                  ),
 
-                  // ── Conditional Dropdown below toggle ──────────────
-                  Obx(() {
-                    final type = controller.locationType.value;
-                    if (type == null) return const SizedBox.shrink();
+                  const SizedBox(height: 14),
 
-                    return Column(
-                      children: [
-                        const SizedBox(height: 16),
-                        if (type == 'district') ...[
-                          controller.isLoadingDistricts.value
-                              ? _buildLoadingDropdown("Loading districts...")
-                              : _buildCard(
-                            child: DropdownButtonFormField<String>(
-                              value: controller.selectedDistrict.value,
-                              decoration: _inputDecoration(
-                                label: "Select District",
-                                hint: "Choose a district",
-                                icon: Icons.location_city_outlined,
-                              ),
-                              items: controller.districts
-                                  .map((d) => DropdownMenuItem(
-                                value: d,
-                                child: Text(d),
-                              ))
-                                  .toList(),
-                              onChanged: (val) =>
-                              controller.selectedDistrict.value = val,
-                              isExpanded: true,
-                              icon: Icon(Icons.keyboard_arrow_down,
-                                  color: AppColors.kPrimary),
-                              dropdownColor: Colors.white,
-                            ),
-                          ),
-                        ] else if (type == 'area') ...[
-                          controller.isLoadingAreas.value
-                              ? _buildLoadingDropdown("Loading areas...")
-                              : _buildCard(
-                            child: DropdownButtonFormField<String>(
-                              value: controller.selectedArea.value,
-                              decoration: _inputDecoration(
-                                label: "Select Area",
-                                hint: "Choose an area",
-                                icon: Icons.place_outlined,
-                              ),
-                              items: controller.areas
-                                  .map((a) => DropdownMenuItem(
-                                value: a,
-                                child: Text(a),
-                              ))
-                                  .toList(),
-                              onChanged: (val) =>
-                              controller.selectedArea.value = val,
-                              isExpanded: true,
-                              icon: Icon(Icons.keyboard_arrow_down,
-                                  color: AppColors.kPrimary),
-                              dropdownColor: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ],
-                    );
-                  }),
-
-                  const SizedBox(height: 40),
-
-                  // ── Post Button ───────────────────────────────────
-                  Obx(() => Container(
-                    width: double.infinity,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      gradient: LinearGradient(
-                        colors: controller.isLoading.value
-                            ? [Colors.grey.shade400, Colors.grey.shade400]
-                            : [
-                          AppColors.kPrimary,
-                          AppColors.kPrimary.withOpacity(0.8),
-                        ],
-                      ),
-                      boxShadow: controller.isLoading.value
-                          ? []
-                          : [
-                        BoxShadow(
-                          color: AppColors.kPrimary.withOpacity(0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: ElevatedButton(
-                      onPressed: controller.isLoading.value
-                          ? null
-                          : controller.postAdvertisement,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: controller.isLoading.value
-                          ? const SizedBox(
-                        height: 24,
-                        width: 24,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2.5,
-                        ),
-                      )
-                          : const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.publish, color: Colors.white),
-                          SizedBox(width: 8),
-                          Text(
-                            "Post Advertisement",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )),
-
-                  const SizedBox(height: 20),
+                  _sectionCard(
+                    title: "AD COVERAGE",
+                    icon: Icons.map_outlined,
+                    children: [_buildCoverage()],
+                  ),
                 ],
               ),
             ),
+
+            // ── LOADING OVERLAY ───────────────────────
+            Obx(() => controller.isLoading.value
+                ? Container(
+              color: Colors.black45,
+              child: const Center(
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                ),
+              ),
+            )
+                : const SizedBox()),
+
+            // ── SUBMIT BUTTON ─────────────────────────
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: _submitButton(),
+            ),
           ],
         ),
       ),
     );
   }
 
-  // ── Location Toggle Button ─────────────────────────────────────────
-  Widget _locationToggleButton({
-    required String label,
-    required IconData icon,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        height: 52,
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.kPrimary : Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isSelected ? AppColors.kPrimary : Colors.grey.shade300,
-            width: 1.5,
+  // ── COVERAGE UI ─────────────────────────────
+  Widget _buildCoverage() {
+    return Obx(() {
+      final isArea = controller.showMode.value == "area";
+
+      return Column(
+        children: [
+
+          // toggle
+          Row(
+            children: [
+              _tab("District", !isArea, () {
+                controller.showMode.value = "district";
+                controller.selectedArea.value = null;
+              }),
+              _tab("Area", isArea, () {
+                controller.showMode.value = "area";
+              }),
+            ],
           ),
-          boxShadow: [
-            BoxShadow(
-              color: isSelected
-                  ? AppColors.kPrimary.withOpacity(0.25)
-                  : Colors.black.withOpacity(0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
+
+          const SizedBox(height: 14),
+
+          _dropdown("State", controller.stateList,
+              controller.selectedState),
+
+          const SizedBox(height: 12),
+
+          _dropdown("District", controller.districtList,
+              controller.selectedDistrict),
+
+          if (isArea) ...[
+            const SizedBox(height: 12),
+            _dropdown("Area", controller.areaList,
+                controller.selectedArea),
           ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 20,
-              color: isSelected ? Colors.white : Colors.grey.shade600,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
+        ],
+      );
+    });
+  }
+
+  Widget _tab(String text, bool selected, VoidCallback onTap) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(10),
+          margin: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.kPrimary : Colors.white,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Center(
+            child: Text(
+              text,
               style: TextStyle(
-                fontSize: 14,
+                color: selected ? Colors.white : _textSecondary,
                 fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.white : Colors.grey.shade700,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _dropdown(String hint, List<String> items, Rx<String?> value) {
+    return Obx(() => Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: _bg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: _border),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value.value,
+          isExpanded: true,
+          hint: Text(hint),
+          items: items
+              .map((e) => DropdownMenuItem(
+            value: e,
+            child: Text(e),
+          ))
+              .toList(),
+          onChanged: (v) => value.value = v,
+        ),
+      ),
+    ));
+  }
+  Widget _buildBanner() {
+    return Obx(() => GestureDetector(
+      onTap: controller.pickBanner,
+      child: Container(
+        width: double.infinity,
+        height: 180,  // ✅ Same height as carousel
+        decoration: BoxDecoration(
+          color: _bg,
+          borderRadius: BorderRadius.circular(20), // ✅ Match carousel radius
+          border: Border.all(color: _border),
+        ),
+        child: controller.bannerImage.value == null
+            ? const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.add_photo_alternate_outlined, size: 36),
+              SizedBox(height: 8),
+              Text(
+                "Tap to upload banner",
+                style: TextStyle(color: Color(0xFF6B7280)),
+              ),
+              SizedBox(height: 4),
+              Text(
+                "Recommended ratio: 2:1",  // ✅ hint for user
+                style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+              ),
+            ],
+          ),
+        )
+            : Stack(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Image.file(
+                controller.bannerImage.value!,
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: 180,
+                cacheWidth: 800,
+                cacheHeight: 400,
+              ),
+            ),
+            // ✅ Remove / re-pick button
+            Positioned(
+              top: 8,
+              right: 8,
+              child: GestureDetector(
+                onTap: controller.removeBanner,
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: const BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.close, size: 16, color: Colors.white),
+                ),
               ),
             ),
           ],
         ),
       ),
-    );
+    ));
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────
-
-  Widget _buildCard({required Widget child}) {
+  // ── CARD ───────────────────────────────────────
+  Widget _sectionCard({
+    required String title,
+    required IconData icon,
+    required List<Widget> children,
+  }) {
     return Container(
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: _card,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _border),
       ),
-      child: child,
-    );
-  }
-
-  Widget _buildLoadingDropdown(String label) {
-    return Container(
-      height: 56,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            height: 18,
-            width: 18,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: AppColors.kPrimary,
-            ),
+          Row(
+            children: [
+              Icon(icon, size: 14, color: AppColors.kPrimary),
+              const SizedBox(width: 6),
+              Text(title,
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.kPrimary)),
+            ],
           ),
-          const SizedBox(width: 12),
-          Text(label,
-              style: TextStyle(color: Colors.grey.shade500, fontSize: 14)),
+          const Divider(),
+          ...children,
         ],
       ),
     );
   }
 
-  InputDecoration _inputDecoration({
-    required String label,
+  Widget _fieldLabel(String text) => Text(text,
+      style: const TextStyle(fontWeight: FontWeight.w500));
+
+  Widget _inputField({
+    required TextEditingController ctrl,
     required String hint,
     required IconData icon,
   }) {
-    return InputDecoration(
-      labelText: label,
-      labelStyle: TextStyle(color: Colors.grey.shade600),
-      hintText: hint,
-      hintStyle: TextStyle(color: Colors.grey.shade400),
-      prefixIcon: Icon(icon, color: AppColors.kPrimary),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide.none,
+    return TextField(
+      controller: ctrl,
+      decoration: InputDecoration(
+        hintText: hint,
+        prefixIcon: Icon(icon),
+        filled: true,
+        fillColor: _bg,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
       ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide.none,
+    );
+  }
+
+  Widget _submitButton() {
+    return SafeArea(
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        child: Obx(() => ElevatedButton(
+          onPressed: controller.isLoading.value
+              ? null
+              : controller.postAdvertisement,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.kPrimary,
+            minimumSize: const Size(double.infinity, 50),
+          ),
+          child: const Text("Post Advertisement"),
+        )),
       ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: AppColors.kPrimary, width: 2),
-      ),
-      filled: true,
-      fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
     );
   }
 }

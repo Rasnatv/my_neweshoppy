@@ -1,10 +1,13 @@
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_colors.dart';
+import '../../../widgets/networkconnection_checkpage.dart';
 import '../../myoders/myoders/myodersview.dart';
 import '../../userlogin/view/useredit_profile.dart';
+import '../../whishlist/view/whishlist_view.dart';
 import '../controller/editprofile_controller.dart';
 import 'user_changepswd.dart';
 import '../../../core/utils/auth_service.dart';
@@ -27,14 +30,24 @@ class ProfileView extends StatelessWidget {
   static const Color _rose    = Color(0xFFEF4444);
   static const Color _amber   = Color(0xFFF59E0B);
 
+
   @override
   Widget build(BuildContext context) {
+
+    // ✅ ADD HERE (TOP of build method)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (controller.profile.value == null && !controller.isLoading.value) {
+        controller.fetchProfile();
+      }
+    });
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-      ),
-      child: Scaffold(
+        value: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark,
+        ),
+        child: NetworkAwareWrapper(
+          child: Scaffold(
         backgroundColor: _bg,
         appBar: _buildAppBar(),
         body: SingleChildScrollView(
@@ -42,24 +55,27 @@ class ProfileView extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Profile Card ────────────────────────────────────────
+
               Obx(() {
-                final user = controller.profile.value;
-                if (user == null) {
+                if (controller.isLoading.value) {
                   return const SizedBox(
                     height: 100,
                     child: Center(child: CircularProgressIndicator()),
                   );
                 }
-                return _ProfileCard(user: user);
+
+                if (controller.profile.value == null) {
+                  return const SizedBox(
+                    height: 100,
+                    child: Center(child: Text("No profile data")),
+                  );
+                }
+
+                return _ProfileCard(user: controller.profile.value);
               }),
 
               const SizedBox(height: 8),
 
-              // ── Stats Bar ───────────────────────────────────────────
-              _StatsBar(),
-
-              const SizedBox(height: 20),
 
               // ── My Account ──────────────────────────────────────────
               _SectionLabel(label: 'My Account'),
@@ -83,7 +99,7 @@ class ProfileView extends StatelessWidget {
                   label: 'Wishlist',
                   sub: 'Items you saved',
                   color: _rose,
-                  onTap: () {},
+                  onTap: () =>Get.to(()=>WishlistScreen()),
                 ),
               ]),
 
@@ -108,11 +124,11 @@ class ProfileView extends StatelessWidget {
 
               const SizedBox(height: 36),
               const SizedBox(height: 20),
-            ],
+        ],
           ),
         ),
       ),
-    );
+    ));
   }
 
   PreferredSizeWidget _buildAppBar() {
@@ -297,23 +313,7 @@ class _ProfileCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 10),
-                Row(
-                  children: [
-                    _badge(
-                      icon: Icons.verified_rounded,
-                      label: 'Verified',
-                      bg: const Color(0xFFEEFDF5),
-                      fg: const Color(0xFF10B981),
-                    ),
-                    const SizedBox(width: 8),
-                    _badge(
-                      icon: Icons.workspace_premium_rounded,
-                      label: 'Member',
-                      bg: const Color(0xFFF3F0FF),
-                      fg: const Color(0xFF6C5CE7),
-                    ),
-                  ],
-                ),
+
               ],
             ),
           ),
@@ -354,35 +354,6 @@ class _ProfileCard extends StatelessWidget {
   }
 }
 
-// ── Stats Bar ────────────────────────────────────────────────────────────────
-class _StatsBar extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          _statCell('12', 'Orders', const Color(0xFF0EA5E9)),
-          _vline(),
-          _statCell('3', 'Wishlist', const Color(0xFFEF4444)),
-          _vline(),
-          _statCell('3', 'Cart Items', const Color(0xFFEF4444)),
-        ],
-      ),
-    );
-  }
 
   Widget _vline() => Container(
     width: 1,
@@ -416,7 +387,7 @@ class _StatsBar extends StatelessWidget {
       ),
     );
   }
-}
+
 
 // ── Section Label ─────────────────────────────────────────────────────────────
 class _SectionLabel extends StatelessWidget {

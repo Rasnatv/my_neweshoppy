@@ -19,10 +19,16 @@ class AddCategoryPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
+        iconTheme: IconThemeData(color:Colors.white),
         elevation: 0,
         title: Text(
           "Add Category",
-          style: AppTextStyle.rTextNunitoWhite17w700,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.1,
+          ),
         ),
         backgroundColor: AppColors.kPrimary,
         actions: [

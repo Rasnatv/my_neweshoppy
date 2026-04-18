@@ -8,6 +8,7 @@ import '../../../../common/style/app_colors.dart';
 import '../../../../common/style/app_text_style.dart';
 
 import '../../../../data/models/adminrestmodel.dart';
+import '../../../../widgets/delete_widget.dart';
 import 'controller/admin_restaurantlistcontroller.dart';
 
 import 'restaurantdetailupdatepage.dart';
@@ -23,9 +24,15 @@ class AdminRestauranthome extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        iconTheme: IconThemeData(color: Colors.white),
         title: Text(
           "Restaurant Home",
-          style: AppTextStyle.rTextNunitoWhite17w700,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.1,
+            ),
         ),
         backgroundColor: AppColors.kPrimary,
         elevation: 0,
@@ -102,9 +109,6 @@ class AdminRestauranthome extends StatelessWidget {
     );
   }
 
-  /// =========================================================
-  /// Register Card
-  /// =========================================================
   Widget _buildRegistrationCard() {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -268,9 +272,6 @@ class AdminRestauranthome extends StatelessWidget {
     );
   }
 
-  /// =========================================================
-  /// Bottom Sheet
-  /// =========================================================
   void _showBottomSheet(NewRestaurantModel restaurant) {
     Get.bottomSheet(
       Container(
@@ -320,8 +321,9 @@ class AdminRestauranthome extends StatelessWidget {
                   'facebook_link': restaurant.facebookLink,
                   'instagram_link': restaurant.instagramLink,
                   'additional_images': restaurant.additionalImages,
+                  'upi_id': restaurant.upiId,   // ✅ Add this
+                  'qr_code': restaurant.qrCode, // ✅ Add this
                 };
-
                 Get.to(
                       () => AdminRestaurantUpdatePage(
                     restaurantId: restaurant.id,
@@ -352,23 +354,44 @@ class AdminRestauranthome extends StatelessWidget {
               },
               icon: const Icon(Icons.restaurant_menu),
               label: const Text("Edit Menu & Tables"),
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 54),
-                backgroundColor: AppColors.kPrimary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-              ),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 54),
+                  backgroundColor: Colors.teal,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)))
             ),
-          ],
+            const SizedBox(height: 12),
+            // /// Menu Management
+        ElevatedButton.icon(
+          onPressed: () {
+            Get.back(); // close bottom sheet first
+            DeleteConfirmDialog.show(
+              context: Get.context!,
+              title: "Delete Restaurant",
+              message:
+              "Are you sure you want to delete \"${restaurant.restaurantName}\"? This action cannot be undone.",
+              onConfirm: () {
+                controller.deleteRestaurant(restaurant.id);
+              },
+            );
+          },
+          icon: const Icon(Icons.delete),
+          label: const Text("Delete Restaurant"),
+          style: ElevatedButton.styleFrom(
+            minimumSize: const Size(double.infinity, 54),
+            backgroundColor: Colors.deepOrange,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),],
         ),
       ),
     );
   }
 
-  /// =========================================================
-  /// Helper method to construct proper image URL
-  /// =========================================================
   String _getImageUrl(String imagePath) {
     if (imagePath.isEmpty) return '';
 
@@ -381,9 +404,6 @@ class AdminRestauranthome extends StatelessWidget {
     return "https://rasma.astradevelops.in/e_shoppyy/public/$imagePath";
   }
 
-  /// =========================================================
-  /// Empty View
-  /// =========================================================
   Widget _emptyView() {
     return Center(
       child: Column(

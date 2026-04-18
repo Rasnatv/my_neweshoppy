@@ -4,6 +4,9 @@ import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import '../../../data/errors/api_error.dart'; // ✅ added
+import '../../merchantlogin/widget/successwidget.dart'; // ✅ added
+
 class MyEventsController extends GetxController {
   var isLoading = true.obs;
   var events = <Event>[].obs;
@@ -22,11 +25,6 @@ class MyEventsController extends GetxController {
     isLoading.value = true;
     final token = box.read("auth_token") ?? "";
 
-    if (token.isEmpty) {
-      isLoading.value = false;
-      Get.snackbar("Error", "Token missing. Please login again.");
-      return;
-    }
 
     try {
       final response = await http.get(
@@ -44,39 +42,21 @@ class MyEventsController extends GetxController {
           final loadedEvents = (data['data'] as List)
               .map((e) => Event.fromJson(e))
               .toList();
+
           events.assignAll(loadedEvents);
         } else {
-          Get.snackbar("Error", data['message'] ?? "Failed to fetch events");
+          AppSnackbar.error(
+              data['message'] ?? "Failed to fetch events"); // ✅
         }
       } else {
-        Get.snackbar("Error", "Server error ${response.statusCode}");
+        AppSnackbar.error(
+            ApiErrorHandler.handleResponse(response)); // ✅
       }
     } catch (e) {
-      Get.snackbar("Error", "Something went wrong: $e");
+      AppSnackbar.error(
+          ApiErrorHandler.handleException(e)); // ✅
     } finally {
       isLoading.value = false;
-    }
-  }
-
-  Future<void> deleteEvent(String eventId) async {
-    final token = box.read("auth_token") ?? "";
-    try {
-      final response = await http.delete(
-        Uri.parse("$apiUrl/$eventId"),
-        headers: {
-          "Accept": "application/json",
-          "Authorization": "Bearer $token",
-        },
-      );
-
-      if (response.statusCode == 200) {
-        events.removeWhere((e) => e.id == eventId);
-        Get.snackbar("Success", "Event deleted successfully");
-      } else {
-        Get.snackbar("Error", "Failed to delete event");
-      }
-    } catch (e) {
-      Get.snackbar("Error", "Something went wrong: $e");
     }
   }
 }

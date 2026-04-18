@@ -1,803 +1,686 @@
-import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_instance/src/extension_instance.dart';
+import 'package:get/get_navigation/src/extension_navigation.dart';
+import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
+
 import '../../../../common/style/app_colors.dart';
 import '../../../../common/style/app_text_style.dart';
-import '../../controller/add_advertismentcontroller.dart';
+import '../controller/admin_updateadvertismnetcontroller.dart';
 
-/// Navigate to this page like:
-///   Get.to(
-///     () => AdminEditAdvertisementPage(adId: ad['id']),
-///     routeName: '/admin-edit-advertisement',
-///   );
-class AdminEditAdvertisementPage extends StatelessWidget {
-  /// The advertisement ID passed from the list page.
+class AdminEditAdvertisementPage extends StatefulWidget {
   final String adId;
 
   const AdminEditAdvertisementPage({super.key, required this.adId});
 
   @override
-  Widget build(BuildContext context) {
-    final AdminAdvertisementController controller =
-    Get.find<AdminAdvertisementController>();
+  State<AdminEditAdvertisementPage> createState() =>
+      _AdminEditAdvertisementPageState();
+}
 
-    // Fetch advertisement details as soon as page opens
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      controller.fetchSingleAdvertisement(adId);
+class _AdminEditAdvertisementPageState
+    extends State<AdminEditAdvertisementPage> {
+  static const _kPrimary = AppColors.kPrimary;
+
+  final AdminupdateAdvertisementController controller =
+  Get.put(AdminupdateAdvertisementController());
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      controller.fetchSingleAdvertisement(widget.adId);
     });
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F2F8),
-      appBar: _buildAppBar(controller),
+      backgroundColor: const Color(0xFFF5F6FA),
+      appBar: _buildAppBar(),
       body: Obx(() {
         if (controller.isFetchingAd.value) {
           return _buildShimmerLoader();
         }
-        return _buildBody(context, controller);
+        return _buildBody(context);
       }),
     );
   }
 
   // ── AppBar ──
-  PreferredSizeWidget _buildAppBar(AdminAdvertisementController controller) {
+  PreferredSizeWidget _buildAppBar() {
     return AppBar(
       backgroundColor: AppColors.kPrimary,
       elevation: 0,
-      centerTitle: false,
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white, size: 20),
-        onPressed: () => Get.back(),
-      ),
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Edit Advertisement",
-            style: AppTextStyle.rTextNunitoWhite17w700,
-          ),
-          Text(
-            "ID: $adId",
-            style: const TextStyle(
-              color: Colors.white60,
-              fontSize: 11,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-        ],
+      surfaceTintColor: Colors.transparent,
+      automaticallyImplyLeading: true,
+      iconTheme: IconThemeData(color: Colors.white),
+      title: const Text(
+        "Edit Advertisement",
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 17,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.1,
+        ),
       ),
       actions: [
-        // Reload button
-        Obx(() => IconButton(
-          icon: controller.isFetchingAd.value
-              ? const SizedBox(
-            width: 18,
-            height: 18,
-            child: CircularProgressIndicator(
-                color: Colors.white, strokeWidth: 2),
-          )
-              : const Icon(Icons.refresh_rounded, color: Colors.white),
-          onPressed: controller.isFetchingAd.value
-              ? null
-              : () => controller.fetchSingleAdvertisement(adId),
+        Obx(() => Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: IconButton(
+            style: IconButton.styleFrom(
+              backgroundColor: _kPrimary.withOpacity(0.08),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
+            icon: controller.isFetchingAd.value
+                ? SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                color: _kPrimary,
+                strokeWidth: 2,
+              ),
+            )
+                : Icon(Icons.refresh_rounded, color: _kPrimary, size: 20),
+            onPressed: controller.isFetchingAd.value
+                ? null
+                : () => controller.fetchSingleAdvertisement(widget.adId),
+          ),
         )),
-        const SizedBox(width: 4),
       ],
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(1),
+        child: Container(height: 1, color: const Color(0xFFEEEFF3)),
       ),
     );
   }
 
-  // ── Shimmer / Loading placeholder ──
-  Widget _buildShimmerLoader() {
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        _shimmerBox(height: 54),
-        const SizedBox(height: 16),
-        _shimmerBox(height: 20, width: 120),
-        const SizedBox(height: 8),
-        _shimmerBox(height: 52),
-        const SizedBox(height: 20),
-        _shimmerBox(height: 20, width: 120),
-        const SizedBox(height: 8),
-        _shimmerBox(height: 180),
-        const SizedBox(height: 20),
-        _shimmerBox(height: 20, width: 160),
-        const SizedBox(height: 8),
-        _shimmerBox(height: 52),
-        _shimmerBox(height: 52),
-        _shimmerBox(height: 52),
-      ],
-    );
-  }
-
-  Widget _shimmerBox({double height = 48, double? width}) {
-    return Container(
-      height: height,
-      width: width,
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade200,
-        borderRadius: BorderRadius.circular(12),
-      ),
-    );
-  }
-
-  // ── Main body ──
-  Widget _buildBody(
-      BuildContext context, AdminAdvertisementController controller) {
+  // ── Body ──
+  Widget _buildBody(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(18, 18, 18, 40),
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 40),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Meta info card ──
-          _buildMetaCard(controller),
-          const SizedBox(height: 20),
-
-          // ── Editable: Title ──
-          _sectionHeader(
-            icon: Icons.edit_rounded,
-            label: "Advertisement Title",
-            color: AppColors.kPrimary,
-            badge: "Editable",
-            badgeColor: const Color(0xFF1565C0),
-          ),
-          const SizedBox(height: 8),
-          _buildTitleField(controller),
-          const SizedBox(height: 22),
-
-          // ── Editable: Banner image ──
-          _sectionHeader(
-            icon: Icons.image_rounded,
-            label: "Banner Image",
-            color: AppColors.kPrimary,
-            badge: "Editable",
-            badgeColor: const Color(0xFF1565C0),
-          ),
-          const SizedBox(height: 8),
-          _buildBannerSection(context, controller),
+          _buildMetaCard(),
           const SizedBox(height: 24),
 
-          // ── Locked fields ──
-          _sectionHeader(
-            icon: Icons.lock_rounded,
-            label: "Locked Information",
-            color: const Color(0xFF78909C),
-            badge: "Read Only",
-            badgeColor: const Color(0xFF546E7A),
-          ),
-          const SizedBox(height: 10),
-          _buildLockedFields(controller),
-          const SizedBox(height: 30),
-
-          // ── Save button ──
-          _buildSaveButton(controller),
-        ],
-      ),
-    );
-  }
-
-  // ── Meta info card (type + posted by) ──
-  Widget _buildMetaCard(AdminAdvertisementController controller) {
-    return Obx(() {
-      final type = controller.editCreatedByType.value;
-      final typeColor = _typeColor(type);
-      final typeLabel = _typeLabel(type);
-
-      return Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: typeColor.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: typeColor.withOpacity(0.25), width: 1),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: typeColor.withOpacity(0.15),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(_typeIcon(type), color: typeColor, size: 22),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        "Ad #$adId",
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: typeColor,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      _pill(typeLabel, typeColor),
-                    ],
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    controller.editCreatedAt.value.isNotEmpty
-                        ? "Posted: ${_formatDate(controller.editCreatedAt.value)}"
-                        : "Loading details...",
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
-    });
-  }
-
-  // ── Section header with badge ──
-  Widget _sectionHeader({
-    required IconData icon,
-    required String label,
-    required Color color,
-    String? badge,
-    Color? badgeColor,
-  }) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: color),
-        const SizedBox(width: 7),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: color,
-            letterSpacing: 0.2,
-          ),
-        ),
-        if (badge != null) ...[
-          const SizedBox(width: 8),
-          _pill(badge, badgeColor ?? color),
-        ],
-      ],
-    );
-  }
-
-  // ── Title field (editable) ──
-  Widget _buildTitleField(AdminAdvertisementController controller) {
-    return Obx(() => TextField(
-      controller: controller.editAdName,
-      style: const TextStyle(fontSize: 14, color: Color(0xFF1A1A2E)),
-      decoration: InputDecoration(
-        hintText: "Enter advertisement title...",
-        hintStyle:
-        TextStyle(color: Colors.grey.shade400, fontSize: 14),
-        prefixIcon: const Icon(Icons.campaign_rounded,
-            color: AppColors.kPrimary, size: 20),
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding:
-        const EdgeInsets.symmetric(vertical: 15, horizontal: 16),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: controller.editIsTitleEmpty.value
-                ? Colors.red.shade400
-                : Colors.grey.shade200,
-            width: 1.2,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide:
-          const BorderSide(color: AppColors.kPrimary, width: 1.8),
-        ),
-        errorText: controller.editIsTitleEmpty.value
-            ? "Title is required"
-            : null,
-      ),
-      onChanged: (_) {
-        if (controller.editIsTitleEmpty.value) {
-          controller.editIsTitleEmpty.value = false;
-        }
-      },
-    ));
-  }
-
-  // ── Banner image section (editable) ──
-  Widget _buildBannerSection(
-      BuildContext context, AdminAdvertisementController controller) {
-    return Obx(() {
-      final localFile = controller.editBannerImage.value;
-      final networkUrl = controller.editNetworkBannerUrl.value;
-
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Preview
-          GestureDetector(
-            onTap: controller.pickEditBannerImage,
-            child: Container(
-              height: 185,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.grey.shade300, width: 1.2),
-              ),
-              clipBehavior: Clip.hardEdge,
-              child: localFile != null
-                  ? _localImagePreview(localFile, controller)
-                  : networkUrl.isNotEmpty
-                  ? _networkImagePreview(networkUrl)
-                  : _imagePlaceholder(),
-            ),
-          ),
-          const SizedBox(height: 10),
-
-          // Buttons row
-          Row(
+          _buildCard(
             children: [
-              Expanded(
-                child: _outlineBtn(
-                  icon: Icons.photo_library_rounded,
-                  label: localFile != null ? "Change Again" : "Change Image",
-                  color: AppColors.kPrimary,
-                  onTap: controller.pickEditBannerImage,
-                ),
+              _sectionHeader(
+                icon: Icons.title_rounded,
+                label: "Advertisement Title",
+                badge: "Editable",
+                badgeColor: const Color(0xFF2D9CDB),
               ),
-              if (localFile != null) ...[
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _outlineBtn(
-                    icon: Icons.undo_rounded,
-                    label: "Revert",
-                    color: Colors.orange.shade700,
-                    onTap: controller.removeEditBannerImage,
-                  ),
-                ),
-              ],
+              const SizedBox(height: 14),
+              _buildTitleField(),
             ],
           ),
-        ],
-      );
-    });
-  }
 
-  Widget _localImagePreview(
-      File file, AdminAdvertisementController controller) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        Image.file(file, fit: BoxFit.cover),
-        // Dark overlay
-        Container(color: Colors.black26),
-        // "New" badge
-        const Positioned(
-          top: 10,
-          left: 10,
-          child: _NewImageBadge(),
-        ),
-        // Remove button
-        Positioned(
-          top: 8,
-          right: 8,
-          child: GestureDetector(
-            onTap: controller.removeEditBannerImage,
-            child: Container(
-              padding: const EdgeInsets.all(5),
-              decoration: const BoxDecoration(
-                color: Colors.red,
-                shape: BoxShape.circle,
-              ),
-              child:
-              const Icon(Icons.close_rounded, color: Colors.white, size: 14),
-            ),
-          ),
-        ),
-        const Center(
-          child: Icon(Icons.check_circle_rounded,
-              color: Colors.white70, size: 36),
-        ),
-      ],
-    );
-  }
+          const SizedBox(height: 16),
 
-  Widget _networkImagePreview(String url) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        Image.network(
-          url,
-          fit: BoxFit.cover,
-          loadingBuilder: (_, child, progress) => progress == null
-              ? child
-              : Container(
-            color: Colors.grey.shade100,
-            child: const Center(
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-          ),
-          errorBuilder: (_, __, ___) => _imagePlaceholder(),
-        ),
-        // Tap-to-edit overlay
-        Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.bottomCenter,
-              end: Alignment.topCenter,
-              colors: [
-                Colors.black.withOpacity(0.5),
-                Colors.transparent,
-              ],
-            ),
-          ),
-        ),
-        const Positioned(
-          bottom: 12,
-          left: 0,
-          right: 0,
-          child: Column(
+          _buildCard(
             children: [
-              Icon(Icons.photo_camera_rounded, color: Colors.white70, size: 22),
-              SizedBox(height: 4),
-              Text(
-                "Tap to replace image",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
+              _sectionHeader(
+                icon: Icons.image_rounded,
+                label: "Banner Image",
+                badge: "Editable",
+                badgeColor: const Color(0xFF2D9CDB),
               ),
+              const SizedBox(height: 14),
+              _buildBannerSection(context),
             ],
           ),
-        ),
-      ],
-    );
-  }
 
-  Widget _imagePlaceholder() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(Icons.add_photo_alternate_rounded,
-            size: 42, color: Colors.grey.shade400),
-        const SizedBox(height: 8),
-        Text(
-          "Tap to select image",
-          style: TextStyle(
-            color: Colors.grey.shade500,
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
+          const SizedBox(height: 16),
 
-  // ── Locked fields section ──
-  Widget _buildLockedFields(AdminAdvertisementController controller) {
-    return Obx(() => Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200, width: 1),
-      ),
-      child: Column(
-        children: [
-          // Main location
-          _lockedFieldTile(
-            icon: Icons.location_on_rounded,
-            label: "Main Location",
-            value: controller.editMainLocation.value.isNotEmpty
-                ? controller.editMainLocation.value
-                : "—",
-            iconColor: const Color(0xFF6A1B9A),
-            isFirst: true,
+          _buildCard(
+            children: [
+              _sectionHeader(
+                icon: Icons.public_rounded,
+                label: "Region Info",
+                badge: "Editable",
+                badgeColor: const Color(0xFF2D9CDB),
+              ),
+              const SizedBox(height: 14),
+              _buildRegionDropdowns(),
+            ],
           ),
-          _divider(),
 
-          // District
-          _lockedFieldTile(
-            icon: Icons.map_rounded,
-            label: "District",
-            value: controller.editDistrict.value.isNotEmpty
-                ? controller.editDistrict.value
-                : "—",
-            iconColor: const Color(0xFF00695C),
-          ),
-          _divider(),
+          const SizedBox(height: 16),
 
-          // Event location
-          _lockedFieldTile(
-            icon: Icons.event_available_rounded,
-            label: "Event Location",
-            value: controller.editEventLocation.value.isNotEmpty
-                ? controller.editEventLocation.value
-                : "—",
-            iconColor: const Color(0xFFBF360C),
+          _buildCard(
+            backgroundColor: const Color(0xFFFAFAFB),
+            children: [
+              _sectionHeader(
+                icon: Icons.lock_outline_rounded,
+                label: "Locked Information",
+                badge: "Read Only",
+                badgeColor: const Color(0xFF9E9E9E),
+              ),
+              const SizedBox(height: 14),
+              _buildLockedFields(),
+            ],
           ),
-          _divider(),
 
-          // Created by
-          _lockedFieldTile(
-            icon: Icons.person_rounded,
-            label: "Posted By",
-            value:
-            "${_typeLabel(controller.editCreatedByType.value)} (ID: ${controller.editCreatedById.value})",
-            iconColor: _typeColor(controller.editCreatedByType.value),
-          ),
-          _divider(),
-
-          // Posted on
-          _lockedFieldTile(
-            icon: Icons.access_time_rounded,
-            label: "Posted On",
-            value: controller.editCreatedAt.value.isNotEmpty
-                ? _formatDate(controller.editCreatedAt.value)
-                : "—",
-            iconColor: Colors.blueGrey,
-            isLast: true,
-          ),
+          const SizedBox(height: 28),
+          _buildSaveButton(),
         ],
       ),
-    ));
+    );
   }
 
-  Widget _lockedFieldTile({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color iconColor,
-    bool isFirst = false,
-    bool isLast = false,
+  // ── Reusable card wrapper ──
+  Widget _buildCard({
+    required List<Widget> children,
+    Color? backgroundColor,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.vertical(
-          top: isFirst ? const Radius.circular(14) : Radius.zero,
-          bottom: isLast ? const Radius.circular(14) : Radius.zero,
+        color: backgroundColor ?? Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
+      ),
+    );
+  }
+
+  // ── Meta card ──
+  Widget _buildMetaCard() {
+    return Obx(() => Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            _kPrimary,
+            _kPrimary.withOpacity(0.8),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: _kPrimary.withOpacity(0.25),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(7),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, size: 16, color: iconColor),
+            child: const Icon(Icons.campaign_rounded,
+                color: Colors.white, size: 22),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  label,
-                  style: TextStyle(
+                  "Ad ID: ${widget.adId}",
+                  style: const TextStyle(
+                    color: Colors.white70,
                     fontSize: 11,
-                    color: Colors.grey.shade500,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  value,
+                  "By: ${controller.editCreatedByType.value.isNotEmpty ? controller.editCreatedByType.value : '—'}",
                   style: const TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF1A1A2E),
+                    color: Colors.white,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
             ),
           ),
-          // Lock icon
-          Icon(Icons.lock_outline_rounded, size: 14, color: Colors.grey.shade400),
+          Container(
+            padding:
+            const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Text(
+              "Editing",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
         ],
+      ),
+    ));
+  }
+
+  // ── Region dropdowns ──
+  Widget _buildRegionDropdowns() {
+    return Obx(() => Column(
+      children: [
+        _buildDropdownField(
+          label: 'State',
+          icon: Icons.map_outlined,
+          value: controller.selectedEditState.value,
+          items: controller.statesList,
+          isLoading: controller.isLoadingStates.value,
+          onChanged: (v) => controller.selectedEditState.value = v,
+        ),
+        const SizedBox(height: 12),
+        _buildDropdownField(
+          label: 'District',
+          icon: Icons.location_city_outlined,
+          value: controller.selectedEditDistrict.value,
+          items: controller.districtsList,
+          isLoading: controller.isLoadingDistricts.value,
+          onChanged: (v) => controller.selectedEditDistrict.value = v,
+        ),
+        if (controller.showMainLocationDropdown) ...[
+          const SizedBox(height: 12),
+          _buildDropdownField(
+            label: 'Main Location',
+            icon: Icons.place_outlined,
+            value: controller.selectedEditArea.value,
+            items: controller.areasList,
+            isLoading: controller.isLoadingAreas.value,
+            onChanged: (v) => controller.selectedEditArea.value = v,
+          ),
+        ],
+      ],
+    ));
+  }
+
+  Widget _buildDropdownField({
+    required String label,
+    required IconData icon,
+    required String? value,
+    required List<String> items,
+    required bool isLoading,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return DropdownButtonFormField<String>(
+      value: value?.isNotEmpty == true ? value : null,
+      icon: isLoading
+          ? const SizedBox(
+          width: 18,
+          height: 18,
+          child: CircularProgressIndicator(strokeWidth: 2))
+          : const Icon(Icons.keyboard_arrow_down_rounded,
+          color: Color(0xFF9E9EA7)),
+      items: items
+          .map((e) => DropdownMenuItem(
+        value: e,
+        child: Text(e,
+            style: const TextStyle(
+                fontSize: 14, color: Color(0xFF1A1A2E))),
+      ))
+          .toList(),
+      onChanged: isLoading ? null : onChanged,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle:
+        const TextStyle(color: Color(0xFF9E9EA7), fontSize: 13),
+        prefixIcon: Icon(icon, color: _kPrimary, size: 20),
+        filled: true,
+        fillColor: const Color(0xFFF9F9FB),
+        contentPadding:
+        const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFE8E8F0)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFE8E8F0)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: _kPrimary, width: 1.5),
+        ),
       ),
     );
   }
 
-  Widget _divider() => Divider(
-    height: 1,
-    thickness: 1,
-    color: Colors.grey.shade100,
-    indent: 14,
-    endIndent: 14,
-  );
-
-  // ── Save button ──
-  Widget _buildSaveButton(AdminAdvertisementController controller) {
-    return Obx(() => SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: ElevatedButton.icon(
-        onPressed: controller.isEditLoading.value
-            ? null
-            : controller.updateAdvertisement,
-        icon: controller.isEditLoading.value
-            ? const SizedBox(
-          width: 19,
-          height: 19,
-          child: CircularProgressIndicator(
-              color: Colors.white, strokeWidth: 2.2),
-        )
-            : const Icon(Icons.save_rounded, color: Colors.white, size: 20),
-        label: Text(
-          controller.isEditLoading.value
-              ? "Saving Changes..."
-              : "Save Changes",
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.3,
-          ),
+  // ── Title field ──
+  Widget _buildTitleField() {
+    return Obx(() => TextField(
+      controller: controller.editAdName,
+      style: const TextStyle(
+        fontSize: 14,
+        color: Color(0xFF1A1A2E),
+        fontWeight: FontWeight.w500,
+      ),
+      decoration: InputDecoration(
+        hintText: "Enter advertisement title",
+        hintStyle:
+        const TextStyle(color: Color(0xFFBDBDC7), fontSize: 14),
+        prefixIcon:
+        Icon(Icons.edit_outlined, color: _kPrimary, size: 20),
+        errorText: controller.editIsTitleEmpty.value ? "Title is required" : null,
+        filled: true,
+        fillColor: const Color(0xFFF9F9FB),
+        contentPadding:
+        const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFE8E8F0)),
         ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.kPrimary,
-          disabledBackgroundColor: AppColors.kPrimary.withOpacity(0.55),
-          elevation: 3,
-          shadowColor: AppColors.kPrimary.withOpacity(0.4),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFE8E8F0)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: _kPrimary, width: 1.5),
         ),
       ),
     ));
   }
 
-  // ─────────────────────────────────────────────
-  //  Helpers
-  // ─────────────────────────────────────────────
-  Widget _pill(String label, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.3), width: 0.8),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          color: color,
+  // ── Banner section ──
+  Widget _buildBannerSection(BuildContext context) {
+    return Obx(() {
+      final file = controller.editBannerImage.value;
+      final url = controller.editNetworkBannerUrl.value;
+      final hasImage = file != null || url.isNotEmpty;
+
+      return GestureDetector(
+        onTap: controller.pickEditBannerImage,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          height: 190,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF2F3F8),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: hasImage ? _kPrimary.withOpacity(0.4) : const Color(0xFFDDDDE8),
+              width: 1.5,
+            ),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(13),
+            child: file != null
+                ? Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.file(file, fit: BoxFit.cover),
+                _buildImageOverlay(),
+              ],
+            )
+                : url.isNotEmpty
+                ? Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.network(url, fit: BoxFit.cover),
+                _buildImageOverlay(),
+              ],
+            )
+                : _buildEmptyBanner(),
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 
-  Widget _outlineBtn({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
+  Widget _buildImageOverlay() {
+    return Positioned(
+      bottom: 10,
+      right: 10,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 11),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          border: Border.all(color: color.withOpacity(0.6), width: 1.2),
-          borderRadius: BorderRadius.circular(10),
-          color: color.withOpacity(0.05),
+          color: Colors.black.withOpacity(0.55),
+          borderRadius: BorderRadius.circular(20),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
-            ),
+            Icon(Icons.edit_rounded, color: Colors.white, size: 13),
+            SizedBox(width: 5),
+            Text("Change",
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500)),
           ],
         ),
       ),
     );
   }
 
-  IconData _typeIcon(String type) {
-    switch (type) {
-      case 'admin':
-        return Icons.admin_panel_settings_rounded;
-      case 'district_admin':
-        return Icons.location_city_rounded;
-      case 'area_admin':
-        return Icons.holiday_village_rounded;
-      case 'merchant':
-        return Icons.storefront_rounded;
-      default:
-        return Icons.person_rounded;
-    }
+  Widget _buildEmptyBanner() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: _kPrimary.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(Icons.add_photo_alternate_outlined,
+              color: _kPrimary, size: 28),
+        ),
+        const SizedBox(height: 10),
+        const Text(
+          "Tap to upload banner image",
+          style: TextStyle(
+            color: Color(0xFF9E9EA7),
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          "JPG, PNG supported",
+          style: TextStyle(color: Color(0xFFBDBDC7), fontSize: 11),
+        ),
+      ],
+    );
   }
 
-  Color _typeColor(String type) {
-    switch (type) {
-      case 'admin':
-        return const Color(0xFF1565C0);
-      case 'district_admin':
-        return const Color(0xFF2E7D32);
-      case 'area_admin':
-        return const Color(0xFF6A1B9A);
-      case 'merchant':
-        return const Color(0xFFE65100);
-      default:
-        return Colors.grey.shade600;
-    }
+  // ── Locked fields ──
+  Widget _buildLockedFields() {
+    return Obx(() => Column(
+      children: [
+        _buildLockedTile(
+          icon: Icons.calendar_today_outlined,
+          label: "Posted On",
+          value: controller.editCreatedAt.value.isNotEmpty
+              ? controller.editCreatedAt.value
+              : '—',
+        ),
+      ],
+    ));
   }
 
-  String _typeLabel(String type) {
-    switch (type) {
-      case 'admin':
-        return 'Admin';
-      case 'district_admin':
-        return 'District Admin';
-      case 'area_admin':
-        return 'Area Admin';
-      case 'merchant':
-        return 'Merchant';
-      default:
-        return type.isEmpty ? '—' : type;
-    }
-  }
-
-  String _formatDate(String dateStr) {
-    try {
-      final dt = DateTime.parse(dateStr);
-      const months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-      ];
-      return "${dt.day} ${months[dt.month - 1]} ${dt.year}, "
-          "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
-    } catch (_) {
-      return dateStr;
-    }
-  }
-}
-
-// Separate const widget to avoid closure issues in Stack
-class _NewImageBadge extends StatelessWidget {
-  const _NewImageBadge();
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildLockedTile({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.green.shade600,
-        borderRadius: BorderRadius.circular(8),
+        color: const Color(0xFFF2F3F7),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE8E8F0)),
       ),
-      child: const Row(
-        mainAxisSize: MainAxisSize.min,
+      child: Row(
         children: [
-          Icon(Icons.check_rounded, color: Colors.white, size: 12),
-          SizedBox(width: 4),
-          Text(
-            "New image",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
+          Icon(icon, color: const Color(0xFFBDBDC7), size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style: const TextStyle(
+                        color: Color(0xFF9E9EA7),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500)),
+                const SizedBox(height: 2),
+                Text(value,
+                    style: const TextStyle(
+                        color: Color(0xFF555566),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500)),
+              ],
             ),
+          ),
+          const Icon(Icons.lock_outline_rounded,
+              color: Color(0xFFCCCCD6), size: 15),
+        ],
+      ),
+    );
+  }
+
+  // ── Save button ──
+  Widget _buildSaveButton() {
+    return Obx(() => SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: ElevatedButton(
+        onPressed: controller.isEditLoading.value
+            ? null
+            : controller.updateAdvertisement,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: _kPrimary,
+          disabledBackgroundColor: _kPrimary.withOpacity(0.5),
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+        child: controller.isEditLoading.value
+            ? const SizedBox(
+          width: 22,
+          height: 22,
+          child: CircularProgressIndicator(
+              color: Colors.white, strokeWidth: 2.5),
+        )
+            : const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.check_circle_outline_rounded,
+                color: Colors.white, size: 20),
+            SizedBox(width: 8),
+            Text(
+              "Save Changes",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.2,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ));
+  }
+
+  // ── Section header ──
+  Widget _sectionHeader({
+    required IconData icon,
+    required String label,
+    required String badge,
+    required Color badgeColor,
+  }) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(7),
+          decoration: BoxDecoration(
+            color: badgeColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: badgeColor, size: 16),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFF1A1A2E),
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.2,
+          ),
+        ),
+        const Spacer(),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+          decoration: BoxDecoration(
+            color: badgeColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: badgeColor.withOpacity(0.25)),
+          ),
+          child: Text(
+            badge,
+            style: TextStyle(
+              color: badgeColor,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.3,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Shimmer loader ──
+  Widget _buildShimmerLoader() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: List.generate(
+          4,
+              (i) => Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: _shimmerBox(height: i == 1 ? 190 : 90),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _shimmerBox({required double height}) {
+    return Container(
+      height: height,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),

@@ -1,20 +1,29 @@
-                       
 
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../../common/style/app_colors.dart';
+import '../../../../common/utils/validators.dart';
 import '../../controller/restaurant_regcontroller.dart';
 
 class RestaurantRegistrationPage extends StatelessWidget {
-  final controller = Get.put(RestaurantRegController());
+  final RestaurantRegController controller =
+  Get.isRegistered<RestaurantRegController>()
+      ? Get.find<RestaurantRegController>()
+      : Get.put(RestaurantRegController());
+
+  RestaurantRegistrationPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        automaticallyImplyLeading: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Get.back(result: true), // ✅ always return true on back
+        ),
         title: const Text(
           "Restaurant Registration",
           style: TextStyle(
@@ -27,263 +36,343 @@ class RestaurantRegistrationPage extends StatelessWidget {
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── Restaurant Banner Image ─────────────────────────────
-                  _buildCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _sectionHeader(
-                          icon: Icons.store_mall_directory_rounded,
-                          title: "Restaurant Image",
+      body: Form(
+        key: controller.formKey,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Restaurant Banner Image ──────────────────────────
+                _buildCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _sectionHeader(
+                        icon: Icons.store_mall_directory_rounded,
+                        title: "Restaurant Image",
+                      ),
+                      const SizedBox(height: 20),
+                      _restaurantImagePicker(),
+                      Obx(() => controller.restaurantImageError.value.isNotEmpty
+                          ? Padding(
+                        padding: const EdgeInsets.only(top: 8, left: 4),
+                        child: Text(
+                          controller.restaurantImageError.value,
+                          style: TextStyle(
+                            color: Colors.red.shade700,
+                            fontSize: 12,
+                          ),
                         ),
-                        const SizedBox(height: 20),
-                        _imagePicker(),
-                      ],
-                    ),
+                      )
+                          : const SizedBox.shrink()),
+                    ],
                   ),
+                ),
 
-                  const SizedBox(height: 20),
+                const SizedBox(height: 20),
 
-
-                  _buildCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _sectionHeader(
-                          icon: Icons.info_outline_rounded,
-                          title: "Basic Information",
-                        ),
-                        const SizedBox(height: 20),
-                        _modernTextField(
-                          controller: controller.restaurantNameCtrl,
-                          label: "Restaurant Name",
-                          hint: "Enter restaurant name",
-                          icon: Icons.restaurant_rounded,
-                        ),
-                        const SizedBox(height: 16),
-                        _modernTextField(
-                          controller: controller.ownerCtrl,
-                          label: "Owner Name",
-                          hint: "Enter owner name",
-                          icon: Icons.person_outline_rounded,
-                        ),
-                        const SizedBox(height: 16),
-                        _modernTextField(
-                          controller: controller.addressCtrl,
-                          label: "Address",
-                          hint: "Enter full address",
-                          icon: Icons.location_on_outlined,
-                          maxLines: 2,
-                        ),
-                        const SizedBox(height: 16),
-                        _modernTextField(
-                          controller: controller.phoneCtrl,
-                          label: "Phone",
-                          hint: "Enter phone number",
-                          icon: Icons.phone_outlined,
-                          type: TextInputType.phone,
-                        ),
-                        const SizedBox(height: 16),
-                        _modernTextField(
-                          controller: controller.emailCtrl,
-                          label: "Email",
-                          hint: "Enter email address",
-                          icon: Icons.email_outlined,
-                          type: TextInputType.emailAddress,
-                        ),
-                        const SizedBox(height: 16),
-                        _modernTextField(
-                          controller: controller.websiteCtrl,
-                          label: "Website",
-                          hint: "https://yourwebsite.com",
-                          icon: Icons.language_outlined,
-                          type: TextInputType.url,
-                        ),
-                      ],
-                    ),
+                // ── Basic Information ────────────────────────────────
+                _buildCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _sectionHeader(
+                        icon: Icons.info_outline_rounded,
+                        title: "Basic Information",
+                      ),
+                      const SizedBox(height: 20),
+                      _validatedTextField(
+                        ctrl: controller.restaurantNameCtrl,
+                        label: "Restaurant Name *",
+                        hint: "Enter restaurant name",
+                        icon: Icons.restaurant_rounded,
+                        validator: (v) =>
+                            DValidator.validateEmptyText('Restaurant name', v),
+                      ),
+                      const SizedBox(height: 16),
+                      _validatedTextField(
+                        ctrl: controller.ownerCtrl,
+                        label: "Owner Name *",
+                        hint: "Enter owner name",
+                        icon: Icons.person_outline_rounded,
+                        validator: (v) =>
+                            DValidator.validateEmptyText('Owner name', v),
+                      ),
+                      const SizedBox(height: 16),
+                      _validatedTextField(
+                        ctrl: controller.addressCtrl,
+                        label: "Address *",
+                        hint: "Enter full address",
+                        icon: Icons.location_on_outlined,
+                        maxLines: 2,
+                        validator: (v) =>
+                            DValidator.validateEmptyText('Address', v),
+                      ),
+                      const SizedBox(height: 16),
+                      _validatedTextField(
+                        ctrl: controller.phoneCtrl,
+                        label: "Phone *",
+                        hint: "Enter 10-digit phone number",
+                        icon: Icons.phone_outlined,
+                        type: TextInputType.phone,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(10),
+                        ],
+                        validator: (v) => DValidator.validatePhoneNumber(v),
+                      ),
+                      const SizedBox(height: 16),
+                      _validatedTextField(
+                        ctrl: controller.emailCtrl,
+                        label: "Email",
+                        hint: "Enter email address",
+                        icon: Icons.email_outlined,
+                        type: TextInputType.emailAddress,
+                        validator: (v) {
+                          if (v == null || v.isEmpty) return null;
+                          return DValidator.validateEmail(v);
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      _validatedTextField(
+                        ctrl: controller.websiteCtrl,
+                        label: "Website",
+                        hint: "https://yourwebsite.com",
+                        icon: Icons.language_outlined,
+                        type: TextInputType.url,
+                        validator: null,
+                      ),
+                      const SizedBox(height: 16),
+                      _validatedTextField(
+                        ctrl: controller.upiCtrl,
+                        label: "UPI ID *",
+                        hint: "e.g. name@upi",
+                        icon: Icons.account_balance_wallet_outlined,
+                        validator: null,
+                      ),
+                    ],
                   ),
+                ),
 
-                  const SizedBox(height: 20),
+                const SizedBox(height: 20),
 
-                  // ── Social & Contact ────────────────────────────────────
-                  _buildCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _sectionHeader(
-                          icon: Icons.share_outlined,
-                          title: "Social & Contact",
+                // ── QR Code Upload ───────────────────────────────────
+                _buildCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _sectionHeader(
+                        icon: Icons.qr_code_2_rounded,
+                        title: "Payment QR Code *",
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        "Upload your UPI / payment QR code image",
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey.shade500,
                         ),
-                        const SizedBox(height: 20),
-                        _modernTextField(
-                          controller: controller.whatsappCtrl,
-                          label: "WhatsApp",
-                          hint: "Enter WhatsApp number",
-                          icon: Icons.chat_outlined,
-                          type: TextInputType.phone,
+                      ),
+                      const SizedBox(height: 20),
+                      _qrCodePicker(),
+                      Obx(() => controller.qrCodeImageError.value.isNotEmpty
+                          ? Padding(
+                        padding: const EdgeInsets.only(top: 8, left: 4),
+                        child: Text(
+                          controller.qrCodeImageError.value,
+                          style: TextStyle(
+                            color: Colors.red.shade700,
+                            fontSize: 12,
+                          ),
                         ),
-                        const SizedBox(height: 16),
-                        _modernTextField(
-                          controller: controller.facebookCtrl,
-                          label: "Facebook",
-                          hint: "Facebook profile or page URL",
-                          icon: Icons.facebook_outlined,
-                          type: TextInputType.url,
-                        ),
-                        const SizedBox(height: 16),
-                        _modernTextField(
-                          controller: controller.instaCtrl,
-                          label: "Instagram",
-                          hint: "@yourhandle or profile URL",
-                          icon: Icons.photo_camera_outlined,
-                          type: TextInputType.url,
-                        ),
-                      ],
-                    ),
+                      )
+                          : const SizedBox.shrink()),
+                    ],
                   ),
+                ),
 
-                  const SizedBox(height: 20),
+                const SizedBox(height: 20),
 
-                  _buildCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _sectionHeader(
-                                icon: Icons.photo_library_outlined,
-                                title: "Additional Images",
+                // ── Social & Contact ─────────────────────────────────
+                _buildCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _sectionHeader(
+                        icon: Icons.share_outlined,
+                        title: "Social & Contact",
+                      ),
+                      const SizedBox(height: 20),
+                      _validatedTextField(
+                        ctrl: controller.whatsappCtrl,
+                        label: "WhatsApp",
+                        hint: "Enter 10-digit WhatsApp number",
+                        icon: Icons.chat_outlined,
+                        type: TextInputType.phone,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(10),
+                        ],
+                        validator: (v) {
+                          if (v == null || v.isEmpty) return null;
+                          return DValidator.validatePhoneNumber(v);
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      _validatedTextField(
+                        ctrl: controller.facebookCtrl,
+                        label: "Facebook",
+                        hint: "Facebook profile or page URL",
+                        icon: Icons.facebook_outlined,
+                        type: TextInputType.url,
+                        validator: null,
+                      ),
+                      const SizedBox(height: 16),
+                      _validatedTextField(
+                        ctrl: controller.instaCtrl,
+                        label: "Instagram",
+                        hint: "@yourhandle or profile URL",
+                        icon: Icons.photo_camera_outlined,
+                        type: TextInputType.url,
+                        validator: null,
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // ── Additional Images ────────────────────────────────
+                _buildCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _sectionHeader(
+                              icon: Icons.photo_library_outlined,
+                              title: "Additional Images",
+                            ),
+                          ),
+                          InkWell(
+                            onTap: controller.pickAdditionalImages,
+                            borderRadius: BorderRadius.circular(10),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: AppColors.kPrimary.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: AppColors.kPrimary.withOpacity(0.3),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.add_photo_alternate_outlined,
+                                      color: AppColors.kPrimary, size: 18),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    "Add",
+                                    style: TextStyle(
+                                      color: AppColors.kPrimary,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            // Add button aligned to the right of header
-                            InkWell(
-                              onTap: controller.pickAdditionalImages,
-                              borderRadius: BorderRadius.circular(10),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 14, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: AppColors.kPrimary.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color: AppColors.kPrimary.withOpacity(0.3),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      Obx(() => controller.additionalImages.isEmpty
+                          ? Container(
+                        height: 100,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                              color: Colors.grey.shade200, width: 1.5),
+                        ),
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.add_photo_alternate_outlined,
+                                  size: 28, color: Colors.grey.shade400),
+                              const SizedBox(height: 6),
+                              Text(
+                                "No additional images selected",
+                                style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.grey.shade400),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                          : Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: controller.additionalImages
+                            .asMap()
+                            .entries
+                            .map(
+                              (e) => Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius:
+                                BorderRadius.circular(10),
+                                child: Image.file(
+                                  e.value,
+                                  width: 100,
+                                  height: 100,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              Positioned(
+                                right: 4,
+                                top: 4,
+                                child: GestureDetector(
+                                  onTap: () => controller
+                                      .additionalImages
+                                      .removeAt(e.key),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black54,
+                                      borderRadius:
+                                      BorderRadius.circular(8),
+                                    ),
+                                    child: const Icon(
+                                        Icons.close_rounded,
+                                        size: 14,
+                                        color: Colors.white),
                                   ),
                                 ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.add_photo_alternate_outlined,
-                                        color: AppColors.kPrimary, size: 18),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      "Add",
-                                      style: TextStyle(
-                                        color: AppColors.kPrimary,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        Obx(() => controller.additionalImages.isEmpty
-                            ? Container(
-                          height: 100,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade50,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                                color: Colors.grey.shade200,
-                                width: 1.5),
-                          ),
-                          child: Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.add_photo_alternate_outlined,
-                                    size: 28,
-                                    color: Colors.grey.shade400),
-                                const SizedBox(height: 6),
-                                Text(
-                                  "No additional images selected",
-                                  style: TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.grey.shade400),
-                                ),
-                              ],
-                            ),
+                            ],
                           ),
                         )
-                            : Wrap(
-                          spacing: 10,
-                          runSpacing: 10,
-                          children: controller.additionalImages
-                              .asMap()
-                              .entries
-                              .map(
-                                (e) => Stack(
-                              children: [
-                                ClipRRect(
-                                  borderRadius:
-                                  BorderRadius.circular(10),
-                                  child: Image.file(
-                                    e.value,
-                                    width: 100,
-                                    height: 100,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                                Positioned(
-                                  right: 4,
-                                  top: 4,
-                                  child: GestureDetector(
-                                    onTap: () => controller
-                                        .additionalImages
-                                        .removeAt(e.key),
-                                    child: Container(
-                                      padding:
-                                      const EdgeInsets.all(4),
-                                      decoration: BoxDecoration(
-                                        color: Colors.black54,
-                                        borderRadius:
-                                        BorderRadius.circular(8),
-                                      ),
-                                      child: const Icon(
-                                          Icons.close_rounded,
-                                          size: 14,
-                                          color: Colors.white),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                              .toList(),
-                        )),
-                      ],
-                    ),
+                            .toList(),
+                      )),
+                    ],
                   ),
+                ),
 
-                  const SizedBox(height: 12),
+                const SizedBox(height: 24),
 
-                  // ── Submit Button ───────────────────────────────────────
-                  Obx(() => Container(
-                    width: double.infinity,
-                    height: 54,
+                // ── Submit Button ────────────────────────────────────
+                Obx(() => SizedBox(
+                  width: double.infinity,
+                  height: 54,
+                  child: DecoratedBox(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
                       gradient: LinearGradient(
@@ -322,9 +411,9 @@ class RestaurantRegistrationPage extends StatelessWidget {
                         child: CircularProgressIndicator(
                             color: Colors.white, strokeWidth: 2.5),
                       )
-                          : Row(
+                          : const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
+                        children: [
                           Icon(Icons.check_circle_outline, size: 22),
                           SizedBox(width: 10),
                           Text(
@@ -338,13 +427,13 @@ class RestaurantRegistrationPage extends StatelessWidget {
                         ],
                       ),
                     ),
-                  )),
+                  ),
+                )),
 
-                  const SizedBox(height: 24),
-                ],
-              ),
+                const SizedBox(height: 24),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -395,20 +484,25 @@ class RestaurantRegistrationPage extends StatelessWidget {
     );
   }
 
-  // ── Modern text field ─────────────────────────────────────────────────────
-  Widget _modernTextField({
-    required TextEditingController controller,
+  // ── Validated text field ──────────────────────────────────────────────────
+  Widget _validatedTextField({
+    required TextEditingController ctrl,
     required String label,
     required String hint,
     required IconData icon,
     TextInputType type = TextInputType.text,
     int maxLines = 1,
+    String? Function(String?)? validator,
+    List<TextInputFormatter>? inputFormatters,
   }) {
-    return TextField(
-      controller: controller,
+    return TextFormField(
+      controller: ctrl,
       keyboardType: type,
       maxLines: maxLines,
+      inputFormatters: inputFormatters,
       style: const TextStyle(fontSize: 15),
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      validator: validator,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
@@ -429,20 +523,21 @@ class RestaurantRegistrationPage extends StatelessWidget {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.red.shade300, width: 2),
+          borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.red.shade400, width: 2),
+          borderSide: BorderSide(color: Colors.red.shade600, width: 2),
         ),
+        errorStyle: TextStyle(color: Colors.red.shade700, fontSize: 12),
         contentPadding:
         const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
     );
   }
 
-  // ── Main image picker ─────────────────────────────────────────────────────
-  Widget _imagePicker() {
+  // ── Main Restaurant Image Picker ──────────────────────────────────────────
+  Widget _restaurantImagePicker() {
     return Obx(() => InkWell(
       onTap: controller.pickRestaurantImage,
       borderRadius: BorderRadius.circular(12),
@@ -450,7 +545,12 @@ class RestaurantRegistrationPage extends StatelessWidget {
         height: 200,
         width: double.infinity,
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade300, width: 2),
+          border: Border.all(
+            color: controller.restaurantImageError.value.isNotEmpty
+                ? Colors.red.shade400
+                : Colors.grey.shade300,
+            width: 2,
+          ),
           borderRadius: BorderRadius.circular(12),
           color: Colors.grey.shade50,
         ),
@@ -461,13 +561,19 @@ class RestaurantRegistrationPage extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.kPrimary.withOpacity(0.1),
+                color:
+                controller.restaurantImageError.value.isNotEmpty
+                    ? Colors.red.withOpacity(0.1)
+                    : AppColors.kPrimary.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.cloud_upload_outlined,
                 size: 40,
-                color: AppColors.kPrimary,
+                color:
+                controller.restaurantImageError.value.isNotEmpty
+                    ? Colors.red.shade400
+                    : AppColors.kPrimary,
               ),
             ),
             const SizedBox(height: 16),
@@ -476,12 +582,15 @@ class RestaurantRegistrationPage extends StatelessWidget {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: Colors.grey.shade700,
+                color:
+                controller.restaurantImageError.value.isNotEmpty
+                    ? Colors.red.shade600
+                    : Colors.grey.shade700,
               ),
             ),
             const SizedBox(height: 6),
             Text(
-              "Click to browse",
+              "Tap to browse gallery",
               style: TextStyle(
                 fontSize: 13,
                 color: Colors.grey.shade500,
@@ -513,6 +622,124 @@ class RestaurantRegistrationPage extends StatelessWidget {
                   Icons.edit,
                   color: Colors.white,
                   size: 20,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ));
+  }
+
+  // ── QR Code Image Picker ──────────────────────────────────────────────────
+  Widget _qrCodePicker() {
+    return Obx(() => InkWell(
+      onTap: controller.pickQrCodeImage,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        height: 180,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: controller.qrCodeImageError.value.isNotEmpty
+                ? Colors.red.shade400
+                : Colors.grey.shade300,
+            width: 2,
+            style: BorderStyle.solid,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          color: Colors.grey.shade50,
+        ),
+        child: controller.qrCodeImage.value == null
+            ? Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: controller.qrCodeImageError.value.isNotEmpty
+                    ? Colors.red.withOpacity(0.1)
+                    : AppColors.kPrimary.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.qr_code_scanner_rounded,
+                size: 36,
+                color: controller.qrCodeImageError.value.isNotEmpty
+                    ? Colors.red.shade400
+                    : AppColors.kPrimary,
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              "Upload QR Code Image",
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: controller.qrCodeImageError.value.isNotEmpty
+                    ? Colors.red.shade600
+                    : Colors.grey.shade700,
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              "Tap to browse gallery",
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey.shade500,
+              ),
+            ),
+          ],
+        )
+            : Stack(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.file(
+                controller.qrCodeImage.value!,
+                fit: BoxFit.contain,
+                width: double.infinity,
+                height: double.infinity,
+              ),
+            ),
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.edit,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 8,
+              left: 8,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.qr_code_rounded,
+                        color: Colors.white, size: 14),
+                    SizedBox(width: 4),
+                    Text(
+                      "QR Code",
+                      style: TextStyle(
+                          color: Colors.white, fontSize: 12),
+                    ),
+                  ],
                 ),
               ),
             ),

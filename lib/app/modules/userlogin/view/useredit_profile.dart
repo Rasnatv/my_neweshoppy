@@ -12,6 +12,14 @@ class EditProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    // ✅ Ensure data loads if empty
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (controller.profile.value == null && !controller.isLoading.value) {
+        controller.fetchProfile();
+      }
+    });
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -22,96 +30,94 @@ class EditProfilePage extends StatelessWidget {
         appBar: AppBar(
           elevation: 0,
           backgroundColor: AppColors.kPrimary,
-          automaticallyImplyLeading: true,
           iconTheme: const IconThemeData(color: Colors.white),
           title: const Text(
             'Edit Profile',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 17,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.1,
-              )
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ─── AVATAR CARD ──────────────────────────────────────
-              _buildAvatarCard(),
 
-              const SizedBox(height: 24),
+        // ✅ FULL FIX HERE
+        body: Obx(() {
+          if (controller.isLoading.value &&
+              controller.profile.value == null) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-              // ─── PERSONAL INFO ────────────────────────────────────
-              _sectionHeader('Personal Info'),
-              const SizedBox(height: 12),
-              _buildCard([
-                _fieldTile(
-                  ctrl: controller.nameCtrl,
-                  label: 'Full Name',
-                  hint: 'Enter your full name',
-                  icon: Icons.person_outline_rounded,
-                  color: const Color(0xFF6366F1),
-                ),
-                _fieldTile(
-                  ctrl: controller.phoneCtrl,
-                  label: 'Phone',
-                  hint: 'Enter your phone number',
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(10),
-                  ],
-                  icon: Icons.phone_outlined,
-                  color: const Color(0xFF3B82F6),
-                  keyboardType: TextInputType.phone,
-                ),
-                _fieldTile(
-                  ctrl: controller.addressCtrl,
-                  label: 'Address',
-                  hint: 'Enter your address',
-                  icon: Icons.location_on_outlined,
-                  color: const Color(0xFF10B981),
-                  maxLines: 2,
-                ),
-              ]),
+          if (controller.profile.value == null) {
+            return const Center(child: Text("No data available"));
+          }
 
-              const SizedBox(height: 20),
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
 
-              // ─── ACCOUNT ──────────────────────────────────────────
-              _sectionHeader('Account'),
-              const SizedBox(height: 12),
-              _buildCard([
-                _fieldTile(
-                  ctrl: controller.emailCtrl,
-                  label: 'Email',
-                  hint: 'Your email address',
-                  icon: Icons.email_outlined,
-                  color: const Color(0xFFF59E0B),
-                  enabled: false,
-                ),
-              ]),
+                _buildAvatarCard(),
 
-              const SizedBox(height: 10),
+                const SizedBox(height: 24),
 
-              // Info note
-              _buildInfoNote(),
+                _sectionHeader('Personal Info'),
+                const SizedBox(height: 12),
+                _buildCard([
+                  _fieldTile(
+                    ctrl: controller.nameCtrl,
+                    label: 'Full Name',
+                    hint: 'Enter your full name',
+                    icon: Icons.person_outline_rounded,
+                    color: const Color(0xFF6366F1),
+                  ),
+                  _fieldTile(
+                    ctrl: controller.phoneCtrl,
+                    label: 'Phone',
+                    hint: 'Enter your phone number',
+                    icon: Icons.phone_outlined,
+                    color: const Color(0xFF3B82F6),
+                  ),
+                  _fieldTile(
+                    ctrl: controller.addressCtrl,
+                    label: 'Address',
+                    hint: 'Enter your address',
+                    icon: Icons.location_on_outlined,
+                    color: const Color(0xFF10B981),
+                    maxLines: 2,
+                  ),
+                ]),
 
-              const SizedBox(height: 28),
+                const SizedBox(height: 20),
 
-              // ─── SAVE BUTTON ──────────────────────────────────────
-              _saveButton(),
+                _sectionHeader('Account'),
+                const SizedBox(height: 12),
+                _buildCard([
+                  _fieldTile(
+                    ctrl: controller.emailCtrl,
+                    label: 'Email',
+                    hint: 'Your email address',
+                    icon: Icons.email_outlined,
+                    color: const Color(0xFFF59E0B),
+                    enabled: false,
+                  ),
+                ]),
 
-              const SizedBox(height: 40),
-            ],
-          ),
-        ),
+                const SizedBox(height: 28),
+
+                _saveButton(),
+
+                const SizedBox(height: 40),
+              ],
+            ),
+          );
+        }),
       ),
     );
   }
 
-  // ─── AVATAR CARD ───────────────────────────────────────────────────────────
+//   // ─── AVATAR CARD ───────────────────────────────────────────────────────────
   Widget _buildAvatarCard() {
     return Obx(() {
       final apiImage = controller.profile.value?.profileImage ?? '';
@@ -205,7 +211,7 @@ class EditProfilePage extends StatelessWidget {
                 Text(
                   'Tap to change your profile photo',
                   style: TextStyle(
-                    fontSize: 12,              // was 11.5
+                    fontSize: 12, // was 11.5
                     color: Colors.white.withOpacity(0.75),
                     fontWeight: FontWeight.w500, // was w400
                   ),

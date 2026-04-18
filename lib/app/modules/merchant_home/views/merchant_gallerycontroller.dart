@@ -1,11 +1,14 @@
+
 import 'dart:convert';
 import 'dart:io';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
-
+import '../../../data/errors/api_error.dart';
 import '../../../data/models/merchant_gallerymode.dart';
+import '../../merchantlogin/widget/successwidget.dart';
+
 
 class MerchantGalleryController extends GetxController {
   final ImagePicker picker = ImagePicker();
@@ -37,14 +40,12 @@ class MerchantGalleryController extends GetxController {
     }
   }
 
-  // ================= REMOVE SELECTED (local only, no API) =================
   void removeSelectedImage(int index) {
     if (index >= 0 && index < selectedImages.length) {
       selectedImages.removeAt(index);
     }
   }
 
-  // ================= BASE64 =================
   String _toBase64(File file) {
     final bytes = file.readAsBytesSync();
     return "data:image/jpeg;base64,${base64Encode(bytes)}";
@@ -59,29 +60,32 @@ class MerchantGalleryController extends GetxController {
 
       final response = await http.get(
         Uri.parse("$baseUrl/images"),
-        headers: {
-          "Authorization": "Bearer $token",
-        },
+        headers: {"Authorization": "Bearer $token"},
       );
 
-      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
 
-      if (response.statusCode == 200 && data["status"] == 1) {
-        uploadedImages.value = (data["data"] as List)
-            .map((e) => MerchantImage.fromJson(e))
-            .toList();
+        if (data["status"] == 1) {
+          uploadedImages.value = (data["data"] as List)
+              .map((e) => MerchantImage.fromJson(e))
+              .toList();
+        } else {
+          AppSnackbar.error(data["message"] ?? "Failed to load images");
+        }
       } else {
-        Get.snackbar("Error", data["message"] ?? "Failed to load images");
+        final error = ApiErrorHandler.handleResponse(response);
+        AppSnackbar.error(error);
       }
     } catch (e) {
-      Get.snackbar("Error", "Gallery load failed");
-      print("Load gallery error: $e");
+      final error = ApiErrorHandler.handleException(e);
+      AppSnackbar.error(error);
     } finally {
       isLoading(false);
     }
   }
 
-  // ================= UPLOAD IMAGES =================
+  // ================= UPLOAD =================
   Future<void> uploadImages() async {
     if (selectedImages.isEmpty || token.isEmpty) return;
 
@@ -99,29 +103,33 @@ class MerchantGalleryController extends GetxController {
         }),
       );
 
-      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
 
-      if (response.statusCode == 200 && data["status"] == 1) {
-        selectedImages.clear();
-        await loadGallery();
-        Get.snackbar("Success", data["message"]);
+        if (data["status"] == 1) {
+          selectedImages.clear();
+          await loadGallery();
+        } else {
+          AppSnackbar.error(data["message"] ?? "Upload failed");
+        }
       } else {
-        Get.snackbar("Error", data["message"]);
+        final error = ApiErrorHandler.handleResponse(response);
+        AppSnackbar.error(error);
       }
     } catch (e) {
-      Get.snackbar("Error", "Upload failed");
-      print(e);
+      final error = ApiErrorHandler.handleException(e);
+      AppSnackbar.error(error);
     } finally {
       isUploading(false);
     }
   }
 
-  // ================= DELETE UPLOADED IMAGE (API call) =================
+  // ================= DELETE =================
   Future<void> deleteImage(int index) async {
-    // ✅ Re-read token at delete time + show message if missing
     final String currentToken = box.read("auth_token") ?? "";
+
     if (currentToken.isEmpty) {
-      Get.snackbar("Error", "Auth token missing. Please login again.");
+      AppSnackbar.error("Session expired. Please login again");
       return;
     }
 
@@ -135,25 +143,28 @@ class MerchantGalleryController extends GetxController {
         Uri.parse("$baseUrl/image/delete"),
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer $currentToken",  // ✅ uses fresh token
+          "Authorization": "Bearer $currentToken",
         },
-        body: jsonEncode({
-          "id": imageId,
-        }),
+        body: jsonEncode({"id": imageId}),
       );
 
-      final data = jsonDecode(response.body);
-      print("DELETE RESPONSE => $data");
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
 
-      if (response.statusCode == 200 && data["status"] == 1) {
-        uploadedImages.removeAt(index);
+        if (data["status"] == 1) {
+          uploadedImages.removeAt(index);
+        } else {
+          AppSnackbar.error(data["message"] ?? "Delete failed");
+        }
       } else {
-        Get.snackbar("Error", data["message"] ?? "Delete failed");
+        final error = ApiErrorHandler.handleResponse(response);
+        AppSnackbar.error(error);
       }
     } catch (e) {
-      print("Delete error => $e");
-      Get.snackbar("Error", "Delete failed");
+      final error = ApiErrorHandler.handleException(e);
+      AppSnackbar.error(error);
     } finally {
       deletingIndex.value = -1;
     }
-  }}
+  }
+}

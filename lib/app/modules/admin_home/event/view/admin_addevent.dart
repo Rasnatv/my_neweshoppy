@@ -18,10 +18,19 @@ class AdminAddEventPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        automaticallyImplyLeading: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Get.back(result: true), // ✅ always return true on back
+        ),
+        iconTheme: IconThemeData(color: Colors.white),
         title: Text(
           'Create Event',
-          style: AppTextStyle.rTextNunitoWhite17w700,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.1,
+          ),
         ),
         backgroundColor: AppColors.kPrimary,
         elevation: 0,
@@ -147,82 +156,92 @@ class AdminAddEventPage extends StatelessWidget {
                         const SizedBox(height: 20),
 
                         // ════════════════════════════════════
-                        // LOCATION (District / Area) CARD
+                        // EVENT COVERAGE CARD
                         // ════════════════════════════════════
                         _buildCard(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               _sectionHeader(
-                                icon: Icons.location_on_outlined,
-                                title: 'Location Type',
+                                icon: Icons.map_outlined,
+                                title: 'Event Coverage',
                               ),
                               const SizedBox(height: 20),
 
-                              // ── Toggle buttons ────────────
-                              Obx(() => Row(
-                                children: [
-                                  Expanded(
-                                    child: _locationToggleButton(
-                                      label: 'District',
-                                      icon: Icons.location_city_outlined,
-                                      isSelected: controller
-                                          .locationType.value ==
-                                          'district',
-                                      onTap: () => controller
-                                          .setLocationType('district'),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: _locationToggleButton(
-                                      label: 'Area',
-                                      icon: Icons.place_outlined,
-                                      isSelected: controller
-                                          .locationType.value ==
-                                          'area',
-                                      onTap: () =>
-                                          controller.setLocationType('area'),
-                                    ),
-                                  ),
-                                ],
-                              )),
+                              // ── Mode Toggle ───────────────
+                              Obx(() => _buildModeToggle()),
 
-                              // ── Conditional dropdown ───────
+                              const SizedBox(height: 16),
+
+                              // ── State Dropdown (always) ───
+                              _fieldLabel('Select State'),
+                              const SizedBox(height: 8),
                               Obx(() {
-                                final type = controller.locationType.value;
-                                if (type == null) return const SizedBox.shrink();
+                                if (controller.isLoadingStates.value) {
+                                  return _buildLoadingRow('Loading states...');
+                                }
+                                if (controller.stateList.isEmpty) {
+                                  return _buildEmptyRow('No states available');
+                                }
+                                return _buildDropdown(
+                                  value: controller.selectedState.value,
+                                  hint: 'Choose a state',
+                                  icon: Icons.flag_outlined,
+                                  items: controller.stateList,
+                                  onChanged: (val) =>
+                                  controller.selectedState.value = val,
+                                );
+                              }),
 
+                              const SizedBox(height: 16),
+
+                              // ── District Dropdown (always) ─
+                              _fieldLabel('Select District'),
+                              const SizedBox(height: 8),
+                              Obx(() {
+                                if (controller.isLoadingDistricts.value) {
+                                  return _buildLoadingRow(
+                                      'Loading districts...');
+                                }
+                                if (controller.districtList.isEmpty) {
+                                  return _buildEmptyRow(
+                                      'No districts available');
+                                }
+                                return _buildDropdown(
+                                  value: controller.selectedDistrict.value,
+                                  hint: 'Choose a district',
+                                  icon: Icons.location_city_outlined,
+                                  items: controller.districtList,
+                                  onChanged: (val) =>
+                                  controller.selectedDistrict.value = val,
+                                );
+                              }),
+
+                              // ── Area Dropdown (area mode only) ─
+                              Obx(() {
+                                if (controller.showMode.value != 'area') {
+                                  return const SizedBox.shrink();
+                                }
                                 return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     const SizedBox(height: 16),
-                                    if (type == 'district') ...[
-                                      controller.isLoadingDistricts.value
-                                          ? _buildLoadingRow(
-                                          'Loading districts...')
-                                          : _buildDropdown(
-                                        value: controller
-                                            .selectedDistrict.value,
-                                        hint: 'Select District',
-                                        icon:
-                                        Icons.location_city_outlined,
-                                        items: controller.districts,
-                                        onChanged: (val) => controller
-                                            .selectedDistrict.value = val,
-                                      ),
-                                    ] else if (type == 'area') ...[
-                                      controller.isLoadingAreas.value
-                                          ? _buildLoadingRow('Loading areas...')
-                                          : _buildDropdown(
-                                        value:
-                                        controller.selectedArea.value,
-                                        hint: 'Select Area',
-                                        icon: Icons.place_outlined,
-                                        items: controller.areas,
-                                        onChanged: (val) => controller
-                                            .selectedArea.value = val,
-                                      ),
-                                    ],
+                                    _fieldLabel('Select Area'),
+                                    const SizedBox(height: 8),
+                                    controller.isLoadingAreas.value
+                                        ? _buildLoadingRow('Loading areas...')
+                                        : controller.areaList.isEmpty
+                                        ? _buildEmptyRow(
+                                        'No areas available')
+                                        : _buildDropdown(
+                                      value: controller
+                                          .selectedArea.value,
+                                      hint: 'Choose an area',
+                                      icon: Icons.place_outlined,
+                                      items: controller.areaList,
+                                      onChanged: (val) => controller
+                                          .selectedArea.value = val,
+                                    ),
                                   ],
                                 );
                               }),
@@ -254,8 +273,7 @@ class AdminAddEventPage extends StatelessWidget {
                                   decoration: BoxDecoration(
                                     border: Border.all(
                                       color: _submitted.value &&
-                                          controller
-                                              .bannerImage.value ==
+                                          controller.bannerImage.value ==
                                               null
                                           ? Colors.red.shade300
                                           : Colors.grey.shade300,
@@ -322,18 +340,61 @@ class AdminAddEventPage extends StatelessWidget {
                                               .removeBannerImage,
                                           child: Container(
                                             padding:
-                                            const EdgeInsets.all(
-                                                6),
+                                            const EdgeInsets.all(6),
                                             decoration: BoxDecoration(
                                               color: Colors.black54,
                                               borderRadius:
-                                              BorderRadius
-                                                  .circular(8),
+                                              BorderRadius.circular(
+                                                  8),
                                             ),
                                             child: const Icon(
                                                 Icons.close,
                                                 color: Colors.white,
                                                 size: 20),
+                                          ),
+                                        ),
+                                      ),
+                                      Positioned(
+                                        bottom: 8,
+                                        left: 8,
+                                        child: Container(
+                                          padding:
+                                          const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                              vertical: 5),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius:
+                                            BorderRadius.circular(20),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black
+                                                    .withOpacity(0.1),
+                                                blurRadius: 6,
+                                              ),
+                                            ],
+                                          ),
+                                          child: Row(
+                                            mainAxisSize:
+                                            MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                  Icons
+                                                      .check_circle_rounded,
+                                                  size: 12,
+                                                  color:
+                                                  AppColors.kPrimary),
+                                              const SizedBox(width: 4),
+                                              const Text(
+                                                'Banner selected',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight:
+                                                  FontWeight.w600,
+                                                  color: Colors.black87,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
                                       ),
@@ -387,53 +448,8 @@ class AdminAddEventPage extends StatelessWidget {
                                 ? null
                                 : () {
                               _submitted.value = true;
-
-                              // Validate location selection
-                              final locType =
-                                  controller.locationType.value;
-                              final locationValid = locType == null ||
-                                  (locType == 'district' &&
-                                      controller.selectedDistrict
-                                          .value !=
-                                          null) ||
-                                  (locType == 'area' &&
-                                      controller.selectedArea.value !=
-                                          null);
-
-                              if (_formKey.currentState!.validate() &&
-                                  controller.startDate.value
-                                      .isNotEmpty &&
-                                  controller.endDate.value
-                                      .isNotEmpty &&
-                                  controller.startTime.value
-                                      .isNotEmpty &&
-                                  controller.endTime.value
-                                      .isNotEmpty &&
-                                  controller.bannerImage.value !=
-                                      null &&
-                                  locationValid) {
+                              if (_formKey.currentState!.validate()) {
                                 controller.addEvent();
-                              } else {
-                                String msg =
-                                    'Please fill all required fields';
-                                if (!locationValid) {
-                                  msg = locType == 'district'
-                                      ? 'Please select a district'
-                                      : 'Please select an area';
-                                }
-                                Get.snackbar(
-                                  'Validation Error',
-                                  msg,
-                                  snackPosition: SnackPosition.BOTTOM,
-                                  backgroundColor:
-                                  Colors.red.shade400,
-                                  colorText: Colors.white,
-                                  margin: const EdgeInsets.all(16),
-                                  borderRadius: 12,
-                                  icon: const Icon(
-                                      Icons.error_outline,
-                                      color: Colors.white),
-                                );
                               }
                             },
                             child: controller.isLoading.value
@@ -472,8 +488,7 @@ class AdminAddEventPage extends StatelessWidget {
           Obx(() => controller.isLoading.value
               ? Container(
             color: Colors.black38,
-            child: const Center(
-                child: CircularProgressIndicator()),
+            child: const Center(child: CircularProgressIndicator()),
           )
               : const SizedBox()),
         ],
@@ -481,57 +496,93 @@ class AdminAddEventPage extends StatelessWidget {
     );
   }
 
-  // ─── Location Toggle Button ───────────────────────────────
-  Widget _locationToggleButton({
+  // ─── Mode Toggle (District / Area) ───────────────────────
+  Widget _buildModeToggle() {
+    final isArea = controller.showMode.value == 'area';
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Row(
+        children: [
+          _modeTab(
+            label: 'District Wise',
+            icon: Icons.location_city_rounded,
+            selected: !isArea,
+            onTap: () => controller.setShowMode('district'),
+          ),
+          _modeTab(
+            label: 'Area Wise',
+            icon: Icons.grid_view_rounded,
+            selected: isArea,
+            onTap: () => controller.setShowMode('area'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _modeTab({
     required String label,
     required IconData icon,
-    required bool isSelected,
+    required bool selected,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        height: 50,
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.kPrimary : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? AppColors.kPrimary : Colors.grey.shade300,
-            width: 1.5,
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          margin: const EdgeInsets.all(3),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.kPrimary : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: selected
+                ? [
+              BoxShadow(
+                color: AppColors.kPrimary.withOpacity(0.25),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              )
+            ]
+                : [],
           ),
-          boxShadow: [
-            BoxShadow(
-              color: isSelected
-                  ? AppColors.kPrimary.withOpacity(0.25)
-                  : Colors.black.withOpacity(0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 18,
-              color: isSelected ? Colors.white : Colors.grey.shade600,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.white : Colors.grey.shade700,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 15,
+                color: selected ? Colors.white : Colors.grey.shade600,
               ),
-            ),
-          ],
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: selected ? Colors.white : Colors.grey.shade700,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
+
+  // ─── Field Label ──────────────────────────────────────────
+  Widget _fieldLabel(String text) => Text(
+    text,
+    style: const TextStyle(
+      fontSize: 13,
+      fontWeight: FontWeight.w500,
+      color: Colors.black87,
+    ),
+  );
 
   // ─── Dropdown ─────────────────────────────────────────────
   Widget _buildDropdown({
@@ -545,7 +596,12 @@ class AdminAddEventPage extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.grey.shade50,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(
+          color: value != null
+              ? AppColors.kPrimary.withOpacity(0.5)
+              : Colors.grey.shade300,
+          width: value != null ? 1.4 : 1,
+        ),
       ),
       child: DropdownButtonFormField<String>(
         value: value,
@@ -558,7 +614,29 @@ class AdminAddEventPage extends StatelessWidget {
           const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         ),
         items: items
-            .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+            .map((s) => DropdownMenuItem(
+          value: s,
+          child: Row(
+            children: [
+              Icon(icon, size: 15, color: AppColors.kPrimary),
+              const SizedBox(width: 8),
+              Text(s,
+                  style: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w500)),
+            ],
+          ),
+        ))
+            .toList(),
+        selectedItemBuilder: (context) => items
+            .map((s) => Row(
+          children: [
+            Icon(icon, size: 16, color: AppColors.kPrimary),
+            const SizedBox(width: 8),
+            Text(s,
+                style: const TextStyle(
+                    fontSize: 14, fontWeight: FontWeight.w600)),
+          ],
+        ))
             .toList(),
         onChanged: onChanged,
         isExpanded: true,
@@ -590,6 +668,22 @@ class AdminAddEventPage extends StatelessWidget {
           Text(label,
               style: TextStyle(color: Colors.grey.shade500, fontSize: 14)),
         ],
+      ),
+    );
+  }
+
+  // ─── Empty Row ────────────────────────────────────────────
+  Widget _buildEmptyRow(String label) {
+    return Container(
+      height: 52,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Center(
+        child: Text(label,
+            style: TextStyle(color: Colors.grey.shade500, fontSize: 14)),
       ),
     );
   }
@@ -709,9 +803,8 @@ class AdminAddEventPage extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               borderSide:
               BorderSide(color: Colors.red.shade300, width: 2)),
-          errorText: _submitted.value && value.value.isEmpty
-              ? errorText
-              : null,
+          errorText:
+          _submitted.value && value.value.isEmpty ? errorText : null,
           contentPadding:
           const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
