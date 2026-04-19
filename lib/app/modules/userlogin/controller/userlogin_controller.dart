@@ -8,8 +8,7 @@ import 'package:http/http.dart' as http;
 import '../../landingview/view/landing_screen.dart';
 import '../../merchant_home/views/merchant_home.dart';
 import '../../merchantlogin/widget/successwidget.dart';
-import '../../product/controller/cartcontroller.dart';
-import '../../profile/controller/editprofile_controller.dart';
+
 
 class UserloginController extends GetxController {
   final TextEditingController username = TextEditingController();

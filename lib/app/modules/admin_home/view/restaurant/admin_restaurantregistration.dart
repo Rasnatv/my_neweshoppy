@@ -22,7 +22,7 @@ class RestaurantRegistrationPage extends StatelessWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Get.back(result: true), // ✅ always return true on back
+          onPressed: () => Get.back(result: true),
         ),
         title: const Text(
           "Restaurant Registration",
@@ -44,26 +44,27 @@ class RestaurantRegistrationPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Restaurant Banner Image ──────────────────────────
+                // ── Restaurant Image ─────────────────────────────────
                 _buildCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _sectionHeader(
                         icon: Icons.store_mall_directory_rounded,
-                        title: "Restaurant Image",
+                        title: "Restaurant Image *",
                       ),
                       const SizedBox(height: 20),
                       _restaurantImagePicker(),
-                      Obx(() => controller.restaurantImageError.value.isNotEmpty
+                      Obx(() =>
+                      controller.restaurantImageError.value.isNotEmpty
                           ? Padding(
-                        padding: const EdgeInsets.only(top: 8, left: 4),
+                        padding:
+                        const EdgeInsets.only(top: 8, left: 4),
                         child: Text(
                           controller.restaurantImageError.value,
                           style: TextStyle(
-                            color: Colors.red.shade700,
-                            fontSize: 12,
-                          ),
+                              color: Colors.red.shade700,
+                              fontSize: 12),
                         ),
                       )
                           : const SizedBox.shrink()),
@@ -83,6 +84,8 @@ class RestaurantRegistrationPage extends StatelessWidget {
                         title: "Basic Information",
                       ),
                       const SizedBox(height: 20),
+
+                      // Restaurant Name — mandatory
                       _validatedTextField(
                         ctrl: controller.restaurantNameCtrl,
                         label: "Restaurant Name *",
@@ -92,6 +95,8 @@ class RestaurantRegistrationPage extends StatelessWidget {
                             DValidator.validateEmptyText('Restaurant name', v),
                       ),
                       const SizedBox(height: 16),
+
+                      // Owner Name — mandatory
                       _validatedTextField(
                         ctrl: controller.ownerCtrl,
                         label: "Owner Name *",
@@ -101,6 +106,8 @@ class RestaurantRegistrationPage extends StatelessWidget {
                             DValidator.validateEmptyText('Owner name', v),
                       ),
                       const SizedBox(height: 16),
+
+                      // Address — mandatory
                       _validatedTextField(
                         ctrl: controller.addressCtrl,
                         label: "Address *",
@@ -111,6 +118,8 @@ class RestaurantRegistrationPage extends StatelessWidget {
                             DValidator.validateEmptyText('Address', v),
                       ),
                       const SizedBox(height: 16),
+
+                      // Phone — mandatory
                       _validatedTextField(
                         ctrl: controller.phoneCtrl,
                         label: "Phone *",
@@ -124,33 +133,42 @@ class RestaurantRegistrationPage extends StatelessWidget {
                         validator: (v) => DValidator.validatePhoneNumber(v),
                       ),
                       const SizedBox(height: 16),
+
+                      // Email — mandatory
                       _validatedTextField(
                         ctrl: controller.emailCtrl,
-                        label: "Email",
+                        label: "Email *",
                         hint: "Enter email address",
                         icon: Icons.email_outlined,
                         type: TextInputType.emailAddress,
                         validator: (v) {
-                          if (v == null || v.isEmpty) return null;
+                          if (v == null || v.trim().isEmpty) {
+                            return 'Email is required';
+                          }
                           return DValidator.validateEmail(v);
                         },
                       ),
                       const SizedBox(height: 16),
+
+                      // Website — optional, must be valid URL if filled
                       _validatedTextField(
                         ctrl: controller.websiteCtrl,
                         label: "Website",
                         hint: "https://yourwebsite.com",
                         icon: Icons.language_outlined,
                         type: TextInputType.url,
-                        validator: null,
+                        validator: controller.validateWebsiteUrl,
                       ),
                       const SizedBox(height: 16),
+
+                      // UPI ID — mandatory
                       _validatedTextField(
                         ctrl: controller.upiCtrl,
                         label: "UPI ID *",
                         hint: "e.g. name@upi",
                         icon: Icons.account_balance_wallet_outlined,
-                        validator: null,
+                        validator: (v) =>
+                            DValidator.validateEmptyText('UPI ID', v),
                       ),
                     ],
                   ),
@@ -171,21 +189,18 @@ class RestaurantRegistrationPage extends StatelessWidget {
                       Text(
                         "Upload your UPI / payment QR code image",
                         style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey.shade500,
-                        ),
+                            fontSize: 13, color: Colors.grey.shade500),
                       ),
                       const SizedBox(height: 20),
                       _qrCodePicker(),
                       Obx(() => controller.qrCodeImageError.value.isNotEmpty
                           ? Padding(
-                        padding: const EdgeInsets.only(top: 8, left: 4),
+                        padding:
+                        const EdgeInsets.only(top: 8, left: 4),
                         child: Text(
                           controller.qrCodeImageError.value,
                           style: TextStyle(
-                            color: Colors.red.shade700,
-                            fontSize: 12,
-                          ),
+                              color: Colors.red.shade700, fontSize: 12),
                         ),
                       )
                           : const SizedBox.shrink()),
@@ -195,7 +210,7 @@ class RestaurantRegistrationPage extends StatelessWidget {
 
                 const SizedBox(height: 20),
 
-                // ── Social & Contact ─────────────────────────────────
+                // ── Social & Contact — all optional ─────────────────
                 _buildCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,7 +219,15 @@ class RestaurantRegistrationPage extends StatelessWidget {
                         icon: Icons.share_outlined,
                         title: "Social & Contact",
                       ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "All fields below are optional",
+                        style: TextStyle(
+                            fontSize: 12, color: Colors.grey.shade400),
+                      ),
                       const SizedBox(height: 20),
+
+                      // WhatsApp — optional, 10 digits if filled
                       _validatedTextField(
                         ctrl: controller.whatsappCtrl,
                         label: "WhatsApp",
@@ -216,27 +239,31 @@ class RestaurantRegistrationPage extends StatelessWidget {
                           LengthLimitingTextInputFormatter(10),
                         ],
                         validator: (v) {
-                          if (v == null || v.isEmpty) return null;
+                          if (v == null || v.trim().isEmpty) return null;
                           return DValidator.validatePhoneNumber(v);
                         },
                       ),
                       const SizedBox(height: 16),
+
+                      // Facebook — optional, must be facebook.com URL if filled
                       _validatedTextField(
                         ctrl: controller.facebookCtrl,
                         label: "Facebook",
-                        hint: "Facebook profile or page URL",
+                        hint: "https://facebook.com/yourpage",
                         icon: Icons.facebook_outlined,
                         type: TextInputType.url,
-                        validator: null,
+                        validator: controller.validateFacebookUrl,
                       ),
                       const SizedBox(height: 16),
+
+                      // Instagram — optional, must be instagram.com URL or @handle
                       _validatedTextField(
                         ctrl: controller.instaCtrl,
                         label: "Instagram",
-                        hint: "@yourhandle or profile URL",
+                        hint: "@yourhandle or https://instagram.com/yourhandle",
                         icon: Icons.photo_camera_outlined,
                         type: TextInputType.url,
-                        validator: null,
+                        validator: controller.validateInstagramUrl,
                       ),
                     ],
                   ),
@@ -244,7 +271,7 @@ class RestaurantRegistrationPage extends StatelessWidget {
 
                 const SizedBox(height: 20),
 
-                // ── Additional Images ────────────────────────────────
+                // ── Additional Images — optional ─────────────────────
                 _buildCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -267,8 +294,7 @@ class RestaurantRegistrationPage extends StatelessWidget {
                                 color: AppColors.kPrimary.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: AppColors.kPrimary.withOpacity(0.3),
-                                ),
+                                    color: AppColors.kPrimary.withOpacity(0.3)),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -279,10 +305,9 @@ class RestaurantRegistrationPage extends StatelessWidget {
                                   Text(
                                     "Add",
                                     style: TextStyle(
-                                      color: AppColors.kPrimary,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                        color: AppColors.kPrimary,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600),
                                   ),
                                 ],
                               ),
@@ -290,7 +315,13 @@ class RestaurantRegistrationPage extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 4),
+                      Text(
+                        "Optional — add photos of your restaurant",
+                        style: TextStyle(
+                            fontSize: 12, color: Colors.grey.shade400),
+                      ),
+                      const SizedBox(height: 16),
                       Obx(() => controller.additionalImages.isEmpty
                           ? Container(
                         height: 100,
@@ -305,7 +336,8 @@ class RestaurantRegistrationPage extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(Icons.add_photo_alternate_outlined,
-                                  size: 28, color: Colors.grey.shade400),
+                                  size: 28,
+                                  color: Colors.grey.shade400),
                               const SizedBox(height: 6),
                               Text(
                                 "No additional images selected",
@@ -377,7 +409,10 @@ class RestaurantRegistrationPage extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                       gradient: LinearGradient(
                         colors: controller.isLoading.value
-                            ? [Colors.grey.shade400, Colors.grey.shade300]
+                            ? [
+                          Colors.grey.shade400,
+                          Colors.grey.shade300
+                        ]
                             : [
                           AppColors.kPrimary,
                           AppColors.kPrimary.withOpacity(0.8),
@@ -398,8 +433,7 @@ class RestaurantRegistrationPage extends StatelessWidget {
                         backgroundColor: Colors.transparent,
                         shadowColor: Colors.transparent,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                            borderRadius: BorderRadius.circular(12)),
                       ),
                       onPressed: controller.isLoading.value
                           ? null
@@ -449,10 +483,9 @@ class RestaurantRegistrationPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 2)),
         ],
       ),
       child: child,
@@ -475,10 +508,9 @@ class RestaurantRegistrationPage extends StatelessWidget {
         Text(
           title,
           style: const TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w700,
-            color: Colors.black87,
-          ),
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+              color: Colors.black87),
         ),
       ],
     );
@@ -536,7 +568,7 @@ class RestaurantRegistrationPage extends StatelessWidget {
     );
   }
 
-  // ── Main Restaurant Image Picker ──────────────────────────────────────────
+  // ── Restaurant Image Picker ───────────────────────────────────────────────
   Widget _restaurantImagePicker() {
     return Obx(() => InkWell(
       onTap: controller.pickRestaurantImage,
@@ -561,8 +593,7 @@ class RestaurantRegistrationPage extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color:
-                controller.restaurantImageError.value.isNotEmpty
+                color: controller.restaurantImageError.value.isNotEmpty
                     ? Colors.red.withOpacity(0.1)
                     : AppColors.kPrimary.withOpacity(0.1),
                 shape: BoxShape.circle,
@@ -570,8 +601,7 @@ class RestaurantRegistrationPage extends StatelessWidget {
               child: Icon(
                 Icons.cloud_upload_outlined,
                 size: 40,
-                color:
-                controller.restaurantImageError.value.isNotEmpty
+                color: controller.restaurantImageError.value.isNotEmpty
                     ? Colors.red.shade400
                     : AppColors.kPrimary,
               ),
@@ -589,13 +619,9 @@ class RestaurantRegistrationPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 6),
-            Text(
-              "Tap to browse gallery",
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey.shade500,
-              ),
-            ),
+            Text("Tap to browse gallery",
+                style: TextStyle(
+                    fontSize: 13, color: Colors.grey.shade500)),
           ],
         )
             : Stack(
@@ -618,11 +644,8 @@ class RestaurantRegistrationPage extends StatelessWidget {
                   color: Colors.black54,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(
-                  Icons.edit,
-                  color: Colors.white,
-                  size: 20,
-                ),
+                child: const Icon(Icons.edit,
+                    color: Colors.white, size: 20),
               ),
             ),
           ],
@@ -645,7 +668,6 @@ class RestaurantRegistrationPage extends StatelessWidget {
                 ? Colors.red.shade400
                 : Colors.grey.shade300,
             width: 2,
-            style: BorderStyle.solid,
           ),
           borderRadius: BorderRadius.circular(12),
           color: Colors.grey.shade50,
@@ -682,13 +704,9 @@ class RestaurantRegistrationPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 5),
-            Text(
-              "Tap to browse gallery",
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey.shade500,
-              ),
-            ),
+            Text("Tap to browse gallery",
+                style: TextStyle(
+                    fontSize: 13, color: Colors.grey.shade500)),
           ],
         )
             : Stack(
@@ -711,11 +729,8 @@ class RestaurantRegistrationPage extends StatelessWidget {
                   color: Colors.black54,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(
-                  Icons.edit,
-                  color: Colors.white,
-                  size: 20,
-                ),
+                child: const Icon(Icons.edit,
+                    color: Colors.white, size: 20),
               ),
             ),
             Positioned(
@@ -734,11 +749,9 @@ class RestaurantRegistrationPage extends StatelessWidget {
                     Icon(Icons.qr_code_rounded,
                         color: Colors.white, size: 14),
                     SizedBox(width: 4),
-                    Text(
-                      "QR Code",
-                      style: TextStyle(
-                          color: Colors.white, fontSize: 12),
-                    ),
+                    Text("QR Code",
+                        style: TextStyle(
+                            color: Colors.white, fontSize: 12)),
                   ],
                 ),
               ),

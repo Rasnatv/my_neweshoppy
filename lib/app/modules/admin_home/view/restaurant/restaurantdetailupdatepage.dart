@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../../common/style/app_colors.dart';
 import '../../../../common/style/app_text_style.dart';
@@ -15,16 +16,13 @@ class AdminRestaurantUpdatePage extends StatelessWidget {
     required this.restaurantData,
   });
 
-  // FIX: Delete old controller and create fresh one every time
   late final AdminRestaurantUpdateController controller = _initController();
 
   AdminRestaurantUpdateController _initController() {
-    // Force delete any stale instance
     if (Get.isRegistered<AdminRestaurantUpdateController>()) {
       Get.delete<AdminRestaurantUpdateController>(force: true);
     }
     final ctrl = Get.put(AdminRestaurantUpdateController());
-    // Load data ONCE here, not inside build()
     ctrl.restaurantId = restaurantId;
     ctrl.loadRestaurantData(restaurantData);
     return ctrl;
@@ -32,8 +30,6 @@ class AdminRestaurantUpdatePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // FIX: Removed controller.loadRestaurantData() from here
-
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -57,156 +53,251 @@ class AdminRestaurantUpdatePage extends StatelessWidget {
           );
         }
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildImageSection(),
-              const SizedBox(height: 24),
-              _buildSectionTitle("Basic Information"),
-              const SizedBox(height: 12),
-              _buildTextField(
-                controller: controller.restaurantNameController,
-                label: "Restaurant Name",
-                icon: Icons.restaurant,
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                controller: controller.ownerNameController,
-                label: "Owner Name",
-                icon: Icons.person,
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                controller: controller.addressController,
-                label: "Address",
-                icon: Icons.location_on,
-                maxLines: 3,
-              ),
-              const SizedBox(height: 24),
-              _buildSectionTitle("Contact Information"),
-              const SizedBox(height: 12),
-              _buildTextField(
-                controller: controller.phoneController,
-                label: "Phone Number",
-                icon: Icons.phone,
-                keyboardType: TextInputType.phone,
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                controller: controller.emailController,
-                label: "Email",
-                icon: Icons.email,
-                keyboardType: TextInputType.emailAddress,
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                controller: controller.whatsappController,
-                label: "WhatsApp Number",
-                icon: Icons.chat,
-                keyboardType: TextInputType.phone,
-              ),
-              const SizedBox(height: 24),
-              _buildSectionTitle("Online Presence"),
-              const SizedBox(height: 12),
-              _buildTextField(
-                controller: controller.websiteController,
-                label: "Website URL",
-                icon: Icons.web,
-                keyboardType: TextInputType.url,
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                controller: controller.facebookController,
-                label: "Facebook Link",
-                icon: Icons.facebook,
-                keyboardType: TextInputType.url,
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                controller: controller.instagramController,
-                label: "Instagram Link",
-                icon: Icons.camera_alt,
-                keyboardType: TextInputType.url,
-              ),
-              const SizedBox(height: 24),
-              _buildAdditionalImagesSection(),
-              const SizedBox(height: 32),
-              const SizedBox(height: 24),
-              _buildSectionTitle("Payment Information"),
-              const SizedBox(height: 12),
+        return Form(
+          key: controller.formKey,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Restaurant Image ───────────────────────────────
+                _buildImageSection(),
+                const SizedBox(height: 24),
 
-              _buildTextField(
-                controller: controller.upiIdController,
-                label: "UPI ID",
-                icon: Icons.account_balance,
-              ),
+                // ── Basic Information ──────────────────────────────
+                _buildSectionTitle("Basic Information"),
+                const SizedBox(height: 12),
 
-              const SizedBox(height: 16),
+                // Restaurant Name — mandatory
+                _buildValidatedField(
+                  controller: controller.restaurantNameController,
+                  label: "Restaurant Name *",
+                  icon: Icons.restaurant,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Restaurant name is required'
+                      : null,
+                ),
+                const SizedBox(height: 16),
 
-              Obx(() {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildSectionTitle("QR Code"),
-                    const SizedBox(height: 12),
+                // Owner Name — mandatory
+                _buildValidatedField(
+                  controller: controller.ownerNameController,
+                  label: "Owner Name *",
+                  icon: Icons.person,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Owner name is required'
+                      : null,
+                ),
+                const SizedBox(height: 16),
 
-                    GestureDetector(
-                      onTap: controller.pickQrImage,
-                      child: Container(
-                        height: 160,
-                        width: 160,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(12),
+                // Address — mandatory
+                _buildValidatedField(
+                  controller: controller.addressController,
+                  label: "Address *",
+                  icon: Icons.location_on,
+                  maxLines: 3,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Address is required'
+                      : null,
+                ),
+                const SizedBox(height: 24),
+
+                // ── Contact Information ────────────────────────────
+                _buildSectionTitle("Contact Information"),
+                const SizedBox(height: 12),
+
+                // Phone — mandatory, 10 digits
+                _buildValidatedField(
+                  controller: controller.phoneController,
+                  label: "Phone Number *",
+                  icon: Icons.phone,
+                  keyboardType: TextInputType.phone,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(10),
+                  ],
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) {
+                      return 'Phone number is required';
+                    }
+                    if (v.trim().length != 10) {
+                      return 'Phone number must be 10 digits';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                // Email — mandatory
+                _buildValidatedField(
+                  controller: controller.emailController,
+                  label: "Email *",
+                  icon: Icons.email,
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) {
+                      return 'Email is required';
+                    }
+                    if (!GetUtils.isEmail(v.trim())) {
+                      return 'Enter a valid email address';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                // WhatsApp — optional, 10 digits if filled
+                _buildValidatedField(
+                  controller: controller.whatsappController,
+                  label: "WhatsApp Number",
+                  icon: Icons.chat,
+                  keyboardType: TextInputType.phone,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(10),
+                  ],
+                  validator: controller.validateWhatsapp,
+                ),
+                const SizedBox(height: 24),
+
+                // ── Online Presence ────────────────────────────────
+                _buildSectionTitle("Online Presence"),
+                const SizedBox(height: 4),
+                Text(
+                  "All fields below are optional",
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
+                ),
+                const SizedBox(height: 12),
+
+                // Website — optional, valid http/https URL
+                _buildValidatedField(
+                  controller: controller.websiteController,
+                  label: "Website URL",
+                  icon: Icons.web,
+                  keyboardType: TextInputType.url,
+                  validator: controller.validateWebsiteUrl,
+                ),
+                const SizedBox(height: 16),
+
+                // Facebook — optional, must be facebook.com URL
+                _buildValidatedField(
+                  controller: controller.facebookController,
+                  label: "Facebook Link",
+                  icon: Icons.facebook,
+                  keyboardType: TextInputType.url,
+                  hint: "https://facebook.com/yourpage",
+                  validator: controller.validateFacebookUrl,
+                ),
+                const SizedBox(height: 16),
+
+                // Instagram — optional, instagram.com URL or @handle
+                _buildValidatedField(
+                  controller: controller.instagramController,
+                  label: "Instagram Link",
+                  icon: Icons.camera_alt,
+                  keyboardType: TextInputType.url,
+                  hint: "@yourhandle or https://instagram.com/yourhandle",
+                  validator: controller.validateInstagramUrl,
+                ),
+                const SizedBox(height: 24),
+
+                // ── Additional Images ──────────────────────────────
+                _buildAdditionalImagesSection(),
+                const SizedBox(height: 32),
+
+                // ── Payment Information ────────────────────────────
+                _buildSectionTitle("Payment Information"),
+                const SizedBox(height: 12),
+
+                // UPI ID — mandatory
+                _buildValidatedField(
+                  controller: controller.upiIdController,
+                  label: "UPI ID *",
+                  icon: Icons.account_balance,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'UPI ID is required'
+                      : null,
+                ),
+                const SizedBox(height: 16),
+
+                // ── QR Code ────────────────────────────────────────
+                Obx(() {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSectionTitle("QR Code"),
+                      const SizedBox(height: 12),
+                      GestureDetector(
+                        onTap: controller.pickQrImage,
+                        child: Container(
+                          height: 160,
+                          width: 160,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: controller.qrImage.value != null
+                              ? ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.file(
+                              controller.qrImage.value!,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                              : controller.qrImageUrl.value.isNotEmpty
+                              ? ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(
+                              _getImageUrl(
+                                  controller.qrImageUrl.value),
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                              : const Center(
+                              child: Icon(Icons.qr_code, size: 50)),
                         ),
-                        child: controller.qrImage.value != null
-                            ? Image.file(controller.qrImage.value!, fit: BoxFit.cover)
-                            : controller.qrImageUrl.value.isNotEmpty
-                            ? Image.network(
-                          _getImageUrl(controller.qrImageUrl.value),
-                          fit: BoxFit.cover,
-                        )
-                            : const Icon(Icons.qr_code, size: 50),
+                      ),
+                      TextButton(
+                        onPressed: controller.pickQrImage,
+                        child: const Text("Change QR Code"),
+                      ),
+                    ],
+                  );
+                }),
+
+                const SizedBox(height: 24),
+
+                // ── Submit Button ──────────────────────────────────
+                SizedBox(
+                  width: double.infinity,
+                  height: 54,
+                  child: ElevatedButton(
+                    onPressed: controller.updateRestaurant,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.kPrimary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-
-                    TextButton(
-                      onPressed: controller.pickQrImage,
-                      child: const Text("Change QR Code"),
-                    ),
-                  ],
-                );
-              }),
-              SizedBox(
-                width: double.infinity,
-                height: 54,
-                child: ElevatedButton(
-                  onPressed: controller.updateRestaurant,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.kPrimary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    "Update Restaurant",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                    child: const Text(
+                      "Update Restaurant",
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
-            ],
+
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         );
       }),
     );
   }
+
+  // ── Restaurant Image Section ──────────────────────────────────────────────
   Widget _buildImageSection() {
     return Obx(() {
       return Column(
@@ -238,9 +329,8 @@ class AdminRestaurantUpdatePage extends StatelessWidget {
                 child: Image.network(
                   _getImageUrl(controller.restaurantImageUrl.value),
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return _buildImagePlaceholder();
-                  },
+                  errorBuilder: (context, error, stackTrace) =>
+                      _buildImagePlaceholder(),
                 ),
               )
                   : _buildImagePlaceholder(),
@@ -265,13 +355,13 @@ class AdminRestaurantUpdatePage extends StatelessWidget {
       children: [
         Icon(Icons.add_photo_alternate, size: 60, color: Colors.grey.shade400),
         const SizedBox(height: 8),
-        Text(
-          "Tap to select image",
-          style: TextStyle(color: Colors.grey.shade600),
-        ),
+        Text("Tap to select image",
+            style: TextStyle(color: Colors.grey.shade600)),
       ],
     );
   }
+
+  // ── Additional Images ─────────────────────────────────────────────────────
   Widget _buildAdditionalImagesSection() {
     return Obx(() {
       return Column(
@@ -288,22 +378,20 @@ class AdminRestaurantUpdatePage extends StatelessWidget {
               ),
             ],
           ),
+          Text(
+            "Optional",
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
+          ),
           const SizedBox(height: 12),
-
-          // Display existing additional images
           if (controller.existingAdditionalImageUrls.isNotEmpty)
             Wrap(
               spacing: 10,
               runSpacing: 10,
               children: List.generate(
                 controller.existingAdditionalImageUrls.length,
-                    (index) {
-                  return _buildExistingImageTile(index);
-                },
+                    (index) => _buildExistingImageTile(index),
               ),
             ),
-
-          // Display newly selected additional images
           if (controller.additionalImages.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 10),
@@ -312,13 +400,10 @@ class AdminRestaurantUpdatePage extends StatelessWidget {
                 runSpacing: 10,
                 children: List.generate(
                   controller.additionalImages.length,
-                      (index) {
-                    return _buildNewImageTile(index);
-                  },
+                      (index) => _buildNewImageTile(index),
                 ),
               ),
             ),
-
           if (controller.existingAdditionalImageUrls.isEmpty &&
               controller.additionalImages.isEmpty)
             Container(
@@ -328,10 +413,8 @@ class AdminRestaurantUpdatePage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
-                child: Text(
-                  "No additional images",
-                  style: TextStyle(color: Colors.grey.shade600),
-                ),
+                child: Text("No additional images",
+                    style: TextStyle(color: Colors.grey.shade600)),
               ),
             ),
         ],
@@ -354,12 +437,10 @@ class AdminRestaurantUpdatePage extends StatelessWidget {
             child: Image.network(
               _getImageUrl(controller.existingAdditionalImageUrls[index]),
               fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  color: Colors.grey.shade200,
-                  child: const Icon(Icons.error),
-                );
-              },
+              errorBuilder: (context, error, stackTrace) => Container(
+                color: Colors.grey.shade200,
+                child: const Icon(Icons.error),
+              ),
             ),
           ),
         ),
@@ -371,14 +452,9 @@ class AdminRestaurantUpdatePage extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(4),
               decoration: const BoxDecoration(
-                color: Colors.red,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.close,
-                size: 16,
-                color: Colors.white,
-              ),
+                  color: Colors.red, shape: BoxShape.circle),
+              child:
+              const Icon(Icons.close, size: 16, color: Colors.white),
             ),
           ),
         ),
@@ -398,10 +474,8 @@ class AdminRestaurantUpdatePage extends StatelessWidget {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            child: Image.file(
-              controller.additionalImages[index],
-              fit: BoxFit.cover,
-            ),
+            child: Image.file(controller.additionalImages[index],
+                fit: BoxFit.cover),
           ),
         ),
         Positioned(
@@ -412,14 +486,9 @@ class AdminRestaurantUpdatePage extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(4),
               decoration: const BoxDecoration(
-                color: Colors.red,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.close,
-                size: 16,
-                color: Colors.white,
-              ),
+                  color: Colors.red, shape: BoxShape.circle),
+              child:
+              const Icon(Icons.close, size: 16, color: Colors.white),
             ),
           ),
         ),
@@ -427,52 +496,47 @@ class AdminRestaurantUpdatePage extends StatelessWidget {
     );
   }
 
-  /// =========================================================
-  /// Helper method to construct proper image URL
-  /// =========================================================
+  // ── Helpers ───────────────────────────────────────────────────────────────
   String _getImageUrl(String imagePath) {
     if (imagePath.isEmpty) return '';
-
-    // If the path already contains the full URL, return it as is
-    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-      return imagePath;
-    }
-
-    // Otherwise, prepend the base URL
+    if (imagePath.startsWith('http://') ||
+        imagePath.startsWith('https://')) return imagePath;
     return "https://rasma.astradevelops.in/e_shoppyy/public/$imagePath";
   }
 
-  /// =========================================================
-  /// Section Title
-  /// =========================================================
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
       style: const TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
-        color: Colors.black87,
-      ),
+          fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
     );
   }
 
-  /// =========================================================
-  /// Text Field
-  /// =========================================================
-  Widget _buildTextField({
+  // ── Validated Field (replaces plain TextField) ────────────────────────────
+  Widget _buildValidatedField({
     required TextEditingController controller,
     required String label,
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
     int maxLines = 1,
+    String? hint,
+    String? Function(String?)? validator,
+    List<TextInputFormatter>? inputFormatters,
   }) {
-    return TextField(
+    return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       maxLines: maxLines,
+      inputFormatters: inputFormatters,
+      style: const TextStyle(fontSize: 15),
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      validator: validator,
       decoration: InputDecoration(
         labelText: label,
+        hintText: hint,
         prefixIcon: Icon(icon, color: AppColors.kPrimary),
+        filled: true,
+        fillColor: Colors.grey.shade50,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Colors.grey.shade300),
@@ -485,8 +549,17 @@ class AdminRestaurantUpdatePage extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: AppColors.kPrimary, width: 2),
         ),
-        filled: true,
-        fillColor: Colors.grey.shade50,
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.red.shade600, width: 2),
+        ),
+        errorStyle: TextStyle(color: Colors.red.shade700, fontSize: 12),
+        contentPadding:
+        const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
     );
   }

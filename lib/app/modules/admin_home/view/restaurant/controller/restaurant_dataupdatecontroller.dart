@@ -10,7 +10,6 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../../data/errors/api_error.dart';
 import '../../../../merchantlogin/widget/successwidget.dart';
 
-
 class AdminRestaurantUpdateController extends GetxController {
   final restaurantNameController = TextEditingController();
   final ownerNameController = TextEditingController();
@@ -42,6 +41,57 @@ class AdminRestaurantUpdateController extends GetxController {
 
   static const String _baseUrl =
       "https://rasma.astradevelops.in/e_shoppyy/public/";
+
+  // ── URL Validators ────────────────────────────────────────────────────────
+
+  /// Generic: must be http/https URL if not empty
+  String? validateUrl(String? value, String fieldName) {
+    if (value == null || value.trim().isEmpty) return null;
+    final uri = Uri.tryParse(value.trim());
+    if (uri == null || !uri.hasScheme || !uri.scheme.startsWith('http')) {
+      return '$fieldName must start with http:// or https://';
+    }
+    return null;
+  }
+
+  /// Website: any valid http/https URL
+  String? validateWebsiteUrl(String? value) => validateUrl(value, 'Website');
+
+  /// Facebook: must contain facebook.com
+  String? validateFacebookUrl(String? value) {
+    if (value == null || value.trim().isEmpty) return null;
+    final err = validateUrl(value, 'Facebook');
+    if (err != null) return err;
+    if (!value.trim().toLowerCase().contains('facebook.com')) {
+      return 'Enter a valid Facebook URL (facebook.com/...)';
+    }
+    return null;
+  }
+
+  /// Instagram: must be instagram.com URL or @handle
+  String? validateInstagramUrl(String? value) {
+    if (value == null || value.trim().isEmpty) return null;
+    final v = value.trim();
+    if (v.startsWith('@')) return null;
+    final err = validateUrl(v, 'Instagram');
+    if (err != null) return err;
+    if (!v.toLowerCase().contains('instagram.com')) {
+      return 'Enter a valid Instagram URL (instagram.com/...) or @handle';
+    }
+    return null;
+  }
+
+  /// WhatsApp: exactly 10 digits if not empty
+  String? validateWhatsapp(String? value) {
+    if (value == null || value.trim().isEmpty) return null;
+    if (value.trim().length != 10) {
+      return 'WhatsApp number must be 10 digits';
+    }
+    return null;
+  }
+
+  // ── Form Key ──────────────────────────────────────────────────────────────
+  final formKey = GlobalKey<FormState>();
 
   @override
   void onClose() {
@@ -107,28 +157,8 @@ class AdminRestaurantUpdateController extends GetxController {
   void removeExistingAdditionalImage(int i) =>
       existingAdditionalImageUrls.removeAt(i);
 
-  bool validateForm() {
-    if (restaurantNameController.text.isEmpty) {
-      AppSnackbar.warning("Restaurant name required");
-      return false;
-    }
-    if (ownerNameController.text.isEmpty) {
-      AppSnackbar.warning("Owner name required");
-      return false;
-    }
-    if (phoneController.text.isEmpty) {
-      AppSnackbar.warning("Phone required");
-      return false;
-    }
-    if (emailController.text.isEmpty) {
-      AppSnackbar.warning("Email required");
-      return false;
-    }
-    return true;
-  }
-
   Future<void> updateRestaurant() async {
-    if (!validateForm()) return;
+    if (!(formKey.currentState?.validate() ?? false)) return;
 
     try {
       isUpdating.value = true;
@@ -138,86 +168,96 @@ class AdminRestaurantUpdateController extends GetxController {
       final url = Uri.parse(
           "https://rasma.astradevelops.in/e_shoppyy/public/api/admin/restaurant/update");
 
-      var request = http.MultipartRequest('POST', url);
+      // ── Switch to JSON body instead of MultipartRequest ──────────────────
+      // Because API expects all images as base64 strings, not multipart files
 
-      request.headers.addAll({
-        "Authorization": "Bearer $token",
-        "Accept": "application/json",
-      });
+      final Map<String, dynamic> body = {};
 
-      // ── Fields ─────────────────────────────
-      request.fields['restaurant_id'] = restaurantId.toString();
-      request.fields['restaurant_name'] =
-          restaurantNameController.text.trim();
-      request.fields['owner_name'] = ownerNameController.text.trim();
-      request.fields['address'] = addressController.text.trim();
-      request.fields['phone'] = phoneController.text.trim();
-      request.fields['email'] = emailController.text.trim();
-      request.fields['website'] = websiteController.text.trim();
-      request.fields['whatsapp'] = whatsappController.text.trim();
-      request.fields['facebook_link'] = facebookController.text.trim();
-      request.fields['instagram_link'] = instagramController.text.trim();
-      request.fields['upi_id'] = upiIdController.text.trim();
+      // ── Fields ──────────────────────────────────────────────────────────
+      body['restaurant_id'] = restaurantId.toString();
+      body['restaurant_name'] = restaurantNameController.text.trim();
+      body['owner_name'] = ownerNameController.text.trim();
+      body['address'] = addressController.text.trim();
+      body['phone'] = phoneController.text.trim();
+      body['email'] = emailController.text.trim();
+      body['website'] = websiteController.text.trim();
+      body['whatsapp'] = whatsappController.text.trim();
+      body['facebook_link'] = facebookController.text.trim();
+      body['instagram_link'] = instagramController.text.trim();
+      body['upi_id'] = upiIdController.text.trim();
 
-      // ── Main Image ─────────────────────────
-      if (restaurantImage.value == null &&
-          restaurantImageUrl.value.isNotEmpty) {
-        request.fields['existing_restaurant_image'] =
-            _stripBaseUrl(restaurantImageUrl.value);
-      }
-
+      // ── Main Restaurant Image ────────────────────────────────────────────
       if (restaurantImage.value != null) {
-        request.files.add(await http.MultipartFile.fromPath(
-            'restaurant_image', restaurantImage.value!.path));
+        // New image selected — convert to base64
+        final bytes = await restaurantImage.value!.readAsBytes();
+        body['restaurant_image'] =
+        "data:image/jpeg;base64,${base64Encode(bytes)}";
+      } else if (restaurantImageUrl.value.isNotEmpty) {
+        // No change — send existing URL
+        body['restaurant_image'] = restaurantImageUrl.value;
       }
 
-      // ── QR Image ───────────────────────────
-      if (qrImage.value == null && qrImageUrl.value.isNotEmpty) {
-        request.fields['existing_qr_code'] =
-            _stripBaseUrl(qrImageUrl.value);
-      }
-
+      // ── QR Code ──────────────────────────────────────────────────────────
       if (qrImage.value != null) {
-        request.files.add(await http.MultipartFile.fromPath(
-            'qr_code', qrImage.value!.path));
+        // New QR selected — convert to base64
+        final bytes = await qrImage.value!.readAsBytes();
+        body['qr_code'] = "data:image/png;base64,${base64Encode(bytes)}";
+      } else if (qrImageUrl.value.isNotEmpty) {
+        // No change — send existing URL
+        body['qr_code'] = qrImageUrl.value;
       }
 
-      // ── Additional Images ──────────────────
-      for (int i = 0; i < existingAdditionalImageUrls.length; i++) {
-        request.fields['existing_additional_images[$i]'] =
-            _stripBaseUrl(existingAdditionalImageUrls[i]);
+      // ── Additional Images ────────────────────────────────────────────────
+      final List<String> allAdditionalImages = [];
+
+      // Keep existing ones
+      for (var url in existingAdditionalImageUrls) {
+        allAdditionalImages.add(url);
       }
 
+      // Convert new ones to base64
       for (var file in additionalImages) {
-        request.files.add(await http.MultipartFile.fromPath(
-            'additional_images[]', file.path));
+        final bytes = await file.readAsBytes();
+        allAdditionalImages
+            .add("data:image/jpeg;base64,${base64Encode(bytes)}");
       }
 
-      // ── Send Request ───────────────────────
-      final streamed = await request.send();
-      final response = await http.Response.fromStream(streamed);
+      body['additional_images'] = allAdditionalImages;
 
-      // ✅ Handle non-200
-      if (response.statusCode != 200) {
-        final error = ApiErrorHandler.handleResponse(response);
-        if (error.isNotEmpty) AppSnackbar.error(error);
+      // ── Send as JSON ──────────────────────────────────────────────────────
+      final response = await http.post(
+        url,
+        headers: {
+          "Authorization": "Bearer $token",
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode(body),
+      );
+
+      debugPrint("Status: ${response.statusCode}");
+      debugPrint("Body: ${response.body}");
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
         return;
       }
 
-      final body = jsonDecode(response.body);
+      final responseBody = jsonDecode(response.body);
 
-      if (body['status'].toString() == "1") {
-        AppSnackbar.success(body['message'] ?? "Updated successfully");
+      if (responseBody['status'].toString() == "1" ||
+          responseBody['status'] == true) {
+        AppSnackbar.success(
+            responseBody['message'] ?? "Updated successfully");
         Get.back();
       } else {
         AppSnackbar.error(
-            body['message'] ?? "Failed to update restaurant");
+            responseBody['message'] ?? "Failed to update restaurant");
       }
     } catch (e) {
-      final error = ApiErrorHandler.handleException(e);
-      AppSnackbar.error(error);
+      debugPrint("Error: $e");
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isUpdating.value = false;
     }
-  }
-}
+  }}

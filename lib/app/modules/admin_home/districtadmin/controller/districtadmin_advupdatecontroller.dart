@@ -9,7 +9,7 @@ import 'package:http/http.dart' as http;
 
 import '../../../../data/errors/api_error.dart';
 import '../../../../widgets/areaadminsuccesswidget.dart';
-import '../../../merchantlogin/widget/successwidget.dart';
+
 import '../view/districtadmin_home.dart';
 import 'districtadminadvertismentgetcontroller.dart';
 
@@ -198,7 +198,7 @@ class AdvertisementUpdateController extends GetxController {
 
       // ✅ Allow only 2:1 ratio (small tolerance ±0.1)
       if (ratio < 1.9 || ratio > 2.1) {
-        AppSnackbar.error(
+        AppSnackbarss.error(
           "Invalid image ratio ${width}x${height}.\nPlease upload a 2:1 ratio image (e.g. 1200x600)",
         );
         return;
@@ -208,7 +208,7 @@ class AdvertisementUpdateController extends GetxController {
       bannerImage.value = File(picked.path);
 
     } catch (e) {
-      AppSnackbar.error("Image error: $e");
+      AppSnackbarss.error("Image error: $e");
     }
   }
 

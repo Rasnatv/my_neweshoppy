@@ -83,7 +83,7 @@ class MenuManagementPage extends StatelessWidget {
           ),
         );
       }),
-      IconButton(onPressed: ()=>Get.to(()=> AdminRestauranthome()), icon:Icon(Icons.home)
+      IconButton(onPressed: ()=>Get.offAll(()=> AdminRestauranthome()), icon:Icon(Icons.home)
       )],
     bottom: PreferredSize(
       preferredSize: const Size.fromHeight(56),
