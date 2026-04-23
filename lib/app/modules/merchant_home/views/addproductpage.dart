@@ -176,10 +176,18 @@ class AddProductPage extends StatelessWidget {
         children: [
           _buildSectionTitle("Product Name *", Icons.shopping_bag_outlined),
           const SizedBox(height: 12),
+          // _buildTextField(
+          //   label: "Enter product name",
+          //   hint: "e.g., Classic Cotton T-Shirt",
+          //   icon: Icons.label_outline,
+          //   onChanged: (v) => controller.productName.value = v,
+          // ),
+          // AFTER
           _buildTextField(
             label: "Enter product name",
             hint: "e.g., Classic Cotton T-Shirt",
             icon: Icons.label_outline,
+            controller: controller.productNameController,   // ← ADD
             onChanged: (v) => controller.productName.value = v,
           ),
         ],
@@ -204,6 +212,7 @@ class AddProductPage extends StatelessWidget {
               border: Border.all(color: const Color(0xFFE5E7EB)),
             ),
             child: TextField(
+              controller: controller.productDescriptionController,
               onChanged: (v) => controller.productDescription.value = v,
               maxLines: 4,
               style: const TextStyle(fontSize: 15, color: Color(0xFF1A1A1A)),
@@ -1318,6 +1327,7 @@ class AddProductPage extends StatelessWidget {
     required String hint,
     required IconData icon,
     required Function(String) onChanged,
+    TextEditingController? controller,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -1326,6 +1336,7 @@ class AddProductPage extends StatelessWidget {
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: TextField(
+        controller: controller,
         onChanged: onChanged,
         style: const TextStyle(fontSize: 15, color: Color(0xFF1A1A1A)),
         decoration: InputDecoration(

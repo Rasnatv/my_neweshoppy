@@ -1,7 +1,6 @@
 
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-
 import '../../modules/admin_home/view/admin_home.dart';
 import '../../modules/admin_home/districtadmin/view/districtadmin_home.dart';
 import '../../modules/areaadmin/view/area_adminhome.dart';
@@ -24,13 +23,12 @@ class AuthCheckController extends GetxController {
     final token      = box.read('auth_token');
     final isLoggedIn = box.read('is_logged_in') ?? false;
     final roleRaw    = box.read('role');
-    print("TOKEN: $token | LOGGED_IN: $isLoggedIn | ROLE: $roleRaw");
+
 
     final int? role = roleRaw is int
         ? roleRaw
         : int.tryParse(roleRaw?.toString() ?? '');
 
-    print("ROLE FROM STORAGE: $role"); // 🔍 DEBUG
 
     if (isLoggedIn && token != null && token.isNotEmpty && role != null) {
       _navigateByRole(role);

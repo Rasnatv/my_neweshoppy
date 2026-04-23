@@ -25,6 +25,11 @@ class ProductController extends GetxController {
   var selectedCategoryId = 0.obs;
   var productDescription = ''.obs;
 
+
+  // ← ADD THESE TWO LINES
+  final TextEditingController productNameController = TextEditingController();
+  final TextEditingController productDescriptionController = TextEditingController();
+
   var isLoadingCategories = false.obs;
   var isSubmitting = false.obs;
 
@@ -438,6 +443,8 @@ class ProductController extends GetxController {
     configuredVariantTypes.clear();
     commonAttributes.clear();
     variantValueController.clear();
+    productNameController.clear();       // ← ADD
+    productDescriptionController.clear(); // ← ADD
   }
 
   void resetForm() {
@@ -467,6 +474,8 @@ class ProductController extends GetxController {
   @override
   void onClose() {
     variantValueController.dispose();
+    productNameController.dispose();       // ← ADD
+    productDescriptionController.dispose(); //
     super.onClose();
   }
 }

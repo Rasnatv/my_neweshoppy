@@ -24,6 +24,12 @@ class UsersignupController extends GetxController {
   RxBool isPasswordVisible = false.obs;
 
   final box = GetStorage();
+  final confirmPasswordController = TextEditingController();
+  RxBool isConfirmPasswordVisible = false.obs;
+
+  void toggleConfirmPasswordVisibility() {
+    isConfirmPasswordVisible.toggle();
+  }
 
   void togglePasswordVisibility() {
     isPasswordVisible.toggle();
@@ -114,6 +120,7 @@ class UsersignupController extends GetxController {
     passwordController.dispose();
     phoneController.dispose();
     addressController.dispose();
+    confirmPasswordController.dispose();
     super.onClose();
   }
 }

@@ -8,13 +8,17 @@ import '../../../common/style/app_colors.dart';
 import '../../product/widgtet/productcard.dart';
 import '../controller/userproductshop_controller.dart';
 
-class ShopDetailPage extends StatelessWidget {
+class ShopDetailPage extends StatefulWidget {
   final int merchantId;
 
-  ShopDetailPage({super.key, required this.merchantId});
+  const ShopDetailPage({super.key, required this.merchantId});
 
-  final UserShopProductController controller =
-  Get.put(UserShopProductController());
+  @override
+  State<ShopDetailPage> createState() => _ShopDetailPageState();
+}
+
+class _ShopDetailPageState extends State<ShopDetailPage> {
+  late final UserShopProductController controller;
 
   // ── Teal palette ───────────────────────────────────────────
   static const _teal      = Color(0xFF009688);
@@ -22,13 +26,17 @@ class ShopDetailPage extends StatelessWidget {
   static const _tealLight = Color(0xFFE0F2F1);
   static const _bg        = Color(0xFFF4F7F6);
   static const _textDark  = Color(0xFF1A2E2C);
-  static const _textMid   = Color(0xFF546E6B);
   static const _textLight = Color(0xFF90AFAC);
 
   @override
-  Widget build(BuildContext context) {
-    controller.loadShop(merchantId);
+  void initState() {
+    super.initState();
+    controller = Get.put(UserShopProductController());
+    controller.loadShop(widget.merchantId);
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
@@ -36,6 +44,7 @@ class ShopDetailPage extends StatelessWidget {
         body: NestedScrollView(
           headerSliverBuilder: (context, innerBoxIsScrolled) {
             return [
+
               // ── Sliver AppBar ────────────────────────────────
               SliverAppBar(
                 expandedHeight: 300,
@@ -48,7 +57,6 @@ class ShopDetailPage extends StatelessWidget {
                   icon: const Icon(Icons.arrow_back, color: Colors.white),
                   onPressed: () => Get.back(),
                 ),
-
                 flexibleSpace: FlexibleSpaceBar(
                   collapseMode: CollapseMode.parallax,
                   background: Obx(() {
@@ -78,6 +86,7 @@ class ShopDetailPage extends StatelessWidget {
                     return Stack(
                       fit: StackFit.expand,
                       children: [
+
                         // ── Cover image ────────────────────────
                         CachedNetworkImage(
                           imageUrl: shop.image,
@@ -128,6 +137,7 @@ class ShopDetailPage extends StatelessWidget {
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
+
                               // Shop avatar
                               Container(
                                 width: 64,
@@ -141,7 +151,7 @@ class ShopDetailPage extends StatelessWidget {
                                     BoxShadow(
                                       color: Colors.black.withOpacity(0.2),
                                       blurRadius: 12,
-                                    )
+                                    ),
                                   ],
                                 ),
                                 child: ClipRRect(
@@ -175,7 +185,7 @@ class ShopDetailPage extends StatelessWidget {
                               ),
                               const SizedBox(width: 12),
 
-                              // Shop name + meta
+                              // Shop name
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -210,7 +220,7 @@ class ShopDetailPage extends StatelessWidget {
                 ),
               ),
 
-              // ── Sticky Tab Bar ────────────────────────────────
+              // ── Sticky Tab Bar ─────────────────────────────
               SliverPersistentHeader(
                 pinned: true,
                 delegate: _StickyTabBarDelegate(
@@ -265,14 +275,18 @@ class ShopDetailPage extends StatelessWidget {
                   ),
                 ),
               ),
+
             ];
           },
 
-          // ── Tab Body ────────────────────────────────────────
+          // ── Tab Body ─────────────────────────────────────────
           body: TabBarView(
             children: [
-              // ── Products Tab ─────────────────────────────────
+
+              // ── Products Tab ──────────────────────────────────
               Obx(() {
+
+                // First page loading
                 if (controller.isLoading.value) {
                   return const Center(
                     child: Column(
@@ -291,6 +305,7 @@ class ShopDetailPage extends StatelessWidget {
                   );
                 }
 
+                // Empty state
                 if (controller.products.isEmpty) {
                   return Center(
                     child: Padding(
@@ -334,79 +349,69 @@ class ShopDetailPage extends StatelessWidget {
                   );
                 }
 
-                return GridView.builder(
-                  padding: const EdgeInsets.all(14),
-                  itemCount: controller.products.length,
-                  gridDelegate:
-                  const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.72,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                  ),
-                  itemBuilder: (context, index) {
-                    final product = controller.products[index];
-                    return ProductCard(
-                      productName: product.productName,
-                      imageUrl: product.image,
-                      price: product.price,
-                      productId: product.productId,
-                    );
+                // ── Grid + centered loader below ────────────────
+                return NotificationListener<ScrollNotification>(
+                  onNotification: (scrollNotification) {
+                    if (scrollNotification is ScrollEndNotification &&
+                        scrollNotification.metrics.pixels >=
+                            scrollNotification.metrics.maxScrollExtent - 200 &&
+                        !controller.isLoadingMore.value &&
+                        controller.hasMore.value) {
+                      controller.loadMoreProducts(widget.merchantId);
+                    }
+                    return false;
                   },
+                  child: Column(
+                    children: [
+
+                      // ── Product grid ─────────────────────────
+                      Expanded(
+                        child: GridView.builder(
+                          padding: const EdgeInsets.all(14),
+                          itemCount: controller.products.length,
+                          gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            childAspectRatio: 0.72,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                          ),
+                          itemBuilder: (context, index) {
+                            final product = controller.products[index];
+                            return ProductCard(
+                              productName: product.productName,
+                              imageUrl: product.image,
+                              price: product.price,
+                              productId: product.productId,
+                            );
+                          },
+                        ),
+                      ),
+
+                      // ── Centered pagination loader ────────────
+                      Obx(() => controller.isLoadingMore.value
+                          ? const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                              color: _teal, strokeWidth: 2.5),
+                        ),
+                      )
+                          : const SizedBox.shrink()),
+                    ],
+                  ),
                 );
               }),
 
-              // ── Gallery Tab ──────────────────────────────────
-              UserMerchantGalleryViewPage(merchantId: merchantId),
+              // ── Gallery Tab ───────────────────────────────────
+              UserMerchantGalleryViewPage(merchantId: widget.merchantId),
 
-              // ── About Tab ────────────────────────────────────
-              MerchantAboutPage(merchantId: merchantId),
+              // ── About Tab ─────────────────────────────────────
+              MerchantAboutPage(merchantId: widget.merchantId),
+
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-// Status Badge widget
-// ─────────────────────────────────────────────
-
-class _StatusBadge extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-
-  const _StatusBadge({
-    required this.icon,
-    required this.label,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.25)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 11, color: color),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: color,
-            ),
-          ),
-        ],
       ),
     );
   }

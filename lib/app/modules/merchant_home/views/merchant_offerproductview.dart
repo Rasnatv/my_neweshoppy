@@ -1,8 +1,8 @@
 
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_colors.dart';
-import '../../../common/style/app_text_style.dart';
 import '../../../data/models/merchant_offerproductviewmodel.dart';
 import '../../../widgets/delete_widget.dart';
 import '../controller/merchant_offerproduct_view_controller.dart';
@@ -38,7 +38,6 @@ class OfferProductScreen extends StatelessWidget {
         ),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
-          // ✅ Show subtle refresh indicator when silently refreshing
           Obx(() => controller.isRefreshing.value
               ? const Padding(
             padding: EdgeInsets.all(16),
@@ -117,18 +116,8 @@ class OfferProductScreen extends StatelessWidget {
                 ClipRRect(
                   borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(16)),
-                  child: Image.network(
-                    product.productImage,
-                    height: 130,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      height: 130,
-                      color: Colors.grey.shade200,
-                      child: const Icon(Icons.image_not_supported,
-                          color: Colors.grey),
-                    ),
-                  ),
+                  // ✅ Handles both network URLs and local file paths
+                  child: _buildProductImage(product.productImage),
                 ),
                 // DISCOUNT BADGE
                 Positioned(
@@ -215,20 +204,13 @@ class OfferProductScreen extends StatelessWidget {
                         Expanded(
                           child: GestureDetector(
                             onTap: () async {
-                              final result = await Get.to(
+                              await Get.to(
                                     () => const UpdateOfferProductPage(),
                                 arguments: {
                                   'offer_product_id': product.productId,
-                                  'offer_id': offerId, // ✅ pass offerId so update controller can find parent
+                                  'offer_id': offerId,
                                 },
                               );
-
-                              // Fallback: if refresh wasn't done inside updateProduct, do it here
-                              if (result == true) {
-                                await Get.find<MerchantOfferProductController>(
-                                  tag: offerId.toString(),
-                                ).fetchOfferProduct();
-                              }
                             },
                             child: Container(
                               padding:
@@ -270,8 +252,8 @@ class OfferProductScreen extends StatelessWidget {
                               title: 'Delete Product',
                               message:
                               '"${product.productName}" will be permanently removed.',
-                              onConfirm: () =>
-                                  controller.deleteOfferProduct(product.productId),
+                              onConfirm: () => controller
+                                  .deleteOfferProduct(product.productId),
                             ),
                             child: Container(
                               padding:
@@ -309,6 +291,47 @@ class OfferProductScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // ✅ Handles network URL, local file path, and empty/null image
+  Widget _buildProductImage(String imagePath) {
+    if (imagePath.isEmpty) {
+      return Container(
+        height: 130,
+        color: Colors.grey.shade200,
+        child: const Icon(Icons.image_not_supported, color: Colors.grey),
+      );
+    }
+
+    if (imagePath.startsWith('http')) {
+      return Image.network(
+        imagePath,
+        height: 130,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        // ✅ Key forces Flutter to re-fetch when URL changes
+        key: ValueKey(imagePath),
+        errorBuilder: (_, __, ___) => Container(
+          height: 130,
+          color: Colors.grey.shade200,
+          child: const Icon(Icons.image_not_supported, color: Colors.grey),
+        ),
+      );
+    }
+
+    // ✅ Local file path — used right after image update before silentRefresh
+    return Image.file(
+      File(imagePath),
+      height: 130,
+      width: double.infinity,
+      fit: BoxFit.cover,
+      key: ValueKey(imagePath),
+      errorBuilder: (_, __, ___) => Container(
+        height: 130,
+        color: Colors.grey.shade200,
+        child: const Icon(Icons.image_not_supported, color: Colors.grey),
       ),
     );
   }

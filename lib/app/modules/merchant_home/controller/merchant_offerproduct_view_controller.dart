@@ -16,7 +16,7 @@ class MerchantOfferProductController extends GetxController {
   final offerProducts = <NMerchantOfferProductModels>[].obs;
   final isLoading = false.obs;
   final isDeleting = false.obs;
-  final isRefreshing = false.obs; // ✅ silent background refresh flag
+  final isRefreshing = false.obs;
 
   final box = GetStorage();
 
@@ -37,7 +37,7 @@ class MerchantOfferProductController extends GetxController {
     fetchOfferProduct();
   }
 
-  // ================= FETCH (shows full loading indicator) =================
+  // ================= FETCH =================
   Future<void> fetchOfferProduct() async {
     if (_token.isEmpty) {
       AppSnackbar.error("Session expired. Please login again");
@@ -85,8 +85,7 @@ class MerchantOfferProductController extends GetxController {
     }
   }
 
-  // ================= SILENT REFRESH (no loading indicator) =================
-  // ✅ Called after edit — refreshes data without showing loading spinner
+  // ================= SILENT REFRESH =================
   Future<void> silentRefresh() async {
     if (_token.isEmpty) return;
 
@@ -120,27 +119,42 @@ class MerchantOfferProductController extends GetxController {
         }
       }
     } catch (_) {
-      // silent — don't show error snackbar for background refresh
+      // silent — no error snackbar
     } finally {
       isRefreshing.value = false;
     }
   }
 
   // ================= PATCH LOCALLY =================
+  // ✅ Instantly updates the card UI before silentRefresh completes
   void patchProductLocally(int productId, Map<String, dynamic> changes) {
     final index = offerProducts.indexWhere((p) => p.productId == productId);
     if (index == -1) return;
 
     final old = offerProducts[index];
 
+    // Recalculate discount percentage if prices changed
+    final newReal =
+        (changes['real_price'] as double?) ?? old.realPrice;
+    final newOffer =
+        (changes['offer_price'] as double?) ?? old.offerPrice;
+    final newDiscount = newReal > 0
+        ? ((newReal - newOffer) / newReal * 100)
+        : old.discountPercentage;
+
     offerProducts[index] = NMerchantOfferProductModels(
       productId: old.productId,
-      productName: changes['product_name'] ?? old.productName,
-      productImage: changes['product_image'] ?? old.productImage,
-      discountPercentage: old.discountPercentage,
-      realPrice: changes['real_price'] ?? old.realPrice,
-      offerPrice: changes['offer_price'] ?? old.offerPrice,
+      productName:
+      (changes['product_name'] as String?) ?? old.productName,
+      productImage:
+      (changes['product_image'] as String?) ?? old.productImage,
+      discountPercentage: newDiscount,
+      realPrice: newReal,
+      offerPrice: newOffer,
     );
+
+    // ✅ Force Obx to rebuild the card immediately
+    offerProducts.refresh();
   }
 
   // ================= DELETE =================

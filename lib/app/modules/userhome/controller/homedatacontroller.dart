@@ -48,9 +48,9 @@ class HomeDataController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    ever(Get.find<NetworkService>().reconnectTrigger, (_) {
-      if (_hasSavedLocation()) refresh();
-    });
+    // ever(Get.find<NetworkService>().reconnectTrigger, (_) {
+    //   if (_hasSavedLocation()) refresh();
+    // });
 
     if (_hasSavedLocation()) {
       _fetchFromStorage();
@@ -110,8 +110,8 @@ class HomeDataController extends GetxController {
     } catch (e) {
       events.clear();
       advertisements.clear();
-      AppSnackbar.error(ApiErrorHandler.handleException(e));
-      Get.log("HomeDataController error: $e");
+      // AppSnackbar.error(ApiErrorHandler.handleException(e));
+      // Get.log("HomeDataController error: $e");
     } finally {
       isLoading(false);
     }

@@ -75,9 +75,9 @@ class UserOfferController extends GetxController {
     } catch (e) {
       offerList.clear();
 
-      // ✅ EXCEPTION HANDLER (Socket, etc.)
-      final errorMessage = ApiErrorHandler.handleException(e);
-      AppSnackbar.error(errorMessage);
+      // // ✅ EXCEPTION HANDLER (Socket, etc.)
+      // final errorMessage = ApiErrorHandler.handleException(e);
+      // AppSnackbar.error(errorMessage);
 
       print('fetchOffers error: $e');
     } finally {

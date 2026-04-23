@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../common/style/app_colors.dart';
 import '../../../../data/models/adminretaurant_menumodel.dart';
-import 'admin_Restauranthome.dart';
+import '../admin_home.dart';
 import 'controller/restaurant_menuaddingcontroller.dart';
 
 // ─── Meal Helpers ─────────────────────────────────────────────────────────────
@@ -83,7 +83,7 @@ class MenuManagementPage extends StatelessWidget {
           ),
         );
       }),
-      IconButton(onPressed: ()=>Get.offAll(()=> AdminRestauranthome()), icon:Icon(Icons.home)
+      IconButton(onPressed: ()=>Get.offAll(()=> AdminDashboard()), icon:Icon(Icons.home)
       )],
     bottom: PreferredSize(
       preferredSize: const Size.fromHeight(56),

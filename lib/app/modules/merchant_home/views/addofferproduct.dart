@@ -380,6 +380,7 @@ class AddOfferProductPage extends StatelessWidget {
               'Product Name', Icons.shopping_bag_outlined),
           const SizedBox(height: 12),
           _buildTextField(
+              controller: controller.productNameController,
             hint: 'e.g., Classic Cotton T-Shirt',
             icon: Icons.label_outline,
             onChanged: (val) => controller.productName.value = val,
@@ -404,8 +405,10 @@ class AddOfferProductPage extends StatelessWidget {
               border: Border.all(color: const Color(0xFFE5E7EB)),
             ),
             child: TextField(
+              controller: controller.productDescriptionController,
               onChanged: (val) =>
               controller.productDescription.value = val,
+
               maxLines: 4,
               style: const TextStyle(
                   fontSize: 15, color: Color(0xFF1A1A1A)),
@@ -948,10 +951,9 @@ class AddOfferProductPage extends StatelessWidget {
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.all(Radius.circular(8)),
                   borderSide: BorderSide.none),
-              contentPadding: EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 12),
-              labelStyle:
-              TextStyle(fontSize: 12, color: kGreen),
+              contentPadding:
+              EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              labelStyle: TextStyle(fontSize: 12, color: kGreen),
             ),
           ),
         ),
@@ -959,31 +961,45 @@ class AddOfferProductPage extends StatelessWidget {
         Obx(() {
           final _ = controller.variants.length;
           if (variant.price != null && variant.price! > 0) {
-            final offerPrice =
-            controller.computeOfferPrice(variant.price!);
-            if (offerPrice != null) {
+            // Prefer server-confirmed finalPrice; fall back to local calc
+            final double? displayFinal = variant.finalPrice ??
+                controller.computeOfferPrice(variant.price!);
+
+            if (displayFinal != null) {
+              final bool isConfirmed = variant.finalPrice != null;
+
               return Container(
                 padding: const EdgeInsets.symmetric(
                     horizontal: 8, vertical: 6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFEF3C7),
+                  color: isConfirmed
+                      ? const Color(0xFFD1FAE5)  // green — server confirmed
+                      : const Color(0xFFFEF3C7), // amber — local estimate
                   borderRadius: BorderRadius.circular(6),
-                  border:
-                  Border.all(color: kAmber.withOpacity(0.3)),
+                  border: Border.all(
+                      color: (isConfirmed ? kGreen : kAmber)
+                          .withOpacity(0.3)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.local_offer,
-                        color: kAmber, size: 12),
+                    Icon(
+                      isConfirmed
+                          ? Icons.verified_outlined
+                          : Icons.local_offer,
+                      color: isConfirmed ? kGreen : kAmber,
+                      size: 12,
+                    ),
                     const SizedBox(width: 4),
                     Flexible(
                       child: Text(
-                        '₹${offerPrice.toStringAsFixed(0)} (${controller.discountPercentage}% off)',
-                        style: const TextStyle(
+                        '₹${displayFinal.toStringAsFixed(0)} '
+                            '(${controller.discountPercentage}% off)'
+                            '${isConfirmed ? ' ✓' : ''}',
+                        style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
-                            color: kAmber),
+                            color: isConfirmed ? kGreen : kAmber),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -1239,6 +1255,7 @@ class AddOfferProductPage extends StatelessWidget {
     required String hint,
     required IconData icon,
     required Function(String) onChanged,
+  TextEditingController? controller,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -1247,6 +1264,7 @@ class AddOfferProductPage extends StatelessWidget {
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: TextField(
+        controller: controller,
         onChanged: onChanged,
         style:
         const TextStyle(fontSize: 15, color: Color(0xFF1A1A1A)),

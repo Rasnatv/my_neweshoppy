@@ -69,8 +69,8 @@ class EditProfileController extends GetxController {
         AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
-      AppSnackbar.error(ApiErrorHandler.handleException(e));
-      debugPrint('fetchProfile error: $e');
+      // AppSnackbar.error(ApiErrorHandler.handleException(e));
+      // debugPrint('fetchProfile error: $e');
     } finally {
       isLoading(false);
     }
@@ -143,8 +143,8 @@ class EditProfileController extends GetxController {
         AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
-      AppSnackbar.error(ApiErrorHandler.handleException(e));
-      debugPrint('updateProfile error: $e');
+      // AppSnackbar.error(ApiErrorHandler.handleException(e));
+      // debugPrint('updateProfile error: $e');
     } finally {
       isLoading(false);
     }

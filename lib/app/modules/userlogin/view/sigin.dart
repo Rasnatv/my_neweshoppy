@@ -156,7 +156,37 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  // ─── Badge ────────────────────────────────────────────────────────────────
+  // // ─── Badge ────────────────────────────────────────────────────────────────
+  // Widget _buildBadge() {
+  //   return Container(
+  //     width: 88,
+  //     height: 88,
+  //     decoration: BoxDecoration(
+  //       color: AppColors.kPrimary,
+  //       borderRadius: BorderRadius.circular(28),
+  //       boxShadow: _T.accentShadow(AppColors.kPrimary),
+  //     ),
+  //     child: ClipRRect(
+  //       borderRadius: BorderRadius.circular(28),
+  //       child: Stack(
+  //         alignment: Alignment.center,
+  //         children: [
+  //           Positioned.fill(
+  //             child: CustomPaint(painter: _RingPainter(AppColors.kPrimary)),
+  //           ),
+  //           Image.asset(
+  //             'assets/images/logo/eshoppycatlogo.png',
+  //             width: 70,
+  //             height: 70,
+  //             fit: BoxFit.contain,
+  //             alignment: Alignment.center,
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
+// ─── Badge ────────────────────────────────────────────────────────────────
   Widget _buildBadge() {
     return Container(
       width: 88,
@@ -166,30 +196,15 @@ class _LoginScreenState extends State<LoginScreen>
         borderRadius: BorderRadius.circular(28),
         boxShadow: _T.accentShadow(AppColors.kPrimary),
       ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Positioned.fill(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(28),
-              child: CustomPaint(painter: _RingPainter(AppColors.kPrimary)),
-            ),
-          ),
-          SizedBox(
-            width: 52,
-            height: 52,
-            child: Center(
-              child: Image.asset(
-                'assets/images/logo/eshoppycatlogo.png',
-                fit: BoxFit.contain,
-              ),
-            ),
-          ),
-        ],
+      child: Center(
+        child: Icon(
+          Icons.shopping_cart_sharp,
+          color: Colors.white,
+          size: 40,
+        ),
       ),
     );
   }
-
   // ─── Title block ──────────────────────────────────────────────────────────
   Widget _buildTitleBlock() {
     return Column(

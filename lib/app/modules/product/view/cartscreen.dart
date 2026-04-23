@@ -500,14 +500,11 @@ class _CartItemCard extends StatelessWidget {
                           children: [
                             _QuantityStepper(
                               quantity: item.quantity,
-                              onDecrement: () =>
-                                  cartController.updateQuantity(
-                                      int.parse(item.productId),
-                                      "decrement"),
-                              onIncrement: () =>
-                                  cartController.updateQuantity(
-                                      int.parse(item.productId),
-                                      "increment"),
+                              stock: item.stock, // ✅ NEW
+                              onDecrement: () => cartController.updateQuantity(
+                                  int.parse(item.productId), "decrement"),
+                              onIncrement: () => cartController.updateQuantity(
+                                  int.parse(item.productId), "increment"),
                             ),
                             const Spacer(),
                             // Item total
@@ -552,20 +549,104 @@ class _CartItemCard extends StatelessWidget {
 // ─────────────────────────────────────────
 // Quantity Stepper
 // ─────────────────────────────────────────
+// class _QuantityStepper extends StatelessWidget {
+//   final int quantity;
+//   final VoidCallback onDecrement;
+//   final VoidCallback onIncrement;
+//
+//   const _QuantityStepper({
+//     Key? key,
+//     required this.quantity,
+//     required this.onDecrement,
+//     required this.onIncrement,
+//   }) : super(key: key);
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+//       height: 36,
+//       decoration: BoxDecoration(
+//         color: const Color(0xFFF7F8FA),
+//         borderRadius: BorderRadius.circular(10),
+//         border: Border.all(color: Colors.grey.shade200),
+//       ),
+//       child: Row(
+//         mainAxisSize: MainAxisSize.min,
+//         children: [
+//           GestureDetector(
+//             onTap: onDecrement,
+//             child: Container(
+//               width: 36,
+//               height: 36,
+//               decoration: BoxDecoration(
+//                 borderRadius: BorderRadius.circular(9),
+//               ),
+//               child: Icon(
+//                 Icons.remove_rounded,
+//                 size: 18,
+//                 color: quantity <= 1
+//                     ? Colors.grey.shade400
+//                     : Colors.grey.shade700,
+//               ),
+//             ),
+//           ),
+//           AnimatedSwitcher(
+//             duration: const Duration(milliseconds: 150),
+//             transitionBuilder: (child, anim) =>
+//                 ScaleTransition(scale: anim, child: child),
+//             child: SizedBox(
+//               key: ValueKey(quantity),
+//               width: 32,
+//               child: Center(
+//                 child: Text(
+//                   "$quantity",
+//                   style: const TextStyle(
+//                     fontSize: 15,
+//                     fontWeight: FontWeight.w700,
+//                     color: Color(0xFF1A1A2E),
+//                   ),
+//                 ),
+//               ),
+//             ),
+//           ),
+//           GestureDetector(
+//             onTap: onIncrement,
+//             child: Container(
+//               width: 36,
+//               height: 36,
+//               decoration: BoxDecoration(
+//                 borderRadius: BorderRadius.circular(9),
+//               ),
+//               child: Icon(
+//                 Icons.add_rounded,
+//                 size: 18,
+//                 color: AppColors.kPrimary,
+//               ),
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
 class _QuantityStepper extends StatelessWidget {
   final int quantity;
+  final int stock; // ✅ NEW
   final VoidCallback onDecrement;
   final VoidCallback onIncrement;
 
   const _QuantityStepper({
     Key? key,
     required this.quantity,
+    required this.stock, // ✅ NEW
     required this.onDecrement,
     required this.onIncrement,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final bool atMax = quantity >= stock; // ✅ NEW
+
     return Container(
       height: 36,
       decoration: BoxDecoration(
@@ -576,6 +657,7 @@ class _QuantityStepper extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // ── Decrement ──
           GestureDetector(
             onTap: onDecrement,
             child: Container(
@@ -593,6 +675,7 @@ class _QuantityStepper extends StatelessWidget {
               ),
             ),
           ),
+          // ── Count ──
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 150),
             transitionBuilder: (child, anim) =>
@@ -612,8 +695,9 @@ class _QuantityStepper extends StatelessWidget {
               ),
             ),
           ),
+          // ── Increment ── ✅ greyed out at stock limit
           GestureDetector(
-            onTap: onIncrement,
+            onTap: atMax ? null : onIncrement,
             child: Container(
               width: 36,
               height: 36,
@@ -623,7 +707,7 @@ class _QuantityStepper extends StatelessWidget {
               child: Icon(
                 Icons.add_rounded,
                 size: 18,
-                color: AppColors.kPrimary,
+                color: atMax ? Colors.grey.shade300 : AppColors.kPrimary,
               ),
             ),
           ),

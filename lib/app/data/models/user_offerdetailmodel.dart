@@ -1,6 +1,143 @@
-
+//
+// class UserOfferProductDetail {
+//   final int productId;
+//   final int type;
+//   final int variantId;
+//   final String merchantId;
+//   final String productName;
+//   final String categoryId;
+//   final String description;
+//   final double discountPercentage;
+//   final List<String> productImages;
+//   final Map<String, String> commonAttributes;
+//   final List<ProductVariant> variants;
+//
+//   UserOfferProductDetail({
+//     required this.productId,
+//     required this.type,
+//     required this.variantId,
+//     required this.merchantId,
+//     required this.productName,
+//     required this.categoryId,
+//     required this.description,
+//     required this.discountPercentage,
+//     required this.productImages,
+//     required this.commonAttributes,
+//     required this.variants,
+//   });
+//
+//   double get price => variants.isNotEmpty ? variants.first.price : 0.0;
+//   double get offerPrice =>
+//       variants.isNotEmpty ? variants.first.offerPrice : 0.0;
+//   int get stockQty => variants.fold(0, (sum, v) => sum + v.stock);
+//
+//   factory UserOfferProductDetail.fromJson(Map<String, dynamic> json) {
+//     // ── Common attributes ──────────────────────────────────────────
+//     final Map<String, String> commonAttrs = {};
+//     if (json['common_attributes'] is Map) {
+//       (json['common_attributes'] as Map).forEach((key, value) {
+//         commonAttrs[key.toString()] = value.toString();
+//       });
+//     }
+//
+//     // ── Variants ───────────────────────────────────────────────────
+//     final List<ProductVariant> variantsList = [];
+//     if (json['variants'] != null) {
+//       for (final e in (json['variants'] as List)) {
+//         variantsList.add(ProductVariant.fromJson(e as Map<String, dynamic>));
+//       }
+//     }
+//
+//     // ── Product images (one per variant, deduplicated) ─────────────
+//     final List<String> images = variantsList
+//         .map((v) => v.image)
+//         .where((img) => img.isNotEmpty)
+//         .toList();
+//
+//     return UserOfferProductDetail(
+//       productId:
+//       int.tryParse(json['product_id']?.toString() ?? '0') ?? 0,
+//       type: int.tryParse(json['type']?.toString() ?? '0') ?? 0,
+//       variantId:
+//       int.tryParse(json['variant_id']?.toString() ?? '0') ?? 0,
+//       merchantId: json['merchant_id']?.toString() ?? '',
+//       productName: json['product_name']?.toString() ?? '',
+//       categoryId: json['category_id']?.toString() ?? '',
+//       description: json['description']?.toString() ?? '',
+//       discountPercentage: double.tryParse(
+//           json['discount_percentage']?.toString() ?? '0') ??
+//           0.0,
+//       productImages: images,
+//       commonAttributes: commonAttrs,
+//       variants: variantsList,
+//     );
+//   }
+// }
+//
+// // ─────────────────────────────────────────────────────────────────────────────
+//
+// class ProductVariant {
+//   final int variantId;
+//   final int type;
+//   final Map<String, String> attributes;
+//   final double price;
+//   final double offerPrice;
+//   final int stock;
+//   final String image;
+//
+//   // mutable — updated by image picker in the merchant edit flow
+//   String imagePath;
+//   bool imageUpdated;
+//
+//   ProductVariant({
+//     required this.variantId,
+//     required this.type,
+//     required this.attributes,
+//     required this.price,
+//     required this.offerPrice,
+//     required this.stock,
+//     required this.image,
+//     this.imagePath = '',
+//     this.imageUpdated = false,
+//   });
+//
+//   factory ProductVariant.fromJson(Map<String, dynamic> json) {
+//     // ✅ FIX: API returns "color" (no 'u'), not "colour"
+//     // We also skip empty strings so only present attributes appear in chips
+//     final Map<String, String> attrs = {};
+//
+//     final color = json['color']?.toString() ?? '';
+//     if (color.isNotEmpty) attrs['color'] = color;
+//
+//     final size = json['size']?.toString() ?? '';
+//     if (size.isNotEmpty) attrs['size'] = size;
+//
+//     return ProductVariant(
+//       variantId:
+//       int.tryParse(json['variant_id']?.toString() ?? '0') ?? 0,
+//       type: int.tryParse(json['type']?.toString() ?? '0') ?? 0,
+//       attributes: attrs,
+//       price:
+//       double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
+//       offerPrice:
+//       double.tryParse(json['offer_price']?.toString() ?? '0') ?? 0.0,
+//       stock:
+//       int.tryParse(json['stock_qty']?.toString() ?? '0') ?? 0,
+//       image: json['image']?.toString() ?? '',
+//       imagePath: json['image']?.toString() ?? '',
+//     );
+//   }
+//
+//   String getDisplayName() {
+//     if (attributes.isEmpty) return 'Variant';
+//     return attributes.values.join(' / ');
+//   }
+// }
 class UserOfferProductDetail {
-  final int id;
+  final int productId;
+  final int offerId;       // ✅ NEW
+  final int type;
+  final int variantId;
   final String merchantId;
   final String productName;
   final String categoryId;
@@ -11,7 +148,10 @@ class UserOfferProductDetail {
   final List<ProductVariant> variants;
 
   UserOfferProductDetail({
-    required this.id,
+    required this.productId,
+    required this.offerId,  // ✅ NEW
+    required this.type,
+    required this.variantId,
     required this.merchantId,
     required this.productName,
     required this.categoryId,
@@ -22,43 +162,46 @@ class UserOfferProductDetail {
     required this.variants,
   });
 
-  // ── Computed from first variant (fallback) ─────────────────
   double get price => variants.isNotEmpty ? variants.first.price : 0.0;
-  double get offerPrice => variants.isNotEmpty ? variants.first.offerPrice : 0.0;
+  double get offerPrice =>
+      variants.isNotEmpty ? variants.first.offerPrice : 0.0;
   int get stockQty => variants.fold(0, (sum, v) => sum + v.stock);
 
   factory UserOfferProductDetail.fromJson(Map<String, dynamic> json) {
-
-    Map<String, String> commonAttrs = {};
-    if (json['common_attributes'] != null &&
-        json['common_attributes'] is Map) {
+    final Map<String, String> commonAttrs = {};
+    if (json['common_attributes'] is Map) {
       (json['common_attributes'] as Map).forEach((key, value) {
         commonAttrs[key.toString()] = value.toString();
       });
     }
 
-    // ── variants: directly under data ─────────────────────
-    List<ProductVariant> variantsList = [];
+    final List<ProductVariant> variantsList = [];
     if (json['variants'] != null) {
-      variantsList = (json['variants'] as List)
-          .map((e) => ProductVariant.fromJson(e))
-          .toList();
+      for (final e in (json['variants'] as List)) {
+        variantsList.add(ProductVariant.fromJson(e as Map<String, dynamic>));
+      }
     }
 
-    // ── productImages: collected from each variant's image ─
-    final images = variantsList
+    final List<String> images = variantsList
         .map((v) => v.image)
         .where((img) => img.isNotEmpty)
         .toList();
 
     return UserOfferProductDetail(
-      id: int.tryParse(json['id'].toString()) ?? 0,
+      productId:
+      int.tryParse(json['product_id']?.toString() ?? '0') ?? 0,
+      offerId:                                                          // ✅ NEW
+      int.tryParse(json['offer_id']?.toString() ?? '0') ?? 0,      // ✅ NEW
+      type: int.tryParse(json['type']?.toString() ?? '0') ?? 0,
+      variantId:
+      int.tryParse(json['variant_id']?.toString() ?? '0') ?? 0,
       merchantId: json['merchant_id']?.toString() ?? '',
-      productName: json['product_name'] ?? '',
+      productName: json['product_name']?.toString() ?? '',
       categoryId: json['category_id']?.toString() ?? '',
-      description: json['description'] ?? '',
-      discountPercentage:
-      double.tryParse(json['discount_percentage']?.toString() ?? '0') ?? 0.0,
+      description: json['description']?.toString() ?? '',
+      discountPercentage: double.tryParse(
+          json['discount_percentage']?.toString() ?? '0') ??
+          0.0,
       productImages: images,
       commonAttributes: commonAttrs,
       variants: variantsList,
@@ -66,43 +209,58 @@ class UserOfferProductDetail {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+
 class ProductVariant {
-  final Map<String, String> attributes; // colour + size as key-value
+  final int variantId;
+  // ✅ REMOVED: type field — no longer present in variant-level API response
+  final Map<String, String> attributes;
   final double price;
-  final double offerPrice; // ← each variant has its own offer price
+  final double offerPrice;
   final int stock;
-  final String image; // ← each variant has its own image
+  final String image;
+
+  String imagePath;
+  bool imageUpdated;
 
   ProductVariant({
+    required this.variantId,
     required this.attributes,
     required this.price,
     required this.offerPrice,
     required this.stock,
     required this.image,
+    this.imagePath = '',
+    this.imageUpdated = false,
   });
 
   factory ProductVariant.fromJson(Map<String, dynamic> json) {
-    // ── Build attributes from flat colour/size fields ──────
-    Map<String, String> attrs = {};
-    if (json['colour'] != null && json['colour'].toString().isNotEmpty) {
-      attrs['colour'] = json['colour'].toString();
-    }
-    if (json['size'] != null && json['size'].toString().isNotEmpty) {
-      attrs['size'] = json['size'].toString();
-    }
+    final Map<String, String> attrs = {};
+
+    final color = json['attributes']?['color']?.toString() ?? '';  // ✅ FIX: read from nested 'attributes' map
+    if (color.isNotEmpty) attrs['color'] = color;
+
+    final size = json['attributes']?['size']?.toString() ?? '';    // ✅ FIX: read from nested 'attributes' map
+    if (size.isNotEmpty) attrs['size'] = size;
 
     return ProductVariant(
+      variantId:
+      int.tryParse(json['variant_id']?.toString() ?? '0') ?? 0,
+      // ✅ REMOVED: type parsing
       attributes: attrs,
-      price: double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
+      price:
+      double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
       offerPrice:
       double.tryParse(json['offer_price']?.toString() ?? '0') ?? 0.0,
-      stock: int.tryParse(json['stock_qty']?.toString() ?? '0') ?? 0,
+      stock:
+      int.tryParse(json['stock_qty']?.toString() ?? '0') ?? 0,
       image: json['image']?.toString() ?? '',
+      imagePath: json['image']?.toString() ?? '',
     );
   }
 
   String getDisplayName() {
     if (attributes.isEmpty) return 'Variant';
-    return attributes.values.join(' - ');
+    return attributes.values.join(' / ');
   }
 }

@@ -9,6 +9,7 @@ class ProductCard extends StatelessWidget {
   final String productName;
   final String? imageUrl;
   final String price;
+  final int type; // ✅ 0 = normal product, 1 = offer product
 
   ProductCard({
     super.key,
@@ -16,10 +17,13 @@ class ProductCard extends StatelessWidget {
     required this.productName,
     required this.imageUrl,
     required this.price,
+    this.type = 0, // ✅ default to normal product
   });
 
   final WishlistController wishlistController =
-  Get.put(WishlistController());
+  Get.isRegistered<WishlistController>()
+      ? Get.find<WishlistController>()
+      : Get.put(WishlistController());
 
   @override
   Widget build(BuildContext context) {
@@ -94,10 +98,15 @@ class ProductCard extends StatelessWidget {
                     top: 8,
                     right: 8,
                     child: Obx(() {
-                      final isFav = wishlistController.isInWishlist(productId);
+                      final isFav =
+                      wishlistController.isInWishlist(productId);
                       return GestureDetector(
                         onTap: () {
-                          wishlistController.toggleWishlist(productId);
+                          // ✅ Pass type so API knows normal (0) vs offer (1)
+                          wishlistController.toggleWishlist(
+                            productId,
+                            type: type,
+                          );
                         },
                         child: Container(
                           padding: const EdgeInsets.all(8),

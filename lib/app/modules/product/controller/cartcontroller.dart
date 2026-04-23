@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-
 import '../../../data/models/cartmodel.dart';
 import '../../../data/errors/api_error.dart';
 import '../../merchantlogin/widget/successwidget.dart';
@@ -22,10 +21,6 @@ class CartController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-
-    // ✅ Guard: only fetch if token actually exists
-    // Prevents triggering a 401 immediately after login
-    // which would cause handleUnauthorized() to fire
     final token = box.read<String?>('auth_token') ?? "";
     if (token.isNotEmpty) {
       fetchCart();
@@ -96,20 +91,20 @@ class CartController extends GetxController {
 
   Future<bool> addToCart({
     required int productId,
+    required int variantId,   // ✅ added
     required int type,
   }) async {
     isLoading.value = true;
-
     try {
       final response = await http.post(
-        Uri.parse(
-            "https://rasma.astradevelops.in/e_shoppyy/public/api/cart/add"),
+        Uri.parse("https://rasma.astradevelops.in/e_shoppyy/public/api/cart/add"),
         headers: {
           "Accept": "application/json",
           "Authorization": "Bearer $authToken",
         },
         body: {
           "product_id": productId.toString(),
+          "variant_id": variantId.toString(),   // ✅ added
           "type": type.toString(),
         },
       ).timeout(const Duration(seconds: 15));
@@ -117,7 +112,6 @@ class CartController extends GetxController {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['status'] == true) {
-          AppSnackbar.success(data['message'] ?? "Product added successfully");
           await fetchCart();
           return true;
         } else {
@@ -125,13 +119,11 @@ class CartController extends GetxController {
           return false;
         }
       } else {
-        final error = ApiErrorHandler.handleResponse(response);
-        AppSnackbar.error(error);
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
         return false;
       }
     } catch (e) {
-      final error = ApiErrorHandler.handleException(e);
-      AppSnackbar.error(error);
+      // AppSnackbar.error(ApiErrorHandler.handleException(e));
       return false;
     } finally {
       isLoading.value = false;
@@ -145,14 +137,22 @@ class CartController extends GetxController {
 
     final item = cartItems[index];
 
+    // ✅ Decrement at qty 1 → remove
     if (action == "decrement" && item.quantity == 1) {
       await removeFromCart(productId);
+      return;
+    }
+
+    // ✅ Block increment when quantity has reached stock limit
+    if (action == "increment" && item.quantity >= item.stock) {
+      // AppSnackbar.error("Only ${item.stock} units available in stock");
       return;
     }
 
     final newQuantity =
     action == "increment" ? item.quantity + 1 : item.quantity - 1;
 
+    // Optimistic update
     cartItems[index] = item.copyWith(
       quantity: newQuantity,
       itemTotal: item.finalPrice * newQuantity,
@@ -210,9 +210,8 @@ class CartController extends GetxController {
         if (data['status'] == true) {
           cartItems.removeWhere((item) => item.productId == key);
           _recalculateTotal();
-          AppSnackbar.success(data['message'] ?? "Item removed");
+
         } else {
-          AppSnackbar.error(data['message'] ?? "Failed to remove");
         }
       } else {
         AppSnackbar.error(ApiErrorHandler.handleResponse(response));

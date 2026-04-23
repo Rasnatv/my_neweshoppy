@@ -41,17 +41,8 @@ class CreateOfferController extends GetxController {
     discountController.dispose();
     super.onClose();
   }
-  //
-  // // ── Token guard ────────────────────────────────────────────
-  // bool _checkToken() {
-  //   if (_authToken.isEmpty) {
-  //     AppSnackbar.error("Token missing. Please login again.");
-  //     return false;
-  //   }
-  //   return true;
-  // }
 
-  // ── Pick banner image with 2:1 ratio validation ────────────
+
   Future<void> pickBanner() async {
     try {
       final XFile? xFile = await _picker.pickImage(
@@ -240,7 +231,7 @@ class CreateOfferController extends GetxController {
 
         await Future.delayed(const Duration(seconds: 2));
 
-        Get.to(
+        Get.offAll(
               () => AddOfferProductPage(),
           binding: BindingsBuilder(() {
             Get.put(AddOfferProductController(

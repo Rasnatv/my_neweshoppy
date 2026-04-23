@@ -1,4 +1,5 @@
 
+
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -31,6 +32,12 @@ class OfferProductDetailController extends GetxController {
   var description = ''.obs;
   var commonAttributes = <String, String>{}.obs;
   var variants = <MOfferVariant>[].obs;
+  var discountPercentage = 0.obs;
+
+  double? computeOfferPrice(double price) {
+    if (discountPercentage.value <= 0) return null;
+    return price - (price * discountPercentage.value / 100);
+  }
 
   final ImagePicker _picker = ImagePicker();
 
@@ -46,12 +53,10 @@ class OfferProductDetailController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-
     final args = Get.arguments;
     if (args != null && args['offer_product_id'] != null) {
       offerProductId.value = args['offer_product_id'];
       fetchProductDetail();
-
     }
   }
 
@@ -77,6 +82,7 @@ class OfferProductDetailController extends GetxController {
           productName.value = detail.productName;
           description.value = detail.description;
           commonAttributes.assignAll(detail.commonAttributes);
+          discountPercentage.value = detail.discountPercentage;
           variants.assignAll(detail.variants);
         } else {
           errorMessage.value =
@@ -169,6 +175,7 @@ class OfferProductDetailController extends GetxController {
 
       for (final v in variants) {
         final Map<String, dynamic> item = {
+          if (v.variantId != null) 'variant_id': v.variantId,
           'attributes': v.attributes,
           'price': v.price,
           'stock': v.stock,
@@ -193,10 +200,8 @@ class OfferProductDetailController extends GetxController {
         'offer_product_id': offerProductId.value,
         'product_name': productName.value.trim(),
         'description': description.value.trim(),
-        'product_attributes': {
-          'common_attributes': commonAttributes,
-          'variants': variantsPayload,
-        },
+        'common_attributes': commonAttributes,
+        'variants': variantsPayload,
       };
 
       final response = await http.put(
@@ -207,28 +212,11 @@ class OfferProductDetailController extends GetxController {
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
-
         if (body['status'] == 1 || body['status'] == true) {
           AppSnackbar.success(
               body['message'] ?? 'Product updated successfully');
-
-          // ✅ Find the parent controller and await refresh BEFORE going back
-          try {
-            final args = Get.arguments;
-            final offerIdTag = args?['offer_id']
-                ?.toString(); // pass offer_id in args
-
-            if (offerIdTag != null) {
-              final parentController = Get.find<MerchantOfferProductController>(
-                tag: offerIdTag,
-              );
-              await parentController.fetchOfferProduct(); // await full refresh
-            }
-          } catch (_) {
-            // controller not found — fallback, result: true will handle it
-          }
-
-          Get.back(result: true);
+          _patchParentController(body['data'] as Map<String, dynamic>?);
+          Get.back();
         } else {
           AppSnackbar.warning(body['message'] ?? 'Update failed');
         }
@@ -243,4 +231,69 @@ class OfferProductDetailController extends GetxController {
       isSubmitting.value = false;
     }
   }
-}
+
+  void _patchParentController(Map<String, dynamic>? responseData) {
+    try {
+      final args = Get.arguments;
+      final offerIdTag = args?['offer_id']?.toString();
+      if (offerIdTag == null) return;
+
+      final parentController =
+      Get.find<MerchantOfferProductController>(tag: offerIdTag);
+
+      final Map<String, dynamic> patchData = {};
+
+      // ── 1. Product name ───────────────────────────────────────
+      final newName = productName.value.trim();
+      final originalName = productData.value?.productName ?? '';
+      if (newName != originalName) {
+        patchData['product_name'] = newName;
+      }
+
+      // ── 2. Price — use server-confirmed values from ANY variant change ──
+      // Always apply server response prices so variant[1..n] changes reflect too.
+      if (responseData != null) {
+        final respVariants = responseData['variants'];
+        if (respVariants is List && respVariants.isNotEmpty) {
+          final first = respVariants[0] as Map<String, dynamic>;
+          final serverRealPrice =
+              double.tryParse(first['price']?.toString() ?? '0') ?? 0.0;
+          final serverOfferPrice =
+              double.tryParse(first['final_price']?.toString() ?? '0') ?? 0.0;
+          if (serverRealPrice > 0) {
+            patchData['real_price'] = serverRealPrice;
+            patchData['offer_price'] = serverOfferPrice;
+          }
+        }
+      } else {
+        // Fallback: compute locally from variant[0] if no server response
+        final currentFirstPrice =
+        variants.isNotEmpty ? variants[0].price : 0.0;
+        if (currentFirstPrice > 0) {
+          patchData['real_price'] = currentFirstPrice;
+          patchData['offer_price'] =
+              computeOfferPrice(currentFirstPrice) ?? currentFirstPrice;
+        }
+      }
+
+      // ── 3. Image — ONLY when first variant image changed ──────
+      if (variants.isNotEmpty &&
+          variants[0].imageUpdated &&
+          variants[0].imagePath.isNotEmpty) {
+        patchData['product_image'] = variants[0].imagePath;
+      }
+
+      // ✅ Patch immediately for instant UI update
+      if (patchData.isNotEmpty) {
+        parentController.patchProductLocally(
+          offerProductId.value,
+          patchData,
+        );
+      }
+
+      // ✅ Always silently sync with server
+      parentController.silentRefresh();
+    } catch (_) {
+      // parent controller not found — no-op
+    }
+  }}

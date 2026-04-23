@@ -164,7 +164,6 @@ class _UpdateOfferProductPageState extends State<UpdateOfferProductPage> {
           );
         }
 
-        // ✅ Initialize stable controllers once data is available
         _initBasicControllers();
         _syncControllers();
 
@@ -206,7 +205,8 @@ class _UpdateOfferProductPageState extends State<UpdateOfferProductPage> {
                       SizedBox(height: 14),
                       Text('Updating product...',
                           style: TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.w600)),
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600)),
                     ],
                   ),
                 ),
@@ -232,7 +232,6 @@ class _UpdateOfferProductPageState extends State<UpdateOfferProductPage> {
   }
 
   // ── Basic Info Card ────────────────────────────────────────
-  // ✅ Uses stable TextEditingControllers — no cursor jump / rebuild issues
   Widget _buildBasicInfoCard() {
     return _Card(
       child: Column(
@@ -285,15 +284,17 @@ class _UpdateOfferProductPageState extends State<UpdateOfferProductPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _label(e.key[0].toUpperCase() + e.key.substring(1)),
+                    _label(
+                        e.key[0].toUpperCase() + e.key.substring(1)),
                     const SizedBox(height: 6),
                     TextField(
                       controller: _commonCtrl(e.key, e.value),
                       onChanged: (v) =>
                           controller.updateCommonAttribute(e.key, v),
-                      style:
-                      const TextStyle(fontSize: 14, color: _textDark),
-                      decoration: _inputDecoration(hint: 'Enter ${e.key}'),
+                      style: const TextStyle(
+                          fontSize: 14, color: _textDark),
+                      decoration:
+                      _inputDecoration(hint: 'Enter ${e.key}'),
                     ),
                   ],
                 ),
@@ -367,7 +368,8 @@ class _UpdateOfferProductPageState extends State<UpdateOfferProductPage> {
         children: [
           // Header
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: _primary.withOpacity(0.05),
               borderRadius:
@@ -376,8 +378,8 @@ class _UpdateOfferProductPageState extends State<UpdateOfferProductPage> {
             child: Row(
               children: [
                 Container(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: _primary.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(8),
@@ -515,7 +517,8 @@ class _UpdateOfferProductPageState extends State<UpdateOfferProductPage> {
                       size: 40, color: _primary),
                   SizedBox(height: 8),
                   Text('Tap to add image',
-                      style: TextStyle(fontSize: 13, color: _textMid)),
+                      style:
+                      TextStyle(fontSize: 13, color: _textMid)),
                 ],
               )
                   : Stack(
@@ -530,7 +533,8 @@ class _UpdateOfferProductPageState extends State<UpdateOfferProductPage> {
                             Icons.broken_image,
                             size: 40,
                             color: Color(0xFFD1D5DB)))
-                        : Image.file(File(path), fit: BoxFit.cover),
+                        : Image.file(File(path),
+                        fit: BoxFit.cover),
                   ),
                   Positioned(
                     top: 8,
@@ -549,7 +553,8 @@ class _UpdateOfferProductPageState extends State<UpdateOfferProductPage> {
                       child: IconButton(
                         icon: const Icon(Icons.edit_outlined,
                             size: 18, color: _primary),
-                        onPressed: () => controller.pickImage(index),
+                        onPressed: () =>
+                            controller.pickImage(index),
                       ),
                     ),
                   ),
@@ -562,19 +567,96 @@ class _UpdateOfferProductPageState extends State<UpdateOfferProductPage> {
     );
   }
 
+
   Widget _buildPriceField(int index, MOfferVariant variant) {
-    return TextField(
-      controller: _priceCtrl(index, variant),
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      onChanged: (v) =>
-          controller.updateVariantPrice(index, double.tryParse(v) ?? 0),
-      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-      decoration: _inputDecoration(
-        hint: '0.00',
-        label: 'Price (₹)',
-        prefixIcon: Icons.currency_rupee_rounded,
-        prefixColor: _green,
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: _priceCtrl(index, variant),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          onChanged: (v) {
+            final parsed = double.tryParse(v) ?? 0;
+            controller.updateVariantPrice(index, parsed);
+            // ✅ Force Obx to rebuild so offer price preview updates
+            controller.variants.refresh();
+          },
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          decoration: _inputDecoration(
+            hint: '0.00',
+            label: 'Price (₹)',
+            prefixIcon: Icons.currency_rupee_rounded,
+            prefixColor: _green,
+          ),
+        ),
+
+        // ✅ Offer price preview — rebuilds when variants change
+        Obx(() {
+          final currentPrice = controller.variants.length > index
+              ? controller.variants[index].price
+              : 0.0;
+
+          if (currentPrice <= 0) return const SizedBox.shrink();
+
+          final offerPrice = controller.computeOfferPrice(currentPrice);
+          if (offerPrice == null) return const SizedBox.shrink();
+
+          final discount = controller.discountPercentage.value;
+          final saved = currentPrice - offerPrice;
+
+          // Check if this matches the existing finalPrice (server confirmed)
+          final isConfirmed = controller.variants[index].finalPrice > 0 &&
+              (controller.variants[index].finalPrice - offerPrice).abs() < 1;
+
+          return Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Container(
+              padding:
+              const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              decoration: BoxDecoration(
+                color: isConfirmed
+                    ? const Color(0xFFD1FAE5)   // green — matches server
+                    : const Color(0xFFFEF3C7),  // amber — local estimate
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: (isConfirmed ? _green : const Color(0xFFF59E0B))
+                      .withOpacity(0.4),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    isConfirmed
+                        ? Icons.verified_outlined
+                        : Icons.local_offer_outlined,
+                    size: 13,
+                    color: isConfirmed
+                        ? _green
+                        : const Color(0xFFF59E0B),
+                  ),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      '₹${offerPrice.toStringAsFixed(0)} after $discount% off'
+                          '  •  Save ₹${saved.toStringAsFixed(0)}'
+                          '${isConfirmed ? ' ✓' : ''}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: isConfirmed
+                            ? _green
+                            : const Color(0xFFF59E0B),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+      ],
     );
   }
 
@@ -659,7 +741,8 @@ class _UpdateOfferProductPageState extends State<UpdateOfferProductPage> {
         borderRadius: BorderRadius.circular(10),
         borderSide: const BorderSide(color: _primary, width: 1.5),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      contentPadding:
+      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
     );
   }
 }

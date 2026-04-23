@@ -11,7 +11,6 @@ import '../../../data/errors/api_error.dart';
 import '../../merchantlogin/widget/successwidget.dart';
 
 class WishlistController extends GetxController {
-  // ✅ Use the same singleton instance, not a new one
   final GetStorage box = GetStorage();
 
   var wishlist = <WishlistItem>[].obs;
@@ -24,7 +23,6 @@ class WishlistController extends GetxController {
   final String removeUrl =
       "https://rasma.astradevelops.in/e_shoppyy/public/api/wishlist/remove";
 
-  // ✅ Trim token to avoid whitespace issues
   String get token => (box.read<String>("auth_token") ?? "").trim();
 
   @override
@@ -65,7 +63,6 @@ class WishlistController extends GetxController {
 
         if (body['status'] == "1" || body['status'] == 1) {
           final List data = body['data'] ?? [];
-          // ✅ Wrap each fromJson in try-catch to skip bad items
           wishlist.value = data.map((e) {
             try {
               return WishlistItem.fromJson(e);
@@ -84,7 +81,6 @@ class WishlistController extends GetxController {
     } catch (e) {
       debugPrint("❌ fetchWishlist exception: $e");
       final error = ApiErrorHandler.handleException(e);
-      AppSnackbar.error(error);
     } finally {
       isLoading(false);
     }
@@ -95,18 +91,27 @@ class WishlistController extends GetxController {
     return wishlist.any((e) => e.productId == productId);
   }
 
+  /// ✅ Get wishlist_id for a given productId (needed for remove API)
+  int? getWishlistId(int productId) {
+    try {
+      return wishlist.firstWhere((e) => e.productId == productId).wishlistId;
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// ================= TOGGLE =================
-  Future<void> toggleWishlist(int productId) async {
+  /// [type]: 0 = normal product, 1 = offer product
+  Future<void> toggleWishlist(int productId, {int type = 0}) async {
     if (isInWishlist(productId)) {
       await removeFromWishlist(productId);
     } else {
-      await addToWishlist(productId);
+      await addToWishlist(productId, type: type);
     }
   }
 
   /// ================= ADD =================
-  Future<void> addToWishlist(int productId) async {
-
+  Future<void> addToWishlist(int productId, {int type = 0}) async {
     try {
       final response = await http.post(
         Uri.parse(addUrl),
@@ -115,35 +120,37 @@ class WishlistController extends GetxController {
           "Authorization": "Bearer $token",
           "Content-Type": "application/json",
         },
-        body: jsonEncode({"product_id": productId}),
+        body: jsonEncode({
+          "product_id": productId,
+          "type": type, // ✅ 0 for normal, 1 for offer
+        }),
       );
-
-      debugPrint("➕ Add wishlist status: ${response.statusCode}");
-      debugPrint("➕ Add wishlist body: ${response.body}");
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
 
-        // ✅ API returns status as String "1", not bool
-        if (body['status'] == "1" || body['status'] == 1) {
-          AppSnackbar.success(body['message'] ?? "Added to wishlist");
+        if (body['status'] == true ||
+            body['status'] == "1" ||
+            body['status'] == 1) {
           await fetchWishlist();
-        } else {
-          AppSnackbar.warning(body['message'] ?? "Failed to add");
         }
       } else {
         final error = ApiErrorHandler.handleResponse(response);
         AppSnackbar.error(error);
       }
     } catch (e) {
-      debugPrint("❌ addToWishlist exception: $e");
       final error = ApiErrorHandler.handleException(e);
       AppSnackbar.error(error);
     }
   }
-
-  /// ================= REMOVE =================
   Future<void> removeFromWishlist(int productId) async {
+    final wishlistId = getWishlistId(productId);
+
+    if (wishlistId == null) {
+
+      return;
+    }
+
     try {
       final response = await http.post(
         Uri.parse(removeUrl),
@@ -152,19 +159,16 @@ class WishlistController extends GetxController {
           "Authorization": "Bearer $token",
           "Content-Type": "application/json",
         },
-        body: jsonEncode({"product_id": productId}),
+        body: jsonEncode({"wishlist_id": wishlistId}), // ✅ correct field
       );
-
-      debugPrint("🗑 Remove wishlist status: ${response.statusCode}");
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
 
-        if (body['status'] == "1" || body['status'] == 1) {
-          AppSnackbar.success(body['message'] ?? "Removed from wishlist");
+        if (body['status'] == "1" ||
+            body['status'] == 1 ||
+            body['status'] == true) {
           await fetchWishlist();
-        } else {
-          AppSnackbar.warning(body['message'] ?? "Failed to remove");
         }
       } else {
         final error = ApiErrorHandler.handleResponse(response);

@@ -210,8 +210,36 @@ class _UserSignupState extends State<UserSignup> with TickerProviderStateMixin {
                 validator: (v) => DValidator.validatePassword(v),
               ),
             ),
-            const SizedBox(height: 28),
 
+            const SizedBox(height: 20),
+
+// Confirm Password
+            Obx(
+                  () => TextFormField(
+                controller: controller.confirmPasswordController,
+                style: DInputDecoration.inputTextStyle,
+                obscureText: !controller.isConfirmPasswordVisible.value,
+                decoration: DInputDecoration.of("Confirm Password", Icons.lock_outline_rounded).copyWith(
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      controller.isConfirmPasswordVisible.value
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                      size: 20,
+                    ),
+                    onPressed: controller.toggleConfirmPasswordVisibility,
+                  ),
+                ),
+                validator: (v) {
+                  if (v == null || v.isEmpty) return "Confirm Password is required";
+                  if (v != controller.passwordController.text) {
+                    return "Passwords do not match";
+                  }
+                  return null;
+                },
+              ),
+            ),
+            const SizedBox(height: 28),
             _buildSignupButton(),
           ],
         ),

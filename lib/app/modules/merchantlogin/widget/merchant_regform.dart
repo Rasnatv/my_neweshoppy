@@ -255,6 +255,42 @@ class MerchantRegform extends StatelessWidget {
         )),
         const SizedBox(height: 16),
 
+
+// Confirm Password
+        Obx(() => TextFormField(
+          controller: controller.confirmPasswordController,
+          obscureText: !controller.isConfirmPasswordVisible.value,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          style: const TextStyle(
+            color: Color(0xFF212121),
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+          ),
+          decoration: inputStyle(
+            "Confirm Password",
+            Icons.lock_outline,
+          ).copyWith(
+            suffixIcon: IconButton(
+              icon: Icon(
+                controller.isConfirmPasswordVisible.value
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
+                color: const Color(0xFF9CA3AF),
+                size: 22,
+              ),
+              onPressed: controller.toggleConfirmPasswordVisibility,
+            ),
+          ),
+          validator: (v) {
+            if (v == null || v.isEmpty) return "Confirm Password is required";
+            if (v != controller.passwordController.text) {
+              return "Passwords do not match";
+            }
+            return null;
+          },
+        )),
+        const SizedBox(height: 16),
+
         TextFormField(
           controller: controller.phoneNo1Controller,
           style: const TextStyle(

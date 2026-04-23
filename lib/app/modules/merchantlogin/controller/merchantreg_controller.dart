@@ -36,6 +36,10 @@ class MerchantRegController extends GetxController {
 
   // Add this observable
   var isPasswordVisible = false.obs;
+  final confirmPasswordController = TextEditingController();
+  var isConfirmPasswordVisible = false.obs;
+
+  void toggleConfirmPasswordVisibility() => isConfirmPasswordVisible.toggle();
 
 // Add this method
   void togglePasswordVisibility() => isPasswordVisible.toggle();
@@ -291,6 +295,10 @@ class MerchantRegController extends GetxController {
       AppSnackbar.error(phoneError);
       return false;
     }
+    if (confirmPasswordController.text.trim() != passwordController.text.trim()) {
+      AppSnackbar.error("Passwords do not match");
+      return false;
+    }
 
     if (selectedState.value.isEmpty) {
       AppSnackbar.error("Please select state");
@@ -396,6 +404,7 @@ class MerchantRegController extends GetxController {
     facebookController.dispose();
     instagramController.dispose();
     websiteController.dispose();
+    confirmPasswordController.dispose();
     super.onClose();
   }
 }

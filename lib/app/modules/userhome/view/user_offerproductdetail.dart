@@ -5,15 +5,16 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
+import '../../../common/style/app_colors.dart';
 import '../../../data/models/cartmodel.dart';
 import '../../../data/models/user_offerdetailmodel.dart';
+import '../../merchantlogin/widget/successwidget.dart';
 import '../../product/controller/cartcontroller.dart';
 import '../controller/user_offerproductdetail_controller.dart';
 
-
 class UserOfferProductDetailScreen extends StatefulWidget {
   final int offerProductId;
-  const UserOfferProductDetailScreen({required this.offerProductId});
+  const UserOfferProductDetailScreen({required this.offerProductId, super.key});
 
   @override
   State<UserOfferProductDetailScreen> createState() =>
@@ -30,17 +31,20 @@ class _UserOfferProductDetailScreenState
 
   final String _token = GetStorage().read('auth_token') ?? '';
 
-  static const _teal      = Color(0xFF009688);
-  static const _tealDark  = Color(0xFF00796B);
-  static const _tealLight = Color(0xFFE0F2F1);
-  static const _teal2     = Color(0xFF4DB6AC);
-  static const _bg        = Color(0xFFF4F7F6);
-  static const _textDark  = Color(0xFF1A2E2C);
-  static const _textMid   = Color(0xFF546E6B);
-  static const _textLight = Color(0xFF90AFAC);
-  static const _divider   = Color(0xFFECF2F1);
-  static const _red       = Color(0xFFE53935);
-  static const _amber     = Color(0xFFFFB300);
+  // ── Design Tokens (matches ProductDetailPage) ───────────────
+  static const _primary      = Color(0xFF3D5A99);
+  static const _primaryLight = Color(0xFFEEF1F9);
+  static const _accent       = Color(0xFFE8A020);
+  static const _accentLight  = Color(0xFFFFF8EC);
+  static const _bg           = Color(0xFFF5F6FA);
+  static const _surface      = Color(0xFFFFFFFF);
+  static const _textDark     = Color(0xFF1C2340);
+  static const _textMid      = Color(0xFF5A6480);
+  static const _textLight    = Color(0xFFB0B8CC);
+  static const _divider      = Color(0xFFEBEDF5);
+  static const _red          = Color(0xFFD93025);
+  static const _amber        = Color(0xFFF59E0B);
+  static const _green        = Color(0xFF1A8A5A);
 
   @override
   void initState() {
@@ -68,10 +72,25 @@ class _UserOfferProductDetailScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _bg,
+      appBar: AppBar(
+        backgroundColor: AppColors.kPrimary,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text(
+          'Product Details',
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+            letterSpacing: 0.2,
+          ),
+        ),
+      ),
       body: Obx(() {
         if (controller.isLoading.value) {
           return const Center(
-            child: CircularProgressIndicator(color: _teal, strokeWidth: 2.5),
+            child: CircularProgressIndicator(
+                color: _primary, strokeWidth: 2.5),
           );
         }
 
@@ -83,11 +102,11 @@ class _UserOfferProductDetailScreenState
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: const BoxDecoration(
-                    color: _tealLight,
+                    color: _primaryLight,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.error_outline_rounded,
-                      size: 44, color: _teal),
+                      size: 44, color: _primary),
                 ),
                 const SizedBox(height: 16),
                 const Text(
@@ -105,7 +124,7 @@ class _UserOfferProductDetailScreenState
                   icon: const Icon(Icons.refresh_rounded, size: 18),
                   label: const Text('Retry'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _teal,
+                    backgroundColor: _primary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
                         horizontal: 28, vertical: 12),
@@ -121,66 +140,49 @@ class _UserOfferProductDetailScreenState
 
         final product = controller.productData.value!;
 
-        return CustomScrollView(
-          slivers: [
-            _buildAppBar(context, product),
-            SliverToBoxAdapter(
+        return Stack(
+          children: [
+            SingleChildScrollView(
+              padding: const EdgeInsets.only(bottom: 110),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildImageCarousel(controller, product),
+                  const SizedBox(height: 5),
+                  _buildImageCarousel(product),
+                  const SizedBox(height: 8),
                   _buildProductInfo(product),
-                  _buildPriceSection(controller, product),
-                  _buildVariantSelector(controller, product),
+                  const SizedBox(height: 8),
+                  _buildPriceSection(product),
+                  const SizedBox(height: 8),
+                  _buildVariantSelector(product),
+                  const SizedBox(height: 8),
                   _buildCommonAttributes(product),
+                  const SizedBox(height: 8),
                   _buildDescription(product),
-                  const SizedBox(height: 110),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),
+            _buildBottomBar(product),
           ],
         );
       }),
-      bottomNavigationBar: _buildBottomBar(),
-    );
-  }
-
-  // ── AppBar ──────────────────────────────────────────────────
-  Widget _buildAppBar(
-      BuildContext context, UserOfferProductDetail product) {
-    return SliverAppBar(
-      expandedHeight: 60,
-      floating: true,
-      pinned: true,
-      elevation: 0,
-      backgroundColor: _teal,
-      iconTheme: const IconThemeData(color: Colors.white),
-      title: const Text(
-        'Product Details',
-        style: TextStyle(
-          fontSize: 17,
-          fontWeight: FontWeight.w700,
-          color: Colors.white,
-          letterSpacing: 0.2,
-        ),
-      ),
     );
   }
 
   // ── Image Carousel ──────────────────────────────────────────
-  Widget _buildImageCarousel(
-      UserOfferProductDetailController controller,
-      UserOfferProductDetail product) {
+  Widget _buildImageCarousel(UserOfferProductDetail product) {
     return Container(
-      color: Colors.white,
+      color: _surface,
       child: Column(
         children: [
+          // Offer Badge Strip
           if (product.discountPercentage > 0)
             Container(
               width: double.infinity,
               padding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              color: _tealLight.withOpacity(0.5),
+              color: _primaryLight.withOpacity(0.6),
               child: Row(
                 children: [
                   Container(
@@ -205,20 +207,20 @@ class _UserOfferProductDetailScreenState
                     padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: _tealLight,
+                      color: _accentLight,
                       borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: _teal2),
+                      border: Border.all(color: _accent.withOpacity(0.5)),
                     ),
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(Icons.local_offer_rounded,
-                            size: 11, color: _tealDark),
+                            size: 11, color: _accent),
                         SizedBox(width: 4),
                         Text(
                           'Special Offer',
                           style: TextStyle(
-                            color: _tealDark,
+                            color: _accent,
                             fontWeight: FontWeight.w700,
                             fontSize: 11,
                           ),
@@ -230,63 +232,59 @@ class _UserOfferProductDetailScreenState
               ),
             ),
 
+          // Carousel / Placeholder
           if (product.productImages.isEmpty)
             Container(
-              height: 300,
-              color: const Color(0xFFF9FAFB),
-              child: const Center(
+              height: 350,
+              color: _bg,
+              child: Center(
                 child: Icon(Icons.image_not_supported_outlined,
-                    size: 56, color: Color(0xFFCFD8DC)),
+                    size: 90, color: Colors.grey[300]),
               ),
             )
           else
-            CarouselSlider(
-              carouselController: _carouselController,
-              options: CarouselOptions(
-                height: 300,
-                viewportFraction: 1.0,
-                enlargeCenterPage: false,
-                initialPage: controller.currentImageIndex.value,
-                onPageChanged: (index, reason) {
-                  controller.currentImageIndex.value = index;
-                },
-              ),
-              items: product.productImages.map((imageUrl) {
-                return Builder(
-                  builder: (BuildContext context) {
-                    return Container(
-                      width: MediaQuery.of(context).size.width,
-                      color: const Color(0xFFF9FAFB),
-                      child: Image.network(
-                        imageUrl,
-                        fit: BoxFit.contain,
-                        headers: {'Authorization': 'Bearer $_token'},
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Center(
-                            child: CircularProgressIndicator(
-                              color: _teal,
-                              strokeWidth: 2,
-                              value: loadingProgress.expectedTotalBytes != null
-                                  ? loadingProgress.cumulativeBytesLoaded /
-                                  loadingProgress.expectedTotalBytes!
-                                  : null,
-                            ),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Center(
-                            child: Icon(Icons.image_not_supported_outlined,
-                                size: 56, color: Color(0xFFCFD8DC)),
-                          );
-                        },
-                      ),
-                    );
+            SizedBox(
+              height: 350,
+              child: CarouselSlider(
+                carouselController: _carouselController,
+                options: CarouselOptions(
+                  height: 350,
+                  viewportFraction: 1.0,
+                  enlargeCenterPage: false,
+                  initialPage: controller.currentImageIndex.value,
+                  onPageChanged: (index, _) {
+                    controller.currentImageIndex.value = index;
                   },
-                );
-              }).toList(),
+                ),
+                items: product.productImages.map((imageUrl) {
+                  return Image.network(
+                    imageUrl,
+                    fit: BoxFit.contain,
+                    headers: {'Authorization': 'Bearer $_token'},
+                    loadingBuilder: (context, child, progress) {
+                      if (progress == null) return child;
+                      return Center(
+                        child: CircularProgressIndicator(
+                          color: _primary,
+                          strokeWidth: 2,
+                          value: progress.expectedTotalBytes != null
+                              ? progress.cumulativeBytesLoaded /
+                              progress.expectedTotalBytes!
+                              : null,
+                        ),
+                      );
+                    },
+                    errorBuilder: (_, __, ___) => Icon(
+                      Icons.image_not_supported_outlined,
+                      size: 90,
+                      color: Colors.grey[300],
+                    ),
+                  );
+                }).toList(),
+              ),
             ),
 
+          // Dot Indicators
           if (product.productImages.length > 1)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 14),
@@ -296,8 +294,8 @@ class _UserOfferProductDetailScreenState
                 effect: const ExpandingDotsEffect(
                   dotHeight: 7,
                   dotWidth: 7,
-                  activeDotColor: _teal,
-                  dotColor: Color(0xFFB2DFDB),
+                  activeDotColor: _primary,
+                  dotColor: Color(0xFFB0B8CC),
                   expansionFactor: 3,
                 ),
               )),
@@ -310,87 +308,72 @@ class _UserOfferProductDetailScreenState
   // ── Product Info ────────────────────────────────────────────
   Widget _buildProductInfo(UserOfferProductDetail product) {
     return Container(
-      margin: const EdgeInsets.only(top: 8),
       padding: const EdgeInsets.all(18),
-      color: Colors.white,
-      child: Column(
+      color: _surface,
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(
-                  product.productName,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: _textDark,
-                    height: 1.35,
-                    letterSpacing: -0.2,
-                  ),
+          Expanded(
+            child: Text(
+              product.productName,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: _textDark,
+                height: 1.35,
+                letterSpacing: -0.2,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Obx(() {
+            final qty        = controller.selectedVariant.value?.stock ?? 0;
+            final isLow      = qty > 0 && qty <= 5;
+            final isOut      = qty <= 0;
+            final color      = isOut ? _red : isLow ? _amber : _green;
+            final label      = isOut
+                ? 'Out of Stock'
+                : isLow
+                ? 'Only $qty left'
+                : '$qty In Stock';
+
+            return Container(
+              padding:
+              const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.09),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: color.withOpacity(0.35)),
+              ),
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: color,
                 ),
               ),
-              const SizedBox(width: 10),
-              Obx(() {
-                final qty        = controller.selectedVariant.value?.stock ?? 0;
-                final isLow      = qty > 0 && qty <= 5;
-                final outOfStock = qty <= 0;
-                final color = outOfStock ? _red : isLow ? _amber : _teal;
-                final label = outOfStock ? 'Out of Stock' : '$qty in stock';
-                final icon  = outOfStock
-                    ? Icons.cancel_rounded
-                    : Icons.check_circle_rounded;
-
-                return Container(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: color.withOpacity(0.35)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(icon, size: 11, color: color),
-                      const SizedBox(width: 4),
-                      Text(
-                        label,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: color,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }),
-            ],
-          ),
+            );
+          }),
         ],
       ),
     );
   }
 
   // ── Price Section ───────────────────────────────────────────
-  Widget _buildPriceSection(
-      UserOfferProductDetailController controller,
-      UserOfferProductDetail product) {
+  Widget _buildPriceSection(UserOfferProductDetail product) {
     return Obx(() {
       final variant      = controller.selectedVariant.value;
       final variantPrice = variant?.price ?? product.price;
       final offerPrice   = variant?.offerPrice ?? product.offerPrice;
       final saved        = variantPrice - offerPrice;
       final discountPct  = variantPrice > 0
-          ? ((saved / variantPrice) * 100)
+          ? (saved / variantPrice) * 100
           : product.discountPercentage;
 
       return Container(
-        margin: const EdgeInsets.only(top: 8),
         padding: const EdgeInsets.all(18),
-        color: Colors.white,
+        color: _surface,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -413,7 +396,7 @@ class _UserOfferProductDetailScreenState
                     style: const TextStyle(
                       fontSize: 30,
                       fontWeight: FontWeight.w900,
-                      color: _teal,
+                      color: Colors.green,
                       letterSpacing: -1,
                     ),
                   ),
@@ -434,9 +417,9 @@ class _UserOfferProductDetailScreenState
               padding:
               const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
               decoration: BoxDecoration(
-                color: _tealLight,
+                color: _accentLight,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: _teal.withOpacity(0.2)),
+                border: Border.all(color: _accent.withOpacity(0.3)),
               ),
               child: Column(
                 children: [
@@ -445,7 +428,7 @@ class _UserOfferProductDetailScreenState
                     style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.w700,
-                      color: _tealDark,
+                      color: _accent,
                       letterSpacing: 1,
                     ),
                   ),
@@ -455,15 +438,15 @@ class _UserOfferProductDetailScreenState
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w900,
-                      color: _tealDark,
+                      color: _accent,
                     ),
                   ),
                   Text(
                     '${discountPct.toStringAsFixed(0)}% off',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: _teal,
+                      color: _accent.withOpacity(0.8),
                     ),
                   ),
                 ],
@@ -476,37 +459,103 @@ class _UserOfferProductDetailScreenState
   }
 
   // ── Variant Selector ────────────────────────────────────────
-  Widget _buildVariantSelector(
-      UserOfferProductDetailController controller,
-      UserOfferProductDetail product) {
+  Widget _buildVariantSelector(UserOfferProductDetail product) {
     if (product.variants.isEmpty) return const SizedBox.shrink();
 
-    final attributeNames = product.variants.first.attributes.keys.toList();
+    final attributeNames =
+    product.variants.first.attributes.keys.toList();
 
     return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(top: 8),
+      color: _surface,
       padding: const EdgeInsets.all(18),
-      color: Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _sectionTitle('Select Variant', Icons.tune_rounded),
           const SizedBox(height: 16),
-          ...attributeNames.map((attributeName) {
-            return _buildAttributeSelector(
-              controller,
-              attributeName,
-              controller.getAvailableValuesForAttribute(attributeName),
-            );
-          }).toList(),
+          ...attributeNames.map((attr) => Padding(
+            padding: const EdgeInsets.only(bottom: 18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  controller.getAttributeDisplayName(attr),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: _textMid,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Obx(() {
+                  final selected =
+                  controller.selectedAttributes[attr];
+                  final values =
+                  controller.getAvailableValuesForAttribute(attr);
+
+                  return Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: values.map((value) {
+                      final isSelected = selected == value;
+                      return GestureDetector(
+                        onTap: () =>
+                            controller.selectAttribute(attr, value),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 18, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? AppColors.kPrimary
+                                : _surface,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: isSelected
+                                  ? AppColors.kPrimary
+                                  : _divider,
+                              width: isSelected ? 2 : 1.5,
+                            ),
+                            boxShadow: isSelected
+                                ? [
+                              BoxShadow(
+                                color:
+                                _primary.withOpacity(0.25),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ]
+                                : [],
+                          ),
+                          child: Text(
+                            value,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: isSelected
+                                  ? Colors.white
+                                  : _textDark,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  );
+                }),
+              ],
+            ),
+          )),
+
+          // Low-stock warning
           Obx(() {
-            final stock = controller.selectedVariant.value?.stock ?? 0;
+            final stock =
+                controller.selectedVariant.value?.stock ?? 0;
             if (stock <= 0 || stock > 5) return const SizedBox.shrink();
             return Container(
               margin: const EdgeInsets.only(top: 4),
-              padding:
-              const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: _amber.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
@@ -535,72 +584,6 @@ class _UserOfferProductDetailScreenState
     );
   }
 
-  Widget _buildAttributeSelector(
-      UserOfferProductDetailController controller,
-      String attributeName,
-      List<String> values) {
-    return Obx(() {
-      final selectedValue = controller.selectedAttributes[attributeName];
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            controller.getAttributeDisplayName(attributeName),
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: _textMid,
-              letterSpacing: 0.2,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: values.map((value) {
-              final isSelected = selectedValue == value;
-              return GestureDetector(
-                onTap: () =>
-                    controller.selectAttribute(attributeName, value),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 18, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: isSelected ? _teal : Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: isSelected ? _teal : _divider,
-                      width: isSelected ? 2 : 1.5,
-                    ),
-                    boxShadow: isSelected
-                        ? [
-                      BoxShadow(
-                        color: _teal.withOpacity(0.28),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      )
-                    ]
-                        : [],
-                  ),
-                  child: Text(
-                    value,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: isSelected ? Colors.white : _textDark,
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 18),
-        ],
-      );
-    });
-  }
-
   // ── Common Attributes ───────────────────────────────────────
   Widget _buildCommonAttributes(UserOfferProductDetail product) {
     if (product.commonAttributes.isEmpty) return const SizedBox.shrink();
@@ -608,9 +591,8 @@ class _UserOfferProductDetailScreenState
     final entries = product.commonAttributes.entries.toList();
 
     return Container(
-      margin: const EdgeInsets.only(top: 8),
+      color: _surface,
       padding: const EdgeInsets.all(18),
-      color: Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -620,12 +602,12 @@ class _UserOfferProductDetailScreenState
             final isEven = e.key.isEven;
             final entry  = e.value;
             return Container(
-              padding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
                 color: isEven
-                    ? _tealLight.withOpacity(0.45)
-                    : Colors.white,
+                    ? _primaryLight.withOpacity(0.55)
+                    : _surface,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -656,7 +638,7 @@ class _UserOfferProductDetailScreenState
                 ],
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );
@@ -667,20 +649,20 @@ class _UserOfferProductDetailScreenState
     if (product.description.trim().isEmpty) return const SizedBox.shrink();
 
     return Container(
-      margin: const EdgeInsets.only(top: 8),
+      color: _surface,
       padding: const EdgeInsets.all(18),
-      color: Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _sectionTitle('Description', Icons.description_outlined),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Text(
             product.description,
             style: const TextStyle(
-              fontSize: 14,
-              color: _textMid,
+              fontSize: 15,
               height: 1.6,
+              color: _textMid,
+              letterSpacing: 0.2,
             ),
           ),
         ],
@@ -689,170 +671,97 @@ class _UserOfferProductDetailScreenState
   }
 
   // ── Bottom Bar ──────────────────────────────────────────────
-  Widget _buildBottomBar() {
-    return Obx(() {
-      if (controller.isLoading.value || controller.productData.value == null) {
-        return const SizedBox.shrink();
-      }
+  Widget _buildBottomBar(UserOfferProductDetail product) {
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 0,
+      child: Obx(() {
+        final variant      = controller.selectedVariant.value;
+        final isOutOfStock = variant == null || variant.stock <= 0;
 
-      final product      = controller.productData.value!;
-      final variant      = controller.selectedVariant.value;
-      final isOutOfStock = variant == null || variant.stock <= 0;
+        final cartItem = cartController.cartItems.firstWhereOrNull(
+              (item) => item.productId == product.productId.toString(),
+        );
+        final isInCart = cartItem != null;
 
-      // Check if this product is already in cart via CartController
-      final cartItem = cartController.cartItems.firstWhereOrNull(
-            (item) => item.productId == product.id.toString(),
-      );
-      final isInCart = cartItem != null;
-
-      return Container(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.07),
-              blurRadius: 20,
-              offset: const Offset(0, -4),
+        return Container(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          decoration: const BoxDecoration(
+            color: _surface,
+            border: Border(
+              top: BorderSide(color: _divider, width: 0.5),
             ),
-          ],
-        ),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+          ),
+          child: SafeArea(
+            top: false,
+            child: isInCart && !isOutOfStock
+                ? _buildCartStepper(cartItem!, product)
+                : _buildAddToCartButton(isOutOfStock, product),
+          ),
+        );
+      }),
+    );
+  }
+  Widget _buildAddToCartButton(
+      bool isOutOfStock, UserOfferProductDetail product) {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: GestureDetector(
+        onTap: isOutOfStock
+            ? null
+            : () async {
+          final variantId = controller.selectedVariant.value?.variantId; // ✅
+          if (variantId == null) {
+            AppSnackbar.warning("Please select a variant");
+            return;
+          }
+          // ✅ Already correct — product.type comes from model top-level, not variant
+          await cartController.addToCart(
+            productId: product.productId,
+            variantId: variantId,
+            type: product.type,   // ✅ top-level type from UserOfferProductDetail
+          );
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            color: isOutOfStock ? _divider : AppColors.kPrimary,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              if (isInCart && !isOutOfStock)
-                _buildCartStepper(cartItem!, product)
-              else
-                Row(
-                  children: [
-                    // ── Add to Cart ──────────────────────────
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: isOutOfStock
-                            ? null
-                            : () => cartController.addToCart(
-                          productId: product.id,
-                          type: 1,
-                        ),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 220),
-                          padding:
-                          const EdgeInsets.symmetric(vertical: 14),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: isOutOfStock ? _divider : _teal,
-                              width: 2,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                isOutOfStock
-                                    ? Icons.block_rounded
-                                    : Icons.shopping_cart_outlined,
-                                size: 18,
-                                color: isOutOfStock ? _textLight : _teal,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                isOutOfStock
-                                    ? 'Out of Stock'
-                                    : 'Add to Cart',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w800,
-                                  color:
-                                  isOutOfStock ? _textLight : _teal,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    // ── Buy Now ──────────────────────────────
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: isOutOfStock
-                            ? null
-                            : () async {
-                          await cartController.addToCart(
-                            productId: product.id,
-                            type: 1,
-                          );
-                          Get.toNamed('/cart');
-                        },
-                        child: Container(
-                          padding:
-                          const EdgeInsets.symmetric(vertical: 14),
-                          decoration: BoxDecoration(
-                            gradient: isOutOfStock
-                                ? null
-                                : const LinearGradient(
-                              colors: [_teal, _tealDark],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            color: isOutOfStock ? _divider : null,
-                            borderRadius: BorderRadius.circular(14),
-                            boxShadow: isOutOfStock
-                                ? []
-                                : [
-                              BoxShadow(
-                                color: _teal.withOpacity(0.35),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                isOutOfStock
-                                    ? Icons.remove_shopping_cart_outlined
-                                    : Icons.bolt_rounded,
-                                size: 18,
-                                color: isOutOfStock
-                                    ? _textLight
-                                    : Colors.white,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                isOutOfStock ? 'Unavailable' : 'Buy Now',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w800,
-                                  color: isOutOfStock
-                                      ? _textLight
-                                      : Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+              Icon(
+                isOutOfStock
+                    ? Icons.remove_shopping_cart_outlined
+                    : Icons.shopping_bag_outlined,
+                size: 19,
+                color: isOutOfStock ? _textLight : Colors.white,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                isOutOfStock ? 'Out of Stock' : 'Add to Cart',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: isOutOfStock ? _textLight : Colors.white,
+                  letterSpacing: 0.2,
                 ),
-              const SizedBox(height: 4),
+              ),
             ],
           ),
         ),
-      );
-    });
+      ),
+    );
   }
 
-  // ── Cart Stepper ─────────────────────────────────────────────
+  // ── Cart Stepper ────────────────────────────────────────────
   Widget _buildCartStepper(
       CartItem cartItem, UserOfferProductDetail product) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
       child: Row(
         children: [
           // Go to Cart
@@ -862,22 +771,22 @@ class _UserOfferProductDetailScreenState
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 decoration: BoxDecoration(
-                  color: _tealLight,
+                  color: _accentLight,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: _teal.withOpacity(0.3)),
+                  border: Border.all(color: _accent.withOpacity(0.4)),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.shopping_cart_rounded,
-                        size: 17, color: _tealDark),
-                    SizedBox(width: 6),
+                        size: 17, color: _accent),
+                    const SizedBox(width: 6),
                     Text(
                       'Go to Cart',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: _tealDark,
+                        color: _accent,
                       ),
                     ),
                   ],
@@ -886,15 +795,15 @@ class _UserOfferProductDetailScreenState
             ),
           ),
           const SizedBox(width: 12),
-          // Stepper
+          // Quantity Stepper
           Container(
             height: 48,
             decoration: BoxDecoration(
-              color: _teal,
+              color: AppColors.kPrimary,
               borderRadius: BorderRadius.circular(14),
               boxShadow: [
                 BoxShadow(
-                  color: _teal.withOpacity(0.35),
+                  color: _primary.withOpacity(0.32),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -903,12 +812,9 @@ class _UserOfferProductDetailScreenState
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Decrement
                 GestureDetector(
                   onTap: () => cartController.updateQuantity(
-                    product.id,
-                    "decrement",
-                  ),
+                      product.productId, "decrement"),
                   child: Container(
                     width: 48,
                     height: 48,
@@ -922,7 +828,6 @@ class _UserOfferProductDetailScreenState
                         color: Colors.white, size: 20),
                   ),
                 ),
-                // Quantity
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 150),
                   transitionBuilder: (child, anim) =>
@@ -942,12 +847,9 @@ class _UserOfferProductDetailScreenState
                     ),
                   ),
                 ),
-                // Increment
                 GestureDetector(
                   onTap: () => cartController.updateQuantity(
-                    product.id,
-                    "increment",
-                  ),
+                      product.productId, "increment"),
                   child: Container(
                     width: 48,
                     height: 48,
@@ -976,10 +878,10 @@ class _UserOfferProductDetailScreenState
         Container(
           padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
-            color: _tealLight,
+            color: _primaryLight,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, size: 14, color: _teal),
+          child: Icon(icon, size: 14, color: _primary),
         ),
         const SizedBox(width: 8),
         Text(

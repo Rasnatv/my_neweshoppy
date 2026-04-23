@@ -126,7 +126,7 @@ class UserLocationController extends GetxController {
     } catch (e) {
       allLocations.clear();
       states.clear();
-      AppSnackbar.error(ApiErrorHandler.handleException(e));
+      // AppSnackbar.error(ApiErrorHandler.handleException(e));
     }
   }
 

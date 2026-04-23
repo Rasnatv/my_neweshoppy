@@ -78,6 +78,11 @@ class EditProfilePage extends StatelessWidget {
                     hint: 'Enter your phone number',
                     icon: Icons.phone_outlined,
                     color: const Color(0xFF3B82F6),
+                    keyboardType: TextInputType.phone,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(10),
+                    ],
                   ),
                   _fieldTile(
                     ctrl: controller.addressCtrl,

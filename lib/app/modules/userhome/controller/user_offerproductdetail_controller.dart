@@ -1,6 +1,5 @@
 
 import 'dart:convert';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
@@ -12,6 +11,8 @@ import '../../merchantlogin/widget/successwidget.dart';
 class UserOfferProductDetailController extends GetxController {
   final box = GetStorage();
 
+  // ✅ Updated endpoint
+// ✅ Updated endpoint
   final String apiUrl =
       "https://rasma.astradevelops.in/e_shoppyy/public/api/offer-product/details";
 
@@ -22,7 +23,7 @@ class UserOfferProductDetailController extends GetxController {
   var selectedVariant = Rx<ProductVariant?>(null);
   var currentImageIndex = 0.obs;
 
-  Future<void> fetchProductDetails(int offerProductId) async {
+  Future<void> fetchProductDetails(int productId) async {
     try {
       isLoading.value = true;
       productData.value = null;
@@ -43,31 +44,30 @@ class UserOfferProductDetailController extends GetxController {
           "Content-Type": "application/json",
           "Authorization": "Bearer $token",
         },
-        body: jsonEncode({"offer_product_id": offerProductId}),
+
+        body: jsonEncode({"offer_product_id": productId}),
       );
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
 
         if (body['status'] == 1) {
-          productData.value = UserOfferProductDetail.fromJson(body['data']);
+          productData.value =
+              UserOfferProductDetail.fromJson(body['data']);
 
           if (productData.value!.variants.isNotEmpty) {
             _initializeFirstVariant();
           }
         } else {
-          // ✅ LOGICAL ERROR (status != 1)
           final message =
               body['message'] ?? "Failed to fetch product details";
           AppSnackbar.error(message);
         }
       } else {
-        // ✅ API ERROR HANDLER
         final errorMessage = ApiErrorHandler.handleResponse(response);
         AppSnackbar.error(errorMessage);
       }
     } catch (e) {
-      // ✅ EXCEPTION HANDLER
       final errorMessage = ApiErrorHandler.handleException(e);
       AppSnackbar.error(errorMessage);
     } finally {
@@ -76,7 +76,8 @@ class UserOfferProductDetailController extends GetxController {
   }
 
   void _initializeFirstVariant() {
-    if (productData.value == null || productData.value!.variants.isEmpty) return;
+    if (productData.value == null ||
+        productData.value!.variants.isEmpty) return;
 
     final firstVariant = productData.value!.variants.first;
     selectedAttributes.value = Map.from(firstVariant.attributes);
@@ -92,8 +93,10 @@ class UserOfferProductDetailController extends GetxController {
   void _updateSelectedVariant() {
     if (productData.value == null) return;
 
-    final matchingVariant = productData.value!.variants.firstWhereOrNull(
-          (variant) => _attributesMatch(variant.attributes, selectedAttributes),
+    final matchingVariant =
+    productData.value!.variants.firstWhereOrNull(
+          (variant) =>
+          _attributesMatch(variant.attributes, selectedAttributes),
     );
 
     selectedVariant.value = matchingVariant;
@@ -109,8 +112,8 @@ class UserOfferProductDetailController extends GetxController {
     if (idx != -1) currentImageIndex.value = idx;
   }
 
-  bool _attributesMatch(
-      Map<String, String> variantAttrs, Map<String, String> selectedAttrs) {
+  bool _attributesMatch(Map<String, String> variantAttrs,
+      Map<String, String> selectedAttrs) {
     if (variantAttrs.length != selectedAttrs.length) return false;
     for (var key in variantAttrs.keys) {
       if (variantAttrs[key] != selectedAttrs[key]) return false;
@@ -133,6 +136,7 @@ class UserOfferProductDetailController extends GetxController {
 
   double getDiscountAmount() {
     if (selectedVariant.value == null) return 0;
-    return selectedVariant.value!.price - selectedVariant.value!.offerPrice;
+    return selectedVariant.value!.price -
+        selectedVariant.value!.offerPrice;
   }
 }

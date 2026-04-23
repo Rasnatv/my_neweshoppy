@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import '../../../data/errors/api_error.dart';
 import '../../merchantlogin/widget/successwidget.dart';
+import '../views/merchant_home.dart';
 import '../views/merchant_offerviewpage.dart';
 import 'merchant_offerbanner_controller.dart';
 
@@ -67,6 +68,9 @@ class AddOfferProductController extends GetxController {
   var variantImagePaths = <int, String>{}.obs;
 
   final ImagePicker picker = ImagePicker();
+  // Add these two declarations with your other TextEditingControllers
+  final TextEditingController productNameController = TextEditingController();
+  final TextEditingController productDescriptionController = TextEditingController();
 
   @override
   void onInit() {
@@ -179,6 +183,7 @@ class AddOfferProductController extends GetxController {
     variants.clear();
     variantImagePaths.clear();
     variantValueController.clear();
+   // ← ADD
   }
 
   bool hasVariantAttributes() {
@@ -484,9 +489,40 @@ class AddOfferProductController extends GetxController {
         final List<dynamic> savedProducts =
             (body['data'] as List<dynamic>?) ?? [];
 
-        totalProductsAdded.value += savedProducts.isNotEmpty
-            ? savedProducts.length
-            : 1;
+        // ── Parse server response → hydrate variants with
+        //    server-assigned IDs and final (discounted) prices ──
+        if (savedProducts.isNotEmpty) {
+          final productWrapper =
+          savedProducts.first as Map<String, dynamic>;
+          final productData =
+          productWrapper['product'] as Map<String, dynamic>?;
+
+          if (productData != null) {
+            final int? returnedProductId =
+            productData['product_id'] as int?;
+
+            final List<dynamic> returnedVariants =
+                (productData['variants'] as List<dynamic>?) ?? [];
+
+            for (int i = 0; i < variants.length; i++) {
+              if (i < returnedVariants.length) {
+                final rv =
+                returnedVariants[i] as Map<String, dynamic>;
+
+                variants[i].variantId  = rv['variant_id'] as int?;
+                variants[i].productId  = returnedProductId;
+                variants[i].finalPrice =
+                    double.tryParse(rv['final_price']?.toString() ?? '');
+                variants[i].serverImage =
+                    rv['image']?.toString();
+              }
+            }
+            variants.refresh();
+          }
+        }
+
+        // Each API call saves exactly 1 product
+        totalProductsAdded.value += 1;
 
         AppSnackbar.success(
           body['message']?.toString().isNotEmpty == true
@@ -495,7 +531,9 @@ class AddOfferProductController extends GetxController {
         );
 
         _clearForm();
-      } else {
+      }
+
+      else {
         AppSnackbar.error(
           body['message']?.toString().isNotEmpty == true
               ? body['message']
@@ -517,7 +555,8 @@ class AddOfferProductController extends GetxController {
     }
 
     // ✅ Navigate directly to the widget — no named route needed
-    Get.off(() =>  MerchantOfferViewPage());
+    // Get.off(() =>  MerchantOfferViewPage());
+    Get.offAll(()=>MerchantDashboardPage());
 
     if (Get.isRegistered<MerchantOfferBannerController>()) {
       Get.find<MerchantOfferBannerController>().fetchOffers();
@@ -551,6 +590,8 @@ class AddOfferProductController extends GetxController {
   }
 
   void _clearForm() {
+    productNameController.clear();        // ← ADD
+    productDescriptionController.clear();
     productName.value        = '';
     selectedCategory.value   = '';
     selectedCategoryId.value = 0;
@@ -602,12 +643,17 @@ class CategoryApiModel {
     required this.variantAttributes,
   });
 }
-
 class OfferProductVariant {
   Map<String, String> attributes;
   double? price;
   int?    stock;
   String? imagePath;
+
+  // ── Server-returned fields (populated after save) ──
+  int?    variantId;
+  double? finalPrice;   // ← discounted price from API
+  int?    productId;
+  String? serverImage;  // ← URL returned by server
 
   OfferProductVariant({
     required this.attributes,

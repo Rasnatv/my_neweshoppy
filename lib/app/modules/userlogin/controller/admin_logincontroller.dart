@@ -105,7 +105,6 @@ class AdminLoginController extends GetxController {
       final bool saved = await _saveAuthData(data);
       if (!saved) return;
 
-      AppSnackbarss.success("Login successful ✅");
 
       _navigateToHome(serverRole);
 

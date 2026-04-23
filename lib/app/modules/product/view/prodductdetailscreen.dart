@@ -72,6 +72,7 @@ class ProductDetailPage extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: const BoxDecoration(
@@ -117,6 +118,7 @@ class ProductDetailPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  SizedBox(height: 5,),
                   _buildImageGallery(variant),
                   const SizedBox(height: 8),
                   _buildProductInfo(product, variant),
@@ -176,12 +178,12 @@ class ProductDetailPage extends StatelessWidget {
     final isLow      = stockCount > 0 && stockCount <= 5;
     final isOut      = stockCount <= 0;
     final color      = isOut ? _red : (isLow ? _amber : _green);
-    final label      = isOut
+    // In _buildProductInfo, change label to show count when in stock:
+    final label = isOut
         ? 'Out of Stock'
         : isLow
         ? 'Only $stockCount left'
-        : 'In Stock';
-    final icon = isOut ? Icons.cancel_rounded : Icons.check_circle_rounded;
+        : '$stockCount In Stock';   // ← shows actual count
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -216,7 +218,7 @@ class ProductDetailPage extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(icon, size: 11, color: color),
+                    // Icon(icon, size: 11, color: color),
                     const SizedBox(width: 4),
                     Text(
                       label,
@@ -432,20 +434,16 @@ class ProductDetailPage extends StatelessWidget {
     );
   }
 
-  // ── Bottom Bar ──────────────────────────────────────────────
   Widget _buildBottomBar(
       ProductDetailController controller,
       CartController cartController,
       ProductDetailModel product,
       ProductVariantModel variant) {
     return Positioned(
-      left: 0,
-      right: 0,
-      bottom: 0,
+      left: 0, right: 0, bottom: 0,
       child: Obx(() {
         final currentVariant = controller.selectedVariant.value ?? variant;
-        final stockCount     = currentVariant.stock;
-        final isOutOfStock   = stockCount <= 0;
+        final isOutOfStock = currentVariant.stock <= 0;
 
         final cartItem = cartController.cartItems.firstWhereOrNull(
               (item) => item.productId == productId.toString(),
@@ -453,148 +451,19 @@ class ProductDetailPage extends StatelessWidget {
         final isInCart = cartItem != null;
 
         return Container(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
           decoration: BoxDecoration(
             color: _surface,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.07),
-                blurRadius: 20,
-                offset: const Offset(0, -4),
-              ),
-            ],
+            border: const Border(top: BorderSide(color: _divider, width: 0.5)),
           ),
           child: SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (isInCart && !isOutOfStock)
-                  _buildCartStepper(cartItem!, cartController)
-                else
-                  Row(
-                    children: [
-                      // Add to Cart
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: isOutOfStock
-                              ? null
-                              : () async {
-                            await cartController.addToCart(
-                              productId: productId,
-                              type: 0,
-                            );
-                          },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 220),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            decoration: BoxDecoration(
-                              color: _surface,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: isOutOfStock
-                                    ? _divider
-                                    : AppColors.kPrimary,
-                                width: 2,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  isOutOfStock
-                                      ? Icons.block_rounded
-                                      : Icons.shopping_cart_outlined,
-                                  size: 18,
-                                  color: isOutOfStock
-                                      ? _textLight
-                                      : AppColors.kPrimary,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  isOutOfStock ? 'Out of Stock' : 'Add to Cart',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w800,
-                                    color: isOutOfStock
-                                        ? _textLight
-                                        : AppColors.kPrimary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      // Buy Now
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: isOutOfStock
-                              ? null
-                              : () async {
-                            await cartController.addToCart(
-                              productId: productId,
-                              type: 0,
-                            );
-                            Get.toNamed('/cart');
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            decoration: BoxDecoration(
-                              gradient: isOutOfStock
-                                  ? null
-                                  : const LinearGradient(
-                                colors: [
-                                  AppColors.kPrimary,
-                                  AppColors.kPrimary,
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              color: isOutOfStock ? _divider : null,
-                              borderRadius: BorderRadius.circular(14),
-                              boxShadow: isOutOfStock
-                                  ? []
-                                  : [
-                                BoxShadow(
-                                  color: _primary.withOpacity(0.32),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  isOutOfStock
-                                      ? Icons.remove_shopping_cart_outlined
-                                      : Icons.bolt_rounded,
-                                  size: 18,
-                                  color: isOutOfStock
-                                      ? _textLight
-                                      : Colors.white,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  isOutOfStock ? 'Unavailable' : 'Buy Now',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w800,
-                                    color: isOutOfStock
-                                        ? _textLight
-                                        : Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                const SizedBox(height: 4),
-              ],
+            top: false,
+            child: isInCart && !isOutOfStock
+                ? _buildCartStepper(cartItem!, cartController)
+                : _buildAddToCartButton(
+              isOutOfStock,
+              cartController,
+              currentVariant.variantId,  // ✅ pass variantId
             ),
           ),
         );
@@ -602,10 +471,61 @@ class ProductDetailPage extends StatelessWidget {
     );
   }
 
+  Widget _buildAddToCartButton(
+      bool isOutOfStock,
+      CartController cartController,
+      int variantId,  // ✅ added
+      ) {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: GestureDetector(
+        onTap: isOutOfStock
+            ? null
+            : () async {
+          await cartController.addToCart(
+            productId: productId,
+            variantId: variantId,  // ✅ pass it
+            type: 0,
+          );
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            color: isOutOfStock ? _divider : AppColors.kPrimary,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                isOutOfStock
+                    ? Icons.remove_shopping_cart_outlined
+                    : Icons.shopping_bag_outlined,
+                size: 19,
+                color: isOutOfStock ? _textLight : Colors.white,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                isOutOfStock ? 'Out of Stock' : 'Add to Cart',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: isOutOfStock ? _textLight : Colors.white,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   // ── Cart Stepper ────────────────────────────────────────────
   Widget _buildCartStepper(CartItem cartItem, CartController cartController) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 8,horizontal:8),
       child: Row(
         children: [
           Expanded(

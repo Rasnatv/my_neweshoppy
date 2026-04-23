@@ -94,7 +94,7 @@ class UserCategoryController extends GetxController {
         AppSnackbar.error(ApiErrorHandler.handleResponse(res));
       }
     } catch (e) {
-      AppSnackbar.error(ApiErrorHandler.handleException(e));
+      // AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoading.value = false;
     }
