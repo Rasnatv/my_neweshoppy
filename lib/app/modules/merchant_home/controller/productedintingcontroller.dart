@@ -32,7 +32,7 @@ class merchantProductDetailController extends GetxController {
   final RxList<VariantForm> variantForms = <VariantForm>[].obs;
 
   // ── API base ──────────────────────────────────────────────────────────────────
-  static const _base = 'https://rasma.astradevelops.in/e_shoppyy/public/api';
+  static const _base = 'https://eshoppy.co.in/api';
 
   // ─────────────────────────────────────────────────────────────────────────────
   @override
@@ -202,6 +202,7 @@ class merchantProductDetailController extends GetxController {
         product(updated);
         _populateForms(updated);
         AppSnackbar.success(json['message'] ?? 'Product updated successfully');
+        Get.back(result: true);
         Get.delete<ManageproductController>();
         Get.offNamed('/manageproduct');
       } else {

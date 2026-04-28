@@ -1,4 +1,5 @@
 import 'package:eshoppy/app/common/style/app_colors.dart';
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../data/models/homedatamodel.dart';
@@ -11,7 +12,7 @@ class AllEventsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return NetworkAwareWrapper(child:Scaffold(
       backgroundColor: const Color(0xFFF7F7F7),
       appBar: AppBar(
         automaticallyImplyLeading: true,
@@ -65,7 +66,7 @@ class AllEventsPage extends StatelessWidget {
           },
         );
       }),
-    );
+    ));
   }
 }
 

@@ -32,7 +32,7 @@ class FoodItem {
 
 // ==================== SEATING TYPE ====================
 
-enum SeatingType { indoor, outdoor, both }
+enum SeatingType { indoor, outdoor }
 
 // ==================== TABLE TYPE ====================
 

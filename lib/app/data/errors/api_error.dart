@@ -35,9 +35,15 @@ class ApiErrorHandler {
     }
   }
 
+  // static String handleException(dynamic error) {
+  //   if (error is SocketException) {
+  //     return "No internet connection";
+  //   }
+  //   return "Unexpected error occurred";
+  // }
   static String handleException(dynamic error) {
     if (error is SocketException) {
-      return "No internet connection";
+      return ""; // ✅ IMPORTANT: return empty
     }
     return "Unexpected error occurred";
   }

@@ -44,7 +44,7 @@ class UserOfferProductController extends GetxController {
 
       final response = await http.post(
         Uri.parse(
-          'https://rasma.astradevelops.in/e_shoppyy/public/api/merchant/offer-products',
+          'https://eshoppy.co.in/api/merchant/offer-products',
         ),
         headers: {
           'Authorization': 'Bearer $token',

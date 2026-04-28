@@ -1,10 +1,13 @@
 
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../common/style/app_colors.dart';
 import '../../../../common/style/app_text_style.dart';
 import '../../../../common/utils/validators.dart';
+import '../../../../widgets/areaadminsuccesswidget.dart';
+import '../../../merchantlogin/widget/successwidget.dart';
 import '../controller/districtadmin_addeventcontroller.dart';
 
 class DistrictAdminAddEventPage extends StatelessWidget {
@@ -17,7 +20,7 @@ class DistrictAdminAddEventPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return NetworkAwareWrapper(child:Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
         iconTheme: IconThemeData(color: Colors.white),
@@ -307,19 +310,7 @@ class DistrictAdminAddEventPage extends StatelessWidget {
                           if (formValid && fieldsValid) {
                             controller.addEvent();
                           } else {
-                            Get.snackbar(
-                              "Validation Error",
-                              "Please fill all required fields",
-                              snackPosition: SnackPosition.BOTTOM,
-                              backgroundColor: Colors.red.shade400,
-                              colorText: Colors.white,
-                              margin: const EdgeInsets.all(16),
-                              borderRadius: 12,
-                              icon: const Icon(
-                                Icons.error_outline,
-                                color: Colors.white,
-                              ),
-                            );
+                            AppSnackbar.warning("Validation Error, please fill all required fields");
                           }
                         },
                         child: controller.isLoading.value
@@ -357,7 +348,7 @@ class DistrictAdminAddEventPage extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 
   // ================================================================

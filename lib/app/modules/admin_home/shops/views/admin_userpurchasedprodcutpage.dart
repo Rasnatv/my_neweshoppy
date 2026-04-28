@@ -1,3 +1,4 @@
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -19,7 +20,7 @@ class PurchasedProductsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.put(PurchasedProductController());
 
-    return Scaffold(
+    return NetworkAwareWrapper(child:Scaffold(
       backgroundColor: _bg,
       appBar: AppBar(
         iconTheme: IconThemeData(color: Colors.white),
@@ -162,7 +163,7 @@ class PurchasedProductsScreen extends StatelessWidget {
           ],
         );
       }),
-    );
+    ));
   }
 
   Widget _buildSummaryBanner(PurchasedProductController controller) {

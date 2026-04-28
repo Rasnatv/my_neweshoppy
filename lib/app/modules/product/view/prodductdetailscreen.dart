@@ -1,5 +1,6 @@
 
 
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_colors.dart';
@@ -41,7 +42,7 @@ class ProductDetailPage extends StatelessWidget {
 
     final cartController = Get.find<CartController>();
 
-    return Scaffold(
+    return NetworkAwareWrapper(child:Scaffold(
       backgroundColor: _bg,
       appBar: AppBar(
         backgroundColor: AppColors.kPrimary,
@@ -136,7 +137,7 @@ class ProductDetailPage extends StatelessWidget {
           ],
         );
       }),
-    );
+    ));
   }
 
   // ── Image Gallery ───────────────────────────────────────────

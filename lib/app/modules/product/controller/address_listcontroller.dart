@@ -12,7 +12,7 @@ class AddressListController extends GetxController {
   final box = GetStorage();
 
   static const String baseUrl =
-      'https://rasma.astradevelops.in/e_shoppyy/public/api';
+      'https://eshoppy.co.in/api';
 
   final RxList<AddressListModel> addressList = <AddressListModel>[].obs;
   final RxBool isLoading                     = false.obs;
@@ -28,11 +28,6 @@ class AddressListController extends GetxController {
 
   // ── Fetch address list ─────────────────────────────────────────────────────
   Future<void> fetchAddresses() async {
-    if (authToken.isEmpty) {
-      AppSnackbar.warning('Authentication token not found. Please log in.');
-      return;
-    }
-
     isLoading.value = true;
     try {
       final response = await http.get(

@@ -1,4 +1,5 @@
 import 'package:eshoppy/app/common/style/app_colors.dart';
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -13,7 +14,7 @@ class NewAddAddressPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return NetworkAwareWrapper(child:Scaffold(
       backgroundColor: const Color(0xFFF6F7FB),
       appBar: AppBar(
         backgroundColor: AppColors.kPrimary,
@@ -190,7 +191,7 @@ class NewAddAddressPage extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ));
   }
 
   // ── Section header ──────────────────────────────────────────────────────────

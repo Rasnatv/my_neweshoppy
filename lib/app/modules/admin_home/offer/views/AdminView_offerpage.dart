@@ -1,4 +1,5 @@
 import 'package:eshoppy/app/common/style/app_colors.dart';
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -13,7 +14,7 @@ class OffersListingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final AdminViewOfferController controller = Get.put(AdminViewOfferController());
 
-    return Scaffold(
+    return NetworkAwareWrapper(child:Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: _buildAppBar(controller),
       body: Obx(() {
@@ -31,7 +32,7 @@ class OffersListingScreen extends StatelessWidget {
         }
         return _OffersContent(controller: controller);
       }),
-    );
+    ));
   }
 
   PreferredSizeWidget _buildAppBar(AdminViewOfferController controller) {

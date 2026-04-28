@@ -25,7 +25,7 @@ class AppSnackbar {
         message,
         style: const TextStyle(color: Colors.white70, fontSize: 13),
       ),
-      backgroundColor: const Color(0xFF4DB6AC),
+      backgroundColor: const Color(0xFF185657),
       borderRadius: 14,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),

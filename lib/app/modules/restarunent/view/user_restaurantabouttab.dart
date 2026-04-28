@@ -1,4 +1,5 @@
 
+import 'package:eshoppy/app/modules/merchantlogin/widget/successwidget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -270,7 +271,7 @@ class RestaurantAboutTab extends StatelessWidget {
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     } else {
-      Get.snackbar('Error', 'Could not launch phone dialer');
+      AppSnackbar.error('Error, Could not launch phone dialer');
     }
   }
 
@@ -279,7 +280,7 @@ class RestaurantAboutTab extends StatelessWidget {
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     } else {
-      Get.snackbar('Error', 'Could not launch email client');
+      AppSnackbar.error('Error, Could not launch email client');
     }
   }
 
@@ -288,7 +289,7 @@ class RestaurantAboutTab extends StatelessWidget {
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
-      Get.snackbar('Error', 'Could not launch WhatsApp');
+      AppSnackbar.error('Error, Could not launch WhatsApp');
     }
   }
 
@@ -297,7 +298,7 @@ class RestaurantAboutTab extends StatelessWidget {
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
-      Get.snackbar('Error', 'Could not open link');
+      AppSnackbar.error('Error, Could not open link');
     }
   }
 }

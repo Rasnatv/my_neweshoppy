@@ -7,45 +7,46 @@ import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
+import '../../../../../data/errors/api_error.dart';
 import '../../../../../data/models/adminretaurant_menumodel.dart';
+import '../../../../merchantlogin/widget/successwidget.dart';
 
-const String _baseUrl =
-    'https://rasma.astradevelops.in/e_shoppyy/public/api';
+const String _baseUrl = 'https://eshoppy.co.in/api';
 
 class RestaurantmenuController extends GetxController {
   final _storage = GetStorage();
 
   // ---- Observables ----
-  var mealMenus = <MealMenu>[].obs;
-  var tableTypes = <TableType>[].obs;
-  var timeSlots = <TimeSlot>[].obs;
-  var seatingType = SeatingType.indoor.obs;
+  var mealMenus        = <MealMenu>[].obs;
+  var tableTypes       = <TableType>[].obs;
+  var timeSlots        = <TimeSlot>[].obs;
+  var seatingType      = SeatingType.indoor.obs;
   var selectedMealType = Rx<MealType>(MealType.breakfast);
 
   var isLoadingPreview = false.obs;
-  var isAddingTable = false.obs;
-  var isAddingTimings = false.obs;
+  var isAddingTable    = false.obs;
+  var isAddingTimings  = false.obs;
   var isAddingMenuItem = false.obs;
   var isDeletingTiming = false.obs;
 
   // ==================== TAB 1: TABLE CONTROLLERS ====================
-  final tableTypeCtrl = TextEditingController();
+  final tableTypeCtrl     = TextEditingController();
   final capacityRangeCtrl = TextEditingController();
-  final tableIdsCtrl = TextEditingController();
+  final tableIdsCtrl      = TextEditingController();
 
   // ==================== TAB 2: TIMING CONTROLLERS ====================
-  final startCtrl = TextEditingController();
-  final endCtrl = TextEditingController();
+  final startCtrl         = TextEditingController();
+  final endCtrl           = TextEditingController();
   final breakDurationCtrl = TextEditingController();
   final RxMap<MealType, List<TimeSlot>> pendingSlots =
       <MealType, List<TimeSlot>>{}.obs;
 
   // ==================== TAB 3: PER-MEAL CARD CONTROLLERS ====================
-  final Map<MealType, TextEditingController> foodNameCtrls = {};
-  final Map<MealType, TextEditingController> foodPriceCtrls = {};
+  final Map<MealType, TextEditingController> foodNameCtrls    = {};
+  final Map<MealType, TextEditingController> foodPriceCtrls   = {};
   final Map<MealType, TextEditingController> descriptionCtrls = {};
-  final Map<MealType, Rx<File?>> pickedImages = {};
-  final Map<MealType, RxBool> expandedCards = {};
+  final Map<MealType, Rx<File?>>  pickedImages  = {};
+  final Map<MealType, RxBool>     expandedCards = {};
 
   final ImagePicker _picker = ImagePicker();
 
@@ -57,13 +58,7 @@ class RestaurantmenuController extends GetxController {
     final dynamic raw = _storage.read('restaurant_id');
     if (raw == null) {
       debugPrint('⚠️ restaurant_id not found in storage');
-      Get.snackbar(
-        'Session Error',
-        'Restaurant ID not found. Please re-register.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      AppSnackbar.error('Restaurant ID not found. Please re-register.');
       return 0;
     }
     final id = raw is int ? raw : int.tryParse(raw.toString()) ?? 0;
@@ -82,19 +77,16 @@ class RestaurantmenuController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-
     for (var mealType in MealType.values) {
       mealMenus.add(MealMenu(mealType: mealType));
     }
-
     for (var mealType in MealType.values) {
-      foodNameCtrls[mealType] = TextEditingController();
-      foodPriceCtrls[mealType] = TextEditingController();
+      foodNameCtrls[mealType]    = TextEditingController();
+      foodPriceCtrls[mealType]   = TextEditingController();
       descriptionCtrls[mealType] = TextEditingController();
-      pickedImages[mealType] = Rx<File?>(null);
-      expandedCards[mealType] = false.obs;
+      pickedImages[mealType]     = Rx<File?>(null);
+      expandedCards[mealType]    = false.obs;
     }
-
     fetchSetupPreview();
   }
 
@@ -108,13 +100,11 @@ class RestaurantmenuController extends GetxController {
     startCtrl.dispose();
     endCtrl.dispose();
     breakDurationCtrl.dispose();
-
     for (var mealType in MealType.values) {
       foodNameCtrls[mealType]?.dispose();
       foodPriceCtrls[mealType]?.dispose();
       descriptionCtrls[mealType]?.dispose();
     }
-
     super.onClose();
   }
 
@@ -131,9 +121,9 @@ class RestaurantmenuController extends GetxController {
   }
 
   String formatTimeTo12h(TimeOfDay time) {
-    final hour = time.hour;
-    final minute = time.minute.toString().padLeft(2, '0');
-    final period = hour >= 12 ? 'PM' : 'AM';
+    final hour        = time.hour;
+    final minute      = time.minute.toString().padLeft(2, '0');
+    final period      = hour >= 12 ? 'PM' : 'AM';
     final displayHour = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
     return '${displayHour.toString().padLeft(2, '0')}:$minute $period';
   }
@@ -142,54 +132,33 @@ class RestaurantmenuController extends GetxController {
 
   void addToPendingSlots() {
     if (startCtrl.text.isEmpty || endCtrl.text.isEmpty) {
-      Get.snackbar(
-        'Validation',
-        'Please select start and end time',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-      );
+      AppSnackbar.warning('Please select start and end time');
       return;
     }
 
-    final mealType = selectedMealType.value;
+    final mealType      = selectedMealType.value;
+    final existingSaved = timeSlots.where((s) => s.mealType == mealType).toList();
 
-    // Check if this meal type already has a saved slot (from API)
-    final existingSaved =
-    timeSlots.where((s) => s.mealType == mealType).toList();
     if (existingSaved.isNotEmpty) {
-      Get.snackbar(
-        'Already Exists',
+      AppSnackbar.warning(
         '${mealType.name.capitalizeFirst} timing already saved. Delete existing slot first to change it.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.orange.shade800,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 4),
-        icon: const Icon(Icons.warning_amber_rounded, color: Colors.white),
       );
       return;
     }
 
-    // Check if this meal type already queued in pendingSlots
     if (pendingSlots.containsKey(mealType) &&
         pendingSlots[mealType]!.isNotEmpty) {
-      Get.snackbar(
-        'Already Queued',
+      AppSnackbar.warning(
         '${mealType.name.capitalizeFirst} is already in the queue. Save first or clear.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
       );
       return;
     }
 
-    // Parse break duration (defaults to 0 if empty or invalid)
     final breakMins = int.tryParse(breakDurationCtrl.text.trim()) ?? 0;
-
     final slot = TimeSlot(
-      mealType: mealType,
-      startTime: startCtrl.text,
-      endTime: endCtrl.text,
+      mealType:      mealType,
+      startTime:     startCtrl.text,
+      endTime:       endCtrl.text,
       breakDuration: breakMins,
     );
 
@@ -203,13 +172,8 @@ class RestaurantmenuController extends GetxController {
     endCtrl.clear();
     breakDurationCtrl.clear();
 
-    Get.snackbar(
-      'Queued',
+    AppSnackbar.success(
       '${mealType.name.capitalizeFirst} slot added to queue. Tap "Save Timings" to submit.',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
-      duration: const Duration(seconds: 2),
     );
   }
 
@@ -219,13 +183,7 @@ class RestaurantmenuController extends GetxController {
     if (tableTypeCtrl.text.trim().isEmpty ||
         capacityRangeCtrl.text.trim().isEmpty ||
         tableIdsCtrl.text.trim().isEmpty) {
-      Get.snackbar(
-        'Validation',
-        'Please fill all table fields',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-      );
+      AppSnackbar.warning('Please fill all table fields');
       return;
     }
     addTableType(
@@ -244,21 +202,15 @@ class RestaurantmenuController extends GetxController {
   Future<void> submitFoodItem(MealType mealType) async {
     final price = double.tryParse(foodPriceCtrls[mealType]!.text.trim());
     if (foodNameCtrls[mealType]!.text.trim().isEmpty || price == null) {
-      Get.snackbar(
-        'Validation',
-        'Please enter food name and valid price',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-      );
+      AppSnackbar.warning('Please enter food name and valid price');
       return;
     }
     await addFoodItem(
       mealType,
       FoodItem(
-        name: foodNameCtrls[mealType]!.text.trim(),
-        price: price,
-        imageFile: pickedImages[mealType]?.value,
+        name:        foodNameCtrls[mealType]!.text.trim(),
+        price:       price,
+        imageFile:   pickedImages[mealType]?.value,
         description: descriptionCtrls[mealType]!.text.trim(),
       ),
     );
@@ -282,8 +234,8 @@ class RestaurantmenuController extends GetxController {
 
   Future<String?> _fileToBase64(File file) async {
     final bytes = await file.readAsBytes();
-    final ext = file.path.split('.').last.toLowerCase();
-    final mime = ext == 'png' ? 'image/png' : 'image/jpeg';
+    final ext   = file.path.split('.').last.toLowerCase();
+    final mime  = ext == 'png' ? 'image/png' : 'image/jpeg';
     return 'data:$mime;base64,${base64Encode(bytes)}';
   }
 
@@ -302,7 +254,7 @@ class RestaurantmenuController extends GetxController {
       );
 
       debugPrint('fetchSetupPreview status: ${response.statusCode}');
-      debugPrint('fetchSetupPreview body: ${response.body}');
+      debugPrint('fetchSetupPreview body:   ${response.body}');
 
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
@@ -310,27 +262,33 @@ class RestaurantmenuController extends GetxController {
           final data = json['data'];
           _loadTablesFromJson(data['tables'] ?? []);
           _loadTimingsFromJson(data['meal_timings'] ?? []);
-          _loadMenuFromJson(data['menu_items'] ?? {});
+          _loadMenuFromJson(data['menu_items']);   // ← pass raw value (may be [] or {})
+        } else {
+          AppSnackbar.warning(
+            json['message']?.toString() ?? 'Failed to load preview',
+          );
         }
+      } else {
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
       debugPrint('fetchSetupPreview error: $e');
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoadingPreview.value = false;
     }
   }
 
   void _loadTablesFromJson(List<dynamic> tablesJson) {
-    final tables = tablesJson.map((t) => TableType.fromJson(t)).toList();
-    tableTypes.assignAll(tables);
+    tableTypes.assignAll(tablesJson.map((t) => TableType.fromJson(t)).toList());
   }
 
   void _loadTimingsFromJson(List<dynamic> timingsJson) {
-    final seen = <String>{};
+    final seen  = <String>{};
     final slots = <TimeSlot>[];
     for (var t in timingsJson) {
       final slot = TimeSlot.fromJson(t);
-      final key = '${slot.mealType.name}|${slot.startTime}|${slot.endTime}';
+      final key  = '${slot.mealType.name}|${slot.startTime}|${slot.endTime}';
       if (!seen.contains(key)) {
         seen.add(key);
         slots.add(slot);
@@ -339,11 +297,18 @@ class RestaurantmenuController extends GetxController {
     timeSlots.assignAll(slots);
   }
 
-  void _loadMenuFromJson(Map<String, dynamic> menuJson) {
+  /// Safely handles both [] (empty list from API) and {"breakfast":[...]} (map with data).
+  void _loadMenuFromJson(dynamic rawMenuJson) {
+    // When no menu items exist, the API returns [] instead of {}
+    // Guard against that so we never crash with a cast error.
+    if (rawMenuJson == null || rawMenuJson is! Map) {
+      debugPrint('_loadMenuFromJson: received non-Map (${rawMenuJson.runtimeType}), skipping.');
+      return;
+    }
+    final menuJson = rawMenuJson as Map<String, dynamic>;
     for (var menu in mealMenus) {
       final items = menuJson[menu.mealType.name] as List<dynamic>? ?? [];
-      menu.foodItems
-          .assignAll(items.map((e) => FoodItem.fromJson(e)).toList());
+      menu.foodItems.assignAll(items.map((e) => FoodItem.fromJson(e)).toList());
     }
   }
 
@@ -371,10 +336,10 @@ class RestaurantmenuController extends GetxController {
 
       final payload = {
         'restaurant_id': id,
-        'table_type': name,
+        'table_type':    name,
         'capacity_range': capacityRange,
-        'table_name': normalizedTableIds,
-        'seating_type': seating.name,
+        'table_name':    normalizedTableIds,
+        'seating_type':  seating.name,
       };
       debugPrint('addTableType payload: $payload');
 
@@ -385,60 +350,50 @@ class RestaurantmenuController extends GetxController {
       );
 
       debugPrint('addTableType status: ${response.statusCode}');
-      debugPrint('addTableType body: ${response.body}');
+      debugPrint('addTableType body:   ${response.body}');
 
       final json = jsonDecode(response.body);
-      if (json['status'] == '1') {
-        final addedTable = TableType.fromJson(json['data']);
 
-        final existing = tableTypes.firstWhereOrNull(
-              (t) =>
-          t.name == name &&
-              t.capacityRange == capacityRange &&
-              t.seatingType == seating,
-        );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (json['status'] == '1') {
+          final addedTable = TableType.fromJson(json['data']);
+          final existing   = tableTypes.firstWhereOrNull(
+                (t) =>
+            t.name == name &&
+                t.capacityRange == capacityRange &&
+                t.seatingType == seating,
+          );
 
-        if (existing != null) {
-          final index = tableTypes.indexOf(existing);
-          tableTypes[index] = TableType(
-            id: existing.id,
-            name: existing.name,
-            capacityRange: existing.capacityRange,
-            seatingType: existing.seatingType,
-            availableTables: [
-              ...existing.availableTables,
-              ...addedTable.availableTables,
-            ],
+          if (existing != null) {
+            final index = tableTypes.indexOf(existing);
+            tableTypes[index] = TableType(
+              id:              existing.id,
+              name:            existing.name,
+              capacityRange:   existing.capacityRange,
+              seatingType:     existing.seatingType,
+              availableTables: [
+                ...existing.availableTables,
+                ...addedTable.availableTables,
+              ],
+            );
+          } else {
+            tableTypes.add(addedTable);
+          }
+
+          AppSnackbar.success(
+            '${addedTable.availableTables.length} table(s) added successfully',
           );
         } else {
-          tableTypes.add(addedTable);
+          AppSnackbar.warning(
+            json['message']?.toString() ?? 'Failed to add tables',
+          );
         }
-
-        Get.snackbar(
-          'Success',
-          '${addedTable.availableTables.length} table(s) added successfully',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
       } else {
-        Get.snackbar(
-          'Error',
-          json['message'] ?? 'Failed to add tables',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Network error: $e',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
       debugPrint('addTableType error: $e');
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isAddingTable.value = false;
     }
@@ -452,14 +407,13 @@ class RestaurantmenuController extends GetxController {
     final id = restaurantId;
     if (id == 0) return;
 
-    // Use Map<String, dynamic> to support int break_duration
     final List<Map<String, dynamic>> timingsPayload = [];
     for (final entry in slots.entries) {
       for (final slot in entry.value) {
         timingsPayload.add({
-          'meal_type': entry.key.name,
-          'start_time': slot.startTime,
-          'end_time': slot.endTime,
+          'meal_type':      entry.key.name,
+          'start_time':     slot.startTime,
+          'end_time':       slot.endTime,
           'break_duration': slot.breakDuration,
         });
       }
@@ -471,7 +425,7 @@ class RestaurantmenuController extends GetxController {
 
       final payload = {
         'restaurant_id': id,
-        'meal_timings': timingsPayload,
+        'meal_timings':  timingsPayload,
       };
       debugPrint('addMealTimings payload: $payload');
 
@@ -482,96 +436,62 @@ class RestaurantmenuController extends GetxController {
       );
 
       debugPrint('addMealTimings status: ${response.statusCode}');
-      debugPrint('addMealTimings body: ${response.body}');
+      debugPrint('addMealTimings body:   ${response.body}');
 
       final json = jsonDecode(response.body);
 
-      // Handle 409 Conflict — meal timing already exists
+      // ── 409 Conflict ──────────────────────────────────────────────
       if (response.statusCode == 409 ||
-          (json['status_code'] != null &&
-              json['status_code'].toString() == '409')) {
-        final rawMsg = json['message'] as String? ?? 'Timing already exists';
-        Get.snackbar(
-          'Already Exists',
-          '$rawMsg\n\nDelete the existing slot first, then re-add.',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.orange.shade800,
-          colorText: Colors.white,
-          duration: const Duration(seconds: 5),
-          icon: const Icon(Icons.warning_amber_rounded, color: Colors.white),
-        );
+          json['status_code']?.toString() == '409') {
+        final msg = json['message']?.toString() ?? 'Timing already exists';
+        AppSnackbar.warning('$msg\n\nDelete the existing slot first, then re-add.');
         return;
       }
 
       if (json['status'] == '1') {
         final data = json['data'] as List<dynamic>;
         for (var t in data) {
-          final slot = TimeSlot.fromJson(t);
+          final slot  = TimeSlot.fromJson(t);
           final isDup = timeSlots.any((s) =>
-          s.mealType == slot.mealType &&
+          s.mealType  == slot.mealType &&
               s.startTime == slot.startTime &&
-              s.endTime == slot.endTime);
+              s.endTime   == slot.endTime);
           if (!isDup) timeSlots.add(slot);
         }
-        Get.snackbar(
-          'Success',
-          'Meal timings saved successfully',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
+        AppSnackbar.success('Meal timings saved successfully');
       } else {
-        final rawMsg = json['message'] as String? ?? 'Failed to save timings';
-        final isConflict = rawMsg.toLowerCase().contains('already');
-        Get.snackbar(
-          isConflict ? 'Already Exists' : 'Error',
-          isConflict
-              ? '$rawMsg\n\nDelete the existing slot first, then re-add.'
-              : rawMsg,
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor:
-          isConflict ? Colors.orange.shade800 : Colors.red,
-          colorText: Colors.white,
-          duration: Duration(seconds: isConflict ? 5 : 3),
-          icon: isConflict
-              ? const Icon(Icons.warning_amber_rounded, color: Colors.white)
-              : null,
-        );
+        final msg        = json['message']?.toString() ?? 'Failed to save timings';
+        final isConflict = msg.toLowerCase().contains('already');
+        isConflict
+            ? AppSnackbar.warning('$msg\n\nDelete the existing slot first, then re-add.')
+            : AppSnackbar.error(msg);
       }
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Network error: $e',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
       debugPrint('addMealTimings error: $e');
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isAddingTimings.value = false;
     }
   }
 
+  // ==================== API: DELETE TIMING ====================
+
   Future<void> removeTimeSlot(TimeSlot slot) async {
     final id = restaurantId;
     if (id == 0) return;
 
-    // Optimistic local remove
-    timeSlots.remove(slot);
+    timeSlots.remove(slot); // optimistic remove
 
     try {
       isDeletingTiming.value = true;
 
       final Map<String, dynamic> payload = {
         'restaurant_id': id,
-        'meal_type': slot.mealType.name,
-        'start_time': slot.startTime,
-        'end_time': slot.endTime,
+        'meal_type':     slot.mealType.name,
+        'start_time':    slot.startTime,
+        'end_time':      slot.endTime,
       };
-
-      if (slot.id != null) {
-        payload['id'] = slot.id.toString();
-      }
+      if (slot.id != null) payload['id'] = slot.id.toString();
 
       debugPrint('removeTimeSlot payload: $payload');
 
@@ -582,40 +502,24 @@ class RestaurantmenuController extends GetxController {
       );
 
       debugPrint('removeTimeSlot status: ${response.statusCode}');
-      debugPrint('removeTimeSlot body: ${response.body}');
+      debugPrint('removeTimeSlot body:   ${response.body}');
 
       final json = jsonDecode(response.body);
 
-      if (json['status'] != '1') {
-        // Rollback on failure
-        timeSlots.add(slot);
-        Get.snackbar(
-          'Error',
-          json['message'] ?? 'Failed to delete timing',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
+      if (json['status'] == '1') {
+        AppSnackbar.success(
+          '${slot.mealType.name.capitalizeFirst} slot removed',
         );
       } else {
-        Get.snackbar(
-          'Deleted',
-          '${slot.mealType.name.capitalizeFirst} slot removed',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
+        timeSlots.add(slot); // rollback
+        AppSnackbar.error(
+          json['message']?.toString() ?? 'Failed to delete timing',
         );
       }
     } catch (e) {
-      // Rollback on network error
-      timeSlots.add(slot);
+      timeSlots.add(slot); // rollback
       debugPrint('removeTimeSlot error: $e');
-      Get.snackbar(
-        'Error',
-        'Network error while deleting: $e',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isDeletingTiming.value = false;
     }
@@ -639,16 +543,17 @@ class RestaurantmenuController extends GetxController {
       }
 
       final body = <String, dynamic>{
-        'restaurant_id': id,
-        'meal_type': mealType.name,
-        'food_name': item.name,
-        'price': item.price,
+        'restaurant_id':     id,
+        'meal_type':         mealType.name,
+        'food_name':         item.name,
+        'price':             item.price,
         'short_description': item.description,
       };
       if (base64Image != null) body['image'] = base64Image;
 
       debugPrint(
-          'addFoodItem: id=$id, meal=${mealType.name}, name=${item.name}, price=${item.price}');
+        'addFoodItem: id=$id, meal=${mealType.name}, name=${item.name}, price=${item.price}',
+      );
 
       final response = await http.post(
         Uri.parse('$_baseUrl/restaurant/menu-item'),
@@ -657,38 +562,27 @@ class RestaurantmenuController extends GetxController {
       );
 
       debugPrint('addFoodItem status: ${response.statusCode}');
-      debugPrint('addFoodItem body: ${response.body}');
+      debugPrint('addFoodItem body:   ${response.body}');
 
       final json = jsonDecode(response.body);
-      if (json['status'] == '1') {
-        final savedItem = FoodItem.fromJson(json['data']);
-        final menu = mealMenus.firstWhere((m) => m.mealType == mealType);
-        menu.foodItems.add(savedItem);
-        Get.snackbar(
-          'Success',
-          'Food item added successfully',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (json['status'] == '1') {
+          final savedItem = FoodItem.fromJson(json['data']);
+          final menu      = mealMenus.firstWhere((m) => m.mealType == mealType);
+          menu.foodItems.add(savedItem);
+          AppSnackbar.success('Food item added successfully');
+        } else {
+          AppSnackbar.warning(
+            json['message']?.toString() ?? 'Failed to add item',
+          );
+        }
       } else {
-        Get.snackbar(
-          'Error',
-          json['message'] ?? 'Failed to add item',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Network error: $e',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
       debugPrint('addFoodItem error: $e');
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isAddingMenuItem.value = false;
     }

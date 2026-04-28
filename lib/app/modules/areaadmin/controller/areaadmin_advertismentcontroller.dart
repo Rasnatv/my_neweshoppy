@@ -7,6 +7,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../../merchantlogin/widget/successwidget.dart';
 import '../../userlogin/view/login.dart';
 import '../view/area_adminhome.dart';
 import '../../../data/errors/api_error.dart';        // ← same as merchant
@@ -41,9 +42,9 @@ class AreaAdminAdvertisementController extends GetxController {
   final _picker = ImagePicker();
 
   static const String baseUrl =
-      'https://rasma.astradevelops.in/e_shoppyy/public/api/area-admin';
+      'https://eshoppy.co.in/api/area-admin';
   static const String publicBaseUrl =
-      'https://rasma.astradevelops.in/e_shoppyy/public/api';
+      'https://eshoppy.co.in/api';
 
   // ─── Token ──────────────────────────────────
   String get token => _box.read('auth_token') ?? '';
@@ -82,15 +83,15 @@ class AreaAdminAdvertisementController extends GetxController {
           states.assignAll(
               (body['data'] as List).map((e) => e.toString()).toList());
         } else {
-          AppSnackbarss.error(body['message'] ?? 'Failed to load states');
+          AppSnackbar.error(body['message'] ?? 'Failed to load states');
         }
       } else if (res.statusCode == 401) {
         _handleUnauthorized();
       } else {
-        AppSnackbarss.error(ApiErrorHandler.handleResponse(res));
+        AppSnackbar.error(ApiErrorHandler.handleResponse(res));
       }
     } catch (e) {
-      AppSnackbarss.error(ApiErrorHandler.handleException(e));
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isStateLoading.value = false;
     }
@@ -116,15 +117,15 @@ class AreaAdminAdvertisementController extends GetxController {
             data.map((e) => e['district'].toString()).toSet().toList(),
           );
         } else {
-          AppSnackbarss.error(body['message'] ?? 'Failed to load districts');
+          AppSnackbar.error(body['message'] ?? 'Failed to load districts');
         }
       } else if (res.statusCode == 401) {
         _handleUnauthorized();
       } else {
-        AppSnackbarss.error(ApiErrorHandler.handleResponse(res));
+        AppSnackbar.error(ApiErrorHandler.handleResponse(res));
       }
     } catch (e) {
-      AppSnackbarss.error(ApiErrorHandler.handleException(e));
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isDistrictLoading.value = false;
     }
@@ -151,15 +152,15 @@ class AreaAdminAdvertisementController extends GetxController {
           locations.assignAll(
               (body['data'] as List).map((e) => e.toString()).toList());
         } else {
-          AppSnackbarss.error(body['message'] ?? 'Failed to load locations');
+          AppSnackbar.error(body['message'] ?? 'Failed to load locations');
         }
       } else if (res.statusCode == 401) {
         _handleUnauthorized();
       } else {
-        AppSnackbarss.error(ApiErrorHandler.handleResponse(res));
+        AppSnackbar.error(ApiErrorHandler.handleResponse(res));
       }
     } catch (e) {
-      AppSnackbarss.error(ApiErrorHandler.handleException(e));
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLocationLoading.value = false;
     }
@@ -197,7 +198,7 @@ class AreaAdminAdvertisementController extends GetxController {
 
       // Allow only 2:1 ratio (±0.1 tolerance)
       if (ratio < 1.9 || ratio > 2.1) {
-        AppSnackbarss.error(
+        AppSnackbar.error(
           "Invalid image ratio ${width}x${height}.\nPlease upload a 2:1 ratio image (e.g. 1200x600)",
         );
         return;
@@ -205,7 +206,7 @@ class AreaAdminAdvertisementController extends GetxController {
 
       bannerImage.value = file;
     } catch (e) {
-      AppSnackbarss.error("Image error: $e");
+      AppSnackbar.error("Image error: $e");
     }
   }
 
@@ -227,19 +228,19 @@ class AreaAdminAdvertisementController extends GetxController {
   bool validate() {
     if (adName.text.trim().isEmpty) {
       isTitleEmpty.value = true;
-      AppSnackbarss.error("Enter advertisement title");
+      AppSnackbar.error("Enter advertisement title");
       return false;
     } else if (selectedState.value.isEmpty) {
-      AppSnackbarss.error("Select state");
+      AppSnackbar.error("Select state");
       return false;
     } else if (selectedDistrict.value.isEmpty) {
-      AppSnackbarss.error("Select district");
+      AppSnackbar.error("Select district");
       return false;
     } else if (selectedLocation.value.isEmpty) {
-      AppSnackbarss.error("Select location");
+      AppSnackbar.error("Select location");
       return false;
     } else if (bannerImage.value == null) {
-      AppSnackbarss.error("Select banner image");
+      AppSnackbar.error("Select banner image");
       return false;
     }
     return true;
@@ -259,7 +260,7 @@ class AreaAdminAdvertisementController extends GetxController {
 
       final base64Image = await _toBase64(bannerImage.value!);
       if (base64Image == null) {
-        AppSnackbarss.error("Failed to process image");
+        AppSnackbar.error("Failed to process image");
         return;
       }
 
@@ -284,20 +285,20 @@ class AreaAdminAdvertisementController extends GetxController {
         if (resData['status'] == true ||
             resData['status'] == 1 ||
             resData['status'] == '1') {
-          AppSnackbarss.success(resData['message'] ?? "Advertisement created");
+          AppSnackbar.success(resData['message'] ?? "Advertisement created");
           resetForm();
           await Future.delayed(const Duration(milliseconds: 800));
           Get.offAll(() => AreaAdminhomepage());
         } else {
-          AppSnackbarss.error(resData['message'] ?? "Failed to create advertisement");
+          AppSnackbar.error(resData['message'] ?? "Failed to create advertisement");
         }
       } else if (response.statusCode == 401) {
         _handleUnauthorized();
       } else {
-        AppSnackbarss.error(ApiErrorHandler.handleResponse(response));
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
-      AppSnackbarss.error(ApiErrorHandler.handleException(e));
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoading.value = false;
     }
@@ -316,7 +317,7 @@ class AreaAdminAdvertisementController extends GetxController {
 
   // ─── Unauthorized ───────────────────────────
   void _handleUnauthorized() {
-    AppSnackbarss.error("Session expired. Please login again.");
+    AppSnackbar.error("Session expired. Please login again.");
     _box.erase();
     Get.offAll(() => LoginPageView());
   }

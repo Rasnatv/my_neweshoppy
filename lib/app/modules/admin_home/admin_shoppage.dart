@@ -1,6 +1,7 @@
 
 import 'package:eshoppy/app/modules/admin_home/shops/views/admin_shopproducts.dart';
 import 'package:eshoppy/app/modules/admin_home/shops/controller/registeredshoplist_controller.dart';
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../common/constants/app_images.dart';
@@ -14,7 +15,7 @@ class AdminShopPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return NetworkAwareWrapper(child: Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         iconTheme: IconThemeData(color: Colors.white),
@@ -127,7 +128,7 @@ class AdminShopPage extends StatelessWidget {
           ),
         );
       }),
-    );
+    ));
   }
 
   Widget _buildShopCard(BuildContext context, dynamic shop, int index) {
@@ -155,7 +156,6 @@ class AdminShopPage extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                // Shop Icon/Image
                 Container(
                   width: 60,
                   height: 60,
@@ -165,11 +165,23 @@ class AdminShopPage extends StatelessWidget {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: Image.asset(
-                      AppImages.editshop,
+                    child: shop.storeImage.isNotEmpty
+                        ? Image.network(
+                      shop.storeImage,
                       width: 60,
                       height: 60,
                       fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              AppColors.kPrimary,
+                            ),
+                          ),
+                        );
+                      },
                       errorBuilder: (context, error, stackTrace) {
                         return Icon(
                           Icons.storefront_rounded,
@@ -177,6 +189,11 @@ class AdminShopPage extends StatelessWidget {
                           color: AppColors.kPrimary,
                         );
                       },
+                    )
+                        : Icon(
+                      Icons.storefront_rounded,
+                      size: 32,
+                      color: AppColors.kPrimary,
                     ),
                   ),
                 ),

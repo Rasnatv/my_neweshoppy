@@ -11,10 +11,8 @@ import '../../merchantlogin/widget/successwidget.dart';
 class UserOfferProductDetailController extends GetxController {
   final box = GetStorage();
 
-  // ✅ Updated endpoint
-// ✅ Updated endpoint
   final String apiUrl =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/offer-product/details";
+      "https://eshoppy.co.in/api/offer-product/details";
 
   var isLoading = false.obs;
   var productData = Rx<UserOfferProductDetail?>(null);
@@ -32,10 +30,6 @@ class UserOfferProductDetailController extends GetxController {
       currentImageIndex.value = 0;
 
       final token = box.read("auth_token");
-      if (token == null) {
-        AppSnackbar.error("Authentication token not found");
-        return;
-      }
 
       final response = await http.post(
         Uri.parse(apiUrl),

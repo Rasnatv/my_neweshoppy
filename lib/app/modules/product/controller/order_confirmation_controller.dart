@@ -41,7 +41,7 @@ class OrderConfirmationController extends GetxController {
 
       final response = await http.post(
         Uri.parse(
-          'https://rasma.astradevelops.in/e_shoppyy/public/api/create-order-preview',
+          'https://eshoppy.co.in/api/create-order-preview',
         ),
         headers: {
           'Content-Type': 'application/json',
@@ -94,7 +94,7 @@ class OrderConfirmationController extends GetxController {
 
       final response = await http.post(
         Uri.parse(
-          'https://rasma.astradevelops.in/e_shoppyy/public/api/confirm-order',
+          'https://eshoppy.co.in/api/confirm-order',
         ),
         headers: {
           'Content-Type': 'application/json',

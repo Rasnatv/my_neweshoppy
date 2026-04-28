@@ -20,7 +20,7 @@ class SearchController extends GetxController {
 
       var response = await http.post(
         Uri.parse(
-            "https://rasma.astradevelops.in/e_shoppyy/public/api/search-products"),
+            "https://eshoppy.co.in/api/search-products"),
         headers: {
           "Content-Type": "application/json",
           "Authorization": "Bearer $token",

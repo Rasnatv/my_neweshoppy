@@ -1,5 +1,6 @@
 
 
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../common/style/app_colors.dart';
@@ -25,7 +26,7 @@ class AdminEventPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return NetworkAwareWrapper(child:Scaffold(
       backgroundColor: const Color(0xfff2f6fa),
       appBar: AppBar(
         iconTheme: IconThemeData(color: Colors.white),
@@ -97,7 +98,7 @@ class AdminEventPage extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ));
   }
 
   // ── Filter Bar ────────────────────────────────────────────────────────────

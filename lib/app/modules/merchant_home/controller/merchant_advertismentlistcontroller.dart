@@ -28,7 +28,7 @@ class MerchantAdvertisementGetController extends GetxController {
 
       final response = await http.get(
         Uri.parse(
-          "https://rasma.astradevelops.in/e_shoppyy/public/api/getadvertisement",
+          "https://eshoppy.co.in/api/getadvertisement",
         ),
         headers: {
           "Authorization": "Bearer $authToken",
@@ -63,10 +63,7 @@ class MerchantAdvertisementGetController extends GetxController {
           );
         }
       }
-      // } else {
-      //   final errorMessage = ApiErrorHandler.handleResponse(response);
-      //   AppSnackbar.error(errorMessage);
-      // }
+
     } catch (e) {
       final errorMessage = ApiErrorHandler.handleException(e);
       AppSnackbar.error(errorMessage);

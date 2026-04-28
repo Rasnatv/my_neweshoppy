@@ -5,7 +5,6 @@ import 'package:http/http.dart' as http;
 
 import '../../../data/errors/api_error.dart';
 import '../../../data/models/homedatamodel.dart';
-import '../../../widgets/network_trihgiger.dart';
 import '../../merchantlogin/widget/successwidget.dart';
 
 
@@ -39,7 +38,7 @@ class HomeDataController extends GetxController {
   final box = GetStorage();
 
   final String _apiUrl =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/get-home-data";
+      "https://eshoppy.co.in/api/get-home-data";
 
   final RxList<HomeEventModel> events = <HomeEventModel>[].obs;
   final RxList<HomeAdModel> advertisements = <HomeAdModel>[].obs;
@@ -48,9 +47,6 @@ class HomeDataController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // ever(Get.find<NetworkService>().reconnectTrigger, (_) {
-    //   if (_hasSavedLocation()) refresh();
-    // });
 
     if (_hasSavedLocation()) {
       _fetchFromStorage();
@@ -64,7 +60,6 @@ class HomeDataController extends GetxController {
     required String mainLocation,
   }) async {
     final token = box.read("auth_token");
-    if (token == null || token.toString().isEmpty) return;
 
     try {
       isLoading(true);
@@ -110,8 +105,6 @@ class HomeDataController extends GetxController {
     } catch (e) {
       events.clear();
       advertisements.clear();
-      // AppSnackbar.error(ApiErrorHandler.handleException(e));
-      // Get.log("HomeDataController error: $e");
     } finally {
       isLoading(false);
     }
@@ -152,7 +145,6 @@ class HomeDataController extends GetxController {
   // ── True if user has any saved location in storage ────────────────────────
   bool _hasSavedLocation() {
     final token = box.read('auth_token');
-    if (token == null) return false;
 
     final state = box.read('state_$token') ?? '';
     final district = box.read('district_$token') ?? '';

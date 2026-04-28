@@ -70,7 +70,7 @@ class CheckEmailOtpController extends GetxController {
 
       final response = await http.post(
         Uri.parse(
-          "https://rasma.astradevelops.in/e_shoppyy/public/api/verify-otp",
+          "https://eshoppy.co.in/api/verify-otp",
         ),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
@@ -121,7 +121,7 @@ class CheckEmailOtpController extends GetxController {
 
       final response = await http.post(
         Uri.parse(
-          "https://rasma.astradevelops.in/e_shoppyy/public/api/forgot-password",
+          "https://eshoppy.co.in/api/forgot-password",
         ),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({

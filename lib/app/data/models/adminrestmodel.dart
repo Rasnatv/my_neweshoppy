@@ -1,3 +1,4 @@
+//
 // class NewRestaurantModel {
 //   final String id;
 //   final String restaurantName;
@@ -11,6 +12,8 @@
 //   final String facebookLink;
 //   final String instagramLink;
 //   final List<String> additionalImages;
+//   final String upiId;      // ✅ Add this
+//   final String qrCode;     // ✅ Add this
 //
 //   NewRestaurantModel({
 //     required this.id,
@@ -25,6 +28,8 @@
 //     required this.facebookLink,
 //     required this.instagramLink,
 //     required this.additionalImages,
+//     required this.upiId,   // ✅ Add this
+//     required this.qrCode,  // ✅ Add this
 //   });
 //
 //   factory NewRestaurantModel.fromJson(Map<String, dynamic> json) {
@@ -40,12 +45,15 @@
 //       whatsapp: json['whatsapp'] ?? '',
 //       facebookLink: json['facebook_link'] ?? '',
 //       instagramLink: json['instagram_link'] ?? '',
-//       additionalImages: json['additional_images'] != null
-//           ? List<String>.from(json['additional_images'])
-//           : [],
+//       upiId: json['upi_id'] ?? '',
+//       qrCode: json['qr_code'] ?? '',
+//
+//       // ✅ THE FIX: skip any non-String entries like {}
+//       additionalImages: (json['additional_images'] as List? ?? [])
+//           .whereType<String>()
+//           .toList(),
 //     );
-//   }
-// }
+//   }}
 class NewRestaurantModel {
   final String id;
   final String restaurantName;
@@ -59,8 +67,8 @@ class NewRestaurantModel {
   final String facebookLink;
   final String instagramLink;
   final List<String> additionalImages;
-  final String upiId;      // ✅ Add this
-  final String qrCode;     // ✅ Add this
+  final String upiId;
+  final String qrCode;
 
   NewRestaurantModel({
     required this.id,
@@ -75,11 +83,51 @@ class NewRestaurantModel {
     required this.facebookLink,
     required this.instagramLink,
     required this.additionalImages,
-    required this.upiId,   // ✅ Add this
-    required this.qrCode,  // ✅ Add this
+    required this.upiId,
+    required this.qrCode,
   });
 
   factory NewRestaurantModel.fromJson(Map<String, dynamic> json) {
+    // ✅ FIX: Robust additional_images parsing
+    // API can return any of these formats:
+    //   ["https://..."]               → plain string URLs  ✅ keep
+    //   [{}]                          → empty objects      ✅ skip
+    //   [{"url":"https://..."}]       → map with url key   ✅ extract
+    //   [{"image":"https://..."}]     → map with image key ✅ extract
+    //   []                            → empty array        ✅ no images
+    //   null                          → null               ✅ no images
+    final List<String> parsedAdditionalImages = [];
+    final rawList = json['additional_images'] as List? ?? [];
+
+    for (final item in rawList) {
+      if (item is String) {
+        final trimmed = item.trim();
+        if (trimmed.isNotEmpty && trimmed.startsWith('http')) {
+          parsedAdditionalImages.add(trimmed);
+        }
+      } else if (item is Map && item.isNotEmpty) {
+        // Handle object formats returned by the API
+        final url = (item['url'] ??
+            item['image'] ??
+            item['image_url'] ??
+            item['path'] ??
+            item['src'] ??
+            item['file'] ??
+            '')
+            ?.toString()
+            .trim();
+        if (url != null && url.isNotEmpty) {
+          if (url.startsWith('http')) {
+            parsedAdditionalImages.add(url);
+          } else {
+            // Convert relative path → full URL
+            parsedAdditionalImages.add("https://eshoppy.co.in/$url");
+          }
+        }
+      }
+      // Empty {} or null items are silently skipped ✅
+    }
+
     return NewRestaurantModel(
       id: json['id']?.toString() ?? '',
       restaurantName: json['restaurant_name'] ?? '',
@@ -92,9 +140,9 @@ class NewRestaurantModel {
       whatsapp: json['whatsapp'] ?? '',
       facebookLink: json['facebook_link'] ?? '',
       instagramLink: json['instagram_link'] ?? '',
-      additionalImages: List<String>.from(json['additional_images'] ?? []),
-      upiId: json['upi_id'] ?? '',    // ✅ Add this
-      qrCode: json['qr_code'] ?? '',  // ✅ Add this
+      upiId: json['upi_id'] ?? '',
+      qrCode: json['qr_code'] ?? '',
+      additionalImages: parsedAdditionalImages,
     );
   }
 }

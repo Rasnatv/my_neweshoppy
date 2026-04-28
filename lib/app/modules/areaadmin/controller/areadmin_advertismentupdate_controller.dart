@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../data/models/areaadmin_updateadvertismentmodel.dart';
 import '../../../widgets/areaadminsuccesswidget.dart';
+import '../../merchantlogin/widget/successwidget.dart';
 import '../view/area_adminhome.dart';
 import '../../../data/errors/api_error.dart';
 
@@ -56,11 +57,6 @@ class AreaAdminUpdateAdvertisementController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    if (token.isEmpty) {
-      AppSnackbarss.error("Session expired. Please login again.");
-      Get.offAllNamed('/login');
-      return;
-    }
 
     fetchAdvertisement();
 
@@ -96,16 +92,9 @@ class AreaAdminUpdateAdvertisementController extends GetxController {
       hasError(false);
       errorMessage('');
 
-      if (token.isEmpty) {
-        hasError(true);
-        errorMessage('No auth token. Please log in again.');
-        AppSnackbarss.error(errorMessage.value);
-        return;
-      }
-
       final response = await http.post(
         Uri.parse(
-            'https://rasma.astradevelops.in/e_shoppyy/public/api/area-admin/advertisement'),
+            'https://eshoppy.co.in/api/area-admin/advertisement'),
         headers: {
           ...headers,
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -131,19 +120,19 @@ class AreaAdminUpdateAdvertisementController extends GetxController {
         } else {
           hasError(true);
           errorMessage(data['message'] ?? 'Failed to load advertisement.');
-          AppSnackbarss.error(errorMessage.value);
+          AppSnackbar.error(errorMessage.value);
         }
       } else {
         final msg = ApiErrorHandler.handleResponse(response);
         hasError(true);
         errorMessage(msg);
-        AppSnackbarss.error(msg);
+        AppSnackbar.error(msg);
       }
     } catch (e) {
       final msg = ApiErrorHandler.handleException(e);
       hasError(true);
       errorMessage(msg);
-      AppSnackbarss.error(msg);
+      AppSnackbar.error(msg);
     } finally {
       isFetching(false);
     }
@@ -156,7 +145,7 @@ class AreaAdminUpdateAdvertisementController extends GetxController {
 
       final response = await http.get(
         Uri.parse(
-            'https://rasma.astradevelops.in/e_shoppyy/public/api/get-MerchantStates'),
+            'https://eshoppy.co.in/api/get-MerchantStates'),
         headers: headers,
       );
 
@@ -177,10 +166,10 @@ class AreaAdminUpdateAdvertisementController extends GetxController {
           }
         }
       } else {
-        AppSnackbarss.error(ApiErrorHandler.handleResponse(response));
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
-      AppSnackbarss.error(ApiErrorHandler.handleException(e));
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoadingStates(false);
     }
@@ -193,7 +182,7 @@ class AreaAdminUpdateAdvertisementController extends GetxController {
 
       final response = await http.get(
         Uri.parse(
-            'https://rasma.astradevelops.in/e_shoppyy/public/api/getMerchant-Districts'),
+            'https://eshoppy.co.in/api/getMerchant-Districts'),
         headers: headers,
       );
 
@@ -219,10 +208,10 @@ class AreaAdminUpdateAdvertisementController extends GetxController {
           }
         }
       } else {
-        AppSnackbarss.error(ApiErrorHandler.handleResponse(response));
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
-      AppSnackbarss.error(ApiErrorHandler.handleException(e));
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoadingDistricts(false);
     }
@@ -235,7 +224,7 @@ class AreaAdminUpdateAdvertisementController extends GetxController {
 
       final response = await http.get(
         Uri.parse(
-            'https://rasma.astradevelops.in/e_shoppyy/public/api/area-admin/main-locations'),
+            'https://eshoppy.co.in/api/area-admin/main-locations'),
         headers: headers,
       );
 
@@ -259,10 +248,10 @@ class AreaAdminUpdateAdvertisementController extends GetxController {
           }
         }
       } else {
-        AppSnackbarss.error(ApiErrorHandler.handleResponse(response));
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
-      AppSnackbarss.error(ApiErrorHandler.handleException(e));
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoadingLocations(false);
     }
@@ -285,14 +274,14 @@ class AreaAdminUpdateAdvertisementController extends GetxController {
       final ratio = decodedImage.width / decodedImage.height;
 
       if (ratio < 1.9 || ratio > 2.1) {
-        AppSnackbarss.error(
+        AppSnackbar.error(
             "Invalid image ratio. Use 2:1 (e.g. 1200x600)");
         return;
       }
 
       bannerImage.value = file;
     } catch (e) {
-      AppSnackbarss.error(ApiErrorHandler.handleException(e));
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     }
   }
 
@@ -307,24 +296,24 @@ class AreaAdminUpdateAdvertisementController extends GetxController {
     isTitleEmpty(false);
 
     if (selectedState.value == null || selectedState.value!.isEmpty) {
-      AppSnackbarss.warning("Please select a state.");
+      AppSnackbar.warning("Please select a state.");
       return;
     }
 
     if (selectedDistrict.value == null ||
         selectedDistrict.value!.isEmpty) {
-      AppSnackbarss.warning("Please select a district.");
+      AppSnackbar.warning("Please select a district.");
       return;
     }
 
     if (selectedLocation.value == null ||
         selectedLocation.value!.isEmpty) {
-      AppSnackbarss.warning("Please select a location.");
+      AppSnackbar.warning("Please select a location.");
       return;
     }
 
     if (token.isEmpty) {
-      AppSnackbarss.error("No auth token. Please log in again.");
+      AppSnackbar.error("No auth token. Please log in again.");
       return;
     }
 
@@ -348,7 +337,7 @@ class AreaAdminUpdateAdvertisementController extends GetxController {
 
       final response = await http.put(
         Uri.parse(
-            'https://rasma.astradevelops.in/e_shoppyy/public/api/area-admin/advertisement/update'),
+            'https://eshoppy.co.in/api/area-admin/advertisement/update'),
         headers: {
           ...headers,
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -365,17 +354,17 @@ class AreaAdminUpdateAdvertisementController extends GetxController {
           bannerImage.value = null;
         }
 
-        AppSnackbarss.success(
+        AppSnackbar.success(
             data['message'] ?? "Advertisement updated!");
 
         await Future.delayed(const Duration(milliseconds: 500));
         Get.offAll(() => AreaAdminhomepage());
       } else {
-        AppSnackbarss.error(
+        AppSnackbar.error(
             ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
-      AppSnackbarss.error(ApiErrorHandler.handleException(e));
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoading(false);
     }

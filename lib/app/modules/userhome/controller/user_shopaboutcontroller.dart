@@ -20,7 +20,7 @@ class MerchantAboutController extends GetxController {
 
       final response = await http.post(
         Uri.parse(
-          "https://rasma.astradevelops.in/e_shoppyy/public/api/aboutusers",
+          "https://eshoppy.co.in/api/aboutusers",
         ),
         headers: {
           "Authorization": "Bearer $token",

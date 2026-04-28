@@ -12,14 +12,13 @@ class CompanyController extends GetxController {
   final box = GetStorage();
 
   final String api =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/user/shops-by-category";
+      "https://eshoppy.co.in/api/user/shops-by-category";
 
   var isLoading = false.obs;
   var shops = <ShoplistModel>[].obs;
 
   Future<void> fetchShopsByCategory(int categoryId) async {
     final token = box.read("auth_token");
-    if (token == null) return;
 
     try {
       isLoading.value = true;
@@ -44,16 +43,13 @@ class CompanyController extends GetxController {
       } else {
         shops.clear();
 
-        // ✅ USE YOUR ERROR HANDLER
         final errorMessage = ApiErrorHandler.handleResponse(response);
 
-        // ✅ SHOW YOUR CUSTOM SNACKBAR
         AppSnackbar.error(errorMessage);
       }
     } catch (e) {
       shops.clear();
 
-      // ✅ HANDLE EXCEPTIONS (NO INTERNET, ETC)
       final errorMessage = ApiErrorHandler.handleException(e);
 
       AppSnackbar.error(errorMessage);

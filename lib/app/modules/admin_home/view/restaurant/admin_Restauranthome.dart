@@ -1,6 +1,7 @@
 
 import 'package:eshoppy/app/modules/admin_home/view/restaurant/resaturant_menu_updatepage.dart';
 import 'package:eshoppy/app/modules/admin_home/view/restaurant/restaurant_menumanagment.dart';
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -22,88 +23,98 @@ class AdminRestauranthome extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        iconTheme: IconThemeData(color: Colors.white),
-        title: Text(
-          "Restaurant Home",
+    return NetworkAwareWrapper(
+      child: Scaffold(
+        appBar: AppBar(
+          iconTheme: const IconThemeData(color: Colors.white),
+          title: const Text(
+            "Restaurant Home",
             style: TextStyle(
               color: Colors.white,
               fontSize: 17,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.1,
             ),
+          ),
+          backgroundColor: AppColors.kPrimary,
+          elevation: 0,
         ),
-        backgroundColor: AppColors.kPrimary,
-        elevation: 0,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            /// ---------------- Register Section ----------------
-            _buildRegistrationCard(),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              /// ---------------- Register Section ----------------
+              _buildRegistrationCard(),
 
-            const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-            /// ---------------- Restaurant List ----------------
-            Expanded(
-              child: Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 2,
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.restaurant,
-                            color: AppColors.kPrimary,
-                            size: 28,
-                          ),
-                          const SizedBox(width: 12),
-                          const Text(
-                            "Restaurant Lists",
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
+              /// ---------------- Restaurant List ----------------
+              Expanded(
+                child: Card(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  elevation: 2,
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.restaurant,
+                              color: AppColors.kPrimary,
+                              size: 28,
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      Expanded(
-                        child: Obx(() {
-                          if (controller.isLoading.value) {
-                            return const Center(
-                              child: CircularProgressIndicator(),
+                            const SizedBox(width: 12),
+                            const Text(
+                              "Restaurant Lists",
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        Expanded(
+                          child: Obx(() {
+                            if (controller.isLoading.value) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            }
+
+                            if (controller.restaurants.isEmpty) {
+                              return const Center(
+                                child: Text(
+                                  "No restaurants found.",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              );
+                            }
+
+                            return ListView.builder(
+                              itemCount: controller.restaurants.length,
+                              itemBuilder: (context, index) {
+                                final restaurant =
+                                controller.restaurants[index];
+                                return _buildRestaurantTile(restaurant);
+                              },
                             );
-                          }
-
-                          if (controller.restaurants.isEmpty) {
-                            return _emptyView();
-                          }
-
-                          return ListView.builder(
-                            itemCount: controller.restaurants.length,
-                            itemBuilder: (context, index) {
-                              final restaurant =
-                              controller.restaurants[index];
-                              return _buildRestaurantTile(restaurant);
-                            },
-                          );
-                        }),
-                      ),
-                    ],
+                          }),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -195,20 +206,7 @@ class AdminRestauranthome extends StatelessWidget {
       child: ListTile(
         contentPadding:
         const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        leading: CircleAvatar(
-          radius: 30,
-          backgroundColor: Colors.grey.shade200,
-          backgroundImage: restaurant.restaurantImage.isNotEmpty
-              ? NetworkImage(_getImageUrl(restaurant.restaurantImage))
-              : null,
-          child: restaurant.restaurantImage.isEmpty
-              ? Icon(
-            Icons.restaurant,
-            size: 30,
-            color: Colors.grey.shade600,
-          )
-              : null,
-        ),
+        leading: _buildRestaurantAvatar(restaurant.restaurantImage),
         title: Text(
           restaurant.restaurantName.isNotEmpty
               ? restaurant.restaurantName
@@ -225,16 +223,12 @@ class AdminRestauranthome extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(Icons.phone,
-                      size: 14, color: Colors.grey.shade600),
+                  Icon(Icons.phone, size: 14, color: Colors.grey.shade600),
                   const SizedBox(width: 4),
                   Text(
-                    restaurant.phone.isNotEmpty
-                        ? restaurant.phone
-                        : "N/A",
+                    restaurant.phone.isNotEmpty ? restaurant.phone : "N/A",
                     style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey.shade700),
+                        fontSize: 13, color: Colors.grey.shade700),
                   ),
                 ],
               ),
@@ -252,8 +246,7 @@ class AdminRestauranthome extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey.shade700),
+                          fontSize: 13, color: Colors.grey.shade700),
                     ),
                   ),
                 ],
@@ -262,10 +255,55 @@ class AdminRestauranthome extends StatelessWidget {
           ),
         ),
         trailing: IconButton(
-          icon: Icon(Icons.more_vert,
-              color: AppColors.kPrimary),
+          icon: Icon(Icons.more_vert, color: AppColors.kPrimary),
           onPressed: () {
             _showBottomSheet(restaurant);
+          },
+        ),
+      ),
+    );
+  }
+
+  /// =========================================================
+  /// Safe Avatar — handles empty URL, 404, and any network error
+  /// =========================================================
+  Widget _buildRestaurantAvatar(String imagePath) {
+    final url = _getImageUrl(imagePath);
+
+    return CircleAvatar(
+      radius: 30,
+      backgroundColor: Colors.grey.shade200,
+      child: url.isEmpty
+          ? Icon(Icons.restaurant, size: 30, color: Colors.grey.shade600)
+          : ClipOval(
+        child: Image.network(
+          url,
+          width: 60,
+          height: 60,
+          fit: BoxFit.cover,
+          // ✅ Shows fallback icon on any load error (404, timeout, etc.)
+          errorBuilder: (context, error, stackTrace) {
+            return Icon(
+              Icons.restaurant,
+              size: 30,
+              color: Colors.grey.shade600,
+            );
+          },
+          // ✅ Shows shimmer-like grey while loading
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Container(
+              width: 60,
+              height: 60,
+              color: Colors.grey.shade300,
+              child: const Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            );
           },
         ),
       ),
@@ -297,8 +335,7 @@ class AdminRestauranthome extends StatelessWidget {
             const SizedBox(height: 20),
             const Text(
               "Manage Restaurant",
-              style: TextStyle(
-                  fontSize: 20, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 24),
 
@@ -307,7 +344,6 @@ class AdminRestauranthome extends StatelessWidget {
               onPressed: () {
                 Get.back();
 
-                // Convert NewRestaurantModel to Map for the update page
                 final restaurantData = {
                   'id': restaurant.id,
                   'restaurant_name': restaurant.restaurantName,
@@ -321,9 +357,10 @@ class AdminRestauranthome extends StatelessWidget {
                   'facebook_link': restaurant.facebookLink,
                   'instagram_link': restaurant.instagramLink,
                   'additional_images': restaurant.additionalImages,
-                  'upi_id': restaurant.upiId,   // ✅ Add this
-                  'qr_code': restaurant.qrCode, // ✅ Add this
+                  'upi_id': restaurant.upiId,
+                  'qr_code': restaurant.qrCode,
                 };
+
                 Get.to(
                       () => AdminRestaurantUpdatePage(
                     restaurantId: restaurant.id,
@@ -350,75 +387,70 @@ class AdminRestauranthome extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: () {
                 Get.back();
-               Get.to(() => MenuUpdatePage(restaurantId: int.parse(restaurant.id)));
+                Get.to(() =>
+                    MenuUpdatePage(restaurantId: int.parse(restaurant.id)));
               },
               icon: const Icon(Icons.restaurant_menu),
               label: const Text("Edit Menu & Tables"),
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 54),
-                  backgroundColor: Colors.teal,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)))
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 54),
+                backgroundColor: Colors.teal,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
             ),
+
             const SizedBox(height: 12),
-            // /// Menu Management
-        ElevatedButton.icon(
-          onPressed: () {
-            Get.back(); // close bottom sheet first
-            DeleteConfirmDialog.show(
-              context: Get.context!,
-              title: "Delete Restaurant",
-              message:
-              "Are you sure you want to delete \"${restaurant.restaurantName}\"? This action cannot be undone.",
-              onConfirm: () {
-                controller.deleteRestaurant(restaurant.id);
+
+            /// Delete Restaurant
+            ElevatedButton.icon(
+              onPressed: () {
+                Get.back();
+                DeleteConfirmDialog.show(
+                  context: Get.context!,
+                  title: "Delete Restaurant",
+                  message:
+                  "Are you sure you want to delete \"${restaurant.restaurantName}\"? This action cannot be undone.",
+                  onConfirm: () {
+                    controller.deleteRestaurant(restaurant.id);
+                  },
+                );
               },
-            );
-          },
-          icon: const Icon(Icons.delete),
-          label: const Text("Delete Restaurant"),
-          style: ElevatedButton.styleFrom(
-            minimumSize: const Size(double.infinity, 54),
-            backgroundColor: Colors.deepOrange,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              icon: const Icon(Icons.delete),
+              label: const Text("Delete Restaurant"),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 54),
+                backgroundColor: Colors.deepOrange,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
             ),
-          ),
-        ),],
+          ],
         ),
       ),
     );
   }
 
+  /// =========================================================
+  /// ✅ FIXED: _getImageUrl — no more double slash
+  /// API already returns full https:// URLs → return as-is
+  /// Relative paths → correctly append with single slash
+  /// =========================================================
   String _getImageUrl(String imagePath) {
     if (imagePath.isEmpty) return '';
 
-    // If the path already contains the full URL, return it as is
-    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-      return imagePath;
+    // Already a full URL — return as-is (no modification)
+    if (imagePath.startsWith('http://') ||
+        imagePath.startsWith('https://')) {
+      return imagePath; // ✅ was causing double slash before
     }
 
-    // Otherwise, prepend the base URL
-    return "https://rasma.astradevelops.in/e_shoppyy/public/$imagePath";
-  }
-
-  Widget _emptyView() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.restaurant_menu,
-              size: 80, color: Colors.grey.shade300),
-          const SizedBox(height: 16),
-          Text(
-            "No restaurants found",
-            style: TextStyle(
-                fontSize: 16, color: Colors.grey.shade600),
-          ),
-        ],
-      ),
-    );
+    // Relative path → prepend base URL with single slash
+    final cleanPath =
+    imagePath.startsWith('/') ? imagePath : '/$imagePath';
+    return "https://eshoppy.co.in$cleanPath";
   }
 }

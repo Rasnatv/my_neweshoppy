@@ -35,7 +35,7 @@ class AdminDashboardController extends GetxController {
 
       final response = await http.get(
         Uri.parse(
-          'https://rasma.astradevelops.in/e_shoppyy/public/api/dashboard-counts',
+          'https://eshoppy.co.in/api/dashboard-counts',
         ),
         headers: {
           'Content-Type': 'application/json',

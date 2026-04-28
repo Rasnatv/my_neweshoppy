@@ -15,19 +15,14 @@ class DeleteEventController extends GetxController {
 
   Future<void> deleteEvent(dynamic eventId, VoidCallback onSuccess) async {
     final String? authToken = box.read('auth_token');
-    //
-    // /// ✅ 1. CHECK TOKEN
-    // if (authToken == null || authToken.toString().isEmpty) {
-    //   ApiErrorHandler.handleUnauthorized();
-    //   return;
-    // }
+
 
     deletingIds.add(eventId);
 
     try {
       final response = await http.delete(
         Uri.parse(
-          'https://rasma.astradevelops.in/e_shoppyy/public/api/delete-event',
+          'https://eshoppy.co.in/api/delete-event',
         ),
         headers: {
           'Content-Type': 'application/json',

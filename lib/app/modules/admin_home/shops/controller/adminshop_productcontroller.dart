@@ -54,7 +54,7 @@ class ShopProductController extends GetxController {
     try {
       final response = await http.post(
         Uri.parse(
-          'https://rasma.astradevelops.in/e_shoppyy/public/api/shop/products',
+          'https://eshoppy.co.in/api/shop/products',
         ),
         headers: _headers(),
         body: jsonEncode({

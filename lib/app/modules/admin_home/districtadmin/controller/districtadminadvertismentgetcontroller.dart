@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 
 import '../../../../data/errors/api_error.dart';
 import '../../../../data/models/districtadmin_advertismnetgetmodel.dart';
+import '../../../merchantlogin/widget/successwidget.dart';
 
 
 class DistrictAdminAdvertisementGetController extends GetxController {
@@ -25,7 +26,7 @@ class DistrictAdminAdvertisementGetController extends GetxController {
   String get token => _box.read('auth_token') ?? '';
 
   static const String _baseUrl =
-      'https://rasma.astradevelops.in/e_shoppyy/public/api/district-admin';
+      'https://eshoppy.co.in/api/district-admin';
 
   Map<String, String> get _headers => {
     'Authorization': 'Bearer $token',
@@ -69,13 +70,13 @@ class DistrictAdminAdvertisementGetController extends GetxController {
       } else {
         final errorMessage =
         ApiErrorHandler.handleResponse(response);
-        AppSnackbarss.error(errorMessage);
+        AppSnackbar.error(errorMessage);
       }
 
     } catch (e) {
       final errorMessage =
       ApiErrorHandler.handleException(e);
-      AppSnackbarss.error(errorMessage);
+      AppSnackbar.error(errorMessage);
 
     } finally {
       isLoading.value = false;
@@ -108,7 +109,7 @@ class DistrictAdminAdvertisementGetController extends GetxController {
         // ✅ Remove locally
         advertisementList.removeWhere((ad) => ad.id == adId);
 
-        AppSnackbarss.success(
+        AppSnackbar.success(
           data['message'] ?? 'Advertisement deleted successfully',
         );
 
@@ -117,13 +118,13 @@ class DistrictAdminAdvertisementGetController extends GetxController {
       } else {
         final errorMessage =
         ApiErrorHandler.handleResponse(response);
-        AppSnackbarss.error(errorMessage);
+        AppSnackbar.error(errorMessage);
       }
 
     } catch (e) {
       final errorMessage =
       ApiErrorHandler.handleException(e);
-      AppSnackbarss.error(errorMessage);
+      AppSnackbar.error(errorMessage);
 
     } finally {
       isDeleting.value = false;

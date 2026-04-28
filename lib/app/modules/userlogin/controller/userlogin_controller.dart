@@ -20,8 +20,9 @@ class UserloginController extends GetxController {
 
   final GetStorage box = GetStorage();
 
-  final String loginUrl =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/login";
+  // final String loginUrl = "https://rasma.astradevelops.in/e_shoppyy/public/api/login";
+  final String loginUrl = "https://eshoppy.co.in/api/login";
+
 
   final Map<int, RoleInfo> roles = {
     1: RoleInfo(

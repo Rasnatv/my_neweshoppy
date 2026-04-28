@@ -15,7 +15,7 @@ class RestaurantController extends GetxController {
   final GetStorage box = GetStorage();
 
   final String apiUrl =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/user/restaurants";
+      "https://eshoppy.co.in/api/user/restaurants";
 
   @override
   void onInit() {
@@ -28,11 +28,6 @@ class RestaurantController extends GetxController {
       isLoading(true);
 
       final token = box.read('auth_token');
-
-      if (token == null || token.isEmpty) {
-        AppSnackbar.error("Session expired. Please login again");
-        return;
-      }
 
       final response = await http.get(
         Uri.parse(apiUrl),

@@ -53,16 +53,16 @@ class AddEventController extends GetxController {
   final box = GetStorage();
 
   final String apiUrl =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/create-event";
+      "https://eshoppy.co.in/api/create-event";
 
   final String statesUrl =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/merchant/states";
+      "https://eshoppy.co.in/api/get-states";
 
   final String areasUrl =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/areas";
+      "https://eshoppy.co.in/api/areas";
 
   final String districtsUrl =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/districts";
+      "https://eshoppy.co.in/api/districts";
 
   @override
   void onInit() {

@@ -15,21 +15,8 @@ class AdminShopController extends GetxController {
   var shopList = <Shop>[].obs;
 
   final String apiUrl =
-      'https://rasma.astradevelops.in/e_shoppyy/public/api/merc/reg/shop';
+      'https://eshoppy.co.in/api/merc/reg/shop';
 
-  // ─────────────────────────────────────────────
-  // 🔐 AUTH CHECK
-  // ─────────────────────────────────────────────
-  bool _checkAuth() {
-    final token = box.read('auth_token');
-
-    if (token == null || token.toString().isEmpty) {
-      box.erase();
-      Get.offAllNamed('/login');
-      return false;
-    }
-    return true;
-  }
 
   // ─────────────────────────────────────────────
   // 🔐 HEADERS
@@ -56,7 +43,6 @@ class AdminShopController extends GetxController {
   // 📦 FETCH SHOPS
   // ─────────────────────────────────────────────
   Future<void> fetchShops() async {
-    if (!_checkAuth()) return;
 
     try {
       isLoading.value = true;
@@ -78,9 +64,7 @@ class AdminShopController extends GetxController {
         } else {
           AppSnackbar.error(decoded['message'] ?? "Failed to load shops");
         }
-      } else if (response.statusCode == 401) {
-        _handleUnauthorized();
-      } else {
+      }  else {
         AppSnackbar.error(
           ApiErrorHandler.handleResponse(response),
         );
@@ -93,24 +77,9 @@ class AdminShopController extends GetxController {
       isLoading.value = false;
     }
   }
-
-  // ─────────────────────────────────────────────
-  // 🔄 REFRESH
-  // ─────────────────────────────────────────────
   Future<void> refreshShops() async {
     await fetchShops();
   }
 
-  // ─────────────────────────────────────────────
-  // 🚫 UNAUTHORIZED HANDLER
-  // ─────────────────────────────────────────────
-  void _handleUnauthorized() {
-    box.erase();
 
-    AppSnackbar.error("Session expired. Please login again.");
-
-    Future.delayed(const Duration(milliseconds: 500), () {
-      Get.offAllNamed('/login');
-    });
-  }
 }

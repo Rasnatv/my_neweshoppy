@@ -1,5 +1,6 @@
 
 
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_instance/src/extension_instance.dart';
@@ -21,7 +22,7 @@ class Districtadminhomepage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return NetworkAwareWrapper(child: Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         elevation: 0,
@@ -71,7 +72,7 @@ class Districtadminhomepage extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 
   // ─── Welcome Card ─────────────────────────────────────────────────────────

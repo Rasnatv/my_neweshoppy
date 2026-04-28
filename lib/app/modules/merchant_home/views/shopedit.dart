@@ -32,7 +32,11 @@ class MerchantSettingPage extends StatelessWidget {
     backgroundColor: AppColors.kPrimary,
     elevation: 0,
     systemOverlayStyle: SystemUiOverlayStyle.light,
-    automaticallyImplyLeading: true,
+    // automaticallyImplyLeading: true,
+    leading: IconButton(
+      icon: const Icon(Icons.arrow_back, color: Colors.white),
+      onPressed: () => Get.back(result: true),
+    ),
     iconTheme: const IconThemeData(color: Colors.white),
     title: const Text(
       "Edit Profile",
@@ -1341,7 +1345,8 @@ class _DropdownRow extends StatelessWidget {
               ),
               Expanded(
                 child: DropdownButtonFormField<String>(
-                  value: value,
+                  value: items.contains(value) ? value : null,
+                  // value: value,
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,

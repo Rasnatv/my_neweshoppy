@@ -16,15 +16,11 @@ class UserOfferController extends GetxController {
   final box = GetStorage();
 
   final String apiUrl =
-      'https://rasma.astradevelops.in/e_shoppyy/public/api/getofferuser';
+      'https://eshoppy.co.in/api/getofferuser';
 
   @override
   void onInit() {
     super.onInit();
-
-    ever(Get.find<NetworkService>().reconnectTrigger, (_) {
-      refresh();
-    });
 
     fetchOffers();
   }
@@ -75,9 +71,9 @@ class UserOfferController extends GetxController {
     } catch (e) {
       offerList.clear();
 
-      // // ✅ EXCEPTION HANDLER (Socket, etc.)
-      // final errorMessage = ApiErrorHandler.handleException(e);
-      // AppSnackbar.error(errorMessage);
+      // ✅ EXCEPTION HANDLER (Socket, etc.)
+      final errorMessage = ApiErrorHandler.handleException(e);
+      AppSnackbar.error(errorMessage);
 
       print('fetchOffers error: $e');
     } finally {

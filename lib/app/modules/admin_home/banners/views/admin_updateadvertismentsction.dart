@@ -1,4 +1,5 @@
 
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_instance/src/extension_instance.dart';
@@ -36,7 +37,7 @@ class _AdminEditAdvertisementPageState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return NetworkAwareWrapper(child: Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: _buildAppBar(),
       body: Obx(() {
@@ -45,7 +46,7 @@ class _AdminEditAdvertisementPageState
         }
         return _buildBody(context);
       }),
-    );
+    ));
   }
 
   // ── AppBar ──
@@ -152,19 +153,6 @@ class _AdminEditAdvertisementPageState
 
           const SizedBox(height: 16),
 
-          _buildCard(
-            backgroundColor: const Color(0xFFFAFAFB),
-            children: [
-              _sectionHeader(
-                icon: Icons.lock_outline_rounded,
-                label: "Locked Information",
-                badge: "Read Only",
-                badgeColor: const Color(0xFF9E9E9E),
-              ),
-              const SizedBox(height: 14),
-              _buildLockedFields(),
-            ],
-          ),
 
           const SizedBox(height: 28),
           _buildSaveButton(),
@@ -504,20 +492,20 @@ class _AdminEditAdvertisementPageState
     );
   }
 
-  // ── Locked fields ──
-  Widget _buildLockedFields() {
-    return Obx(() => Column(
-      children: [
-        _buildLockedTile(
-          icon: Icons.calendar_today_outlined,
-          label: "Posted On",
-          value: controller.editCreatedAt.value.isNotEmpty
-              ? controller.editCreatedAt.value
-              : '—',
-        ),
-      ],
-    ));
-  }
+  // // ── Locked fields ──
+  // Widget _buildLockedFields() {
+  //   return Obx(() => Column(
+  //     children: [
+  //       _buildLockedTile(
+  //         icon: Icons.calendar_today_outlined,
+  //         label: "Posted On",
+  //         value: controller.editCreatedAt.value.isNotEmpty
+  //             ? controller.editCreatedAt.value
+  //             : '—',
+  //       ),
+  //     ],
+  //   ));
+  // }
 
   Widget _buildLockedTile({
     required IconData icon,

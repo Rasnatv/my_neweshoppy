@@ -1,4 +1,5 @@
 
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -23,7 +24,7 @@ class RestaurantFinalCart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return NetworkAwareWrapper(child:Scaffold(
       backgroundColor: const Color(0xFFF2F4F3),
       appBar: _buildAppBar(),
       body: Obx(() {
@@ -32,15 +33,7 @@ class RestaurantFinalCart extends StatelessWidget {
               child: CircularProgressIndicator(color: _primary));
         }
 
-        if (controller.errorMessage.value.isNotEmpty &&
-            controller.restaurants.isEmpty) {
-          return _ErrorView(
-            message: controller.errorMessage.value,
-            onRetry: controller.fetchFinalCart,
-          );
-        }
 
-        if (controller.isEmpty) return const _EmptyCartView();
 
         return ListView.builder(
           padding: const EdgeInsets.only(top: 8, bottom: 130),
@@ -73,7 +66,7 @@ class RestaurantFinalCart extends StatelessWidget {
           totalItems: controller.totalItemCount,
         );
       }),
-    );
+    ));
   }
 
   AppBar _buildAppBar() {
@@ -1067,65 +1060,6 @@ class _EmptyCartView extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// ── ERROR VIEW ────────────────────────────────────────────────────────────────
-class _ErrorView extends StatelessWidget {
-  final String message;
-  final VoidCallback onRetry;
-
-  const _ErrorView({required this.message, required this.onRetry});
-  static const _primary = Color(0xFF0F5151);
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(22),
-              decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.08),
-                  shape: BoxShape.circle),
-              child: const Icon(Icons.wifi_off_rounded,
-                  size: 48, color: Colors.red),
-            ),
-            const SizedBox(height: 20),
-            const Text('Something went wrong',
-                style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87)),
-            const SizedBox(height: 8),
-            Text(message,
-                textAlign: TextAlign.center,
-                style:
-                TextStyle(fontSize: 14, color: Colors.grey.shade500)),
-            const SizedBox(height: 28),
-            ElevatedButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh_rounded, size: 18),
-              label: const Text('Try Again',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 15)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 28, vertical: 14),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
-                elevation: 0,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

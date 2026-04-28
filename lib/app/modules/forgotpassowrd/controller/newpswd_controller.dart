@@ -64,7 +64,8 @@ class NewPasswordController extends GetxController {
 
       final response = await http.post(
         Uri.parse(
-          "https://rasma.astradevelops.in/e_shoppyy/public/api/reset-password",
+          "https://eshoppy.co.in/api/reset-password"
+          //"https://rasma.astradevelops.in/e_shoppyy/public/api/reset-password",
         ),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({

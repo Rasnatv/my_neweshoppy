@@ -1,5 +1,6 @@
 
 
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -16,7 +17,7 @@ class AreaAdminAllAdvertismentViewPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return NetworkAwareWrapper(child:Scaffold(
       backgroundColor: const Color(0xFFF7F8FF),
       appBar: AppBar(
         iconTheme: IconThemeData(color: Colors.white),
@@ -82,7 +83,7 @@ class AreaAdminAllAdvertismentViewPage extends StatelessWidget {
           ),
         );
       }),
-    );
+    ));
   }
 
   void _confirmDelete(

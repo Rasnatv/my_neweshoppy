@@ -13,7 +13,7 @@ class MyEventsController extends GetxController {
 
   final box = GetStorage();
   final String apiUrl =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/eventss";
+      "https://eshoppy.co.in/api/eventss";
 
   @override
   void onInit() {

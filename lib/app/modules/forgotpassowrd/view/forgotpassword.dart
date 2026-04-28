@@ -1,4 +1,5 @@
 
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/constants/text_String.dart';
@@ -13,7 +14,7 @@ class ForgotPasswordEmailView extends GetView<ForgotPasswordController> {
   Widget build(BuildContext context) {
     Get.put(ForgotPasswordController());
 
-    return Scaffold(
+    return NetworkAwareWrapper(child:Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -126,6 +127,6 @@ class ForgotPasswordEmailView extends GetView<ForgotPasswordController> {
           ],
         ),
       ),
-    );
+    ));
   }
 }

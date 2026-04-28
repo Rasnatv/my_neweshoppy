@@ -1,6 +1,7 @@
 
 
 import 'dart:io';
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -25,7 +26,7 @@ class AdminAddAdvertisementPage  extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
-      child: Scaffold(
+      child: NetworkAwareWrapper(child: Scaffold(
         backgroundColor: _bg,
         appBar: AppBar(
           elevation: 0,
@@ -132,7 +133,7 @@ class AdminAddAdvertisementPage  extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 
   // ── COVERAGE SECTION ──────────────────────────────────────
@@ -342,19 +343,36 @@ class AdminAddAdvertisementPage  extends StatelessWidget {
             );
           }).toList(),
           onChanged: onChanged,
-          selectedItemBuilder: (context) => items.map((item) {
-            return Row(
-              children: [
-                Icon(icon, size: 16, color: AppColors.kPrimary),
-                const SizedBox(width: 8),
-                Text(item,
-                    style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: _textPrimary)),
-              ],
-            );
-          }).toList(),
+          // selectedItemBuilder: (context) => items.map((item) {
+          //   return Row(
+          //     children: [
+          //       Icon(icon, size: 16, color: AppColors.kPrimary),
+          //       const SizedBox(width: 8),
+          //       Text(item,
+          //           style: const TextStyle(
+          //               fontSize: 14,
+          //               fontWeight: FontWeight.w600,
+          //               color: _textPrimary)),
+          //     ],
+          //   );
+          // }).toList(),
+          selectedItemBuilder: (context) => items
+              .map((s) => SizedBox(
+            width: double.infinity,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                s,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ))
+              .toList(),
         ),
       ),
     );

@@ -20,21 +20,21 @@ class mAdminProductDetailController extends GetxController {
   final RxInt selectedVariantIndex = 0.obs;
 
   static const String _baseUrl =
-      'https://rasma.astradevelops.in/e_shoppyy/public/api/product/detailss';
+      'https://eshoppy.co.in/api/product/detailss';
 
   static const String _authTokenKey = 'auth_token';
   static const String authTokenKey = _authTokenKey;
 
   /// ✅ AUTH CHECK (EMPTY TOKEN)
-  bool _checkAuth() {
-    final token = box.read(_authTokenKey);
-
-    if (token == null || token.toString().isEmpty) {
-      Get.offAllNamed('/login');
-      return false;
-    }
-    return true;
-  }
+  // bool _checkAuth() {
+  //   final token = box.read(_authTokenKey);
+  //
+  //   if (token == null || token.toString().isEmpty) {
+  //     Get.offAllNamed('/login');
+  //     return false;
+  //   }
+  //   return true;
+  // }
 
   String? get authToken => box.read<String>(_authTokenKey);
 
@@ -73,7 +73,6 @@ class mAdminProductDetailController extends GetxController {
 
   /// ✅ FETCH PRODUCT (WITH 401 AUTO LOGOUT)
   Future<void> fetchProductDetail({required int productId}) async {
-    if (!_checkAuth()) return;
 
     try {
       isLoading.value = true;

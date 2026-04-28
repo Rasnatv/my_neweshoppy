@@ -1,4 +1,5 @@
 
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../common/style/app_colors.dart';
@@ -16,7 +17,7 @@ class AddCategoryPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return NetworkAwareWrapper(child:Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         iconTheme: IconThemeData(color:Colors.white),
@@ -373,7 +374,7 @@ class AddCategoryPage extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildHeader() {

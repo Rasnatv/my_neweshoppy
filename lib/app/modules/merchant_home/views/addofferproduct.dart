@@ -1,5 +1,6 @@
 
 import 'dart:io';
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_colors.dart';
@@ -20,7 +21,7 @@ class AddOfferProductPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return NetworkAwareWrapper(child:Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -101,7 +102,7 @@ class AddOfferProductPage extends StatelessWidget {
         ],
       ),
       floatingActionButton: _buildFab(context),
-    );
+    ));
   }
 
   // ── Offer info banner ─────────────────────────────────────────────────────

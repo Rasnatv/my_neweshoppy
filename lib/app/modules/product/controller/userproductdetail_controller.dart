@@ -21,7 +21,7 @@ class ProductDetailController extends GetxController {
   var product = Rxn<ProductDetailModel>();
   var selectedVariant = Rxn<ProductVariantModel>();
 
-  final String _baseUrl = "https://rasma.astradevelops.in/e_shoppyy/public/api";
+  final String _baseUrl = "https://eshoppy.co.in/api";
 
   @override
   void onInit() {

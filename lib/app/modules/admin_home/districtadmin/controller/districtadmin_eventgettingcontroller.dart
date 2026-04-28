@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import '../../../../data/errors/api_error.dart';
 import '../../../../data/models/districtadmineventmodel.dart';
 import '../../../../widgets/areaadminsuccesswidget.dart';
+import '../../../merchantlogin/widget/successwidget.dart';
 
 
 class DistrictAdminGettingEventController extends GetxController {
@@ -36,7 +37,7 @@ class DistrictAdminGettingEventController extends GetxController {
   };
 
   static const String _baseUrl =
-      'https://rasma.astradevelops.in/e_shoppyy/public/api/district-admin';
+      'https://eshoppy.co.in/api/district-admin';
 
   @override
   void onInit() {
@@ -73,13 +74,13 @@ class DistrictAdminGettingEventController extends GetxController {
       } else {
         final error = ApiErrorHandler.handleResponse(res);
         _setError(error);
-        AppSnackbarss.error(error);
+        AppSnackbar.error(error);
       }
 
     } catch (e) {
       final error = ApiErrorHandler.handleException(e);
       _setError(error);
-      AppSnackbarss.error(error);
+      AppSnackbar.error(error);
     } finally {
       isLoading.value = false;
     }
@@ -105,17 +106,17 @@ class DistrictAdminGettingEventController extends GetxController {
 
       if (res.statusCode == 200 && body['status'] == true) {
 
-        AppSnackbarss.success(
+        AppSnackbar.success(
             body['message'] ?? 'Event deleted successfully');
 
         await fetchEvents();
 
       } else {
-        AppSnackbarss.error(ApiErrorHandler.handleResponse(res));
+        AppSnackbar.error(ApiErrorHandler.handleResponse(res));
       }
 
     } catch (e) {
-      AppSnackbarss.error(ApiErrorHandler.handleException(e));
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isDeleting.value = false;
     }

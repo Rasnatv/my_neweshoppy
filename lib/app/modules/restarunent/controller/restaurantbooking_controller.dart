@@ -4,7 +4,9 @@
 // import 'package:get/get.dart';
 // import 'package:get_storage/get_storage.dart';
 // import 'package:http/http.dart' as http;
+// import '../../../data/errors/api_error.dart';
 // import '../../../data/models/userslotbooking.model.dart';
+// import '../../merchantlogin/widget/successwidget.dart'; // ← adjust path
 //
 // class RestaurantBookingController extends GetxController {
 //   late final int restaurantId;
@@ -18,7 +20,6 @@
 //   var seatingGroups = <SeatingTableGroup>[].obs;
 //
 //   // ─── One RxMap row per meal ───────────────────────────────────────────
-//   // keys: mealType (fixed from API), seatingType, timeSlot, tableName
 //   var bookingRows = <RxMap<String, String>>[].obs;
 //
 //   // ─── UI state ─────────────────────────────────────────────────────────
@@ -27,19 +28,15 @@
 //   var isSaving        = false.obs;
 //   var errorMessage    = "".obs;
 //
-//   // ─── Holds the confirmed summary so cart screen reads it directly ─────
-//   // This avoids any Get.arguments re-parse issues
+//   // ─── Holds the confirmed summary ──────────────────────────────────────
 //   BookingSummary? currentSummary;
 //
-//   final String _base = "https://rasma.astradevelops.in/e_shoppyy/public/api";
+//   final String _base = "https://eshoppy.co.in/api";
 //
 //   @override
 //   void onInit() {
 //     super.onInit();
-//     // Read restaurant_id from Get.arguments
-//     // Get.arguments is set by the time onInit runs after Get.put()
 //     final args = Get.arguments;
-//     debugPrint("── onInit args = $args");
 //
 //     restaurantId = (args is Map && args["restaurant_id"] != null)
 //         ? (args["restaurant_id"] as num).toInt()
@@ -63,7 +60,7 @@
 //     }
 //   }
 //
-//   // ─── 1. Fetch meals + time-slots ─────────────────────────────────────
+//   // ─── 1. Fetch meals + time-slots ──────────────────────────────────────
 //   Future<void> fetchTimeSlots() async {
 //     try {
 //       isLoadingSlots.value = true;
@@ -80,27 +77,37 @@
 //         body: body,
 //       );
 //
-//       debugPrint("── SLOTS RESPONSE ${res.statusCode} ${res.body}");
 //
-//       final parsed = TimeSlotsResponse.fromJson(_safe(res.body));
+//       if (res.statusCode == 200) {
+//         final parsed = TimeSlotsResponse.fromJson(_safe(res.body));
 //
-//       if (parsed.status == 1 && parsed.data != null) {
-//         meals.value = parsed.data!.meals;
-//         _buildRowsFromMeals();
-//         await _fetchTablesByGuests();
+//         if (parsed.status == 1 && parsed.data != null) {
+//           meals.value = parsed.data!.meals;
+//           _buildRowsFromMeals();
+//           await _fetchTablesByGuests();
+//         } else {
+//           final msg = parsed.message.isNotEmpty
+//               ? parsed.message
+//               : "No slots found.";
+//           errorMessage.value = msg;
+//           AppSnackbar.warning(msg);
+//         }
 //       } else {
-//         errorMessage.value =
-//         parsed.message.isNotEmpty ? parsed.message : "No slots found.";
+//         final msg = ApiErrorHandler.handleResponse(res);
+//         errorMessage.value = msg;
+//         AppSnackbar.error(msg);
 //       }
 //     } catch (e, st) {
-//       errorMessage.value = "Error: $e";
+//       final msg = ApiErrorHandler.handleException(e);
+//       errorMessage.value = msg;
+//       AppSnackbar.error(msg);
 //       debugPrintStack(stackTrace: st, label: "fetchTimeSlots");
 //     } finally {
 //       isLoadingSlots.value = false;
 //     }
 //   }
 //
-//   // ─── 2. Fetch tables by guest count ──────────────────────────────────
+//   // ─── 2. Fetch tables by guest count ───────────────────────────────────
 //   Future<void> _fetchTablesByGuests() async {
 //     if (meals.isEmpty) return;
 //     try {
@@ -123,20 +130,31 @@
 //
 //       debugPrint("── TABLES RESPONSE ${res.statusCode} ${res.body}");
 //
-//       final parsed = GetTablesByGuestsResponse.fromJson(_safe(res.body));
+//       if (res.statusCode == 200) {
+//         final parsed = GetTablesByGuestsResponse.fromJson(_safe(res.body));
 //
-//       if (parsed.status == 1) {
-//         seatingGroups.value = parsed.data;
-//         for (final row in bookingRows) {
-//           row["tableName"] = "";
+//         if (parsed.status == 1) {
+//           seatingGroups.value = parsed.data;
+//           for (final row in bookingRows) {
+//             row["tableName"] = "";
+//           }
+//           bookingRows.refresh();
+//         } else {
+//           final msg = parsed.message.isNotEmpty
+//               ? parsed.message
+//               : "No tables found.";
+//           errorMessage.value = msg;
+//           AppSnackbar.warning(msg);
 //         }
-//         bookingRows.refresh();
 //       } else {
-//         errorMessage.value =
-//         parsed.message.isNotEmpty ? parsed.message : "No tables found.";
+//         final msg = ApiErrorHandler.handleResponse(res);
+//         errorMessage.value = msg;
+//         AppSnackbar.error(msg);
 //       }
 //     } catch (e, st) {
-//       errorMessage.value = "Error: $e";
+//       final msg = ApiErrorHandler.handleException(e);
+//       errorMessage.value = msg;
+//       AppSnackbar.error(msg);
 //       debugPrintStack(stackTrace: st, label: "_fetchTablesByGuests");
 //     } finally {
 //       isLoadingTables.value = false;
@@ -155,7 +173,7 @@
 //         .toList();
 //   }
 //
-//   // ─── Derived ─────────────────────────────────────────────────────────
+//   // ─── Derived ──────────────────────────────────────────────────────────
 //   List<String> get availableSeatingTypes =>
 //       seatingGroups.map((g) => g.seatingType).toSet().toList();
 //
@@ -199,7 +217,7 @@
 //     bookingRows.refresh();
 //   }
 //
-//   // ─── Filter only fully completed rows ────────────────────────────────
+//   // ─── Filter only fully completed rows ─────────────────────────────────
 //   List<BookingEntry> _completedEntries() {
 //     debugPrint("── _completedEntries: checking ${bookingRows.length} rows");
 //     for (int i = 0; i < bookingRows.length; i++) {
@@ -234,7 +252,7 @@
 //     return result;
 //   }
 //
-//   // ─── Build summary — stores in controller so cart can read directly ───
+//   // ─── Build summary ────────────────────────────────────────────────────
 //   BookingSummary? buildSummary() {
 //     final entries = _completedEntries();
 //     if (entries.isEmpty) return null;
@@ -265,13 +283,13 @@
 //     return currentSummary;
 //   }
 //
-//   // ─── Save to DB — reads from currentSummary stored in controller ──────
-//   // Does NOT re-read bookingRows or Get.arguments — uses exact snapshot
+//   // ─── Save to DB ───────────────────────────────────────────────────────
 //   Future<bool> confirmAndSave() async {
-//     // Read from controller's stored summary — NOT from Get.arguments
 //     final summary = currentSummary;
 //     if (summary == null || summary.bookings.isEmpty) {
-//       errorMessage.value = "No booking data found.";
+//       const msg = "No booking data found.";
+//       errorMessage.value = msg;
+//       AppSnackbar.warning(msg);
 //       return false;
 //     }
 //
@@ -312,19 +330,35 @@
 //
 //       debugPrint("── CONFIRM RESPONSE ${res.statusCode} ${res.body}");
 //
-//       final parsed = ConfirmBookingResponse.fromJson(_safe(res.body));
+//       if (res.statusCode == 200) {
+//         final parsed = ConfirmBookingResponse.fromJson(_safe(res.body));
 //
-//       if (parsed.status == 1) {
-//         currentSummary = null; // clear after successful save
-//         return true;
+//         if (parsed.status == 1) {
+//           AppSnackbar.success(
+//             parsed.message.isNotEmpty
+//                 ? parsed.message
+//                 : "Booking confirmed successfully!",
+//           );
+//           currentSummary = null;
+//           return true;
+//         } else {
+//           final msg = parsed.message.isNotEmpty
+//               ? parsed.message
+//               : "Booking failed.";
+//           errorMessage.value = msg;
+//           AppSnackbar.error(msg);
+//           return false;
+//         }
 //       } else {
-//         errorMessage.value = parsed.message.isNotEmpty
-//             ? parsed.message
-//             : "Booking failed.";
+//         final msg = ApiErrorHandler.handleResponse(res);
+//         errorMessage.value = msg;
+//         AppSnackbar.error(msg);
 //         return false;
 //       }
 //     } catch (e, st) {
-//       errorMessage.value = "Error: $e";
+//       final msg = ApiErrorHandler.handleException(e);
+//       errorMessage.value = msg;
+//       AppSnackbar.error(msg);
 //       debugPrintStack(stackTrace: st, label: "confirmAndSave");
 //       return false;
 //     } finally {
@@ -332,7 +366,7 @@
 //     }
 //   }
 //
-//   // ─── Helpers ─────────────────────────────────────────────────────────
+//   // ─── Helpers ──────────────────────────────────────────────────────────
 //   String _token() {
 //     final t = GetStorage().read<String>("auth_token") ?? "";
 //     debugPrint("── TOKEN: '$t'");
@@ -356,13 +390,15 @@ import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import '../../../data/errors/api_error.dart';
 import '../../../data/models/userslotbooking.model.dart';
-import '../../merchantlogin/widget/successwidget.dart'; // ← adjust path
+import '../../merchantlogin/widget/successwidget.dart';
 
 class RestaurantBookingController extends GetxController {
   late final int restaurantId;
 
   // ─── Selections ───────────────────────────────────────────────────────
-  var guests       = 1.obs;
+  var guests    = 1.obs;
+  var maxGuests = 99.obs; // tightened by API response
+
   var selectedDate = DateTime.now().obs;
 
   // ─── API data ─────────────────────────────────────────────────────────
@@ -381,13 +417,12 @@ class RestaurantBookingController extends GetxController {
   // ─── Holds the confirmed summary ──────────────────────────────────────
   BookingSummary? currentSummary;
 
-  final String _base = "https://rasma.astradevelops.in/e_shoppyy/public/api";
+  final String _base = "https://eshoppy.co.in/api";
 
   @override
   void onInit() {
     super.onInit();
     final args = Get.arguments;
-    debugPrint("── onInit args = $args");
 
     restaurantId = (args is Map && args["restaurant_id"] != null)
         ? (args["restaurant_id"] as num).toInt()
@@ -427,8 +462,6 @@ class RestaurantBookingController extends GetxController {
         headers: _headers(token),
         body: body,
       );
-
-      debugPrint("── SLOTS RESPONSE ${res.statusCode} ${res.body}");
 
       if (res.statusCode == 200) {
         final parsed = TimeSlotsResponse.fromJson(_safe(res.body));
@@ -485,16 +518,31 @@ class RestaurantBookingController extends GetxController {
       if (res.statusCode == 200) {
         final parsed = GetTablesByGuestsResponse.fromJson(_safe(res.body));
 
-        if (parsed.status == 1) {
+        if (parsed.status == 1 && parsed.data.isNotEmpty) {
+          // ✅ Tables found for this guest count — valid
           seatingGroups.value = parsed.data;
+          if (guests.value > maxGuests.value) {
+            maxGuests.value = guests.value;
+          }
           for (final row in bookingRows) {
             row["tableName"] = "";
           }
           bookingRows.refresh();
         } else {
+          // ❌ No tables — guest count exceeds capacity, clamp back
+          seatingGroups.value = [];
+          maxGuests.value     = guests.value - 1;
+          if (guests.value > 1) guests.value--;
+
+          for (final row in bookingRows) {
+            row["tableName"]   = "";
+            row["seatingType"] = "";
+          }
+          bookingRows.refresh();
+
           final msg = parsed.message.isNotEmpty
               ? parsed.message
-              : "No tables found.";
+              : "No tables available for that many guests.";
           errorMessage.value = msg;
           AppSnackbar.warning(msg);
         }

@@ -113,7 +113,7 @@ class FinalCartItemModel {
     );
   }
 
-  /// Full image URL helper  — adjust base URL as needed
-  String get imageUrl =>
-      'https://rasma.astradevelops.in/e_shoppyy/public/$itemImage';
+  // /// Full image URL helper  — adjust base URL as needed
+  // String get imageUrl =>
+  //     'https://rasma.astradevelops.in/e_shoppyy/public/$itemImage';
 }

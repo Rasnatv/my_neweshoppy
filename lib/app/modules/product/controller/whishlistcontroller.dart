@@ -17,11 +17,11 @@ class WishlistController extends GetxController {
   var isLoading = false.obs;
 
   final String addUrl =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/wishlist/add";
+      "https://eshoppy.co.in/api/wishlist/add";
   final String getUrl =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/wishlist/get";
+      "https://eshoppy.co.in/api/wishlist/get";
   final String removeUrl =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/wishlist/remove";
+      "https://eshoppy.co.in/api/wishlist/remove";
 
   String get token => (box.read<String>("auth_token") ?? "").trim();
 
@@ -29,17 +29,7 @@ class WishlistController extends GetxController {
   void onInit() {
     super.onInit();
 
-    ever(Get.find<NetworkService>().reconnectTrigger, (isOnline) {
-      if (isOnline == true && token.isNotEmpty) {
         fetchWishlist();
-      }
-    });
-
-    if (token.isNotEmpty) {
-      fetchWishlist();
-    } else {
-      debugPrint("⚠️ WishlistController: No auth token found");
-    }
   }
 
   /// ================= FETCH =================
@@ -67,7 +57,6 @@ class WishlistController extends GetxController {
             try {
               return WishlistItem.fromJson(e);
             } catch (err) {
-              debugPrint("❌ Failed to parse wishlist item: $e → $err");
               return null;
             }
           }).whereType<WishlistItem>().toList();
@@ -79,8 +68,9 @@ class WishlistController extends GetxController {
         AppSnackbar.error(error);
       }
     } catch (e) {
-      debugPrint("❌ fetchWishlist exception: $e");
+
       final error = ApiErrorHandler.handleException(e);
+      AppSnackbar.error(error);
     } finally {
       isLoading(false);
     }

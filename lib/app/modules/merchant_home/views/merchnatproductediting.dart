@@ -1,5 +1,6 @@
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_colors.dart';
@@ -12,15 +13,15 @@ class MerchantProductDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final ctrl = Get.put(merchantProductDetailController());
 
-    return Scaffold(
+    return NetworkAwareWrapper(child: Scaffold(
       backgroundColor: const Color(0xFFF2F4F7),
       appBar: _buildAppBar(),
       body: Obx(() {
         if (ctrl.isLoading.value) return _buildLoader();
-        if (ctrl.product.value == null) return _buildEmpty();
+        // if (ctrl.product.value == null) return _buildEmpty();
         return _buildForm(context, ctrl);
       }),
-    );
+    ));
   }
 
   // ── AppBar ────────────────────────────────────────────────────────────────────
@@ -62,13 +63,6 @@ class MerchantProductDetailPage extends StatelessWidget {
               style: TextStyle(color: Color(0xFF78909C), fontSize: 14)),
         ],
       ),
-    );
-  }
-
-  Widget _buildEmpty() {
-    return const Center(
-      child: Text('No product data found.',
-          style: TextStyle(color: Color(0xFF90A4AE))),
     );
   }
 

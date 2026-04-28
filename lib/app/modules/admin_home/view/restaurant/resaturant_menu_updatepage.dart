@@ -1,4 +1,5 @@
 
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../common/style/app_colors.dart';
@@ -55,7 +56,7 @@ class MenuUpdatePage extends StatelessWidget {
 
     return DefaultTabController(
       length: 3,
-      child: Scaffold(
+      child: NetworkAwareWrapper(child:  Scaffold(
         backgroundColor: Colors.grey.shade50,
         appBar: _buildAppBar(),
         body: TabBarView(
@@ -66,7 +67,7 @@ class MenuUpdatePage extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 
   // ── AppBar ──────────────────────────────────────────────────────────────────

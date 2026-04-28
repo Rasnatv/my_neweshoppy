@@ -1,4 +1,5 @@
 
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -22,11 +23,11 @@ class LandingView extends StatelessWidget {
 
     return GetBuilder<LandingController>(
       builder: (controller) {
-        return Scaffold(
+        return NetworkAwareWrapper(child:Scaffold(
           extendBody: true,
           body: controller.getPage(),
           bottomNavigationBar: const AppNavBar(),
-        );
+        ));
       },
     );
   }

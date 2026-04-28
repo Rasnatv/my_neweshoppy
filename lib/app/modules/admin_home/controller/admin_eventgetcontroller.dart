@@ -17,7 +17,7 @@ class AdminEventGetController extends GetxController {
   final box = GetStorage();
 
   final String apiUrl =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/get-all-events-admin-district";
+      "https://eshoppy.co.in/api/get-all-events-admin-district";
 
   String get _token => box.read('auth_token')?.toString().trim() ?? '';
 
@@ -145,7 +145,7 @@ class AdminEventGetController extends GetxController {
     try {
       final response = await http.delete(
         Uri.parse(
-            "https://rasma.astradevelops.in/e_shoppyy/public/api/delete-Event-admindistrict"),
+            "https://eshoppy.co.in/api/delete-Event-admindistrict"),
         headers: {
           "Accept": "application/json",
           "Authorization": "Bearer $_token",

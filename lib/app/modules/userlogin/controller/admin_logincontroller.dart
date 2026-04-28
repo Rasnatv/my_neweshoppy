@@ -10,6 +10,7 @@ import '../../admin_home/districtadmin/view/districtadmin_home.dart';
 import '../../admin_home/view/admin_home.dart';
 import '../../areaadmin/view/area_adminhome.dart';
 import '../../../data/errors/api_error.dart';
+import '../../merchantlogin/widget/successwidget.dart';
 
 class AdminLoginController extends GetxController {
   final emailCtrl = TextEditingController();
@@ -22,7 +23,7 @@ class AdminLoginController extends GetxController {
   final GetStorage box = GetStorage();
 
   final String loginUrl =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/login";
+      "https://eshoppy.co.in/api/login";
 
   @override
   void onClose() {
@@ -43,12 +44,12 @@ class AdminLoginController extends GetxController {
     final password = passwordCtrl.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
-      AppSnackbarss.warning("Email and password are required");
+      AppSnackbar.warning("Email and password are required");
       return;
     }
 
     if (!GetUtils.isEmail(email)) {
-      AppSnackbarss.warning("Enter valid email");
+      AppSnackbar.warning("Enter valid email");
       return;
     }
 
@@ -74,7 +75,7 @@ class AdminLoginController extends GetxController {
       // ✅ HANDLE NON-200 RESPONSES
       if (response.statusCode != 200) {
         final errorMsg = ApiErrorHandler.handleResponse(response);
-        AppSnackbarss.error(errorMsg);
+        AppSnackbar.error(errorMsg);
         return;
       }
 
@@ -84,13 +85,13 @@ class AdminLoginController extends GetxController {
       bool isSuccess = status == 1 || status == "1" || status == true;
 
       if (!isSuccess) {
-        AppSnackbarss.error(body['message'] ?? "Login failed");
+        AppSnackbar.error(body['message'] ?? "Login failed");
         return;
       }
 
       final data = body['data'];
       if (data == null) {
-        AppSnackbarss.error("Invalid response from server");
+        AppSnackbar.error("Invalid response from server");
         return;
       }
 
@@ -98,7 +99,7 @@ class AdminLoginController extends GetxController {
           int.tryParse(data['role'].toString()) ?? 0;
 
       if (serverRole != selectedRole.value) {
-        AppSnackbarss.error("Invalid role selected");
+        AppSnackbar.error("Invalid role selected");
         return;
       }
 
@@ -113,7 +114,7 @@ class AdminLoginController extends GetxController {
 
       // ✅ HANDLE EXCEPTION (NO INTERNET, ETC)
       final errorMsg = ApiErrorHandler.handleException(e);
-      AppSnackbarss.error(errorMsg);
+      AppSnackbar.error(errorMsg);
     } finally {
       isLoading.value = false;
     }
@@ -125,11 +126,6 @@ class AdminLoginController extends GetxController {
         data['token'] ??
         data['access_token'];
 
-    if (token == null || token.toString().trim().isEmpty) {
-      AppSnackbarss.error("Authentication token missing in response");
-      return false;
-    }
-
     final String cleanToken = token.toString().trim();
 
     await box.write("auth_token", cleanToken);
@@ -140,11 +136,6 @@ class AdminLoginController extends GetxController {
 
     final String? savedToken = box.read('auth_token');
     debugPrint("✅ Token saved: '$savedToken'");
-
-    if (savedToken == null || savedToken.isEmpty) {
-      AppSnackbarss.error("Failed to save session. Please try again.");
-      return false;
-    }
 
     return true;
   }
@@ -162,7 +153,7 @@ class AdminLoginController extends GetxController {
         Get.offAll(() => AreaAdminhomepage());
         break;
       default:
-        AppSnackbarss.error("Invalid role");
+        AppSnackbar.error("Invalid role");
     }
   }
 

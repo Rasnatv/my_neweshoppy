@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 
 import '../../../data/errors/api_error.dart';
 import '../../../widgets/areaadminsuccesswidget.dart';
+import '../../merchantlogin/widget/successwidget.dart';
 
 class AreaAdminDashboardController extends GetxController {
   final box = GetStorage();
@@ -16,7 +17,7 @@ class AreaAdminDashboardController extends GetxController {
   var totalAdvertisements = 0.obs;
 
   final String url =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/area-admin/dashboard-count";
+      "https://eshoppy.co.in/api/area-admin/dashboard-count";
 
   @override
   void onInit() {
@@ -31,10 +32,6 @@ class AreaAdminDashboardController extends GetxController {
       /// ✅ 1. Token check
       String? token = box.read('auth_token');
 
-      // if (token == null || token.toString().isEmpty) {
-      //   ApiErrorHandler.handleUnauthorized();
-      //   return;
-      // }
 
       /// ✅ 2. API Call
       final response = await http.get(
@@ -57,14 +54,14 @@ class AreaAdminDashboardController extends GetxController {
       } else {
         /// ❌ 4. Handle API Errors centrally
         final errorMessage = ApiErrorHandler.handleResponse(response);
-        AppSnackbarss.error(errorMessage);
+        AppSnackbar.error(errorMessage);
       }
 
     } catch (e) {
 
       /// ❌ 6. Other Exceptions
       final errorMessage = ApiErrorHandler.handleException(e);
-      AppSnackbarss.error(errorMessage);
+      AppSnackbar.error(errorMessage);
 
     } finally {
       isLoading(false);

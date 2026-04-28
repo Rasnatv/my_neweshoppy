@@ -21,10 +21,9 @@ class CartController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    final token = box.read<String?>('auth_token') ?? "";
-    if (token.isNotEmpty) {
+
       fetchCart();
-    }
+
   }
 
   Future<void> refresh() async {
@@ -54,7 +53,7 @@ class CartController extends GetxController {
     try {
       final response = await http.get(
         Uri.parse(
-            "https://rasma.astradevelops.in/e_shoppyy/public/api/cart"),
+            "https://eshoppy.co.in/api/cart"),
         headers: {
           "Accept": "application/json",
           "Authorization": "Bearer $token",
@@ -97,7 +96,7 @@ class CartController extends GetxController {
     isLoading.value = true;
     try {
       final response = await http.post(
-        Uri.parse("https://rasma.astradevelops.in/e_shoppyy/public/api/cart/add"),
+        Uri.parse("https://eshoppy.co.in/api/cart/add"),
         headers: {
           "Accept": "application/json",
           "Authorization": "Bearer $authToken",
@@ -123,7 +122,7 @@ class CartController extends GetxController {
         return false;
       }
     } catch (e) {
-      // AppSnackbar.error(ApiErrorHandler.handleException(e));
+       AppSnackbar.error(ApiErrorHandler.handleException(e));
       return false;
     } finally {
       isLoading.value = false;
@@ -162,7 +161,7 @@ class CartController extends GetxController {
     try {
       final response = await http.post(
         Uri.parse(
-            "https://rasma.astradevelops.in/e_shoppyy/public/api/cart/update-quantity"),
+            "https://eshoppy.co.in/api/cart/update-quantity"),
         headers: {
           "Accept": "application/json",
           "Authorization": "Bearer $authToken",
@@ -197,7 +196,7 @@ class CartController extends GetxController {
     try {
       final response = await http.delete(
         Uri.parse(
-            "https://rasma.astradevelops.in/e_shoppyy/public/api/cart/remove"),
+            "https://eshoppy.co.in/api/cart/remove"),
         headers: {
           "Accept": "application/json",
           "Authorization": "Bearer $authToken",

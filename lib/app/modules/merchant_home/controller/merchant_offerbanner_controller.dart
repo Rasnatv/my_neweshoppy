@@ -13,9 +13,9 @@ class MerchantOfferBannerController extends GetxController {
   final box       = GetStorage();
 
   static const String _offerUrl =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/mercgetoffer";
+      "https://eshoppy.co.in/api/mercgetoffer";
   static const String _deleteUrl =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/delete-Offerbanner";
+      "https://eshoppy.co.in/api/delete-Offerbanner";
 
   String get _token => box.read("auth_token") ?? "";
 
@@ -30,14 +30,7 @@ class MerchantOfferBannerController extends GetxController {
     fetchOffers();
   }
 
-  // // ── Token guard ────────────────────────────────────────────
-  // bool _checkToken() {
-  //   if (_token.isEmpty) {
-  //     AppSnackbar.error("Token missing. Please login again.");
-  //     return false;
-  //   }
-  //   return true;
-  // }
+
 
   // ── Fetch offers ───────────────────────────────────────────
   Future<void> fetchOffers() async {

@@ -1,4 +1,5 @@
 
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../common/style/app_text_style.dart';
@@ -47,7 +48,7 @@ class AdminAdvertisementPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return NetworkAwareWrapper(child:Scaffold(
       backgroundColor: const Color(0xFFF0F2F8),
       appBar: _buildAppBar(),
       floatingActionButton: _buildFAB(),
@@ -76,7 +77,7 @@ class AdminAdvertisementPage extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ));
   }
 
   PreferredSizeWidget _buildAppBar() {

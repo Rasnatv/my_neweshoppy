@@ -1,7 +1,6 @@
 
 import 'dart:convert';
-import 'dart:io';
-import 'package:flutter/material.dart';
+
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
@@ -36,7 +35,7 @@ class MyOrdersController extends GetxController {
 
       final response = await http.get(
         Uri.parse(
-          'https://rasma.astradevelops.in/e_shoppyy/public/api/my-orders',
+          'https://eshoppy.co.in/api/my-orders',
         ),
         headers: {
           'Content-Type': 'application/json',
@@ -70,11 +69,11 @@ class MyOrdersController extends GetxController {
 
     } catch (e) {
       /// ✅ EXCEPTION HANDLING
-      // final error = ApiErrorHandler.handleException(e);
+      final error = ApiErrorHandler.handleException(e);
       // hasError.value = true;
       // errorMessage.value = error;
-      //
-      // AppSnackbar.error(error);
+
+      AppSnackbar.error(error);
 
     } finally {
       isLoading.value = false;

@@ -1,5 +1,6 @@
 
 import 'dart:io';
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -23,7 +24,7 @@ class MerchantAddAdvertisementPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark,
-      child: Scaffold(
+      child: NetworkAwareWrapper(child:Scaffold(
         backgroundColor: _bg,
         appBar: AppBar(
           elevation: 0,
@@ -108,7 +109,7 @@ class MerchantAddAdvertisementPage extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 
   // ── COVERAGE UI ─────────────────────────────

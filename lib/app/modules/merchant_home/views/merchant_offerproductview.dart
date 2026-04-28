@@ -1,5 +1,6 @@
 
 import 'dart:io';
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_colors.dart';
@@ -22,7 +23,7 @@ class OfferProductScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return NetworkAwareWrapper(child: Scaffold(
       backgroundColor: const Color(0xFFF2F3F7),
       appBar: AppBar(
         automaticallyImplyLeading: true,
@@ -38,7 +39,8 @@ class OfferProductScreen extends StatelessWidget {
         ),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
-          Obx(() => controller.isRefreshing.value
+          Obx(() =>
+          controller.isRefreshing.value
               ? const Padding(
             padding: EdgeInsets.all(16),
             child: SizedBox(
@@ -60,12 +62,10 @@ class OfferProductScreen extends StatelessWidget {
         if (controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
-        if (controller.offerProducts.isEmpty) {
-          return _emptyView();
-        }
+
         return _gridView(controller.offerProducts);
       }),
-    );
+    ));
   }
 
   // ═══════════════════════════ GRID ═══════════════════════════
@@ -91,8 +91,8 @@ class OfferProductScreen extends StatelessWidget {
 
   // ═══════════════════════ PRODUCT CARD ═══════════════════════
 
-  Widget _productCard(
-      BuildContext context, NMerchantOfferProductModels product) {
+  Widget _productCard(BuildContext context,
+      NMerchantOfferProductModels product) {
     return GestureDetector(
       onTap: () {},
       child: Container(
@@ -247,14 +247,18 @@ class OfferProductScreen extends StatelessWidget {
                         // DELETE
                         Expanded(
                           child: GestureDetector(
-                            onTap: () => DeleteConfirmDialog.show(
-                              context: Get.context!,
-                              title: 'Delete Product',
-                              message:
-                              '"${product.productName}" will be permanently removed.',
-                              onConfirm: () => controller
-                                  .deleteOfferProduct(product.productId),
-                            ),
+                            onTap: () =>
+                                DeleteConfirmDialog.show(
+                                  context: Get.context!,
+                                  title: 'Delete Product',
+                                  message:
+                                  '"${product
+                                      .productName}" will be permanently removed.',
+                                  onConfirm: () =>
+                                      controller
+                                          .deleteOfferProduct(
+                                          product.productId),
+                                ),
                             child: Container(
                               padding:
                               const EdgeInsets.symmetric(vertical: 7),
@@ -313,11 +317,12 @@ class OfferProductScreen extends StatelessWidget {
         fit: BoxFit.cover,
         // ✅ Key forces Flutter to re-fetch when URL changes
         key: ValueKey(imagePath),
-        errorBuilder: (_, __, ___) => Container(
-          height: 130,
-          color: Colors.grey.shade200,
-          child: const Icon(Icons.image_not_supported, color: Colors.grey),
-        ),
+        errorBuilder: (_, __, ___) =>
+            Container(
+              height: 130,
+              color: Colors.grey.shade200,
+              child: const Icon(Icons.image_not_supported, color: Colors.grey),
+            ),
       );
     }
 
@@ -328,34 +333,15 @@ class OfferProductScreen extends StatelessWidget {
       width: double.infinity,
       fit: BoxFit.cover,
       key: ValueKey(imagePath),
-      errorBuilder: (_, __, ___) => Container(
-        height: 130,
-        color: Colors.grey.shade200,
-        child: const Icon(Icons.image_not_supported, color: Colors.grey),
-      ),
+      errorBuilder: (_, __, ___) =>
+          Container(
+            height: 130,
+            color: Colors.grey.shade200,
+            child: const Icon(Icons.image_not_supported, color: Colors.grey),
+          ),
     );
   }
 
-  // ═══════════════════════════ EMPTY ═══════════════════════════
+// ═══════════════════════════ EMPTY ═══════════════════════════
 
-  Widget _emptyView() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.inbox_outlined, size: 64, color: Colors.grey.shade400),
-          const SizedBox(height: 12),
-          const Text(
-            "No Product Found",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            "Pull down to refresh",
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
-          ),
-        ],
-      ),
-    );
-  }
 }

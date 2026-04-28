@@ -12,7 +12,7 @@ class PurchasedProductController extends GetxController {
   final box = GetStorage();
 
   static const String _url =
-      'https://rasma.astradevelops.in/e_shoppyy/public/api/getUser-PurchasedProducts';
+      'https://eshoppy.co.in/api/getUser-PurchasedProducts';
 
   // ── State ─────────────────────────────────────
   var isLoading = false.obs;

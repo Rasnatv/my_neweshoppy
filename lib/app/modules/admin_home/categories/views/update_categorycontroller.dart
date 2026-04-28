@@ -1,3 +1,4 @@
+
 import 'dart:convert';
 import 'dart:io';
 
@@ -15,9 +16,10 @@ import 'admin_categorieslist.dart';
 class AdminEditCategoryController extends GetxController {
   final _box = GetStorage();
 
-  String get authToken => _box.read('auth_token') ?? '';
+  // ✅ Single getter — always fresh, never stale
+  String get _token => _box.read('auth_token') ?? '';
 
-  final isLoading = false.obs;
+  final isLoading  = false.obs;
   final isUpdating = false.obs;
 
   final titleCtrl = TextEditingController();
@@ -30,17 +32,7 @@ class AdminEditCategoryController extends GetxController {
 
   int categoryId = 0;
 
-  static const _base = 'https://rasma.astradevelops.in/e_shoppyy/public/api';
-
-  @override
-  void onInit() {
-    super.onInit();
-
-    // ✅ Auto logout if token missing
-    if (authToken.isEmpty) {
-      Get.offAllNamed('/login');
-    }
-  }
+  static const _base = 'https://eshoppy.co.in/api';
 
   @override
   void onClose() {
@@ -53,19 +45,8 @@ class AdminEditCategoryController extends GetxController {
     await fetchCategory();
   }
 
-  /// 🔐 TOKEN CHECK
-  bool _checkToken() {
-    if (authToken.isEmpty) {
-      AppSnackbar.error("Session expired. Please login again");
-      Get.offAllNamed('/login');
-      return false;
-    }
-    return true;
-  }
 
-  // ── FETCH CATEGORY ─────────────────────────
   Future<void> fetchCategory() async {
-    if (!_checkToken()) return;
 
     try {
       isLoading(true);
@@ -82,7 +63,7 @@ class AdminEditCategoryController extends GetxController {
         if (body['status'] == true && body['data'] != null) {
           final data = body['data'];
 
-          titleCtrl.text = data['name'] ?? '';
+          titleCtrl.text   = data['name'] ?? '';
           existingImageUrl = data['image'] ?? '';
 
           commonAttributes.assignAll(
@@ -93,16 +74,21 @@ class AdminEditCategoryController extends GetxController {
           AppSnackbar.error(body['message'] ?? 'Failed to fetch category');
         }
       } else {
-        AppSnackbar.error(ApiErrorHandler.handleResponse(res));
+        // ✅ 401 → handleUnauthorized fires inside handleResponse
+        //    returns '' for 401, so guard prevents blank snackbar
+        final msg = ApiErrorHandler.handleResponse(res);
+        if (msg.isNotEmpty) AppSnackbar.error(msg);
       }
     } catch (e) {
-      AppSnackbar.error(ApiErrorHandler.handleException(e));
+      // ✅ SocketException returns '' — guard prevents blank snackbar
+      final msg = ApiErrorHandler.handleException(e);
+      if (msg.isNotEmpty) AppSnackbar.error(msg);
     } finally {
       isLoading(false);
     }
   }
 
-  // ── IMAGE PICK ─────────────────────────────
+  // ── IMAGE PICK ─────────────────────────────────────────────────────────────
   Future<void> pickImage() async {
     try {
       final picked = await ImagePicker().pickImage(
@@ -111,36 +97,29 @@ class AdminEditCategoryController extends GetxController {
       );
 
       if (picked == null) return;
-
       imageFile.value = File(picked.path);
     } catch (e) {
       AppSnackbar.error("Image picking failed");
     }
   }
 
-  // ── ATTRIBUTE HELPERS ──────────────────────
+  // ── ATTRIBUTE HELPERS ──────────────────────────────────────────────────────
   void addCommon(String v) {
-    if (!commonAttributes.contains(v)) {
-      commonAttributes.add(v);
-    }
+    if (!commonAttributes.contains(v)) commonAttributes.add(v);
   }
 
   void removeCommon(String v) => commonAttributes.remove(v);
 
   void addVariant(String v) {
-    if (!variantAttributes.contains(v)) {
-      variantAttributes.add(v);
-    }
+    if (!variantAttributes.contains(v)) variantAttributes.add(v);
   }
 
   void removeVariant(String v) => variantAttributes.remove(v);
 
-  // ── SUBMIT UPDATE ──────────────────────────
+  // ── SUBMIT UPDATE ──────────────────────────────────────────────────────────
   Future<void> submit() async {
-    if (!_checkToken()) return;
 
     final name = titleCtrl.text.trim();
-
     if (name.isEmpty) {
       AppSnackbar.warning('Category name is required');
       return;
@@ -150,19 +129,16 @@ class AdminEditCategoryController extends GetxController {
       isUpdating(true);
 
       final Map<String, dynamic> body = {
-        'category_id': categoryId,
-        'name': name,
-        'common_attributes': commonAttributes.toList(),
-        'variant_attributes': variantAttributes.toList(),
+        'category_id'        : categoryId,
+        'name'               : name,
+        'common_attributes'  : commonAttributes.toList(),
+        'variant_attributes' : variantAttributes.toList(),
       };
 
-      // ✅ IMAGE BASE64
       if (imageFile.value != null) {
         final bytes = await imageFile.value!.readAsBytes();
-        final ext = imageFile.value!.path.split('.').last.toLowerCase();
-
-        final mime = ext == 'png' ? 'image/png' : 'image/jpeg';
-
+        final ext   = imageFile.value!.path.split('.').last.toLowerCase();
+        final mime  = ext == 'png' ? 'image/png' : 'image/jpeg';
         body['image'] = 'data:$mime;base64,${base64Encode(bytes)}';
       }
 
@@ -176,12 +152,10 @@ class AdminEditCategoryController extends GetxController {
         final resBody = jsonDecode(res.body);
 
         if (resBody['status'] == true) {
-          AppSnackbar.success(
-              resBody['message'] ?? 'Category updated successfully');
+          AppSnackbar.success(resBody['message'] ?? 'Category updated successfully');
 
           await Future.delayed(const Duration(milliseconds: 800));
 
-          // ✅ Refresh list if controller exists
           if (Get.isRegistered<AdminCategoryListController>()) {
             Get.find<AdminCategoryListController>().fetchCategories();
           }
@@ -191,19 +165,22 @@ class AdminEditCategoryController extends GetxController {
           AppSnackbar.error(resBody['message'] ?? 'Update failed');
         }
       } else {
-        AppSnackbar.error(ApiErrorHandler.handleResponse(res));
+        // ✅ 401 → handleUnauthorized fires inside handleResponse
+        final msg = ApiErrorHandler.handleResponse(res);
+        if (msg.isNotEmpty) AppSnackbar.error(msg);
       }
     } catch (e) {
-      AppSnackbar.error(ApiErrorHandler.handleException(e));
+      final msg = ApiErrorHandler.handleException(e);
+      if (msg.isNotEmpty) AppSnackbar.error(msg);
     } finally {
       isUpdating(false);
     }
   }
 
-  // ── HEADERS ───────────────────────────────
+  // ── HEADERS ────────────────────────────────────────────────────────────────
   Map<String, String> _headers() => {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-    'Authorization': 'Bearer $authToken',
+    'Content-Type' : 'application/json',
+    'Accept'       : 'application/json',
+    'Authorization': 'Bearer $_token',
   };
 }

@@ -1,3 +1,4 @@
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -16,7 +17,7 @@ class AdminOfferProductScreen extends StatelessWidget {
     final  AdminOfferProductController controller =
     Get.put( AdminOfferProductController ());
 
-    return Scaffold(
+    return NetworkAwareWrapper(child:Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: _buildAppBar(controller),
       body: Obx(() {
@@ -29,12 +30,9 @@ class AdminOfferProductScreen extends StatelessWidget {
             onRetry: controller.refreshProducts,
           );
         }
-        if (controller.products.isEmpty) {
-          return const _EmptyView();
-        }
         return _ProductsContent(controller: controller);
       }),
-    );
+    ));
   }
 
   PreferredSizeWidget _buildAppBar(AdminOfferProductController controller) {
@@ -388,32 +386,3 @@ class _ErrorView extends StatelessWidget {
   }
 }
 
-class _EmptyView extends StatelessWidget {
-  const _EmptyView();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.inventory_2_outlined, size: 64, color: Color(0xFFD1D5DB)),
-          SizedBox(height: 16),
-          Text(
-            'No products found',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF6B7280),
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'No products are linked to this offer.',
-            style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
-          ),
-        ],
-      ),
-    );
-  }
-}

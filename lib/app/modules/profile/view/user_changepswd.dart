@@ -1,10 +1,13 @@
 
 import 'package:eshoppy/app/modules/profile/controller/user_chnagepassword_controller.dart';
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_colors.dart';
 import '../../../common/utils/validators.dart';
+import '../../merchantlogin/widget/successwidget.dart';
+
 
 class ChangePasswordPage extends StatefulWidget {
   const ChangePasswordPage({super.key});
@@ -31,6 +34,36 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     super.dispose();
   }
 
+  // ─── HANDLE UPDATE ─────────────────────────────────────────────────────────
+  void _handleUpdate() {
+    final oldPass     = _oldCtrl.text.trim();
+    final newPass     = _newCtrl.text.trim();
+    final confirmPass = _confirmCtrl.text.trim();
+
+    if (oldPass.isEmpty) {
+      AppSnackbar.error('Please enter your current password'); // ← replaced
+      return;
+    }
+
+    final newPassError = DValidator.validatePassword(newPass);
+    if (newPassError != null) {
+      AppSnackbar.error(newPassError); // ← replaced
+      return;
+    }
+
+    if (newPass != confirmPass) {
+      AppSnackbar.error('New password and confirm password do not match'); // ← replaced
+      return;
+    }
+
+    controller.changePassword(
+      oldPassword: oldPass,
+      newPassword: newPass,
+      confirmPassword: confirmPass,
+    );
+  }
+
+  // ─── BUILD ─────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -38,7 +71,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
       ),
-      child: Scaffold(
+      child:NetworkAwareWrapper(child:  Scaffold(
         backgroundColor: Colors.grey[50],
         appBar: AppBar(
           elevation: 0,
@@ -47,12 +80,12 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
           iconTheme: const IconThemeData(color: Colors.white),
           title: const Text(
             'Change Password',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 17,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.1,
-              )
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.1,
+            ),
           ),
         ),
         body: SingleChildScrollView(
@@ -61,15 +94,10 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
-              // ── SECURITY BANNER ───────────────────────────────────────
               _buildSecurityBanner(),
               const SizedBox(height: 28),
-
-              // ── PASSWORD DETAILS ──────────────────────────────────────
               _sectionHeader('Password Details'),
               const SizedBox(height: 14),
-
               _buildFieldCard(
                 ctrl: _oldCtrl,
                 icon: Icons.lock_outline_rounded,
@@ -99,10 +127,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                 obscure: !_showConfirm,
                 onToggle: () => setState(() => _showConfirm = !_showConfirm),
               ),
-
               const SizedBox(height: 28),
-
-              // ── TIPS ──────────────────────────────────────────────────
               _sectionHeader('Password Tips'),
               const SizedBox(height: 14),
               _buildTipCard(Icons.straighten_rounded,  const Color(0xFF6366F1), 'At least 8 characters long'),
@@ -112,9 +137,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               _buildTipCard(Icons.tag_rounded,          const Color(0xFF3B82F6), 'Include numbers and symbols'),
               const SizedBox(height: 10),
               _buildTipCard(Icons.person_off_outlined,  const Color(0xFFF59E0B), 'Avoid personal information'),
-
               const SizedBox(height: 32),
-
               _buildUpdateButton(),
               const SizedBox(height: 12),
               _buildCancelButton(),
@@ -123,7 +146,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
           ),
         ),
       ),
-    );
+    ));
   }
 
   // ─── SECTION HEADER ────────────────────────────────────────────────────────
@@ -131,15 +154,15 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     return Text(
       title,
       style: const TextStyle(
-        fontSize: 18,              // was 16
-        fontWeight: FontWeight.w800, // was w700
-        color: Color(0xFF1A202C),  // was 0xFF2D3748
-        letterSpacing: -0.3,       // added
+        fontSize: 18,
+        fontWeight: FontWeight.w800,
+        color: Color(0xFF1A202C),
+        letterSpacing: -0.3,
       ),
     );
   }
 
-  // ─── INDIVIDUAL FIELD CARD ─────────────────────────────────────────────────
+  // ─── FIELD CARD ────────────────────────────────────────────────────────────
   Widget _buildFieldCard({
     required TextEditingController ctrl,
     required IconData icon,
@@ -181,10 +204,10 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 14,              // was 13
-                    fontWeight: FontWeight.w800, // was w700
-                    color: Color(0xFF1A202C),   // was 0xFF2D3748
-                    letterSpacing: -0.2,        // added
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1A202C),
+                    letterSpacing: -0.2,
                   ),
                 ),
                 const SizedBox(height: 5),
@@ -192,8 +215,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                   controller: ctrl,
                   obscureText: obscure,
                   style: TextStyle(
-                    fontSize: 14,              // was 13.5
-                    fontWeight: FontWeight.w600, // was w500
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
                     color: Colors.grey[700],
                   ),
                   decoration: InputDecoration(
@@ -201,7 +224,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                     hintStyle: TextStyle(
                       fontSize: 13,
                       color: Colors.grey[300],
-                      fontWeight: FontWeight.w500, // was w400
+                      fontWeight: FontWeight.w500,
                     ),
                     isDense: true,
                     contentPadding: EdgeInsets.zero,
@@ -235,7 +258,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     );
   }
 
-  // ─── INDIVIDUAL TIP CARD ───────────────────────────────────────────────────
+  // ─── TIP CARD ──────────────────────────────────────────────────────────────
   Widget _buildTipCard(IconData icon, Color color, String text) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -265,10 +288,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
           Text(
             text,
             style: const TextStyle(
-              fontSize: 14,              // was 13.5
-              // fontWeight: FontWeight.w700, // was w600
-              color: Color(0xFF1A202C),   // was 0xFF2D3748
-              letterSpacing: -0.1,        // added
+              fontSize: 14,
+              color: Color(0xFF1A202C),
+              letterSpacing: -0.1,
             ),
           ),
         ],
@@ -329,18 +351,18 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                     Text(
                       'Secure Your Account',
                       style: TextStyle(
-                        fontSize: 18,              // was 16
-                        fontWeight: FontWeight.w900, // was w800
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
                         color: Colors.white,
-                        letterSpacing: -0.4,        // was -0.3
+                        letterSpacing: -0.4,
                       ),
                     ),
                     SizedBox(height: 4),
                     Text(
                       'Update your password to keep\nyour account protected',
                       style: TextStyle(
-                        fontSize: 13,              // was 12
-                        fontWeight: FontWeight.w500, // was default w400
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
                         color: Colors.white70,
                         height: 1.45,
                       ),
@@ -385,10 +407,10 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
             Text(
               'Update Password',
               style: TextStyle(
-                fontSize: 16,              // was 15
-                fontWeight: FontWeight.w800, // was w700
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
                 color: Colors.white,
-                letterSpacing: -0.2,        // added
+                letterSpacing: -0.2,
               ),
             ),
           ],
@@ -421,55 +443,12 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
             'Cancel',
             style: TextStyle(
               fontSize: 15,
-              fontWeight: FontWeight.w700, // was w600
+              fontWeight: FontWeight.w700,
               color: Color(0xFF64748B),
             ),
           ),
         ),
       ),
-    );
-  }
-
-  void _handleUpdate() {
-    final oldPass = _oldCtrl.text.trim();
-    final newPass = _newCtrl.text.trim();
-    final confirmPass = _confirmCtrl.text.trim();
-
-    // Current password — just check not empty
-    if (oldPass.isEmpty) {
-      _snack('Missing Field', 'Please enter your current password');
-      return;
-    }
-
-    // New password — full DValidator check
-    final newPassError = DValidator.validatePassword(newPass);
-    if (newPassError != null) {
-      _snack('Invalid Password', newPassError);
-      return;
-    }
-
-    // Confirm match
-    if (newPass != confirmPass) {
-      _snack('Password Mismatch', 'New password and confirm password do not match');
-      return;
-    }
-
-    controller.changePassword(
-      oldPassword: oldPass,
-      newPassword: newPass,
-      confirmPassword: confirmPass,
-    );
-  }
-
-  void _snack(String title, String msg) {
-    Get.snackbar(
-      title, msg,
-      backgroundColor: const Color(0xFFEF4444),
-      colorText: Colors.white,
-      borderRadius: 14,
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      snackPosition: SnackPosition.TOP,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
     );
   }
 }

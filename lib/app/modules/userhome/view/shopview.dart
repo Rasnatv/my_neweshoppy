@@ -2,6 +2,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:eshoppy/app/modules/userhome/view/user_shopabotus.dart';
 import 'package:eshoppy/app/modules/userhome/view/user_viewmerchantgallery.dart';
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_colors.dart';
@@ -39,7 +40,7 @@ class _ShopDetailPageState extends State<ShopDetailPage> {
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: 3,
-      child: Scaffold(
+      child:NetworkAwareWrapper(child: Scaffold(
         backgroundColor: _bg,
         body: NestedScrollView(
           headerSliverBuilder: (context, innerBoxIsScrolled) {
@@ -305,50 +306,6 @@ class _ShopDetailPageState extends State<ShopDetailPage> {
                   );
                 }
 
-                // Empty state
-                if (controller.products.isEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(28),
-                            decoration: const BoxDecoration(
-                              color: _tealLight,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                                Icons.shopping_bag_outlined,
-                                size: 56,
-                                color: _teal),
-                          ),
-                          const SizedBox(height: 20),
-                          const Text(
-                            'No Products Yet',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              color: _textDark,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            "This shop hasn't added any products.\nCheck back soon!",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 13,
-                              height: 1.6,
-                              color: _textLight,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
                 // ── Grid + centered loader below ────────────────
                 return NotificationListener<ScrollNotification>(
                   onNotification: (scrollNotification) {
@@ -413,7 +370,7 @@ class _ShopDetailPageState extends State<ShopDetailPage> {
           ),
         ),
       ),
-    );
+    ));
   }
 }
 

@@ -39,13 +39,13 @@ class AdminaddAdvertisementController extends GetxController {
   final showMode = "district".obs;
 
   final String statesUrl =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/merchant/states";
+      "https://eshoppy.co.in/api/get-states";
   final String districtsUrl =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/districts";
+      "https://eshoppy.co.in/api/districts";
   final String areasUrl =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/areas";
+      "https://eshoppy.co.in/api/areas";
   final String apiUrl =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/advertisement";
+      "https://eshoppy.co.in/api/advertisement";
 
   @override
   void onInit() {
@@ -87,8 +87,6 @@ class AdminaddAdvertisementController extends GetxController {
       } else {
         AppSnackbar.error(ApiErrorHandler.handleResponse(res));
       }
-    } catch (e) {
-      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoadingStates.value = false;
     }
@@ -232,8 +230,6 @@ class AdminaddAdvertisementController extends GetxController {
       } else {
         AppSnackbar.error(ApiErrorHandler.handleResponse(res));
       }
-    } catch (e) {
-      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoading.value = false;
     }
@@ -249,3 +245,5 @@ class AdminaddAdvertisementController extends GetxController {
     showMode.value = "district";
   }
 }
+
+

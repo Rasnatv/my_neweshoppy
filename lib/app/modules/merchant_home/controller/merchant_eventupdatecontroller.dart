@@ -38,7 +38,7 @@ class EventUpdateController extends GetxController {
   final pickedImageBase64 = RxnString();
 
   static const _baseUrl =
-      'https://rasma.astradevelops.in/e_shoppyy/public/api';
+      'https://eshoppy.co.in/api';
 
   final _box = GetStorage();
 
@@ -370,7 +370,6 @@ class EventUpdateController extends GetxController {
 
         AppSnackbar.success("Event updated successfully");
 
-        Get.off(MerchantEventsPage());
       } else if (response.statusCode != 200) {
         AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }

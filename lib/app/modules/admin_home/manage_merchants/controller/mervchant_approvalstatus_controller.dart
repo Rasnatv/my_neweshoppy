@@ -13,16 +13,6 @@ class AdminMerchantController extends GetxController {
   var merchants = <AdminMerchant>[].obs;
   var isLoading = false.obs;
 
-  /// ---------------- AUTH CHECK ----------------
-  bool _checkAuth() {
-    final token = box.read("auth_token");
-
-    if (token == null || token.toString().isEmpty) {
-      Get.offAllNamed('/login');
-      return false;
-    }
-    return true;
-  }
 
   Map<String, String> _headers() {
     final token = box.read("auth_token") ?? '';
@@ -40,14 +30,13 @@ class AdminMerchantController extends GetxController {
 
   /// ---------------- FETCH MERCHANTS ----------------
   Future<void> fetchMerchants() async {
-    if (!_checkAuth()) return;
 
     isLoading.value = true;
 
     try {
       final response = await http.get(
         Uri.parse(
-          "https://rasma.astradevelops.in/e_shoppyy/public/api/admin/merchants",
+          "https://eshoppy.co.in/api/admin/merchants",
         ),
         headers: _headers(),
       );

@@ -9,7 +9,6 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../data/errors/api_error.dart';
 import '../../../data/models/edit_profilemodel.dart';
-import '../../../widgets/network_trihgiger.dart';
 import '../../merchantlogin/widget/successwidget.dart'; // ← adjust path
 
 class EditProfileController extends GetxController {
@@ -43,7 +42,7 @@ class EditProfileController extends GetxController {
 
       final response = await http.get(
         Uri.parse(
-            'https://rasma.astradevelops.in/e_shoppyy/public/api/get-profile'),
+            'https://eshoppy.co.in/api/get-profile'),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
@@ -69,8 +68,8 @@ class EditProfileController extends GetxController {
         AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
-      // AppSnackbar.error(ApiErrorHandler.handleException(e));
-      // debugPrint('fetchProfile error: $e');
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
+      debugPrint('fetchProfile error: $e');
     } finally {
       isLoading(false);
     }
@@ -107,7 +106,7 @@ class EditProfileController extends GetxController {
 
       final response = await http.post(
         Uri.parse(
-            'https://rasma.astradevelops.in/e_shoppyy/public/api/edit-profile'),
+            'https://eshoppy.co.in/api/edit-profile'),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
@@ -143,8 +142,8 @@ class EditProfileController extends GetxController {
         AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
-      // AppSnackbar.error(ApiErrorHandler.handleException(e));
-      // debugPrint('updateProfile error: $e');
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
+
     } finally {
       isLoading(false);
     }

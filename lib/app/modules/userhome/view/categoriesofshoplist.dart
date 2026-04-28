@@ -1,5 +1,6 @@
 
 import 'dart:ui';
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -17,7 +18,7 @@ class Categoriesofshoplist extends StatelessWidget {
     final CompanyController controller =
     Get.find<CompanyController>();
 
-    return Scaffold(
+    return NetworkAwareWrapper(child:Scaffold(
       appBar: AppBar(
         backgroundColor: AppColors.kPrimary,
         iconTheme: IconThemeData(color: Colors.white),
@@ -53,6 +54,6 @@ class Categoriesofshoplist extends StatelessWidget {
           },
         );
       }),
-    );
+    ));
   }
 }

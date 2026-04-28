@@ -23,7 +23,7 @@ class AdminCategoryController extends GetxController {
   final box = GetStorage();
 
   final String apiUrl =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/addcategories";
+      "https://eshoppy.co.in/api/addcategories";
 
   /// PICK IMAGE
   Future<void> pickImage() async {

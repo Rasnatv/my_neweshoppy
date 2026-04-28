@@ -18,7 +18,7 @@ class GalleryController extends GetxController {
   final GetStorage box = GetStorage();
 
   final String apiUrl =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/user/restaurant/images";
+      "https://eshoppy.co.in/api/user/restaurant/images";
 
   @override
   void onInit() {
@@ -32,12 +32,6 @@ class GalleryController extends GetxController {
       errorMessage('');
 
       final token = box.read('auth_token');
-
-      if (token == null || token.isEmpty) {
-        errorMessage('Session expired. Please login again.');
-        AppSnackbar.error(errorMessage.value);
-        return;
-      }
 
       final response = await http.post(
         Uri.parse(apiUrl),

@@ -44,7 +44,7 @@ class ForgotPasswordController extends GetxController {
 
       final response = await http.post(
         Uri.parse(
-          "https://rasma.astradevelops.in/e_shoppyy/public/api/forgot-password",
+          "https://eshoppy.co.in/api/forgot-password",
         ),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({

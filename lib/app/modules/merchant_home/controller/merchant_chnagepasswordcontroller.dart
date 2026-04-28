@@ -25,7 +25,7 @@ class MerchantChangePasswordController extends GetxController {
   final box = GetStorage();
 
   static const String _changePasswordUrl =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/merchant/change-password";
+      "https://eshoppy.co.in/api/merchant/change-password";
 
   @override
   void onClose() {

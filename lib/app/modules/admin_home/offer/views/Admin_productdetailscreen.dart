@@ -1,4 +1,5 @@
 import 'package:eshoppy/app/common/style/app_colors.dart';
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -12,7 +13,7 @@ class AdminSingleOfferProductScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(AdminSingleOfferProductController());
-    return Scaffold(
+    return NetworkAwareWrapper(child: Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       body: Obx(() {
         if (controller.isLoading.value) return const _LoadingView();
@@ -25,7 +26,7 @@ class AdminSingleOfferProductScreen extends StatelessWidget {
         if (controller.product.value == null) return const _LoadingView();
         return _DetailContent(controller: controller);
       }),
-    );
+    ));
   }
 }
 

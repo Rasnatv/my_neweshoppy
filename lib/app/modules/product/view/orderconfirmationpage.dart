@@ -1,4 +1,5 @@
 
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -19,7 +20,7 @@ class OrderConfirmationPage extends StatelessWidget {
     final controller = Get.put(OrderConfirmationController(addressId: addressId));
 
 
-    return Scaffold(
+    return NetworkAwareWrapper(child: Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
         backgroundColor: AppColors.kPrimary,
@@ -53,7 +54,7 @@ class OrderConfirmationPage extends StatelessWidget {
         final preview = controller.orderPreview.value!;
         return _buildBody(preview, controller);
       }),
-    );
+    ));
   }
 
   // ── Error State ─────────────────────────────────────────────────────────────

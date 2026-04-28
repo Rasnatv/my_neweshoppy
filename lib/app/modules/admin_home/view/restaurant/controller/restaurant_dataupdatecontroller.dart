@@ -33,18 +33,18 @@ class AdminRestaurantUpdateController extends GetxController {
   var additionalImages = <File>[].obs;
   var existingAdditionalImageUrls = <String>[].obs;
 
+  // ✅ Track whether user explicitly modified additional images
+  // (removed existing OR added new ones)
+  var additionalImagesModified = false.obs;
+
   final box = GetStorage();
   final ImagePicker _picker = ImagePicker();
 
   String? restaurantId;
   bool _isDataLoaded = false;
 
-  static const String _baseUrl =
-      "https://rasma.astradevelops.in/e_shoppyy/public/";
+  // ── Validators ────────────────────────────────────────────────────────────
 
-  // ── URL Validators ────────────────────────────────────────────────────────
-
-  /// Generic: must be http/https URL if not empty
   String? validateUrl(String? value, String fieldName) {
     if (value == null || value.trim().isEmpty) return null;
     final uri = Uri.tryParse(value.trim());
@@ -54,10 +54,8 @@ class AdminRestaurantUpdateController extends GetxController {
     return null;
   }
 
-  /// Website: any valid http/https URL
   String? validateWebsiteUrl(String? value) => validateUrl(value, 'Website');
 
-  /// Facebook: must contain facebook.com
   String? validateFacebookUrl(String? value) {
     if (value == null || value.trim().isEmpty) return null;
     final err = validateUrl(value, 'Facebook');
@@ -68,7 +66,6 @@ class AdminRestaurantUpdateController extends GetxController {
     return null;
   }
 
-  /// Instagram: must be instagram.com URL or @handle
   String? validateInstagramUrl(String? value) {
     if (value == null || value.trim().isEmpty) return null;
     final v = value.trim();
@@ -81,7 +78,6 @@ class AdminRestaurantUpdateController extends GetxController {
     return null;
   }
 
-  /// WhatsApp: exactly 10 digits if not empty
   String? validateWhatsapp(String? value) {
     if (value == null || value.trim().isEmpty) return null;
     if (value.trim().length != 10) {
@@ -108,6 +104,7 @@ class AdminRestaurantUpdateController extends GetxController {
     super.onClose();
   }
 
+  // ── Load Data ─────────────────────────────────────────────────────────────
   void loadRestaurantData(Map<String, dynamic> data) {
     if (_isDataLoaded) return;
     _isDataLoaded = true;
@@ -126,18 +123,50 @@ class AdminRestaurantUpdateController extends GetxController {
     restaurantImageUrl.value = data['restaurant_image'] ?? '';
     qrImageUrl.value = data['qr_code'] ?? '';
 
+    // ✅ FIX: Robust additional images parsing
+    // API can return:
+    //   ["https://..."]  → valid URLs, keep them
+    //   [{}]             → empty objects, skip (treat as no images)
+    //   []               → empty array, no images
+    //   null             → no images
     if (data['additional_images'] != null) {
-      existingAdditionalImageUrls.value =
-      List<String>.from(data['additional_images']);
+      final raw = data['additional_images'] as List;
+      final parsed = <String>[];
+
+      for (final item in raw) {
+        if (item is String) {
+          final trimmed = item.trim();
+          if (trimmed.isNotEmpty && trimmed.startsWith('http')) {
+            parsed.add(trimmed);
+          }
+        } else if (item is Map && item.isNotEmpty) {
+          // Handle object formats like {"url":"..."} {"image":"..."} etc.
+          final url = (item['url'] ??
+              item['image'] ??
+              item['image_url'] ??
+              item['path'] ??
+              item['src'] ??
+              item['file'] ??
+              '')
+              ?.toString()
+              .trim();
+          if (url != null && url.isNotEmpty) {
+            if (url.startsWith('http')) {
+              parsed.add(url);
+            } else {
+              parsed.add("https://eshoppy.co.in/$url");
+            }
+          }
+        }
+        // Empty {} or null items are silently skipped ✅
+      }
+
+      existingAdditionalImageUrls.value = parsed;
+      debugPrint("✅ Loaded ${parsed.length} additional images: $parsed");
     }
   }
 
-  String _stripBaseUrl(String url) {
-    return url.startsWith(_baseUrl)
-        ? url.replaceFirst(_baseUrl, '')
-        : url;
-  }
-
+  // ── Image Pickers ─────────────────────────────────────────────────────────
   Future<void> pickRestaurantImage() async {
     final file = await _picker.pickImage(source: ImageSource.gallery);
     if (file != null) restaurantImage.value = File(file.path);
@@ -150,13 +179,23 @@ class AdminRestaurantUpdateController extends GetxController {
 
   Future<void> pickAdditionalImages() async {
     final files = await _picker.pickMultiImage();
-    additionalImages.addAll(files.map((e) => File(e.path)));
+    if (files.isNotEmpty) {
+      additionalImages.addAll(files.map((e) => File(e.path)));
+      additionalImagesModified.value = true; // ✅ Mark as modified
+    }
   }
 
-  void removeAdditionalImage(int i) => additionalImages.removeAt(i);
-  void removeExistingAdditionalImage(int i) =>
-      existingAdditionalImageUrls.removeAt(i);
+  void removeAdditionalImage(int i) {
+    additionalImages.removeAt(i);
+    additionalImagesModified.value = true; // ✅ Mark as modified
+  }
 
+  void removeExistingAdditionalImage(int i) {
+    existingAdditionalImageUrls.removeAt(i);
+    additionalImagesModified.value = true; // ✅ Mark as modified
+  }
+
+  // ── Update ────────────────────────────────────────────────────────────────
   Future<void> updateRestaurant() async {
     if (!(formKey.currentState?.validate() ?? false)) return;
 
@@ -164,17 +203,13 @@ class AdminRestaurantUpdateController extends GetxController {
       isUpdating.value = true;
 
       final token = box.read("auth_token");
-
       final url = Uri.parse(
-          "https://rasma.astradevelops.in/e_shoppyy/public/api/admin/restaurant/update");
-
-      // ── Switch to JSON body instead of MultipartRequest ──────────────────
-      // Because API expects all images as base64 strings, not multipart files
+          "https://eshoppy.co.in/api/admin/restaurant/update");
 
       final Map<String, dynamic> body = {};
 
-      // ── Fields ──────────────────────────────────────────────────────────
-      body['restaurant_id'] = restaurantId.toString();
+      // ── Text Fields ──────────────────────────────────────────────────────
+      body['restaurant_id'] = restaurantId ?? '';
       body['restaurant_name'] = restaurantNameController.text.trim();
       body['owner_name'] = ownerNameController.text.trim();
       body['address'] = addressController.text.trim();
@@ -187,44 +222,60 @@ class AdminRestaurantUpdateController extends GetxController {
       body['upi_id'] = upiIdController.text.trim();
 
       // ── Main Restaurant Image ────────────────────────────────────────────
+      // ✅ Only send when a NEW image is picked (as base64).
+      // When unchanged, omit the key → backend keeps existing file.
       if (restaurantImage.value != null) {
-        // New image selected — convert to base64
         final bytes = await restaurantImage.value!.readAsBytes();
         body['restaurant_image'] =
         "data:image/jpeg;base64,${base64Encode(bytes)}";
-      } else if (restaurantImageUrl.value.isNotEmpty) {
-        // No change — send existing URL
-        body['restaurant_image'] = restaurantImageUrl.value;
       }
 
       // ── QR Code ──────────────────────────────────────────────────────────
+      // ✅ Same fix as restaurant_image above.
       if (qrImage.value != null) {
-        // New QR selected — convert to base64
         final bytes = await qrImage.value!.readAsBytes();
         body['qr_code'] = "data:image/png;base64,${base64Encode(bytes)}";
-      } else if (qrImageUrl.value.isNotEmpty) {
-        // No change — send existing URL
-        body['qr_code'] = qrImageUrl.value;
       }
 
       // ── Additional Images ────────────────────────────────────────────────
-      final List<String> allAdditionalImages = [];
+      // ✅ KEY FIX:
+      // Only send additional_images if the user actually modified them
+      // (added new images OR removed existing ones).
+      //
+      // If NOT modified → omit the key entirely → backend keeps existing
+      // files untouched. This prevents the 500 "unlink(): Is a directory"
+      // crash caused by the API returning [{}] (empty objects), which get
+      // filtered to [], and [] sent to backend triggers a bad unlink call.
+      if (additionalImagesModified.value) {
+        final List<String> allAdditionalImages = [];
 
-      // Keep existing ones
-      for (var url in existingAdditionalImageUrls) {
-        allAdditionalImages.add(url);
+        for (final existingUrl in existingAdditionalImageUrls) {
+          final trimmed = existingUrl.trim();
+          if (trimmed.isNotEmpty && trimmed.startsWith('http')) {
+            allAdditionalImages.add(trimmed);
+          }
+        }
+
+        for (final file in additionalImages) {
+          final bytes = await file.readAsBytes();
+          allAdditionalImages
+              .add("data:image/jpeg;base64,${base64Encode(bytes)}");
+        }
+
+        body['additional_images'] = allAdditionalImages;
+
+        debugPrint(
+            "📤 Sending ${allAdditionalImages.length} additional images (modified)");
+        debugPrint(
+            "📤 Existing URLs: ${allAdditionalImages.where((e) => e.startsWith('http')).toList()}");
+        debugPrint(
+            "📤 New images count: ${allAdditionalImages.where((e) => e.startsWith('data:')).length}");
+      } else {
+        debugPrint(
+            "📤 Additional images NOT modified — key omitted from request");
       }
 
-      // Convert new ones to base64
-      for (var file in additionalImages) {
-        final bytes = await file.readAsBytes();
-        allAdditionalImages
-            .add("data:image/jpeg;base64,${base64Encode(bytes)}");
-      }
-
-      body['additional_images'] = allAdditionalImages;
-
-      // ── Send as JSON ──────────────────────────────────────────────────────
+      // ── Send ──────────────────────────────────────────────────────────────
       final response = await http.post(
         url,
         headers: {
@@ -260,4 +311,5 @@ class AdminRestaurantUpdateController extends GetxController {
     } finally {
       isUpdating.value = false;
     }
-  }}
+  }
+}

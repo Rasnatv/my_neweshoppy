@@ -118,7 +118,7 @@ class _LoginScreenState extends State<LoginScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return NetworkAwareWrapper(child:Scaffold(
       body: Container(
         color: AppColors.kPrimary.withOpacity(0.04),
         child: SafeArea(
@@ -153,40 +153,9 @@ class _LoginScreenState extends State<LoginScreen>
           ),
         ),
       ),
-    );
+    ));
   }
 
-  // // ─── Badge ────────────────────────────────────────────────────────────────
-  // Widget _buildBadge() {
-  //   return Container(
-  //     width: 88,
-  //     height: 88,
-  //     decoration: BoxDecoration(
-  //       color: AppColors.kPrimary,
-  //       borderRadius: BorderRadius.circular(28),
-  //       boxShadow: _T.accentShadow(AppColors.kPrimary),
-  //     ),
-  //     child: ClipRRect(
-  //       borderRadius: BorderRadius.circular(28),
-  //       child: Stack(
-  //         alignment: Alignment.center,
-  //         children: [
-  //           Positioned.fill(
-  //             child: CustomPaint(painter: _RingPainter(AppColors.kPrimary)),
-  //           ),
-  //           Image.asset(
-  //             'assets/images/logo/eshoppycatlogo.png',
-  //             width: 70,
-  //             height: 70,
-  //             fit: BoxFit.contain,
-  //             alignment: Alignment.center,
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
-// ─── Badge ────────────────────────────────────────────────────────────────
   Widget _buildBadge() {
     return Container(
       width: 88,

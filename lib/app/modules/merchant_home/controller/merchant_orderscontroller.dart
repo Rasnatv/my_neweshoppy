@@ -29,7 +29,7 @@ class MerchantOrdersController extends GetxController {
 
       final response = await http.get(
         Uri.parse(
-          'https://rasma.astradevelops.in/e_shoppyy/public/api/merchant/orders',
+          'https://eshoppy.co.in/api/merchant/orders',
         ),
         headers: {
           'Content-Type': 'application/json',

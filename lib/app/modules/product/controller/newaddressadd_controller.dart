@@ -27,7 +27,7 @@ class NewAddAddressController extends GetxController {
   final RxBool isLoading = false.obs;
 
   static const String baseUrl =
-      'https://rasma.astradevelops.in/e_shoppyy/public/api';
+      'https://eshoppy.co.in/api';
 
   String get authToken => box.read('auth_token') ?? '';
 

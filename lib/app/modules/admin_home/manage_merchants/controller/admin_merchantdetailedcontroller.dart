@@ -16,18 +16,7 @@ class AdminMerchantDetailController extends GetxController {
   var isLoading = true.obs;
   var merchant = Rxn<AdminMerchantDetail>();
 
-  /// ===============================
-  /// AUTH CHECK
-  /// ===============================
-  bool _checkAuth() {
-    final token = box.read("auth_token");
 
-    if (token == null || token.toString().isEmpty) {
-      Get.offAllNamed('/login');
-      return false;
-    }
-    return true;
-  }
 
   Map<String, String> _headers() {
     final token = box.read("auth_token") ?? '';
@@ -37,18 +26,14 @@ class AdminMerchantDetailController extends GetxController {
     };
   }
 
-  /// ===============================
-  /// FETCH MERCHANT DETAILS
-  /// ===============================
   Future<void> fetchMerchantDetail(int merchantId) async {
-    if (!_checkAuth()) return;
 
     isLoading.value = true;
 
     try {
       final response = await http.post(
         Uri.parse(
-          "https://rasma.astradevelops.in/e_shoppyy/public/api/admin/merchant/details",
+          "https://eshoppy.co.in/api/admin/merchant/details",
         ),
         headers: _headers(),
         body: {
@@ -75,19 +60,15 @@ class AdminMerchantDetailController extends GetxController {
     }
   }
 
-  /// ===============================
-  /// APPROVE / REJECT MERCHANT
-  /// ===============================
   Future<void> updateApproval({
     required int merchantId,
     required String status, // approved | rejected
   }) async {
-    if (!_checkAuth()) return;
 
     try {
       final response = await http.post(
         Uri.parse(
-          "https://rasma.astradevelops.in/e_shoppyy/public/api/admin/merchant/approve-reject",
+          "https://eshoppy.co.in/api/admin/merchant/approve-reject",
         ),
         headers: _headers(),
         body: {

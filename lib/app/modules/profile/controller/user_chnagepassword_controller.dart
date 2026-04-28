@@ -20,17 +20,13 @@ class ChangePasswordController extends GetxController {
     required String newPassword,
     required String confirmPassword,
   }) async {
-    if (_token.isEmpty) {
-      AppSnackbar.warning('Please log in to change your password.');
-      return;
-    }
 
     try {
       isLoading.value = true;
 
       final response = await http.post(
         Uri.parse(
-          'https://rasma.astradevelops.in/e_shoppyy/public/api/change-password',
+          'https://eshoppy.co.in/api/change-password',
         ),
         headers: {
           'Authorization': 'Bearer $_token',

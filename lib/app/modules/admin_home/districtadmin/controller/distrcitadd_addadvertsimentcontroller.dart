@@ -34,9 +34,10 @@ class DistrictAdminAdvertisementController extends GetxController {
   final _box = GetStorage();
 
   static const String _baseUrl =
-      'https://rasma.astradevelops.in/e_shoppyy/public/api/district-admin';
+      // 'https://rasma.astradevelops.in/e_shoppyy/public/api/district-admin';
+  "https://eshoppy.co.in/api/district-admin";
   static const String _publicBaseUrl =
-      'https://rasma.astradevelops.in/e_shoppyy/public/api';
+      'https://eshoppy.co.in/api';
 
   String get token => _box.read('auth_token') ?? '';
 
@@ -81,10 +82,10 @@ class DistrictAdminAdvertisementController extends GetxController {
           data.map((e) => (e['state'] ?? '').toString()).toList(),
         );
       } else {
-        AppSnackbarss.error(ApiErrorHandler.handleResponse(res));
+        AppSnackbar.error(ApiErrorHandler.handleResponse(res));
       }
     } catch (e) {
-      AppSnackbarss.error(ApiErrorHandler.handleException(e));
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isStatesLoading.value = false;
     }
@@ -107,10 +108,10 @@ class DistrictAdminAdvertisementController extends GetxController {
         final List data = body['data'] ?? [];
         districts.assignAll(data.map((e) => e.toString()).toList());
       } else {
-        AppSnackbarss.error(ApiErrorHandler.handleResponse(res));
+        AppSnackbar.error(ApiErrorHandler.handleResponse(res));
       }
     } catch (e) {
-      AppSnackbarss.error(ApiErrorHandler.handleException(e));
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isDistrictLoading.value = false;
     }
@@ -159,16 +160,16 @@ class DistrictAdminAdvertisementController extends GetxController {
   bool validate() {
     if (adName.text.trim().isEmpty) {
       isTitleEmpty.value = true;
-      AppSnackbarss.warning("Enter advertisement title");
+      AppSnackbar.warning("Enter advertisement title");
       return false;
     } else if (selectedState.value.isEmpty) {
-      AppSnackbarss.warning("Select a state");
+      AppSnackbar.warning("Select a state");
       return false;
     } else if (selectedDistrict.value.isEmpty) {
-      AppSnackbarss.warning("Select a district");
+      AppSnackbar.warning("Select a district");
       return false;
     } else if (bannerImage.value == null) {
-      AppSnackbarss.warning("Select banner image");
+      AppSnackbar.warning("Select banner image");
       return false;
     }
     return true;
@@ -205,7 +206,7 @@ class DistrictAdminAdvertisementController extends GetxController {
       if ((response.statusCode == 200 || response.statusCode == 201) &&
           resData['status'] == true) {
 
-        AppSnackbarss.success(
+        AppSnackbar.success(
             resData['message'] ?? "Advertisement created");
 
         if (Get.isRegistered<DistrictAdminAdvertisementGetController>()) {
@@ -217,10 +218,10 @@ class DistrictAdminAdvertisementController extends GetxController {
         Get.offAll(() => Districtadminhomepage());
 
       } else {
-        AppSnackbarss.error(ApiErrorHandler.handleResponse(response));
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
-      AppSnackbarss.error(ApiErrorHandler.handleException(e));
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoading.value = false;
     }

@@ -1,4 +1,5 @@
 import 'package:eshoppy/app/modules/admin_home/categories/views/update_categorycontroller.dart';
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -27,7 +28,7 @@ class EditCategoryPage extends StatelessWidget {
       controller.init(categoryId);
     });
 
-    return Scaffold(
+    return NetworkAwareWrapper(child:Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         elevation: 0,
@@ -411,7 +412,7 @@ class EditCategoryPage extends StatelessWidget {
           ),
         );
       }),
-    );
+    ));
   }
 
   // ── Header ────────────────────────────────────────────────────────────────

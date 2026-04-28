@@ -21,7 +21,7 @@ class MerchantOfferProductController extends GetxController {
   final box = GetStorage();
 
   static const String _base =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api";
+      "https://eshoppy.co.in/api";
 
   String get _token => box.read("auth_token") ?? "";
 
@@ -39,10 +39,7 @@ class MerchantOfferProductController extends GetxController {
 
   // ================= FETCH =================
   Future<void> fetchOfferProduct() async {
-    if (_token.isEmpty) {
-      AppSnackbar.error("Session expired. Please login again");
-      return;
-    }
+
 
     isLoading.value = true;
     offerProducts.clear();

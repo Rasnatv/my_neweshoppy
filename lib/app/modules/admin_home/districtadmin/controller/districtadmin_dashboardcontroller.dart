@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 
 import '../../../../data/errors/api_error.dart';
 import '../../../../widgets/areaadminsuccesswidget.dart';
+import '../../../merchantlogin/widget/successwidget.dart';
 
 
 class DistrictAdminDashboardController extends GetxController {
@@ -17,7 +18,7 @@ class DistrictAdminDashboardController extends GetxController {
   var totalAdvertisements = 0.obs;
 
   final String url =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/district-admin/dashboard-count";
+      "https://eshoppy.co.in/api/district-admin/dashboard-count";
 
   String get token => box.read('auth_token') ?? '';
 
@@ -52,11 +53,11 @@ class DistrictAdminDashboardController extends GetxController {
             data['data']['total_advertisements'] ?? 0;
 
       } else {
-        AppSnackbarss.error(ApiErrorHandler.handleResponse(response));
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
       print("ERROR: $e");
-      AppSnackbarss.error(ApiErrorHandler.handleException(e));
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoading(false);
     }

@@ -33,7 +33,7 @@ class CategoryController extends GetxController {
   final items = <ItemData>[].obs;
 
   final String url =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/categories";
+      "https://eshoppy.co.in/api/categories";
 
   /// 📷 Pick Image
   Future<void> pickImage() async {

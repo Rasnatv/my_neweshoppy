@@ -10,6 +10,7 @@ import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
  // ← adjust path
 import '../../../../data/errors/api_error.dart';
+import '../../../merchantlogin/widget/successwidget.dart';
 import '../view/districtadmin_home.dart';
 import 'districtadmin_eventgettingcontroller.dart';
 
@@ -18,9 +19,9 @@ class DistrictAdminUpdateEventController extends GetxController {
 
   // ─── API URLs ─────────────────────────────────────
   static const String _baseUrl =
-      'https://rasma.astradevelops.in/e_shoppyy/public/api/district-admin';
+      'https://eshoppy.co.in/api/district-admin';
   static const String _publicBaseUrl =
-      'https://rasma.astradevelops.in/e_shoppyy/public/api';
+      'https://eshoppy.co.in/api';
 
   // ─── Observables ──────────────────────────────────
   final isLoading          = false.obs;
@@ -98,13 +99,13 @@ class DistrictAdminUpdateEventController extends GetxController {
           states.assignAll(
             data.map((e) => (e['state'] ?? '').toString()).toList(),
           );
-        } AppSnackbarss.error(body['message'] ?? 'Failed to load states');
+        }
         }
       else {
-    AppSnackbarss.error(ApiErrorHandler.handleResponse(response));
+    AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
-      AppSnackbarss.error(ApiErrorHandler.handleException(e));
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isStatesLoading.value = false;
     }
@@ -127,14 +128,12 @@ class DistrictAdminUpdateEventController extends GetxController {
         if (body['status'] == true) {
           final List data = body['data'] ?? [];
           districts.assignAll(data.map((e) => e.toString()).toList());
-        } else {
-          AppSnackbarss.error(body['message'] ?? 'Failed to load districts');
         }
       } else {
-        AppSnackbarss.error(ApiErrorHandler.handleResponse(response));
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
-      AppSnackbarss.error(ApiErrorHandler.handleException(e));
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isDistrictsLoading.value = false;
     }
@@ -157,14 +156,12 @@ class DistrictAdminUpdateEventController extends GetxController {
         final body = jsonDecode(response.body);
         if (body['status'] == true) {
           _prefillFromResponse(body['data']);
-        } else {
-          AppSnackbarss.error(body['message'] ?? 'Failed to fetch event');
         }
       } else {
-        AppSnackbarss.error(ApiErrorHandler.handleResponse(response));
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
-      AppSnackbarss.error(ApiErrorHandler.handleException(e));
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isEventLoading.value = false;
     }
@@ -195,7 +192,7 @@ class DistrictAdminUpdateEventController extends GetxController {
     File file = File(picked.path);
 
     if (await file.length() > 1024 * 1024) {
-      AppSnackbarss.error('Image must be less than 1 MB');
+      AppSnackbar.error('Image must be less than 1 MB');
       errorBanner.value = 'Image must be less than 1 MB';
       return;
     }
@@ -266,7 +263,7 @@ class DistrictAdminUpdateEventController extends GetxController {
           final end = DateTime.tryParse(endDate.value!);
           if (end != null && end.isBefore(picked)) {
             endDate.value = null;
-            AppSnackbarss.warning(
+            AppSnackbar.warning(
               'End date was reset because it was before the new start date.',
             );
           }
@@ -322,7 +319,7 @@ class DistrictAdminUpdateEventController extends GetxController {
         endDate.value   == null ||
         startTime.value == null ||
         endTime.value   == null) {
-      AppSnackbarss.error('Please fill all fields');
+      AppSnackbar.error('Please fill all fields');
       return;
     }
 
@@ -363,7 +360,7 @@ class DistrictAdminUpdateEventController extends GetxController {
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
         if (body['status'] == true) {
-          AppSnackbarss.success(body['message'] ?? 'Event updated successfully');
+          AppSnackbar.success(body['message'] ?? 'Event updated successfully');
           await Future.delayed(const Duration(milliseconds: 300));
 
           if (Get.isRegistered<DistrictAdminGettingEventController>()) {
@@ -372,13 +369,13 @@ class DistrictAdminUpdateEventController extends GetxController {
 
           Get.toNamed('/districtadminhome');
         } else {
-          AppSnackbarss.error(body['message'] ?? 'Update failed');
+          AppSnackbar.error(body['message'] ?? 'Update failed');
         }
       } else {
-        AppSnackbarss.error(ApiErrorHandler.handleResponse(response));
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
-      AppSnackbarss.error(ApiErrorHandler.handleException(e));
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoading.value = false;
     }

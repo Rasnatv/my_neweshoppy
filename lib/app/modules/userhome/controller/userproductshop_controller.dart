@@ -28,9 +28,10 @@ class UserShopProductController extends GetxController {
 
   // ── API endpoints ─────────────────────────────────────────
   final String productApi =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/shop-products";
+      //"https://rasma.astradevelops.in/e_shoppyy/public/api/shop-products";
+       "https://eshoppy.co.in/api/shop-products?page=1&per_page=10" ;
   final String shopDetailApi =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/shop-details";
+      "https://eshoppy.co.in/api/shop-details";
 
   // ── Entry point called by the view ────────────────────────
   Future<void> loadShop(int merchantId) async {

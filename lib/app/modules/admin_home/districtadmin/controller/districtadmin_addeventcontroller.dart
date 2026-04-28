@@ -11,6 +11,7 @@ import 'package:http/http.dart' as http;
 
 import '../../../../data/errors/api_error.dart';
 import '../../../../widgets/areaadminsuccesswidget.dart';
+import '../../../merchantlogin/widget/successwidget.dart';
 import '../view/districtadmin_home.dart';
 
 class DistrictAdminEventAddController extends GetxController {
@@ -39,9 +40,9 @@ class DistrictAdminEventAddController extends GetxController {
 
 
   static const String _baseUrl =
-      'https://rasma.astradevelops.in/e_shoppyy/public/api/district-admin';
+      'https://eshoppy.co.in/api/district-admin';
   static const String _publicBaseUrl =
-      'https://rasma.astradevelops.in/e_shoppyy/public/api';
+      'https://eshoppy.co.in/api';
 
   @override
   void onInit() {
@@ -82,10 +83,10 @@ class DistrictAdminEventAddController extends GetxController {
           data.map((e) => (e['state'] ?? '').toString()).toList(),
         );
       } else {
-        AppSnackbarss.error(ApiErrorHandler.handleResponse(response));
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
-      AppSnackbarss.error(ApiErrorHandler.handleException(e));
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isStatesLoading.value = false;
     }
@@ -109,10 +110,10 @@ class DistrictAdminEventAddController extends GetxController {
         final List data = body['data'] ?? [];
         districts.assignAll(data.map((e) => e.toString()).toList());
       } else {
-        AppSnackbarss.error(ApiErrorHandler.handleResponse(response));
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
-      AppSnackbarss.error(ApiErrorHandler.handleException(e));
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isDistrictsLoading.value = false;
     }
@@ -184,14 +185,6 @@ class DistrictAdminEventAddController extends GetxController {
     );
   }
 
-  // // ─── IMAGE ────────────────────────────────────
-  // Future<void> pickBannerImage() async {
-  //   final file = await _picker.pickImage(
-  //     source: ImageSource.gallery,
-  //     imageQuality: 80,
-  //   );
-  //   if (file != null) bannerImage.value = File(file.path);
-  // }
   Future<void> pickBannerImage() async {
     final picked = await picker.pickImage(
       source: ImageSource.gallery,
@@ -238,25 +231,25 @@ class DistrictAdminEventAddController extends GetxController {
   // ─── VALIDATION ───────────────────────────────
   bool _validateForm() {
     if (eventName.text.trim().isEmpty) {
-      AppSnackbarss.warning('Enter event name');
+      AppSnackbar.warning('Enter event name');
       return false;
     } else if (selectedState.value.isEmpty) {
-      AppSnackbarss.warning('Select state');
+      AppSnackbar.warning('Select state');
       return false;
     } else if (selectedDistrict.value.isEmpty) {
-      AppSnackbarss.warning('Select district');
+      AppSnackbar.warning('Select district');
       return false;
     } else if (startDate.value.isEmpty || endDate.value.isEmpty) {
-      AppSnackbarss.warning('Select dates');
+      AppSnackbar.warning('Select dates');
       return false;
     } else if (startTime.value.isEmpty || endTime.value.isEmpty) {
-      AppSnackbarss.warning('Select time');
+      AppSnackbar.warning('Select time');
       return false;
     } else if (eventLocation.text.trim().isEmpty) {
-      AppSnackbarss.warning('Enter event location');
+      AppSnackbar.warning('Enter event location');
       return false;
     } else if (bannerImage.value == null) {
-      AppSnackbarss.warning('Select banner image');
+      AppSnackbar.warning('Select banner image');
       return false;
     }
     return true;
@@ -295,18 +288,18 @@ class DistrictAdminEventAddController extends GetxController {
       if (response.statusCode == 200 &&
           (responseData['status'] == true || responseData['status'] == 1)) {
 
-        AppSnackbarss.success(
+        AppSnackbar.success(
             responseData['message'] ?? 'Event created successfully');
 
         _resetForm();
         Get.offAll(() => Districtadminhomepage());
 
       } else {
-        AppSnackbarss.error(ApiErrorHandler.handleResponse(response));
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
 
     } catch (e) {
-      AppSnackbarss.error(ApiErrorHandler.handleException(e));
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoading.value = false;
     }

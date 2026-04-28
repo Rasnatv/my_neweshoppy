@@ -2,6 +2,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:eshoppy/app/modules/merchantlogin/widget/successwidget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gal/gal.dart';
@@ -23,7 +24,7 @@ final _box = GetStorage();
 String get _authToken => _box.read('auth_token') ?? '';
 
 const String _baseUrl =
-    'https://rasma.astradevelops.in/e_shoppyy/public/api';
+    'https://eshoppy.co.in/api';
 
 Map<String, String> get _apiHeaders => {
   'Content-Type': 'application/json',
@@ -589,17 +590,18 @@ void _copyUpi(String upiId) {
 // ── Snackbar helper ───────────────────────────────────────────────────────────
 void _snack(String title, String message,
     {bool isSuccess = false, int duration = 3}) {
-  Get.snackbar(
-    title,
-    message,
-    snackPosition: SnackPosition.BOTTOM,
-    backgroundColor:
-    isSuccess ? const Color(0xFF059669) : const Color(0xFF111111),
-    colorText: Colors.white,
-    borderRadius: 12,
-    margin: const EdgeInsets.all(16),
-    duration: Duration(seconds: duration),
-  );
+  // Get.snackbar(
+  //   title,
+  //   message,
+  //   snackPosition: SnackPosition.BOTTOM,
+  //   backgroundColor:
+  //   isSuccess ? const Color(0xFF059669) : const Color(0xFF111111),
+  //   colorText: Colors.white,
+  //   borderRadius: 12,
+  //   margin: const EdgeInsets.all(16),
+  //   duration: Duration(seconds: duration),
+  // );
+
 }
 
 // ── Main page ─────────────────────────────────────────────────────────────────

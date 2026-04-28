@@ -1,10 +1,12 @@
 
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../common/style/app_colors.dart';
 import '../../../../data/models/districtadmineventmodel.dart';
 import '../../../../widgets/areaadminsuccesswidget.dart';
+import '../../../merchantlogin/widget/successwidget.dart';
 import '../controller/districtadmin_eventgettingcontroller.dart';
 import '../widget/recent_eventwidget.dart';
 import 'districtadmin_eventupdatepage.dart';
@@ -33,7 +35,7 @@ class DistrictAdminAllEventsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return NetworkAwareWrapper(child: Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         backgroundColor: AppColors.welcomecardclr,
@@ -54,7 +56,7 @@ class DistrictAdminAllEventsPage extends StatelessWidget {
             icon: const Icon(Icons.refresh_rounded),
             onPressed: () async {
               await controller.fetchEvents();
-              AppSnackbarss.success("Events refreshed");
+              AppSnackbar.success("Events refreshed");
             },
           ),
         ],
@@ -86,7 +88,7 @@ class DistrictAdminAllEventsPage extends StatelessWidget {
                   ElevatedButton.icon(
                     onPressed: () async {
                       await controller.fetchEvents();
-                      AppSnackbarss.success("Retry successful");
+                      AppSnackbar.success("Retry successful");
                     },
                     icon: const Icon(Icons.refresh),
                     label: const Text('Retry'),
@@ -127,7 +129,7 @@ class DistrictAdminAllEventsPage extends StatelessWidget {
         return RefreshIndicator(
           onRefresh: () async {
             await controller.fetchEvents();
-            AppSnackbarss.success("Refreshed");
+            AppSnackbar.success("Refreshed");
           },
           child: ListView.separated(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
@@ -146,7 +148,7 @@ class DistrictAdminAllEventsPage extends StatelessWidget {
           ),
         );
       }),
-    );
+    ));
   }
 
   // ─── DELETE CONFIRM ──
@@ -168,9 +170,9 @@ class DistrictAdminAllEventsPage extends StatelessWidget {
 
               try {
                 await controller.deleteEvent(event.id);
-                AppSnackbarss.success("Event deleted");
+                AppSnackbar.success("Event deleted");
               } catch (e) {
-                AppSnackbarss.error("Delete failed");
+                AppSnackbar.error("Delete failed");
               }
             },
             child: const Text('Delete',
@@ -187,7 +189,7 @@ class DistrictAdminAllEventsPage extends StatelessWidget {
         ?.then((result) async {
       if (result == true) {
         await controller.fetchEvents();
-        AppSnackbarss.success("Updated successfully");
+        AppSnackbar.success("Updated successfully");
       }
     });
   }

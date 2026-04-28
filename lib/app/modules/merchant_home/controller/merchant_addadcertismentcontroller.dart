@@ -39,13 +39,13 @@ class MerchantAdvertisementController extends GetxController {
 
   // ── API URLS ──────────────────────────────────────────────
   final String statesUrl =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/merchant/states";
+      "https://eshoppy.co.in/api/get-states";
   final String districtsUrl =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/districts";
+      "https://eshoppy.co.in/api/districts";
   final String areasUrl =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/areas";
+      "https://eshoppy.co.in/api/areas";
   final String apiUrl =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/advertisement";
+      "https://eshoppy.co.in/api/advertisement";
 
   // ── LIFECYCLE ─────────────────────────────────────────────
   @override

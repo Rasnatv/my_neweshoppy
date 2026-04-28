@@ -11,7 +11,7 @@ import '../../merchantlogin/widget/successwidget.dart';
 
 class Restaurantcartcontroller extends GetxController {
   static const String _baseUrl =
-      'https://rasma.astradevelops.in/e_shoppyy/public/api';
+      'https://eshoppy.co.in/api';
 
   final RxList<RestaurantCartModel> _allCartItems =
       <RestaurantCartModel>[].obs;
@@ -106,10 +106,6 @@ class Restaurantcartcontroller extends GetxController {
 
   // ───────────────── FETCH CART ─────────────────
   Future<void> fetchCart() async {
-    if (_authToken.isEmpty) {
-      AppSnackbar.error("Session expired. Please login again.");
-      return;
-    }
 
     isLoading.value = true;
 

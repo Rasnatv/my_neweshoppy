@@ -75,8 +75,8 @@ class MOfferProductDetail {
           rawVariants.map((v) => MOfferVariant.fromJson(v)).toList();
     }
 
-    // ✅ Derive discount_percentage from variants if not present at top level
-    // (detail API has no top-level discount_percentage, but variants have final_price)
+    // ✅ Derive discount_percentage from top-level if present,
+    // otherwise compute from first variant's price vs final_price.
     int discountPct =
         int.tryParse(json['discount_percentage']?.toString() ?? '0') ?? 0;
     if (discountPct == 0 && variantsList.isNotEmpty) {
@@ -86,6 +86,16 @@ class MOfferProductDetail {
       }
     }
 
+    // ✅ Derive offerPrice: prefer top-level offer_price,
+    // fallback to first variant's final_price.
+    double offerPriceVal =
+        double.tryParse(json['offer_price']?.toString() ?? '0') ??
+            double.tryParse(json['final_price']?.toString() ?? '0') ??
+            0.0;
+    if (offerPriceVal == 0 && variantsList.isNotEmpty) {
+      offerPriceVal = variantsList[0].finalPrice;
+    }
+
     return MOfferProductDetail(
       offerProductId: int.tryParse(rawId?.toString() ?? '0') ?? 0,
       offerId: int.tryParse(json['offer_id']?.toString() ?? '0') ?? 0,
@@ -93,8 +103,7 @@ class MOfferProductDetail {
       description: json['description']?.toString() ?? '',
       categoryId: int.tryParse(json['category_id']?.toString() ?? '0') ?? 0,
       price: double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
-      offerPrice:
-      double.tryParse(json['offer_price']?.toString() ?? '0') ?? 0.0,
+      offerPrice: offerPriceVal,
       discountPercentage: discountPct,
       discountAmount:
       double.tryParse(json['discount_amount']?.toString() ?? '0') ?? 0.0,
@@ -138,7 +147,9 @@ class MOfferVariant {
     }
 
     return MOfferVariant(
-      variantId: int.tryParse(json['variant_id']?.toString() ?? ''),
+      // ✅ FIX: detail API uses "id", update response uses "variant_id" — handle both
+      variantId: int.tryParse(
+          (json['variant_id'] ?? json['id'])?.toString() ?? ''),
       attributes: attrs,
       price: double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
       stock: int.tryParse(json['stock']?.toString() ?? '0') ?? 0,

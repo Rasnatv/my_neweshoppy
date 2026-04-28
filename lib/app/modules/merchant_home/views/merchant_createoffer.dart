@@ -1,5 +1,6 @@
 
 import 'dart:io';
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -13,7 +14,7 @@ class CreateOfferPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return NetworkAwareWrapper(child:Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
         elevation: 0,
@@ -58,7 +59,7 @@ class CreateOfferPage extends StatelessWidget {
           _buildLoadingOverlay(),
         ],
       ),
-    );
+    ));
   }
 
   // ── Header card ────────────────────────────────────────────

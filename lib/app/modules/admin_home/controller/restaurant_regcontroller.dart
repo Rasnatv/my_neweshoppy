@@ -165,7 +165,7 @@ class RestaurantRegController extends GetxController {
 
       final response = await http.post(
         Uri.parse(
-          "https://rasma.astradevelops.in/e_shoppyy/public/api/restaurant/register",
+          "https://eshoppy.co.in/api/restaurant/register",
         ),
         headers: {
           "Accept": "application/json",
@@ -199,7 +199,7 @@ class RestaurantRegController extends GetxController {
         }
         AppSnackbar.success(
             data['message'] ?? "Restaurant registered successfully");
-        Get.off(() => MenuManagementPage());
+        Get.offAll(() => MenuManagementPage());
       } else {
         AppSnackbar.error(data['message'] ?? "Request failed");
       }

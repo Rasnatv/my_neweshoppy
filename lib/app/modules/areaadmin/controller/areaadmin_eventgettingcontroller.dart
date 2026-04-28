@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import '../../../data/models/areaadmin_eventsgetmodel.dart';
 import '../../../data/errors/api_error.dart';
 import '../../../widgets/areaadminsuccesswidget.dart';
+import '../../merchantlogin/widget/successwidget.dart';
 
 class AreaadminGettingEventController extends GetxController {
   var isLoading = false.obs;
@@ -35,7 +36,7 @@ class AreaadminGettingEventController extends GetxController {
       errorMessage('');
 
       final response = await http.get(
-        Uri.parse("https://rasma.astradevelops.in/e_shoppyy/public/api/events"),
+        Uri.parse("https://eshoppy.co.in/api/events"),
         headers: {
           "Accept": "application/json",
           "Authorization": "Bearer $_token",
@@ -78,20 +79,15 @@ class AreaadminGettingEventController extends GetxController {
         errorMessage(error);
 
         if (error.isNotEmpty) {
-          AppSnackbarss.error(error);
+          AppSnackbar.error(error);
         }
       }
 
-    } on SocketException {
-      hasError(true);
-      errorMessage("No internet connection");
-      AppSnackbarss.error("No internet connection");
-
-    } catch (e) {
+    }  catch (e) {
       hasError(true);
       final err = ApiErrorHandler.handleException(e);
       errorMessage(err);
-      AppSnackbarss.error(err);
+      AppSnackbar.error(err);
 
     } finally {
       isLoading(false);
@@ -112,7 +108,7 @@ class AreaadminGettingEventController extends GetxController {
 
       final response = await http.delete(
         Uri.parse(
-            "https://rasma.astradevelops.in/e_shoppyy/public/api/event/delete"),
+            "https://eshoppy.co.in/api/event/delete"),
         headers: {
           "Accept": "application/json",
           "Authorization": "Bearer $_token",
@@ -125,7 +121,7 @@ class AreaadminGettingEventController extends GetxController {
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200 && data['status'] == true) {
-        AppSnackbarss.success(
+        AppSnackbar.success(
             data['message'] ?? 'Event deleted successfully');
       } else {
         /// ❌ Rollback
@@ -133,9 +129,9 @@ class AreaadminGettingEventController extends GetxController {
         recentEvents.value = backupRecent;
 
         final error = ApiErrorHandler.handleResponse(response);
-        if (error.isNotEmpty) AppSnackbarss.error(error);
+        if (error.isNotEmpty) AppSnackbar.error(error);
       }
     } catch (e) {
-      AppSnackbarss.error(ApiErrorHandler.handleException(e));
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     }
   }}

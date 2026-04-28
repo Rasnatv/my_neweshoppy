@@ -20,7 +20,7 @@ class MerchantDashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return NetworkAwareWrapper(child: Scaffold(
             backgroundColor: const Color(0xFFF8F9FA),
 
             // ---------------- APP BAR ----------------
@@ -155,7 +155,7 @@ class MerchantDashboardPage extends StatelessWidget {
 
             // ---------------- FLOATING ADD BUTTON ----------------
             floatingActionButton: _buildModernFAB(),
-          );
+          ));
   }
 
   // ---------------- CUSTOM HEADER ----------------

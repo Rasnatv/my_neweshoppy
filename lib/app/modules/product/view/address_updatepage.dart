@@ -1,4 +1,5 @@
 
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -23,7 +24,7 @@ class EditAddressPage extends StatelessWidget {
       controller.fetchAddress(addressId);
     });
 
-    return Scaffold(
+    return NetworkAwareWrapper(child:Scaffold(
       backgroundColor: bg,
       appBar: AppBar(
         backgroundColor: AppColors.kPrimary,
@@ -235,7 +236,7 @@ class EditAddressPage extends StatelessWidget {
           ),
         );
       }),
-    );
+    ));
   }
 
   Widget _buildCard({required List<Widget> children}) {

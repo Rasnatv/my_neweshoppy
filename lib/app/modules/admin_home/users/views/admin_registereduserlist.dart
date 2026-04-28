@@ -1,4 +1,5 @@
 
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../common/style/app_text_style.dart';
@@ -12,7 +13,7 @@ class AdminUserListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return NetworkAwareWrapper(child:Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         automaticallyImplyLeading: true,
@@ -101,7 +102,7 @@ class AdminUserListPage extends StatelessWidget {
           },
         );
       }),
-    );
+    ));
   }
 
   /// ================= MODERN USER CARD =================

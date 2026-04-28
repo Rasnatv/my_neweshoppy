@@ -1,5 +1,6 @@
 
 import 'dart:io';
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -87,7 +88,7 @@ class _UpdateOfferProductPageState extends State<UpdateOfferProductPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return NetworkAwareWrapper(child:Scaffold(
       backgroundColor: _bg,
       appBar: AppBar(
         automaticallyImplyLeading: true,
@@ -228,7 +229,7 @@ class _UpdateOfferProductPageState extends State<UpdateOfferProductPage> {
         elevation: 4,
       )
           : const SizedBox.shrink()),
-    );
+    ));
   }
 
   // ── Basic Info Card ────────────────────────────────────────
@@ -284,8 +285,7 @@ class _UpdateOfferProductPageState extends State<UpdateOfferProductPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _label(
-                        e.key[0].toUpperCase() + e.key.substring(1)),
+                    _label(e.key[0].toUpperCase() + e.key.substring(1)),
                     const SizedBox(height: 6),
                     TextField(
                       controller: _commonCtrl(e.key, e.value),
@@ -454,35 +454,89 @@ class _UpdateOfferProductPageState extends State<UpdateOfferProductPage> {
                   ),
                 ],
 
-                // Final price display
-                if (variant.finalPrice > 0) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: _green.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: _green.withOpacity(0.25)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.local_offer_outlined,
-                            size: 14, color: _green),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Offer price: ₹${variant.finalPrice.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: _green,
-                          ),
+                // ── FIXED: Reactive offer price display ───────────
+                Obx(() {
+                  final currentPrice = controller.variants.length > index
+                      ? controller.variants[index].price
+                      : 0.0;
+
+                  final serverFinal = controller.variants.length > index
+                      ? controller.variants[index].finalPrice
+                      : 0.0;
+
+                  final offerPrice =
+                  controller.computeOfferPrice(currentPrice);
+
+                  // Show computed offer price if discount exists,
+                  // else fall back to server finalPrice
+                  final displayPrice =
+                      offerPrice ?? (serverFinal > 0 ? serverFinal : null);
+
+                  if (displayPrice == null || currentPrice <= 0) {
+                    return const SizedBox.shrink();
+                  }
+
+                  final discount = controller.discountPercentage.value;
+                  final saved = currentPrice - displayPrice;
+
+                  // Green = server-confirmed match, amber = live local estimate
+                  final isConfirmed = serverFinal > 0 &&
+                      (serverFinal - displayPrice).abs() < 1;
+
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isConfirmed
+                            ? _green.withOpacity(0.08)
+                            : const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: (isConfirmed
+                              ? _green
+                              : const Color(0xFFF59E0B))
+                              .withOpacity(0.25),
                         ),
-                      ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            isConfirmed
+                                ? Icons.verified_outlined
+                                : Icons.local_offer_outlined,
+                            size: 14,
+                            color: isConfirmed
+                                ? _green
+                                : const Color(0xFFF59E0B),
+                          ),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              offerPrice != null
+                                  ? 'Offer price: ₹${offerPrice.toStringAsFixed(2)}'
+                                  '  •  Save ₹${saved.toStringAsFixed(0)}'
+                                  ' ($discount% off)'
+                                  '${isConfirmed ? ' ✓' : ''}'
+                                  : 'Offer price: ₹${serverFinal.toStringAsFixed(2)}',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: isConfirmed
+                                    ? _green
+                                    : const Color(0xFFF59E0B),
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  );
+                }),
+                // ── END FIXED SECTION ──────────────────────────────
               ],
             ),
           ),
@@ -533,8 +587,7 @@ class _UpdateOfferProductPageState extends State<UpdateOfferProductPage> {
                             Icons.broken_image,
                             size: 40,
                             color: Color(0xFFD1D5DB)))
-                        : Image.file(File(path),
-                        fit: BoxFit.cover),
+                        : Image.file(File(path), fit: BoxFit.cover),
                   ),
                   Positioned(
                     top: 8,
@@ -553,8 +606,7 @@ class _UpdateOfferProductPageState extends State<UpdateOfferProductPage> {
                       child: IconButton(
                         icon: const Icon(Icons.edit_outlined,
                             size: 18, color: _primary),
-                        onPressed: () =>
-                            controller.pickImage(index),
+                        onPressed: () => controller.pickImage(index),
                       ),
                     ),
                   ),
@@ -567,21 +619,22 @@ class _UpdateOfferProductPageState extends State<UpdateOfferProductPage> {
     );
   }
 
-
   Widget _buildPriceField(int index, MOfferVariant variant) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TextField(
           controller: _priceCtrl(index, variant),
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          keyboardType:
+          const TextInputType.numberWithOptions(decimal: true),
           onChanged: (v) {
             final parsed = double.tryParse(v) ?? 0;
             controller.updateVariantPrice(index, parsed);
-            // ✅ Force Obx to rebuild so offer price preview updates
+            // Force Obx to rebuild so offer price preview updates
             controller.variants.refresh();
           },
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          style: const TextStyle(
+              fontSize: 14, fontWeight: FontWeight.w600),
           decoration: _inputDecoration(
             hint: '0.00',
             label: 'Price (₹)',
@@ -590,7 +643,7 @@ class _UpdateOfferProductPageState extends State<UpdateOfferProductPage> {
           ),
         ),
 
-        // ✅ Offer price preview — rebuilds when variants change
+        // Offer price preview below price field — rebuilds when variants change
         Obx(() {
           final currentPrice = controller.variants.length > index
               ? controller.variants[index].price
@@ -615,8 +668,8 @@ class _UpdateOfferProductPageState extends State<UpdateOfferProductPage> {
               const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
               decoration: BoxDecoration(
                 color: isConfirmed
-                    ? const Color(0xFFD1FAE5)   // green — matches server
-                    : const Color(0xFFFEF3C7),  // amber — local estimate
+                    ? const Color(0xFFD1FAE5) // green — matches server
+                    : const Color(0xFFFEF3C7), // amber — local estimate
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: (isConfirmed ? _green : const Color(0xFFF59E0B))
@@ -722,7 +775,8 @@ class _UpdateOfferProductPageState extends State<UpdateOfferProductPage> {
     return InputDecoration(
       hintText: hint,
       labelText: label,
-      hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+      hintStyle:
+      const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
       labelStyle: const TextStyle(fontSize: 12, color: _textMid),
       prefixIcon: prefixIcon != null
           ? Icon(prefixIcon, size: 18, color: prefixColor ?? _textMid)

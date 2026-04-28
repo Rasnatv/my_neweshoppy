@@ -12,7 +12,7 @@ class UserCategoryController extends GetxController {
   final box = GetStorage();
 
   final String api =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/usercategoriesget";
+      "https://eshoppy.co.in/api/usercategoriesget";
 
   var isLoading = false.obs;
   var categories = <UserCategoryModel>[].obs;
@@ -29,7 +29,6 @@ class UserCategoryController extends GetxController {
 
   Future<void> _fetchFromStorageIfAvailable() async {
     final token = box.read('auth_token');
-    if (token == null) return;
 
     final state        = box.read('state_$token') ?? '';
     final district     = box.read('district_$token') ?? '';
@@ -86,7 +85,6 @@ class UserCategoryController extends GetxController {
         final newCategories =
         list.map((e) => UserCategoryModel.fromJson(e)).toList();
 
-        // ✅ Only replace if new data arrived — prevents empty flash
         if (newCategories.isNotEmpty) {
           categories.value = newCategories;
         }
@@ -94,7 +92,7 @@ class UserCategoryController extends GetxController {
         AppSnackbar.error(ApiErrorHandler.handleResponse(res));
       }
     } catch (e) {
-      // AppSnackbar.error(ApiErrorHandler.handleException(e));
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoading.value = false;
     }

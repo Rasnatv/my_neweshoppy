@@ -16,7 +16,7 @@ class AdminCategoryListController extends GetxController {
   final box = GetStorage();
 
   final String apiUrl =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/categories";
+      "https://eshoppy.co.in/api/categories";
 
   @override
   void onInit() {
@@ -30,13 +30,6 @@ class AdminCategoryListController extends GetxController {
     final token = box.read("auth_token");
     final role = box.read("role");
 
-    /// 🔐 TOKEN / ROLE CHECK (SAME LOGIC)
-    if (token == null || token.toString().isEmpty || role != 3) {
-      AppSnackbar.error("Please login as admin");
-      Get.toNamed('/login');
-      isLoading.value = false;
-      return;
-    }
 
     try {
       final response = await http.get(
@@ -84,7 +77,7 @@ class AdminCategoryListController extends GetxController {
 
       final response = await http.delete(
         Uri.parse(
-            'https://rasma.astradevelops.in/e_shoppyy/public/api/delete-category'),
+            'https://eshoppy.co.in/api/delete-category'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',

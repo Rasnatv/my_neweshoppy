@@ -25,10 +25,6 @@ class AdminOfferProductController extends GetxController {
   bool _checkAuth() {
     final token = _box.read('auth_token');
 
-    if (token == null || token.toString().isEmpty) {
-      Get.offAllNamed('/login');
-      return false;
-    }
     return true;
   }
 
@@ -63,7 +59,7 @@ class AdminOfferProductController extends GetxController {
 
       final response = await http.post(
         Uri.parse(
-          'https://rasma.astradevelops.in/e_shoppyy/public/api/offer-products',
+          'https://eshoppy.co.in/api/offer-products',
         ),
         headers: _headers(),
         body: jsonEncode({'offer_id': offerId}),

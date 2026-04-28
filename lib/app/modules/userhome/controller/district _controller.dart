@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 
-import '../../../data/errors/api_error.dart';
+ import '../../../data/errors/api_error.dart';
 import '../../../data/models/userlocation_model.dart';
 import '../../../widgets/network_trihgiger.dart';
 import '../../merchantlogin/widget/successwidget.dart';
@@ -15,7 +15,7 @@ class UserLocationController extends GetxController {
   final box = GetStorage();
 
   final String locationApi =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/merchants/location-wise";
+      "https://eshoppy.co.in/api/merchants/location-wise";
 
   var isLoading = false.obs;
 
@@ -47,7 +47,6 @@ class UserLocationController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    ever(Get.find<NetworkService>().reconnectTrigger, (_) => refresh());
     _initFlow();
   }
 
@@ -98,9 +97,39 @@ class UserLocationController extends GetxController {
     selectedMainLocation.value = box.read('main_location_$token') ?? '';
   }
 
+  // Future<void> fetchLocations() async {
+  //   final token = box.read("auth_token");
+  //
+  //   try {
+  //     final res = await http.get(
+  //       Uri.parse(locationApi),
+  //       headers: {
+  //         "Accept": "application/json",
+  //         "Authorization": "Bearer $token",
+  //       },
+  //     );
+  //
+  //     if (res.statusCode == 200) {
+  //       final decoded = json.decode(res.body);
+  //       final List data = decoded['data'] ?? [];
+  //       allLocations.value =
+  //           data.map((e) => UserLocationModel.fromJson(e)).toList();
+  //       states.value =
+  //           allLocations.map((e) => _cap(e.state)).toSet().toList();
+  //     } else {
+  //       allLocations.clear();
+  //       states.clear();
+  //       AppSnackbar.error(ApiErrorHandler.handleResponse(res));
+  //     }
+  //   } catch (e) {
+  //     allLocations.clear();
+  //     states.clear();
+  //   }
+  // }
+  // userlocation_controller.dart  — updated fetchLocations()
+
   Future<void> fetchLocations() async {
     final token = box.read("auth_token");
-    if (token == null) return;
 
     try {
       final res = await http.get(
@@ -121,15 +150,18 @@ class UserLocationController extends GetxController {
       } else {
         allLocations.clear();
         states.clear();
+        // handleResponse calls handleUnauthorized() automatically on 401
         AppSnackbar.error(ApiErrorHandler.handleResponse(res));
       }
     } catch (e) {
       allLocations.clear();
       states.clear();
-      // AppSnackbar.error(ApiErrorHandler.handleException(e));
+
+      // Returns "" for SocketException — skip snackbar in that case
+      final msg = ApiErrorHandler.handleException(e);
+      if (msg.isNotEmpty) AppSnackbar.error(msg);
     }
   }
-
   void onStateSelected(String v) {
     selectedState.value        = v;
     selectedDistrict.value     = '';
@@ -157,14 +189,8 @@ class UserLocationController extends GetxController {
         .toList();
   }
 
-  /// Confirm tapped — saves location then refreshes data based on
-  /// how much the user selected:
-  ///
-  ///  state + district            → events, banners, categories (district-level)
-  ///  state + district + location → events, banners, categories (location-level)
   Future<void> saveLocation() async {
     final token = box.read('auth_token');
-    if (token == null) return;
 
     // 1. Persist whatever was selected
     box.write('state_$token',         selectedState.value);
@@ -193,7 +219,6 @@ class UserLocationController extends GetxController {
     } catch (_) {}
   }
 
-  /// Skip tapped — clears everything
   Future<void> skipLocation() async {
     clearSelected();
 

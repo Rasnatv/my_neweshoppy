@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -45,7 +46,7 @@ class _RestaurantRegisterPageState extends State<RestaurantRegisterPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return NetworkAwareWrapper(child: Scaffold(
       appBar: AppBar(
         title: const Text("Register Restaurant"),
         centerTitle: true,
@@ -150,6 +151,6 @@ class _RestaurantRegisterPageState extends State<RestaurantRegisterPage> {
           ],
         ),
       ),
-    );
+    ));
   }
 }

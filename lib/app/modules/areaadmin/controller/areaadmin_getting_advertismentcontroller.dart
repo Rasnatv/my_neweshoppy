@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import '../../../data/models/area_admin_advertismentgetmodel.dart';
 import '../../../data/errors/api_error.dart';
 import '../../../widgets/areaadminsuccesswidget.dart';
+import '../../merchantlogin/widget/successwidget.dart';
 
 class AreaAdminAdvertisementgetController extends GetxController {
   var isLoading = false.obs;
@@ -35,7 +36,7 @@ class AreaAdminAdvertisementgetController extends GetxController {
 
       final response = await http.get(
         Uri.parse(
-          'https://rasma.astradevelops.in/e_shoppyy/public/api/area-admin/advertisements',
+          'https://eshoppy.co.in/api/area-admin/advertisements',
         ),
         headers: {
           "Authorization": "Bearer $token",
@@ -62,11 +63,11 @@ class AreaAdminAdvertisementgetController extends GetxController {
         }
       } else {
         final errorMsg = ApiErrorHandler.handleResponse(response);
-        AppSnackbarss.error(errorMsg);
+        AppSnackbar.error(errorMsg);
       }
     } catch (e) {
       final errorMsg = ApiErrorHandler.handleException(e);
-      AppSnackbarss.error(errorMsg);
+      AppSnackbar.error(errorMsg);
     } finally {
       isLoading(false);
     }
@@ -81,14 +82,14 @@ class AreaAdminAdvertisementgetController extends GetxController {
       final String? token = box.read('auth_token');
 
       if (token == null || token.isEmpty) {
-        AppSnackbarss.error("No auth token found.");
+        AppSnackbar.error("No auth token found.");
         fetchAdvertisements(); // rollback
         return;
       }
 
       final response = await http.delete(
         Uri.parse(
-          'https://rasma.astradevelops.in/e_shoppyy/public/api/area-admin/advertisement/delete',
+          'https://eshoppy.co.in/api/area-admin/advertisement/delete',
         ),
         headers: {
           "Authorization": "Bearer $token",
@@ -101,17 +102,17 @@ class AreaAdminAdvertisementgetController extends GetxController {
       final data = json.decode(response.body);
 
       if (response.statusCode == 200 && data['status'] == true) {
-        AppSnackbarss.success(
+        AppSnackbar.success(
           data['message'] ?? "Advertisement deleted.",
         );
       } else {
         final errorMsg = ApiErrorHandler.handleResponse(response);
-        AppSnackbarss.error(errorMsg);
+        AppSnackbar.error(errorMsg);
         fetchAdvertisements(); // rollback
       }
     } catch (e) {
       final errorMsg = ApiErrorHandler.handleException(e);
-      AppSnackbarss.error(errorMsg);
+      AppSnackbar.error(errorMsg);
       fetchAdvertisements(); // rollback
     }
   }

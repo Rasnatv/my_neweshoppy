@@ -1,5 +1,6 @@
 
 import 'package:eshoppy/app/common/style/app_colors.dart';
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_text_style.dart';
@@ -13,7 +14,7 @@ class CartScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return NetworkAwareWrapper(child: Scaffold(
       backgroundColor: const Color(0xFFF7F8FA),
       appBar: AppBar(
         backgroundColor: AppColors.kPrimary,
@@ -89,7 +90,7 @@ class CartScreen extends StatelessWidget {
           ],
         );
       }),
-    );
+    ));
   }
 
   Widget _buildEmptyCart() {
@@ -197,15 +198,7 @@ class CartScreen extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () {
                     if (cartController.cartItems.isEmpty) {
-                      Get.snackbar(
-                        "Cart Empty",
-                        "Add products first",
-                        backgroundColor: Colors.red.shade400,
-                        colorText: Colors.white,
-                        snackPosition: SnackPosition.BOTTOM,
-                        margin: const EdgeInsets.all(16),
-                        borderRadius: 12,
-                      );
+
                       return;
                     }
                     Get.to(()=> AddressListPage());

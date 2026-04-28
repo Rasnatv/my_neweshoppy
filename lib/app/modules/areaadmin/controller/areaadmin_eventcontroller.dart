@@ -11,6 +11,7 @@ import 'package:http/http.dart' as http;
 
 import '../../../data/errors/api_error.dart';
 import '../../../widgets/areaadminsuccesswidget.dart';
+import '../../merchantlogin/widget/successwidget.dart';
 import '../view/area_adminhome.dart';
 
 class AreaAdminEventAddController extends GetxController {
@@ -50,9 +51,9 @@ class AreaAdminEventAddController extends GetxController {
 
   // ─── API Base ─────────────────────────────────────
   static const String _baseUrl =
-      'https://rasma.astradevelops.in/e_shoppyy/public/api';
+      'https://eshoppy.co.in/api';
   static const String _adminBaseUrl =
-      'https://rasma.astradevelops.in/e_shoppyy/public/api/area-admin';
+      'https://eshoppy.co.in/api/area-admin';
 
   // ─── Lifecycle ────────────────────────────────────
   @override
@@ -103,14 +104,14 @@ class AreaAdminEventAddController extends GetxController {
           final List data = body['data'] ?? [];
           states.assignAll(data.map((e) => e.toString()).toList());
         } else {
-          AppSnackbarss.error(body['message'] ?? 'Failed to load states');
+          AppSnackbar.error(body['message'] ?? 'Failed to load states');
         }
       } else {
         final errorMsg = ApiErrorHandler.handleResponse(response);
-        if (response.statusCode != 401) AppSnackbarss.error(errorMsg);
+        if (response.statusCode != 401) AppSnackbar.error(errorMsg);
       }
     } catch (e) {
-      AppSnackbarss.error(ApiErrorHandler.handleException(e));
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isStatesLoading.value = false;
     }
@@ -148,15 +149,15 @@ class AreaAdminEventAddController extends GetxController {
           }
           districts.assignAll(result);
         } else {
-          AppSnackbarss.error(body['message'] ?? 'Failed to load districts');
+          AppSnackbar.error(body['message'] ?? 'Failed to load districts');
         }
       } else {
         final errorMsg = ApiErrorHandler.handleResponse(response);
-        if (response.statusCode != 401) AppSnackbarss.error(errorMsg);
+        if (response.statusCode != 401) AppSnackbar.error(errorMsg);
       }
 
     } catch (e) {
-      AppSnackbarss.error(ApiErrorHandler.handleException(e));
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isDistrictsLoading.value = false;
     }
@@ -181,15 +182,15 @@ class AreaAdminEventAddController extends GetxController {
           final List data = body['data'] ?? [];
           mainLocations.assignAll(data.map((e) => e.toString()).toList());
         } else {
-          AppSnackbarss.error(body['message'] ?? 'Failed to load locations');
+          AppSnackbar.error(body['message'] ?? 'Failed to load locations');
         }
       } else {
         final errorMsg = ApiErrorHandler.handleResponse(response);
-        if (response.statusCode != 401) AppSnackbarss.error(errorMsg);
+        if (response.statusCode != 401) AppSnackbar.error(errorMsg);
       }
 
     } catch (e) {
-      AppSnackbarss.error(ApiErrorHandler.handleException(e));
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLocationsLoading.value = false;
     }
@@ -272,7 +273,7 @@ class AreaAdminEventAddController extends GetxController {
     final int bytes = await file.length();
     if (bytes > 1024 * 1024) {
       errorBanner.value = "Image must be less than 1 MB";
-      AppSnackbarss.warning("Image must be less than 1 MB");
+      AppSnackbar.warning("Image must be less than 1 MB");
       return;
     }
 
@@ -304,28 +305,28 @@ class AreaAdminEventAddController extends GetxController {
   // ─── Validate Form ────────────────────────────────
   bool _validateForm() {
     if (eventName.text.trim().isEmpty) {
-      AppSnackbarss.warning('Enter event name');
+      AppSnackbar.warning('Enter event name');
       return false;
     } else if (selectedState.value.isEmpty) {
-      AppSnackbarss.warning('Select state');
+      AppSnackbar.warning('Select state');
       return false;
     } else if (selectedDistrict.value.isEmpty) {
-      AppSnackbarss.warning('Select district');
+      AppSnackbar.warning('Select district');
       return false;
     } else if (selectedMainLocation.value.isEmpty) {
-      AppSnackbarss.warning('Select main location');
+      AppSnackbar.warning('Select main location');
       return false;
     } else if (eventLocation.text.trim().isEmpty) {
-      AppSnackbarss.warning('Enter event location');
+      AppSnackbar.warning('Enter event location');
       return false;
     } else if (startDate.value.isEmpty || endDate.value.isEmpty) {
-      AppSnackbarss.warning('Select dates');
+      AppSnackbar.warning('Select dates');
       return false;
     } else if (startTime.value.isEmpty || endTime.value.isEmpty) {
-      AppSnackbarss.warning('Select time');
+      AppSnackbar.warning('Select time');
       return false;
     } else if (bannerImage.value == null) {
-      AppSnackbarss.warning('Select banner image');
+      AppSnackbar.warning('Select banner image');
       return false;
     }
     return true;
@@ -368,22 +369,22 @@ class AreaAdminEventAddController extends GetxController {
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
         if (responseData['status'].toString() == '1') {
-          AppSnackbarss.success(
+          AppSnackbar.success(
               responseData['message'] ?? 'Event created successfully');
           _resetForm();
           Get.offAll(() => AreaAdminhomepage());
         } else {
-          AppSnackbarss.error(
+          AppSnackbar.error(
               responseData['message'] ?? 'Failed to create event');
         }
       } else {
         final errorMsg = ApiErrorHandler.handleResponse(response);
-        if (response.statusCode != 401) AppSnackbarss.error(errorMsg);
+        if (response.statusCode != 401) AppSnackbar.error(errorMsg);
       }
     } on SocketException {
-      AppSnackbarss.error(ApiErrorHandler.handleException(SocketException('')));
+      AppSnackbar.error(ApiErrorHandler.handleException(SocketException('')));
     } catch (e) {
-      AppSnackbarss.error(ApiErrorHandler.handleException(e));
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoading.value = false;
     }

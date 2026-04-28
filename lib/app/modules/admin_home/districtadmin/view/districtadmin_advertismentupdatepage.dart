@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:eshoppy/app/common/style/app_colors.dart';
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -12,7 +13,7 @@ class DistrictAdvertisementUpdatePage extends StatelessWidget{
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return NetworkAwareWrapper(child: Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: _buildAppBar(),
       body: Obx(() {
@@ -23,7 +24,7 @@ class DistrictAdvertisementUpdatePage extends StatelessWidget{
         }
         return _buildBody(context);
       }),
-    );
+    ));
   }
 
   // ─── APP BAR ────────────────────────────────────────────────────────────────
@@ -460,15 +461,6 @@ class DistrictAdvertisementUpdatePage extends StatelessWidget{
                   label: 'Gallery',
                   onTap: controller.pickBanner,
                   isPrimary: true,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildImageActionButton(
-                  icon: Icons.camera_alt_rounded,
-                  label: 'Camera',
-                  onTap: controller.captureImage,
-                  isPrimary: false,
                 ),
               ),
             ],

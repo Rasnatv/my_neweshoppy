@@ -67,7 +67,7 @@ class AdminupdateAdvertisementController extends GetxController {
 
     try {
       final res = await http.get(
-        Uri.parse('https://rasma.astradevelops.in/e_shoppyy/public/api/get-states'),
+        Uri.parse('https://eshoppy.co.in/api/get-states'),
         headers: _headers,
       );
 
@@ -99,7 +99,7 @@ class AdminupdateAdvertisementController extends GetxController {
 
     try {
       final res = await http.get(
-        Uri.parse('https://rasma.astradevelops.in/e_shoppyy/public/api/districts'),
+        Uri.parse('https://eshoppy.co.in/api/districts'),
         headers: _headers,
       );
 
@@ -131,7 +131,7 @@ class AdminupdateAdvertisementController extends GetxController {
 
     try {
       final res = await http.get(
-        Uri.parse('https://rasma.astradevelops.in/e_shoppyy/public/api/areas'),
+        Uri.parse('https://eshoppy.co.in/api/areas'),
         headers: _headers,
       );
 
@@ -164,7 +164,7 @@ class AdminupdateAdvertisementController extends GetxController {
 
     try {
       final res = await http.post(
-        Uri.parse('https://rasma.astradevelops.in/e_shoppyy/public/api/get-single-advertisement'),
+        Uri.parse('https://eshoppy.co.in/api/get-single-advertisement'),
         headers: _headers,
         body: jsonEncode({
           'advertisement_id': int.tryParse(adId) ?? adId,
@@ -231,8 +231,8 @@ class AdminupdateAdvertisementController extends GetxController {
         'data:${_mimeFromPath(file.path)};base64,${base64Encode(bytes)}';
       }
 
-      final res = await http.post(
-        Uri.parse('https://rasma.astradevelops.in/e_shoppyy/public/api/update-advertisement'),
+      final res = await http.put(
+        Uri.parse('https://eshoppy.co.in/api/update-advertisement'),
         headers: _headers,
         body: jsonEncode(payload),
       );

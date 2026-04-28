@@ -1,4 +1,5 @@
 
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -23,7 +24,7 @@ class DistrictAdminUpdateEventPage extends StatelessWidget {
       controller.fetchEvent(eventId);
     });
 
-    return Scaffold(
+    return NetworkAwareWrapper(child:Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         backgroundColor : AppColors.welcomecardclr,
@@ -286,7 +287,7 @@ class DistrictAdminUpdateEventPage extends StatelessWidget {
           ),
         );
       }),
-    );
+    ));
   }
 
   // ── Reusable Widgets ───────────────────────────────

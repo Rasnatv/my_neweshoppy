@@ -1,5 +1,4 @@
 
-
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -17,9 +16,9 @@ class OfferProductDetailController extends GetxController {
   final box = GetStorage();
 
   static const String _detailUrl =
-      'https://rasma.astradevelops.in/e_shoppyy/public/api/offer-product-details';
+      'https://eshoppy.co.in/api/offer-product-details';
   static const String _updateUrl =
-      'https://rasma.astradevelops.in/e_shoppyy/public/api/update-offer-product';
+      'https://eshoppy.co.in/api/update-offer-product';
 
   var isLoading = false.obs;
   var isSubmitting = false.obs;
@@ -34,6 +33,11 @@ class OfferProductDetailController extends GetxController {
   var variants = <MOfferVariant>[].obs;
   var discountPercentage = 0.obs;
 
+  // ✅ Stores variant[0]'s original price at fetch time
+  // so we can detect if the display variant price actually changed.
+  double _originalDisplayPrice = 0.0;
+  String _originalDisplayImage = '';
+
   double? computeOfferPrice(double price) {
     if (discountPercentage.value <= 0) return null;
     return price - (price * discountPercentage.value / 100);
@@ -43,12 +47,11 @@ class OfferProductDetailController extends GetxController {
 
   String get _token => box.read<String>('auth_token') ?? '';
 
-  Map<String, String> get _headers =>
-      {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Authorization': 'Bearer $_token',
-      };
+  Map<String, String> get _headers => {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'Authorization': 'Bearer $_token',
+  };
 
   @override
   void onInit() {
@@ -83,7 +86,22 @@ class OfferProductDetailController extends GetxController {
           description.value = detail.description;
           commonAttributes.assignAll(detail.commonAttributes);
           discountPercentage.value = detail.discountPercentage;
-          variants.assignAll(detail.variants);
+          variants.assignAll(
+            detail.variants.map((v) => MOfferVariant(
+              variantId: v.variantId,
+              attributes: Map.from(v.attributes),
+              price: v.price,
+              stock: v.stock,
+              imagePath: v.imagePath,
+              finalPrice: v.finalPrice,
+            )),
+          );
+
+          // ✅ Snapshot original display variant (variant[0]) values
+          if (variants.isNotEmpty) {
+            _originalDisplayPrice = variants[0].price;
+            _originalDisplayImage = variants[0].imagePath;
+          }
         } else {
           errorMessage.value =
               body['message'] ?? 'Failed to fetch product details';
@@ -136,20 +154,14 @@ class OfferProductDetailController extends GetxController {
 
   // ================= VALIDATION =================
   bool _validate() {
-    if (productName.value
-        .trim()
-        .isEmpty) {
+    if (productName.value.trim().isEmpty) {
       AppSnackbar.warning('Product name is required');
       return false;
     }
-
-    if (description.value
-        .trim()
-        .isEmpty) {
+    if (description.value.trim().isEmpty) {
       AppSnackbar.warning('Description is required');
       return false;
     }
-
     for (int i = 0; i < variants.length; i++) {
       if (variants[i].price <= 0) {
         AppSnackbar.warning('Variant ${i + 1}: valid price required');
@@ -160,7 +172,6 @@ class OfferProductDetailController extends GetxController {
         return false;
       }
     }
-
     return true;
   }
 
@@ -184,10 +195,7 @@ class OfferProductDetailController extends GetxController {
         if (v.imageUpdated && v.imagePath.isNotEmpty) {
           if (!v.imagePath.startsWith('http')) {
             final bytes = await File(v.imagePath).readAsBytes();
-            final ext = v.imagePath
-                .split('.')
-                .last
-                .toLowerCase();
+            final ext = v.imagePath.split('.').last.toLowerCase();
             final mime = ext == 'png' ? 'image/png' : 'image/jpeg';
             item['image'] = 'data:$mime;base64,${base64Encode(bytes)}';
           }
@@ -213,8 +221,7 @@ class OfferProductDetailController extends GetxController {
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
         if (body['status'] == 1 || body['status'] == true) {
-          AppSnackbar.success(
-              body['message'] ?? 'Product updated successfully');
+          AppSnackbar.success(body['message'] ?? 'Product updated successfully');
           _patchParentController(body['data'] as Map<String, dynamic>?);
           Get.back();
         } else {
@@ -232,6 +239,7 @@ class OfferProductDetailController extends GetxController {
     }
   }
 
+  // ================= PATCH PARENT =================
   void _patchParentController(Map<String, dynamic>? responseData) {
     try {
       final args = Get.arguments;
@@ -250,45 +258,60 @@ class OfferProductDetailController extends GetxController {
         patchData['product_name'] = newName;
       }
 
-      // ── 2. Price — use server-confirmed values from ANY variant change ──
-      // Always apply server response prices so variant[1..n] changes reflect too.
-      if (responseData != null) {
-        final respVariants = responseData['variants'];
-        if (respVariants is List && respVariants.isNotEmpty) {
-          final first = respVariants[0] as Map<String, dynamic>;
-          final serverRealPrice =
-              double.tryParse(first['price']?.toString() ?? '0') ?? 0.0;
-          final serverOfferPrice =
-              double.tryParse(first['final_price']?.toString() ?? '0') ?? 0.0;
-          if (serverRealPrice > 0) {
-            patchData['real_price'] = serverRealPrice;
-            patchData['offer_price'] = serverOfferPrice;
+      // ── 2. Price — ONLY patch if display variant (variant[0]) price changed ──
+      // Changes to variant[1..n] must NOT affect the offer product card.
+      final currentDisplayPrice =
+      variants.isNotEmpty ? variants[0].price : 0.0;
+      final displayPriceChanged =
+          currentDisplayPrice > 0 &&
+              currentDisplayPrice != _originalDisplayPrice;
+
+      if (displayPriceChanged) {
+        if (responseData != null) {
+          // Find the server-confirmed response for variant[0] by matching variant_id
+          final respVariants = responseData['variants'];
+          if (respVariants is List && respVariants.isNotEmpty) {
+            final displayVariantId = variants[0].variantId;
+
+            final matchedResp = displayVariantId != null
+                ? respVariants.firstWhere(
+                  (v) =>
+              (v as Map<String, dynamic>)['variant_id'] ==
+                  displayVariantId,
+              orElse: () => respVariants[0],
+            ) as Map<String, dynamic>
+                : respVariants[0] as Map<String, dynamic>;
+
+            final serverRealPrice =
+                double.tryParse(matchedResp['price']?.toString() ?? '0') ?? 0.0;
+            final serverOfferPrice =
+                double.tryParse(matchedResp['final_price']?.toString() ?? '0') ??
+                    0.0;
+
+            if (serverRealPrice > 0) {
+              patchData['real_price'] = serverRealPrice;
+              patchData['offer_price'] = serverOfferPrice;
+            }
           }
-        }
-      } else {
-        // Fallback: compute locally from variant[0] if no server response
-        final currentFirstPrice =
-        variants.isNotEmpty ? variants[0].price : 0.0;
-        if (currentFirstPrice > 0) {
-          patchData['real_price'] = currentFirstPrice;
+        } else {
+          // Fallback: compute locally
+          patchData['real_price'] = currentDisplayPrice;
           patchData['offer_price'] =
-              computeOfferPrice(currentFirstPrice) ?? currentFirstPrice;
+              computeOfferPrice(currentDisplayPrice) ?? currentDisplayPrice;
         }
       }
 
-      // ── 3. Image — ONLY when first variant image changed ──────
+      // ── 3. Image — ONLY when display variant (variant[0]) image changed ──
       if (variants.isNotEmpty &&
           variants[0].imageUpdated &&
-          variants[0].imagePath.isNotEmpty) {
+          variants[0].imagePath.isNotEmpty &&
+          variants[0].imagePath != _originalDisplayImage) {
         patchData['product_image'] = variants[0].imagePath;
       }
 
       // ✅ Patch immediately for instant UI update
       if (patchData.isNotEmpty) {
-        parentController.patchProductLocally(
-          offerProductId.value,
-          patchData,
-        );
+        parentController.patchProductLocally(offerProductId.value, patchData);
       }
 
       // ✅ Always silently sync with server
@@ -296,4 +319,5 @@ class OfferProductDetailController extends GetxController {
     } catch (_) {
       // parent controller not found — no-op
     }
-  }}
+  }
+}

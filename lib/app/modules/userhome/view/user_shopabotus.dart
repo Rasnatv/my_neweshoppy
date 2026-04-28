@@ -1,4 +1,5 @@
 
+import 'package:eshoppy/app/modules/merchantlogin/widget/successwidget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -215,33 +216,14 @@ class MerchantAboutPage extends StatelessWidget {
     try {
       final Uri uri = Uri.parse(url);
       if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-        Get.snackbar(
-          'Error',
-          'Could not open link',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red.shade600,
-          colorText: Colors.white,
-          margin: const EdgeInsets.all(16),
-          borderRadius: 12,
-        );
+        AppSnackbar.error("Error,could not open link");
       }
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Invalid URL',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.shade600,
-        colorText: Colors.white,
-        margin: const EdgeInsets.all(16),
-        borderRadius: 12,
-      );
+      AppSnackbar.error("Error,Invalid URL");
     }
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-//  Section Card
-// ─────────────────────────────────────────────────────────────
 
 class _SectionCard extends StatelessWidget {
   final String title;

@@ -16,7 +16,7 @@ class RestaurantMenuController extends GetxController {
 
   final box = GetStorage();
   final String apiUrl =
-      'https://rasma.astradevelops.in/e_shoppyy/public/api/user/menu-by-meal';
+      'https://eshoppy.co.in/api/user/menu-by-meal';
 
   final List<Map<String, String>> mealTypes = [
     {'label': 'Breakfast', 'value': 'breakfast'},
@@ -40,7 +40,6 @@ class RestaurantMenuController extends GetxController {
 
   Future<void> _detectAvailableMealTypes(String restaurantId) async {
     final token = box.read('auth_token');
-    if (token == null) return;
 
     final futures = mealTypes.map((type) async {
       try {
@@ -79,11 +78,6 @@ class RestaurantMenuController extends GetxController {
     try {
       isLoading(true);
       final token = box.read('auth_token');
-
-      if (token == null) {
-        AppSnackbar.error('Not authenticated');
-        return;
-      }
 
       final type = mealType ?? selectedMealType.value;
 

@@ -40,8 +40,6 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
         onPressed: () {
           if (selectedPoint != null) {
             Get.back(result: selectedPoint);
-          } else {
-            Get.snackbar("Select a point", "Tap on map to choose location");
           }
         },
         child: const Icon(Icons.check),

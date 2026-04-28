@@ -1,4 +1,5 @@
 
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -17,7 +18,7 @@ class AdminMerchantDetailPageUI extends StatelessWidget {
   Widget build(BuildContext context) {
     controller.fetchMerchantDetail(merchantId);
 
-    return Scaffold(
+    return NetworkAwareWrapper(child: Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         elevation: 0,
@@ -207,7 +208,7 @@ class AdminMerchantDetailPageUI extends StatelessWidget {
           ),
         );
       }),
-    );
+    ));
   }
 
   Widget _buildHeader(dynamic merchant) {

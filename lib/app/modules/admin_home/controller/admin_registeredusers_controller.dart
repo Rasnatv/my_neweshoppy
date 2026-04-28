@@ -22,18 +22,18 @@ class AdminUserController extends GetxController {
 
   Future<void> fetchUsers() async {
     /// ✅ Auth check
-    if (authToken.isEmpty) {
-      AppSnackbar.error("Session expired. Please login again");
-      Get.offAllNamed('/login');
-      return;
-    }
+    // if (authToken.isEmpty) {
+    //   AppSnackbar.error("Session expired. Please login again");
+    //   Get.offAllNamed('/login');
+    //   return;
+    // }
 
     isLoading.value = true;
 
     try {
       final response = await http.get(
         Uri.parse(
-          "https://rasma.astradevelops.in/e_shoppyy/public/api/admin/users",
+          "https://eshoppy.co.in/api/admin/users",
         ),
         headers: {
           "Authorization": "Bearer $authToken",

@@ -1,4 +1,5 @@
 
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/constants/text_String.dart';
@@ -11,7 +12,7 @@ class SetNewPasswordView extends GetView<NewPasswordController> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return NetworkAwareWrapper(child: Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(automaticallyImplyLeading: true),
       body: Padding(
@@ -137,6 +138,6 @@ class SetNewPasswordView extends GetView<NewPasswordController> {
           ],
         ),
       ),
-    );
+    ));
   }
 }

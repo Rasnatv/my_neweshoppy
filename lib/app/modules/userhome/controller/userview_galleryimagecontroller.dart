@@ -18,7 +18,7 @@ class MerchantGalleryViewController extends GetxController {
   RxBool isLoading = false.obs;
 
   final String baseUrl =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/user/merchant";
+      "https://eshoppy.co.in/api/user/merchant";
 
   @override
   void onInit() {
@@ -62,8 +62,6 @@ class MerchantGalleryViewController extends GetxController {
       // ✅ EXCEPTION HANDLER
       final errorMessage = ApiErrorHandler.handleException(e);
       AppSnackbar.error(errorMessage);
-
-      print("==> Gallery fetch error: $e");
     } finally {
       isLoading(false);
     }

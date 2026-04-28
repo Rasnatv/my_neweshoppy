@@ -1,4 +1,5 @@
 
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../common/style/app_colors.dart';
@@ -15,7 +16,7 @@ class AdminAddEventPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return NetworkAwareWrapper(child: Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
         leading: IconButton(
@@ -493,7 +494,7 @@ class AdminAddEventPage extends StatelessWidget {
               : const SizedBox()),
         ],
       ),
-    );
+    ));
   }
 
   // ─── Mode Toggle (District / Area) ───────────────────────
@@ -583,8 +584,6 @@ class AdminAddEventPage extends StatelessWidget {
       color: Colors.black87,
     ),
   );
-
-  // ─── Dropdown ─────────────────────────────────────────────
   Widget _buildDropdown({
     required String? value,
     required String hint,
@@ -592,57 +591,66 @@ class AdminAddEventPage extends StatelessWidget {
     required List<String> items,
     required void Function(String?) onChanged,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: value != null
-              ? AppColors.kPrimary.withOpacity(0.5)
-              : Colors.grey.shade300,
-          width: value != null ? 1.4 : 1,
+    return DropdownButtonFormField<String>(
+      value: value,
+      isDense: true,
+      isExpanded: true,
+      icon: Icon(Icons.keyboard_arrow_down, color: AppColors.kPrimary),
+      dropdownColor: Colors.white,
+      decoration: InputDecoration(
+        prefixIcon: Icon(icon, size: 20, color: AppColors.kPrimary),
+        hintText: hint,
+        hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+        filled: true,
+        fillColor: Colors.grey.shade50,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
         ),
-      ),
-      child: DropdownButtonFormField<String>(
-        value: value,
-        decoration: InputDecoration(
-          prefixIcon: Icon(icon, size: 20, color: AppColors.kPrimary),
-          hintText: hint,
-          hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
-          border: InputBorder.none,
-          contentPadding:
-          const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        ),
-        items: items
-            .map((s) => DropdownMenuItem(
-          value: s,
-          child: Row(
-            children: [
-              Icon(icon, size: 15, color: AppColors.kPrimary),
-              const SizedBox(width: 8),
-              Text(s,
-                  style: const TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w500)),
-            ],
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: value != null
+                ? AppColors.kPrimary.withOpacity(0.5)
+                : Colors.grey.shade300,
+            width: value != null ? 1.4 : 1,
           ),
-        ))
-            .toList(),
-        selectedItemBuilder: (context) => items
-            .map((s) => Row(
-          children: [
-            Icon(icon, size: 16, color: AppColors.kPrimary),
-            const SizedBox(width: 8),
-            Text(s,
-                style: const TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w600)),
-          ],
-        ))
-            .toList(),
-        onChanged: onChanged,
-        isExpanded: true,
-        icon: Icon(Icons.keyboard_arrow_down, color: AppColors.kPrimary),
-        dropdownColor: Colors.white,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.kPrimary, width: 2),
+        ),
       ),
+      items: items
+          .map((s) => DropdownMenuItem(
+        value: s,
+        child: Text(
+          s,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ))
+          .toList(),
+      selectedItemBuilder: (context) => items
+          .map(
+            (s) => DropdownMenuItem(
+          value: s,
+          child: Text(
+            s,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      )
+          .toList(),
+      onChanged: onChanged,
     );
   }
 

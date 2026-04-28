@@ -14,10 +14,10 @@ class LocationController extends GetxController {
 
   // APIs
   final String addApiUrl =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/admin/location/add";
+      "https://eshoppy.co.in/api/admin/location/add";
 
   final String listApiUrl =
-      "https://rasma.astradevelops.in/e_shoppyy/public/api/admin/location/list";
+      "https://eshoppy.co.in/api/admin/location/list";
 
   // Data
   RxList<StateItem> stateList = <StateItem>[].obs;

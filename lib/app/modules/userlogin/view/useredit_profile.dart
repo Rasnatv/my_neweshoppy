@@ -1,4 +1,5 @@
 
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -25,7 +26,7 @@ class EditProfilePage extends StatelessWidget {
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
       ),
-      child: Scaffold(
+      child:NetworkAwareWrapper(child: Scaffold(
         backgroundColor: Colors.grey[50],
         appBar: AppBar(
           elevation: 0,
@@ -119,7 +120,7 @@ class EditProfilePage extends StatelessWidget {
           );
         }),
       ),
-    );
+    ));
   }
 
 //   // ─── AVATAR CARD ───────────────────────────────────────────────────────────

@@ -1,5 +1,6 @@
 
 import 'package:eshoppy/app/common/style/app_colors.dart';
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -13,7 +14,7 @@ class AdminProductDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.put(mAdminProductDetailController());
 
-    return Scaffold(
+    return NetworkAwareWrapper(child:Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: _buildAppBar(),
       body: Obx(() {
@@ -31,12 +32,9 @@ class AdminProductDetailScreen extends StatelessWidget {
             },
           );
         }
-        if (controller.product == null) {
-          return const _EmptyView();
-        }
         return _ProductDetailBody(controller: controller);
       }),
-    );
+    ));
   }
 
   PreferredSizeWidget _buildAppBar() {
@@ -654,23 +652,3 @@ class _ErrorView extends StatelessWidget {
   }
 }
 
-class _EmptyView extends StatelessWidget {
-  const _EmptyView();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.inventory_2_rounded, size: 56, color: Color(0xFFD1D5DB)),
-          SizedBox(height: 16),
-          Text(
-            'No product found',
-            style: TextStyle(color: Color(0xFF6B7280), fontSize: 16),
-          ),
-        ],
-      ),
-    );
-  }
-}
