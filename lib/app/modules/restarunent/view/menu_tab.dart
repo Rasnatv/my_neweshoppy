@@ -53,7 +53,6 @@ class RestaurantMenuTab extends StatelessWidget {
       final totalItems = cartController.totalItemsForRestaurant(_rid);
       final totalAmount = cartController.totalAmountForRestaurant(_rid);
 
-      // ✅ Comes directly from controller — already probed & filtered
       final visibleTypes = menuController.availableMealTypes;
 
       return Scaffold(
@@ -63,7 +62,6 @@ class RestaurantMenuTab extends StatelessWidget {
             Column(
               children: [
                 // ── MEAL TYPE CHIPS ────────────────────────────────────────
-                // Only shown when more than 1 meal type has items
                 if (!menuController.isLoading.value &&
                     visibleTypes.length > 1) ...[
                   Container(
@@ -222,107 +220,12 @@ class RestaurantMenuTab extends StatelessWidget {
                 ),
               ],
             ),
-
           ],
         ),
       );
     });
   }
 }
-
-// // ── CART BOTTOM BAR ──────────────────────────────────────────────────────────
-// class _CartBottomBar extends StatelessWidget {
-//   final Restaurantcartcontroller cartController;
-//   final int restaurantId;
-//   final int totalItems;
-//   final double totalAmount;
-//
-//   const _CartBottomBar({
-//     required this.cartController,
-//     required this.restaurantId,
-//     required this.totalItems,
-//     required this.totalAmount,
-//   });
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     final amountDisplay = totalAmount % 1 == 0
-//         ? totalAmount.toInt().toString()
-//         : totalAmount.toStringAsFixed(2);
-//
-//     return Container(
-//       decoration: const BoxDecoration(
-//         color: Colors.white,
-//         boxShadow: [
-//           BoxShadow(
-//             color: Color(0x18000000),
-//             blurRadius: 24,
-//             offset: Offset(0, -6),
-//           ),
-//         ],
-//       ),
-//       padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
-//       child: Material(
-//         color: _AppTheme.primary,
-//         borderRadius: BorderRadius.circular(16),
-//         child: InkWell(
-//           borderRadius: BorderRadius.circular(16),
-//           splashColor: Colors.white.withOpacity(0.15),
-//           onTap: () => Get.to(
-//                 () => RestaurantCartPage(restaurantId: restaurantId),
-//           ),
-//           child: Padding(
-//             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
-//             child: Row(
-//               children: [
-//                 Container(
-//                   padding: const EdgeInsets.symmetric(
-//                       horizontal: 10, vertical: 5),
-//                   decoration: BoxDecoration(
-//                     color: Colors.white.withOpacity(0.2),
-//                     borderRadius: BorderRadius.circular(8),
-//                   ),
-//                   child: Text(
-//                     '$totalItems item${totalItems > 1 ? 's' : ''}',
-//                     style: const TextStyle(
-//                       color: Colors.white,
-//                       fontWeight: FontWeight.w700,
-//                       fontSize: 12,
-//                       letterSpacing: 0.3,
-//                     ),
-//                   ),
-//                 ),
-//                 const Expanded(
-//                   child: Text(
-//                     'View Cart',
-//                     textAlign: TextAlign.center,
-//                     style: TextStyle(
-//                       color: Colors.white,
-//                       fontWeight: FontWeight.w800,
-//                       fontSize: 15,
-//                       letterSpacing: 0.3,
-//                     ),
-//                   ),
-//                 ),
-//                 Text(
-//                   '₹$amountDisplay',
-//                   style: const TextStyle(
-//                     color: Colors.white,
-//                     fontWeight: FontWeight.w800,
-//                     fontSize: 15,
-//                   ),
-//                 ),
-//                 const SizedBox(width: 6),
-//                 const Icon(Icons.arrow_forward_ios_rounded,
-//                     color: Colors.white, size: 13),
-//               ],
-//             ),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
 
 // ── MENU ITEM CARD ────────────────────────────────────────────────────────────
 class _MenuItemCard extends StatelessWidget {
@@ -450,58 +353,13 @@ class _MenuItemCard extends StatelessWidget {
                               .updateQuantity(_menuId, 'decrement'),
                         )
                             : _AddButton(
-                          onTap: () async {
-                            final success =
-                            await cartController.addToCart(
-                              restaurantId: restaurantId,
-                              menuId: _menuId,
-                              itemName: item.foodName ?? '',
-                              image: item.image ?? '',
-                              price: rawPrice,
-                            );
-                            if (success) {
-                              Get.snackbar(
-                                '',
-                                '',
-                                titleText: const SizedBox.shrink(),
-                                messageText: Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(6),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white
-                                            .withOpacity(0.2),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                          Icons.check_rounded,
-                                          color: Colors.white,
-                                          size: 14),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Text(
-                                        '${item.foodName} added to cart',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 13,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                backgroundColor: _AppTheme.primary,
-                                snackPosition: SnackPosition.BOTTOM,
-                                margin: const EdgeInsets.fromLTRB(
-                                    16, 0, 16, 90),
-                                borderRadius: 14,
-                                duration: const Duration(seconds: 2),
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 12),
-                              );
-                            }
-                          },
+                          onTap: () => cartController.addToCart(
+                            restaurantId: restaurantId,
+                            menuId: _menuId,
+                            itemName: item.foodName ?? '',
+                            image: item.image ?? '',
+                            price: rawPrice,
+                          ),
                         ),
                       ],
                     ),

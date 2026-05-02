@@ -21,7 +21,8 @@ class ApiErrorHandler {
 
         //
          handleUnauthorized();
-        return message ?? "Session expired. Please login agoain";
+         return ""; // ✅ prevent duplicate snackbar
+        // return message ?? "Session expired. Please login agoain";
       case 403:
         return message ?? "Access denied";
       case 404:

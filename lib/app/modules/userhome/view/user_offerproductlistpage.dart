@@ -25,8 +25,12 @@ class UserOfferProductPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Offer Products',
-          style: AppTextStyle.rTextNunitoWhite17w700,
+          'Offer Products',style: TextStyle(
+          color: Colors.white,
+          fontSize: 17,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.1,
+        )
         ),
         iconTheme: const IconThemeData(color: Colors.white),
         backgroundColor: AppColors.kPrimary,

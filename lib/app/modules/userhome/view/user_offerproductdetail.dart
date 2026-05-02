@@ -12,10 +12,15 @@ import '../../../data/models/user_offerdetailmodel.dart';
 import '../../merchantlogin/widget/successwidget.dart';
 import '../../product/controller/cartcontroller.dart';
 import '../controller/user_offerproductdetail_controller.dart';
-
 class UserOfferProductDetailScreen extends StatefulWidget {
   final int offerProductId;
-  const UserOfferProductDetailScreen({required this.offerProductId, super.key});
+  final int? preSelectedVariantId; // ✅ ADD
+
+  const UserOfferProductDetailScreen({
+    required this.offerProductId,
+    this.preSelectedVariantId, // ✅ ADD
+    super.key,
+  });
 
   @override
   State<UserOfferProductDetailScreen> createState() =>
@@ -56,8 +61,16 @@ class _UserOfferProductDetailScreenState
     );
     cartController = Get.find<CartController>();
 
+    // if (controller.productData.value == null && !controller.isLoading.value) {
+    //   controller.fetchProductDetails(widget.offerProductId);
+    // }
     if (controller.productData.value == null && !controller.isLoading.value) {
-      controller.fetchProductDetails(widget.offerProductId);
+      controller.fetchProductDetails(widget.offerProductId).then((_) {
+        // ✅ Pre-select the variant that was in cart
+        if (widget.preSelectedVariantId != null) {
+          controller.selectVariantById(widget.preSelectedVariantId!);
+        }
+      });
     }
 
     ever(controller.currentImageIndex, (index) {
@@ -671,7 +684,7 @@ class _UserOfferProductDetailScreenState
     );
   }
 
-  // ── Bottom Bar ──────────────────────────────────────────────
+
   Widget _buildBottomBar(UserOfferProductDetail product) {
     return Positioned(
       left: 0,
@@ -681,8 +694,13 @@ class _UserOfferProductDetailScreenState
         final variant      = controller.selectedVariant.value;
         final isOutOfStock = variant == null || variant.stock <= 0;
 
-        final cartItem = cartController.cartItems.firstWhereOrNull(
-              (item) => item.productId == product.productId.toString(),
+        // ✅ FIX: match by productId AND variantId
+        final cartItem = variant == null
+            ? null
+            : cartController.cartItems.firstWhereOrNull(
+              (item) =>
+          item.productId == product.productId.toString() &&
+              item.variantId == variant.variantId,
         );
         final isInCart = cartItem != null;
 
@@ -704,6 +722,7 @@ class _UserOfferProductDetailScreenState
       }),
     );
   }
+
   Widget _buildAddToCartButton(
       bool isOutOfStock, UserOfferProductDetail product) {
     return SizedBox(
@@ -713,16 +732,15 @@ class _UserOfferProductDetailScreenState
         onTap: isOutOfStock
             ? null
             : () async {
-          final variantId = controller.selectedVariant.value?.variantId; // ✅
+          final variantId = controller.selectedVariant.value?.variantId;
           if (variantId == null) {
             AppSnackbar.warning("Please select a variant");
             return;
           }
-          // ✅ Already correct — product.type comes from model top-level, not variant
           await cartController.addToCart(
             productId: product.productId,
             variantId: variantId,
-            type: product.type,   // ✅ top-level type from UserOfferProductDetail
+            type: product.type,
           );
         },
         child: AnimatedContainer(
@@ -757,15 +775,11 @@ class _UserOfferProductDetailScreenState
       ),
     );
   }
-
-  // ── Cart Stepper ────────────────────────────────────────────
-  Widget _buildCartStepper(
-      CartItem cartItem, UserOfferProductDetail product) {
+  Widget _buildCartStepper(CartItem cartItem, UserOfferProductDetail product) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
       child: Row(
         children: [
-          // Go to Cart
           Expanded(
             child: GestureDetector(
               onTap: () => Get.toNamed('/cart'),
@@ -779,8 +793,7 @@ class _UserOfferProductDetailScreenState
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.shopping_cart_rounded,
-                        size: 17, color: _accent),
+                    Icon(Icons.shopping_cart_rounded, size: 17, color: _accent),
                     const SizedBox(width: 6),
                     Text(
                       'Go to Cart',
@@ -796,7 +809,6 @@ class _UserOfferProductDetailScreenState
             ),
           ),
           const SizedBox(width: 12),
-          // Quantity Stepper
           Container(
             height: 48,
             decoration: BoxDecoration(
@@ -815,7 +827,10 @@ class _UserOfferProductDetailScreenState
               children: [
                 GestureDetector(
                   onTap: () => cartController.updateQuantity(
-                      product.productId, "decrement"),
+                    product.productId,
+                    "decrement",
+                    variantId: cartItem.variantId, // ✅ fix
+                  ),
                   child: Container(
                     width: 48,
                     height: 48,
@@ -850,7 +865,10 @@ class _UserOfferProductDetailScreenState
                 ),
                 GestureDetector(
                   onTap: () => cartController.updateQuantity(
-                      product.productId, "increment"),
+                    product.productId,
+                    "increment",
+                    variantId: cartItem.variantId, // ✅ fix
+                  ),
                   child: Container(
                     width: 48,
                     height: 48,

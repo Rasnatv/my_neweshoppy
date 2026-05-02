@@ -399,53 +399,22 @@ class MerchantOrdersView extends StatelessWidget {
     );
   }
 
-  // ── Product Row ───────────────────────────────────────────────────────────
   Widget _buildProductRow(MerchantOrderProduct product) {
     return Row(
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(10),
           child: Image.network(
-            product.image,
+            product.selectedVariant?.image.isNotEmpty == true
+                ? product.selectedVariant!.image
+                : product.image,
             width: 58,
             height: 58,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
-              width: 58,
-              height: 58,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF0F0F0),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(
-                Icons.image_not_supported_outlined,
-                color: Colors.grey,
-                size: 22,
-              ),
-            ),
-            loadingBuilder: (_, child, progress) => progress == null
-                ? child
-                : Container(
-              width: 58,
-              height: 58,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF0F0F0),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Center(
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color:AppColors.kPrimary,
-                  value: progress.expectedTotalBytes != null
-                      ? progress.cumulativeBytesLoaded /
-                      progress.expectedTotalBytes!
-                      : null,
-                ),
-              ),
-            ),
           ),
         ),
         const SizedBox(width: 12),
+
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -455,12 +424,36 @@ class MerchantOrdersView extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 13.5,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF1A1A1A),
                 ),
               ),
+
+              /// ✅ SHOW VARIANT ATTRIBUTES
+              if (product.selectedVariant != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Wrap(
+                    spacing: 6,
+                    children: product.selectedVariant!.attributes.entries.map((e) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          '${e.key}: ${e.value}',
+                          style: const TextStyle(fontSize: 10),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+
               const SizedBox(height: 5),
+
               Text(
-                '₹${product.price.toStringAsFixed(2)}  ×  ${product.quantity}',
+                '₹${product.price.toStringAsFixed(2)} × ${product.quantity}',
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.grey.shade500,
@@ -469,10 +462,10 @@ class MerchantOrdersView extends StatelessWidget {
             ],
           ),
         ),
+
         Text(
           '₹${product.total.toStringAsFixed(2)}',
           style: TextStyle(
-            fontSize: 14,
             fontWeight: FontWeight.w700,
             color: AppColors.kPrimary,
           ),

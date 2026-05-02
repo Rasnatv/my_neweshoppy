@@ -177,13 +177,6 @@ class AddProductPage extends StatelessWidget {
         children: [
           _buildSectionTitle("Product Name *", Icons.shopping_bag_outlined),
           const SizedBox(height: 12),
-          // _buildTextField(
-          //   label: "Enter product name",
-          //   hint: "e.g., Classic Cotton T-Shirt",
-          //   icon: Icons.label_outline,
-          //   onChanged: (v) => controller.productName.value = v,
-          // ),
-          // AFTER
           _buildTextField(
             label: "Enter product name",
             hint: "e.g., Classic Cotton T-Shirt",
@@ -266,38 +259,76 @@ class AddProductPage extends StatelessWidget {
                 ),
               );
             }
-            return _infoBox(
-              padding:
-              const EdgeInsets.symmetric(horizontal: 16),
+            //           return _infoBox(
+            //             padding:
+            //             const EdgeInsets.symmetric(horizontal: 16),
+            //             child: DropdownButtonFormField<String>(
+            //               decoration: const InputDecoration(
+            //                 border: InputBorder.none,
+            //                 prefixIcon: Icon(Icons.list_alt,
+            //                     color: Color(0xFF6B7280), size: 20),
+            //                 hintText: "Choose a category",
+            //                 hintStyle: TextStyle(
+            //                     color: Color(0xFF9CA3AF), fontSize: 14),
+            //               ),
+            //               value: controller.selectedCategory.value.isEmpty
+            //                   ? null
+            //                   : controller.selectedCategory.value,
+            //               items: controller.apiCategories
+            //                   .map((c) => DropdownMenuItem(
+            //                   value: c.name,
+            //                   child: Text(c.name,
+            //                       style: const TextStyle(fontSize: 15))))
+            //                   .toList(),
+            //               onChanged: (v) => controller.onCategoryChanged(v!),
+            //               dropdownColor: Colors.white,
+            //               icon: const Icon(Icons.keyboard_arrow_down,
+            //                   color: Color(0xFF6B7280)),
+            //             ),
+            //           );
+            //         }),
+            //       ],
+            //     ),
+            //   );
+            // }
+            return Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFFF9FAFB),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE5E7EB)),
+              ),
               child: DropdownButtonFormField<String>(
                 decoration: const InputDecoration(
                   border: InputBorder.none,
-                  prefixIcon: Icon(Icons.list_alt,
-                      color: Color(0xFF6B7280), size: 20),
+                  contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 14),
+                  prefixIcon: Icon(
+                      Icons.list_alt, color: Color(0xFF6B7280), size: 20),
                   hintText: "Choose a category",
-                  hintStyle: TextStyle(
-                      color: Color(0xFF9CA3AF), fontSize: 14),
+                  hintStyle: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
                 ),
                 value: controller.selectedCategory.value.isEmpty
                     ? null
                     : controller.selectedCategory.value,
                 items: controller.apiCategories
-                    .map((c) => DropdownMenuItem(
-                    value: c.name,
-                    child: Text(c.name,
-                        style: const TextStyle(fontSize: 15))))
+                    .map((c) =>
+                    DropdownMenuItem(
+                        value: c.name,
+                        child: Text(
+                            c.name, style: const TextStyle(fontSize: 15))))
                     .toList(),
                 onChanged: (v) => controller.onCategoryChanged(v!),
                 dropdownColor: Colors.white,
-                icon: const Icon(Icons.keyboard_arrow_down,
-                    color: Color(0xFF6B7280)),
+                icon: const Icon(
+                    Icons.keyboard_arrow_down, color: Color(0xFF6B7280)),
+                isExpanded: true, // ← prevents overflow
               ),
             );
-          }),
-        ],
-      ),
-    );
-  }
+                    }),
+                  ],
+                ),
+              );
+            }
 
   // ── Common Attributes ────────────────────────────────────────────────────────
 

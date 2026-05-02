@@ -16,13 +16,6 @@ class CategorySection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      // ✅ FIX: Removed the isLoading spinner block entirely.
-      // The home page (Userhome) now controls the single top-level loading gate.
-      // Showing a spinner here caused a second flash: shimmer → spinner → grid.
-      // Since _isLoading in Userhome stays true until data is ready,
-      // by the time CategorySection is visible, categories are already populated.
-
-      // ---------- EMPTY ----------
       if (controller.categories.isEmpty) {
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 40),
@@ -46,19 +39,14 @@ class CategorySection extends StatelessWidget {
         );
       }
 
-      // ---------- GRID ----------
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
+      // ---------- HORIZONTAL SCROLL ----------
+      return SizedBox(
+        height: 140, // icon bubble (70) + spacing (9) + text (~2 lines ~28) + padding
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 20),
           itemCount: controller.categories.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 4,
-            mainAxisSpacing: 20,
-            crossAxisSpacing: 12,
-            childAspectRatio: 0.58,
-          ),
+          separatorBuilder: (_, __) => const SizedBox(width: 12),
           itemBuilder: (context, index) {
             final UserCategoryModel cat = controller.categories[index];
 
@@ -119,7 +107,6 @@ class _CategoryCardState extends State<_CategoryCard>
       duration: const Duration(milliseconds: 450),
     );
 
-    // Staggered entrance based on index
     final delay = (widget.index * 0.06).clamp(0.0, 0.6);
     final end = (delay + 0.45).clamp(0.0, 1.0);
 
@@ -131,7 +118,7 @@ class _CategoryCardState extends State<_CategoryCard>
     );
 
     _slide = Tween<Offset>(
-      begin: const Offset(0, 0.3),
+      begin: const Offset(0.3, 0), // slide from right instead of bottom
       end: Offset.zero,
     ).animate(
       CurvedAnimation(
@@ -177,68 +164,71 @@ class _CategoryCardState extends State<_CategoryCard>
               scale: _pressed ? 0.93 : 1.0,
               duration: const Duration(milliseconds: 120),
               curve: Curves.easeOut,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // ── Icon bubble ──────────────────────────────────────────
-                  Container(
-                    height: 100,
-                    width: 100,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: AppColors.kPrimary.withOpacity(0.10),
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
+              child: SizedBox(
+                width: 75, // fixed width per card
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // ── Icon bubble ──────────────────────────────────────────
+                    Container(
+                      height: 70,
+                      width: 70,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
                           color: AppColors.kPrimary.withOpacity(0.10),
-                          blurRadius: 16,
-                          offset: const Offset(0, 6),
-                          spreadRadius: -2,
+                          width: 1.5,
                         ),
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(18),
-                      child: Padding(
-                        padding: const EdgeInsets.all(10),
-                        child: Image.network(
-                          widget.category.image,
-                          fit: BoxFit.contain,
-                          errorBuilder: (_, __, ___) => Icon(
-                            Icons.category_outlined,
-                            color: AppColors.kPrimary.withOpacity(0.5),
-                            size: 26,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.kPrimary.withOpacity(0.10),
+                            blurRadius: 16,
+                            offset: const Offset(0, 6),
+                            spreadRadius: -2,
+                          ),
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Padding(
+                          padding: const EdgeInsets.all(10),
+                          child: Image.network(
+                            widget.category.image,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => Icon(
+                              Icons.category_outlined,
+                              color: AppColors.kPrimary.withOpacity(0.5),
+                              size: 26,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
 
-                  const SizedBox(height: 9),
+                    const SizedBox(height: 9),
 
-                  // ── Label ────────────────────────────────────────────────
-                  Text(
-                    widget.category.name,
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF1A1A2E),
-                      height: 1.3,
-                      letterSpacing: 0.1,
+                    // ── Label ────────────────────────────────────────────────
+                    Text(
+                      widget.category.name,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1A1A2E),
+                        height: 1.3,
+                        letterSpacing: 0.1,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

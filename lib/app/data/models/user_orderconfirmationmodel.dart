@@ -1,3 +1,4 @@
+
 class OrderConfirmationModel {
   final AddressPreview address;
   final List<OrderItem> items;
@@ -21,50 +22,64 @@ class OrderConfirmationModel {
 }
 
 class AddressPreview {
-  final int addressId;
   final String name;
   final String phone;
   final String address;
 
-  AddressPreview({
-    required this.addressId,
-    required this.name,
-    required this.phone,
-    required this.address,
-  });
+  AddressPreview({required this.name, required this.phone, required this.address});
 
   factory AddressPreview.fromJson(Map<String, dynamic> json) {
     return AddressPreview(
-      addressId: int.parse(json['address_id'].toString()),
-      name: json['name'] ?? '',
-      phone: json['phone'] ?? '',
-      address: json['address'] ?? '',
+      name: json['name'],
+      phone: json['phone'],
+      address: json['address'],
     );
   }
 }
 
 class OrderItem {
-  final int productId;
+  final String productId;
+  final String variantId;
   final String productName;
   final String image;
   final double price;
   final int quantity;
+  final Map<String, String> attributes;
 
   OrderItem({
     required this.productId,
+    required this.variantId,
     required this.productName,
     required this.image,
     required this.price,
     required this.quantity,
+    required this.attributes,
   });
 
   factory OrderItem.fromJson(Map<String, dynamic> json) {
     return OrderItem(
-      productId: int.parse(json['product_id'].toString()),
-      productName: json['product_name'] ?? '',
-      image: json['image'] ?? '',
+      productId: json['product_id'].toString(),
+      variantId: json['variant_id'].toString(),
+      productName: json['product_name'],
+      image: json['image'],
       price: (json['price'] as num).toDouble(),
-      quantity: json['quantity'] ?? 1,
+      quantity: json['quantity'],
+      attributes: json['attributes'] != null
+          ? Map<String, String>.from(
+        (json['attributes'] as Map)
+            .map((k, v) => MapEntry(k.toString(), v.toString())),
+      )
+          : {},
     );
   }
+
+  /// Returns formatted string like "Size: S • Color: Cream"
+  String get formattedAttributes {
+    return attributes.entries
+        .map((e) => '${_capitalize(e.key)}: ${e.value}')
+        .join('  •  ');
+  }
+
+  String _capitalize(String s) =>
+      s.isEmpty ? s : s[0].toUpperCase() + s.substring(1).replaceAll('_', ' ');
 }

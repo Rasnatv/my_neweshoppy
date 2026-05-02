@@ -676,12 +676,11 @@ class MenuManagementPage extends StatelessWidget {
                                   fontWeight: FontWeight.w600,
                                   color: color)),
                           const SizedBox(height: 4),
-                          Wrap(
-                            spacing: 6,
-                            runSpacing: 4,
+                          Column(                          // ← Column directly, NO Wrap wrapper
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: slots.map((s) => Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
+                              margin: const EdgeInsets.only(bottom: 6),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
                                 color: color.withOpacity(0.10),
                                 borderRadius: BorderRadius.circular(6),
@@ -706,6 +705,7 @@ class MenuManagementPage extends StatelessWidget {
                               ),
                             )).toList(),
                           ),
+
                         ],
                       ),
                     );
@@ -743,18 +743,58 @@ class MenuManagementPage extends StatelessWidget {
                                     fontWeight: FontWeight.w600,
                                     color: color)),
                             const SizedBox(height: 6),
+
                             ...menu.foodItems.map((food) => Padding(
-                              padding: const EdgeInsets.only(bottom: 4),
+                              padding: const EdgeInsets.only(bottom: 8),
                               child: Row(children: [
-                                Icon(Icons.fiber_manual_record,
-                                    size: 6,
-                                    color: Colors.grey.shade400),
-                                const SizedBox(width: 8),
+                                // ── Image ──────────────────────────────
+                                Builder(builder: (_) {
+                                  final placeholder = Container(
+                                    width: 44, height: 44,
+                                    decoration: BoxDecoration(
+                                      color: color.withOpacity(0.10),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Icon(Icons.fastfood_rounded, color: color, size: 20),
+                                  );
+                                  if (food.imageFile != null) {
+                                    return ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.file(food.imageFile!,
+                                          width: 44, height: 44, fit: BoxFit.cover),
+                                    );
+                                  }
+                                  if (food.imageUrl != null && food.imageUrl!.isNotEmpty) {
+                                    return ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.network(
+                                        food.imageUrl!,
+                                        width: 44, height: 44, fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) => placeholder,
+                                      ),
+                                    );
+                                  }
+                                  return placeholder;
+                                }),
+                                const SizedBox(width: 10),
+                                // ── Name & Price ────────────────────────
                                 Expanded(
-                                  child: Text(food.name,
-                                      style: const TextStyle(
-                                          fontSize: 13,
-                                          color: Color(0xFF5C6080))),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(food.name,
+                                          style: const TextStyle(
+                                              fontSize: 13,
+                                              color: Color(0xFF5C6080))),
+                                      if (food.description.isNotEmpty)
+                                        Text(food.description,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                                fontSize: 11,
+                                                color: Colors.grey.shade400)),
+                                    ],
+                                  ),
                                 ),
                                 Text(
                                   '₹${food.price.toStringAsFixed(0)}',

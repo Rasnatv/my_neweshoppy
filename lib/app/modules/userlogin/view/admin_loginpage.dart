@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../widgets/backarrowwidget.dart';
 import '../controller/admin_logincontroller.dart';
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
@@ -178,41 +179,107 @@ class _AdminLoginScreenState extends State<AdminLoginScreen>
 
     return Obx(() {
       final role = _activeRole(_ctrl.selectedRole.value);
-      return Scaffold(
-        body: AnimatedContainer(
-          duration: const Duration(milliseconds: 380),
-          color: role.color.withOpacity(0.04),
-          child: SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: EdgeInsets.symmetric(
-                  horizontal: hPadding,
-                  vertical: vPadding,
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _reveal(0, _buildBadge(role,
-                        size: badgeSize,
-                        radius: badgeRadius,
-                        iconSize: badgeIcon)),
-                    SizedBox(height: gap1),
-                    _reveal(1, _buildTitleBlock(role, titleSize: titleSize, isSmall: isSmall)),
-                    SizedBox(height: gap2),
-                    _reveal(2, _buildRoleSelector(role, screenW: screenW, isSmall: isSmall)),
-                    SizedBox(height: gap3),
-                    _reveal(3, _buildLoginCard(role, isSmall: isSmall)),
-                    const SizedBox(height: 16),
-                  ],
+      return
+  //       Scaffold(
+  //       body: AnimatedContainer(
+  //         duration: const Duration(milliseconds: 380),
+  //         color: role.color.withOpacity(0.04),
+  //         child: SafeArea(
+  //           child: Center(
+  //             child: SingleChildScrollView(
+  //               physics: const BouncingScrollPhysics(),
+  //               padding: EdgeInsets.symmetric(
+  //                 horizontal: hPadding,
+  //                 vertical: vPadding,
+  //               ),
+  //               child: Column(
+  //                 mainAxisAlignment: MainAxisAlignment.center,
+  //                 children: [
+  //                   _reveal(0, _buildBadge(role,
+  //                       size: badgeSize,
+  //                       radius: badgeRadius,
+  //                       iconSize: badgeIcon)),
+  //                   SizedBox(height: gap1),
+  //                   _reveal(1, _buildTitleBlock(role, titleSize: titleSize, isSmall: isSmall)),
+  //                   SizedBox(height: gap2),
+  //                   _reveal(2, _buildRoleSelector(role, screenW: screenW, isSmall: isSmall)),
+  //                   SizedBox(height: gap3),
+  //                   _reveal(3, _buildLoginCard(role, isSmall: isSmall)),
+  //                   const SizedBox(height: 16),
+  //                 ],
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //     );
+  //   });
+  // }
+      Scaffold(
+        body: Stack(
+          children: [
+            // ── Main UI ─────────────────────────────────────────────
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 380),
+              color: role.color.withOpacity(0.04),
+              child: SafeArea(
+                child: Center(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: hPadding,
+                      vertical: vPadding,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _reveal(0, _buildBadge(role,
+                            size: badgeSize,
+                            radius: badgeRadius,
+                            iconSize: badgeIcon)),
+
+                        SizedBox(height: gap1),
+
+                        _reveal(1, _buildTitleBlock(
+                          role,
+                          titleSize: titleSize,
+                          isSmall: isSmall,
+                        )),
+
+                        SizedBox(height: gap2),
+
+                        _reveal(2, _buildRoleSelector(
+                          role,
+                          screenW: screenW,
+                          isSmall: isSmall,
+                        )),
+
+                        SizedBox(height: gap3),
+
+                        _reveal(3, _buildLoginCard(
+                          role,
+                          isSmall: isSmall,
+                        )),
+
+                        const SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
+
+            // ── Use Your BackArrow Widget ───────────────────────────
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 8,
+              left: 12,
+              child: const BackArrow(),
+            ),
+          ],
         ),
       );
     });
-  }
+     }
 
   // ─── Badge ────────────────────────────────────────────────────────────────
   Widget _buildBadge(_AdminRole role, {
@@ -563,6 +630,28 @@ class _AdminLoginScreenState extends State<AdminLoginScreen>
         ),
       );
     });
+  }
+  Widget _buildBackButton() {
+    return Positioned(
+      top: MediaQuery.of(context).padding.top + 8,
+      left: 8,
+      child: GestureDetector(
+        onTap: () => Get.back(), // or Navigator.pop(context)
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            boxShadow: _T.cardShadow,
+          ),
+          child: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: 18,
+            color: _T.ink900,
+          ),
+        ),
+      ),
+    );
   }
 
   void _handleLogin() {

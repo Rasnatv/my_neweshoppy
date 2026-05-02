@@ -8,40 +8,40 @@ import '../../../data/models/cartmodel.dart';
 import '../../../data/errors/api_error.dart';
 import '../../merchantlogin/widget/successwidget.dart';
 
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+
 class CartController extends GetxController {
   final box = GetStorage();
 
   var cartItems = <CartItem>[].obs;
   var total = 0.0.obs;
   var isLoading = false.obs;
+
+  /// key => productId_variantId
   var removingItems = <String, bool>{}.obs;
 
   String get authToken => box.read('auth_token') ?? "";
 
+  /// ✅ unique key for each cart item (important for variants)
+  String _itemKey(String productId, int? variantId) {
+    return "${productId}_${variantId ?? 0}";
+  }
+
+  bool isItemRemoving(String productId, int? variantId) {
+    return removingItems[_itemKey(productId, variantId)] == true;
+  }
+
   @override
   void onInit() {
     super.onInit();
-
-      fetchCart();
-
+    fetchCart();
   }
 
-  Future<void> refresh() async {
-    cartItems.clear();
-    total.value = 0.0;
-    await fetchCart();
-  }
-
-  bool isProductInCart(int productId) {
-    return cartItems.any((item) => item.productId == productId.toString());
-  }
-
-  bool isItemRemoving(String productId) => removingItems[productId] == true;
-
+  /// ✅ FETCH CART
   Future<void> fetchCart() async {
-    final token = box.read<String?>('auth_token') ?? "";
+    final token = authToken;
 
-    // ✅ Silent return — no snackbar, no redirect
     if (token.isEmpty) {
       cartItems.clear();
       total.value = 0.0;
@@ -52,8 +52,7 @@ class CartController extends GetxController {
 
     try {
       final response = await http.get(
-        Uri.parse(
-            "https://eshoppy.co.in/api/cart"),
+        Uri.parse("https://eshoppy.co.in/api/cart"),
         headers: {
           "Accept": "application/json",
           "Authorization": "Bearer $token",
@@ -62,19 +61,23 @@ class CartController extends GetxController {
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
+
         if (body['status'] == true) {
           final items = body['items'] ?? [];
+
           cartItems.value =
               items.map<CartItem>((e) => CartItem.fromJson(e)).toList();
-          total.value =
-              double.tryParse(body['total'].toString()) ?? 0.0;
+
+          /// calculate total safely
+          total.value = cartItems.fold(
+            0.0,
+                (sum, item) => sum + (item.finalPrice * item.quantity),
+          );
         } else {
           cartItems.clear();
           total.value = 0.0;
         }
       } else {
-        // ✅ Don't call ApiErrorHandler here — silent fail for cart fetch
-        // Avoids triggering handleUnauthorized() on background cart load
         debugPrint("Cart fetch failed: ${response.statusCode}");
         cartItems.clear();
         total.value = 0.0;
@@ -88,12 +91,14 @@ class CartController extends GetxController {
     }
   }
 
+  /// ✅ ADD TO CART (WITH VARIANT)
   Future<bool> addToCart({
     required int productId,
-    required int variantId,   // ✅ added
+    required int variantId,
     required int type,
   }) async {
     isLoading.value = true;
+
     try {
       final response = await http.post(
         Uri.parse("https://eshoppy.co.in/api/cart/add"),
@@ -103,71 +108,77 @@ class CartController extends GetxController {
         },
         body: {
           "product_id": productId.toString(),
-          "variant_id": variantId.toString(),   // ✅ added
+          "variant_id": variantId.toString(),
           "type": type.toString(),
         },
       ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+
         if (data['status'] == true) {
           await fetchCart();
           return true;
         } else {
           AppSnackbar.error(data['message'] ?? "Failed to add product");
-          return false;
         }
       } else {
         AppSnackbar.error(ApiErrorHandler.handleResponse(response));
-        return false;
       }
     } catch (e) {
-       AppSnackbar.error(ApiErrorHandler.handleException(e));
-      return false;
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoading.value = false;
     }
+
+    return false;
   }
 
-  Future<void> updateQuantity(int productId, String action) async {
+  /// ✅ UPDATE QUANTITY (VARIANT SAFE)
+  Future<void> updateQuantity(
+      int productId,
+      String action, {
+        int? variantId,
+      }) async {
     final key = productId.toString();
-    final index = cartItems.indexWhere((item) => item.productId == key);
+
+    final index = cartItems.indexWhere((item) =>
+    item.productId == key && item.variantId == variantId);
+
     if (index == -1) return;
 
     final item = cartItems[index];
 
-    // ✅ Decrement at qty 1 → remove
+    /// if qty = 1 and decrement → remove
     if (action == "decrement" && item.quantity == 1) {
-      await removeFromCart(productId);
+      await removeFromCart(productId, variantId: variantId);
       return;
     }
 
-    // ✅ Block increment when quantity has reached stock limit
-    if (action == "increment" && item.quantity >= item.stock) {
-      // AppSnackbar.error("Only ${item.stock} units available in stock");
-      return;
-    }
+    /// prevent exceeding stock
+    if (action == "increment" && item.quantity >= item.stock) return;
 
-    final newQuantity =
+    final newQty =
     action == "increment" ? item.quantity + 1 : item.quantity - 1;
 
-    // Optimistic update
+    /// optimistic update
     cartItems[index] = item.copyWith(
-      quantity: newQuantity,
-      itemTotal: item.finalPrice * newQuantity,
+      quantity: newQty,
+      itemTotal: item.finalPrice * newQty,
     );
+
     _recalculateTotal();
 
     try {
       final response = await http.post(
-        Uri.parse(
-            "https://eshoppy.co.in/api/cart/update-quantity"),
+        Uri.parse("https://eshoppy.co.in/api/cart/update-quantity"),
         headers: {
           "Accept": "application/json",
           "Authorization": "Bearer $authToken",
         },
         body: {
-          "product_id": key,
+          "product_id": productId.toString(),
+          if (variantId != null) "variant_id": variantId.toString(),
           "action": action,
         },
       ).timeout(const Duration(seconds: 15));
@@ -188,29 +199,40 @@ class CartController extends GetxController {
     }
   }
 
-  Future<void> removeFromCart(int productId) async {
-    final key = productId.toString();
+  /// ✅ REMOVE ITEM (VARIANT SAFE)
+  Future<void> removeFromCart(
+      int productId, {
+        int? variantId,
+      }) async {
+    final key = _itemKey(productId.toString(), variantId);
+
     removingItems[key] = true;
     removingItems.refresh();
 
     try {
       final response = await http.delete(
-        Uri.parse(
-            "https://eshoppy.co.in/api/cart/remove"),
+        Uri.parse("https://eshoppy.co.in/api/cart/remove"),
         headers: {
           "Accept": "application/json",
           "Authorization": "Bearer $authToken",
         },
-        body: {"product_id": key},
+        body: {
+          "product_id": productId.toString(),
+          if (variantId != null) "variant_id": variantId.toString(),
+        },
       ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (data['status'] == true) {
-          cartItems.removeWhere((item) => item.productId == key);
-          _recalculateTotal();
 
+        if (data['status'] == true) {
+          cartItems.removeWhere((item) =>
+          item.productId == productId.toString() &&
+              item.variantId == variantId);
+
+          _recalculateTotal();
         } else {
+          AppSnackbar.error(data['message'] ?? "Remove failed");
         }
       } else {
         AppSnackbar.error(ApiErrorHandler.handleResponse(response));
@@ -223,9 +245,12 @@ class CartController extends GetxController {
     }
   }
 
+  /// ✅ TOTAL CALCULATION
   void _recalculateTotal() {
     total.value = cartItems.fold(
-        0.0, (sum, item) => sum + (item.finalPrice * item.quantity));
+      0.0,
+          (sum, item) => sum + (item.finalPrice * item.quantity),
+    );
   }
 
   void _revertItem(int index, CartItem oldItem) {

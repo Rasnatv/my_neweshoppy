@@ -106,7 +106,6 @@ class Restaurantcartcontroller extends GetxController {
 
   // ───────────────── FETCH CART ─────────────────
   Future<void> fetchCart() async {
-
     isLoading.value = true;
 
     try {
@@ -125,9 +124,6 @@ class Restaurantcartcontroller extends GetxController {
 
           _grandTotal.value =
               double.tryParse(data['grand_total']?.toString() ?? '0') ?? 0.0;
-        } else {
-          _allCartItems.clear();
-          // AppSnackbar.error(data['message'] ?? "Failed to load cart");
         }
       } else {
         final error = ApiErrorHandler.handleResponse(response);
@@ -169,16 +165,9 @@ class Restaurantcartcontroller extends GetxController {
         if (data['status'] == 1) {
           await fetchCart();
           return true;
-        } else {
-          AppSnackbar.error(data['message'] ?? "Add to cart failed");
         }
-      } else {
-        final error = ApiErrorHandler.handleResponse(response);
-        AppSnackbar.error(error);
       }
     } catch (e) {
-      final error = ApiErrorHandler.handleException(e);
-      AppSnackbar.error(error);
       debugPrint('addToCart error: $e');
     }
     return false;
@@ -213,17 +202,12 @@ class Restaurantcartcontroller extends GetxController {
           }
 
           _allCartItems.refresh();
-        } else {
-          AppSnackbar.error(data['message'] ?? "Update failed");
         }
       } else {
-        final error = ApiErrorHandler.handleResponse(response);
-        AppSnackbar.error(error);
         await fetchCart();
       }
     } catch (e) {
-      final error = ApiErrorHandler.handleException(e);
-      AppSnackbar.error(error);
+      debugPrint('updateQuantity error: $e');
       await fetchCart();
     } finally {
       isUpdating.value = false;

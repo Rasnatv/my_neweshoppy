@@ -19,54 +19,63 @@ class FinalCartBinding extends Bindings {
 class RestaurantFinalCart extends StatelessWidget {
   RestaurantFinalCart({super.key});
 
-  final FinalCartController controller = Get.put(FinalCartController());
+  // ✅ FIX 1: Force delete old controller so onInit always runs fresh
+  final FinalCartController controller = () {
+    if (Get.isRegistered<FinalCartController>()) {
+      Get.delete<FinalCartController>(force: true);
+    }
+    return Get.put(FinalCartController());
+  }();
+
   static const _primary = Color(0xFF0F5151);
 
   @override
   Widget build(BuildContext context) {
-    return NetworkAwareWrapper(child:Scaffold(
-      backgroundColor: const Color(0xFFF2F4F3),
-      appBar: _buildAppBar(),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(
-              child: CircularProgressIndicator(color: _primary));
-        }
+    return NetworkAwareWrapper(
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF2F4F3),
+        appBar: _buildAppBar(),
+        body: Obx(() {
+          if (controller.isLoading.value) {
+            return const Center(
+                child: CircularProgressIndicator(color: _primary));
+          }
 
+          if (controller.isEmpty) {
+            return const _EmptyCartView();
+          }
 
+          return ListView.builder(
+            padding: const EdgeInsets.only(top: 8, bottom: 130),
+            itemCount: controller.restaurants.length,
+            itemBuilder: (context, index) {
+              final restaurant = controller.restaurants[index];
+              return _RestaurantCard(
+                restaurant: restaurant,
+                onRemoveRestaurant: () =>
+                    _confirmRemoveRestaurant(context, restaurant),
+              );
+            },
+          );
+        }),
 
-        return ListView.builder(
-          padding: const EdgeInsets.only(top: 8, bottom: 130),
-          itemCount: controller.restaurants.length,
-          itemBuilder: (context, index) {
-            final restaurant = controller.restaurants[index];
-            return _RestaurantCard(
-              restaurant: restaurant,
-              onRemoveRestaurant: () =>
-                  _confirmRemoveRestaurant(context, restaurant),
-            );
-          },
-        );
-      }),
-
-      // ── BOTTOM BAR — only when exactly 1 restaurant ────────────────────────
-      bottomNavigationBar: Obx(() {
-        if (controller.isLoading.value || controller.isEmpty) {
-          return const SizedBox(height: 0);
-        }
-        // Hide bottom bar when multiple restaurants
-        // (each card has its own button in that case)
-        if (controller.restaurants.length != 1) {
-          return const SizedBox(height: 0);
-        }
-        return _PlaceOrderBar(
-          grandTotal: controller.grandTotal,
-          restaurantCount: controller.restaurants.length,
-          totalBookings: controller.totalBookingCount,
-          totalItems: controller.totalItemCount,
-        );
-      }),
-    ));
+        // ── BOTTOM BAR — only when exactly 1 restaurant ──────────────────────
+        bottomNavigationBar: Obx(() {
+          if (controller.isLoading.value || controller.isEmpty) {
+            return const SizedBox(height: 0);
+          }
+          if (controller.restaurants.length != 1) {
+            return const SizedBox(height: 0);
+          }
+          return _PlaceOrderBar(
+            grandTotal: controller.grandTotal,
+            restaurantCount: controller.restaurants.length,
+            totalBookings: controller.totalBookingCount,
+            totalItems: controller.totalItemCount,
+          );
+        }),
+      ),
+    );
   }
 
   AppBar _buildAppBar() {
@@ -76,8 +85,15 @@ class RestaurantFinalCart extends StatelessWidget {
       backgroundColor: _primary,
       foregroundColor: Colors.white,
       elevation: 0,
-      title: const Text('My Cart',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+      title: const Text(
+        'My Cart',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 17,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.1,
+        ),
+      ),
       actions: [
         Obx(() {
           final count = controller.restaurants.length;
@@ -133,11 +149,13 @@ class RestaurantFinalCart extends StatelessWidget {
                   color: Colors.red, size: 34),
             ),
             const SizedBox(height: 16),
-            const Text('Remove Restaurant?',
-                style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87)),
+            const Text(
+              'Remove Restaurant?',
+              style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87),
+            ),
             const SizedBox(height: 8),
             Text(
               'All bookings from "${restaurant.restaurantName}" will be removed.',
@@ -225,7 +243,6 @@ class _RestaurantCard extends StatelessWidget {
     return Obx(() {
       final isDeleting =
       controller.isDeletingRestaurant(restaurant.restaurantId);
-      // Show per-card button only when more than 1 restaurant
       final showCardButton = controller.restaurants.length > 1;
 
       return AnimatedOpacity(
@@ -266,12 +283,11 @@ class _RestaurantCard extends StatelessWidget {
                 },
               ),
 
-              // ── Total + optional per-card button ──────────────────────
+              // ── Total + optional per-card button ────────────────────────
               Padding(
                 padding: const EdgeInsets.all(14),
                 child: Column(
                   children: [
-                    // Total row
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 14, vertical: 10),
@@ -300,8 +316,6 @@ class _RestaurantCard extends StatelessWidget {
                       ),
                     ),
 
-                    // Per-restaurant Confirm Booking button
-                    // shown only when 2+ restaurants
                     if (showCardButton) ...[
                       const SizedBox(height: 10),
                       SizedBox(
@@ -456,7 +470,7 @@ class _BookingCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Booking Meta ───────────────────────────────────────────────
+          // ── Booking Meta ─────────────────────────────────────────────────
           Container(
             padding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -508,7 +522,7 @@ class _BookingCard extends StatelessWidget {
             ),
           ),
 
-          // ── Items ──────────────────────────────────────────────────────
+          // ── Items ────────────────────────────────────────────────────────
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -526,7 +540,7 @@ class _BookingCard extends StatelessWidget {
             },
           ),
 
-          // ── Booking Total ──────────────────────────────────────────────
+          // ── Booking Total ────────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
             child: Row(
@@ -592,7 +606,7 @@ class _ItemRow extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Top Row: Image + Name / Unit price + Delete ────────────
+            // ── Top Row: Image + Name / Unit price + Delete ──────────────
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -632,8 +646,8 @@ class _ItemRow extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         '₹${FinalCartController.formatPrice(item.price)} / item',
-                        style:
-                        TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                        style: TextStyle(
+                            fontSize: 11, color: Colors.grey.shade500),
                       ),
                     ],
                   ),
@@ -672,7 +686,7 @@ class _ItemRow extends StatelessWidget {
 
             const SizedBox(height: 10),
 
-            // ── Bottom Row: Stepper + Total price ──────────────────────
+            // ── Bottom Row: Stepper + Total price ────────────────────────
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -702,7 +716,8 @@ class _ItemRow extends StatelessWidget {
                       Container(
                         constraints: const BoxConstraints(minWidth: 36),
                         alignment: Alignment.center,
-                        padding: const EdgeInsets.symmetric(horizontal: 2),
+                        padding:
+                        const EdgeInsets.symmetric(horizontal: 2),
                         child: isQtyUpdating
                             ? const SizedBox(
                           width: 14,
@@ -905,7 +920,7 @@ class _MetaRow extends StatelessWidget {
   }
 }
 
-// ── PLACE ORDER BAR — shown only when exactly 1 restaurant ───────────────────
+// ── PLACE ORDER BAR ───────────────────────────────────────────────────────────
 class _PlaceOrderBar extends StatelessWidget {
   final double grandTotal;
   final int restaurantCount;
@@ -1047,8 +1062,8 @@ class _EmptyCartView extends StatelessWidget {
             onPressed: () => Get.back(),
             icon: const Icon(Icons.arrow_back_rounded, size: 18),
             label: const Text('Browse Restaurants',
-                style:
-                TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, fontSize: 15)),
             style: ElevatedButton.styleFrom(
               backgroundColor: _primary,
               foregroundColor: Colors.white,

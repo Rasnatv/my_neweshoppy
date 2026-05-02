@@ -1,60 +1,76 @@
-// ─── Model ────────────────────────────────────────────────────────────────────
 
 class PurchasedProductModel {
   final bool status;
-  final int statusCode;
   final String message;
-  final int userId;
-  final List<PurchasedProduct> data;
+  final List<OrderItem> data;
 
   PurchasedProductModel({
     required this.status,
-    required this.statusCode,
     required this.message,
-    required this.userId,
     required this.data,
   });
 
   factory PurchasedProductModel.fromJson(Map<String, dynamic> json) {
-    final dataObj = json['data'] as Map<String, dynamic>?;
-    final productsList = dataObj?['products'] as List<dynamic>? ?? [];
-
     return PurchasedProductModel(
-      status: (json['status'] == 1 || json['status'] == true),
-      statusCode: json['status_code'] ?? 0,
+      status: json['status'] == true || json['status'] == 1,
       message: json['message'] ?? '',
-      userId: dataObj?['user_id'] ?? 0,
-      data: productsList
-          .map((e) => PurchasedProduct.fromJson(e as Map<String, dynamic>))
+      data: (json['data'] as List<dynamic>? ?? [])
+          .map((e) => OrderItem.fromJson(e))
           .toList(),
     );
   }
 }
 
-// ─── Product ──────────────────────────────────────────────────────────────────
+class OrderItem {
+  final String orderId;
+  final String orderDate;
+  final double totalAmount;
+  final List<PurchasedProduct> items;
+
+  OrderItem({
+    required this.orderId,
+    required this.orderDate,
+    required this.totalAmount,
+    required this.items,
+  });
+
+  factory OrderItem.fromJson(Map<String, dynamic> json) {
+    return OrderItem(
+      orderId: json['order_id'] ?? '',
+      orderDate: json['order_date'] ?? '',
+      totalAmount: double.tryParse(json['total_amount'].toString()) ?? 0.0,
+      items: (json['items'] as List<dynamic>? ?? [])
+          .map((e) => PurchasedProduct.fromJson(e))
+          .toList(),
+    );
+  }
+}
 
 class PurchasedProduct {
-  final String orderId;
+  final int productId;
   final String productName;
-  final double price;
+  final String productImage;
   final int quantity;
+  final double price;
   final double total;
 
   PurchasedProduct({
-    required this.orderId,
+    required this.productId,
     required this.productName,
-    required this.price,
+    required this.productImage,
     required this.quantity,
+    required this.price,
     required this.total,
   });
 
   factory PurchasedProduct.fromJson(Map<String, dynamic> json) {
     return PurchasedProduct(
-      orderId: json['order_id']?.toString() ?? '',
-      productName: json['product_name']?.toString() ?? '',
-      price: double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
-      quantity: int.tryParse(json['quantity']?.toString() ?? '0') ?? 0,
-      total: double.tryParse(json['total']?.toString() ?? '0') ?? 0.0,
+      productId: json['product_id'] ?? 0,
+      productName: json['product_name'] ?? '',
+      productImage: json['product_image'] ?? '',
+      quantity: json['quantity'] ?? 0,
+      price: double.tryParse(json['price'].toString()) ?? 0.0,
+      total: double.tryParse(json['total'].toString()) ?? 0.0,
     );
   }
 }

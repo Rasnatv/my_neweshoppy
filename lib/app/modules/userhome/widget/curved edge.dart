@@ -1,22 +1,4 @@
-// import 'package:flutter/material.dart';
-//
-// import 'customcurvededge.dart';
-//
-//
-// class curvedEdge extends StatelessWidget {
-//   const curvedEdge({super.key, this.child});
-//   final Widget? child;
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return ClipPath(
-//         clipper: CustomCurvedEdge() ,
-//         child:child
-//     );
-//
-//
-//   }
-// }
+
 import 'package:flutter/material.dart';
 
 class SmoothBottomCurveClipper extends CustomClipper<Path> {

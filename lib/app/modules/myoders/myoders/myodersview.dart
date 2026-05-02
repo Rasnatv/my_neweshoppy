@@ -229,17 +229,16 @@ class MyOrdersView extends StatelessWidget {
     );
   }
 
-  // ── Item Row ─────────────────────────────────────────────────────────────────
   Widget _buildItemRow(OrderProduct item) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         children: [
-          // Product image
+          // ✅ use displayImage (variant image preferred)
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: Image.network(
-              item.productImage,
+              item.displayImage,
               width: 56,
               height: 56,
               fit: BoxFit.cover,
@@ -261,10 +260,7 @@ class MyOrdersView extends StatelessWidget {
                   : Container(
                 width: 56,
                 height: 56,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF0F0F0),
-                  borderRadius: BorderRadius.circular(10),
-                ),
+                color: const Color(0xFFF0F0F0),
                 child: Center(
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
@@ -279,7 +275,6 @@ class MyOrdersView extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          // Product details
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -292,7 +287,21 @@ class MyOrdersView extends StatelessWidget {
                     color: Color(0xFF1A1A1A),
                   ),
                 ),
+                // ✅ show variant attributes if present
+                if (item.variant != null &&
+                    item.variant!.attributes.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    item.variant!.displayAttributes,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey.shade500,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 4),
+                // ✅ price from variant or derived
                 Text(
                   '₹${item.price.toStringAsFixed(2)}  ×  ${item.quantity}',
                   style: const TextStyle(
@@ -303,7 +312,6 @@ class MyOrdersView extends StatelessWidget {
               ],
             ),
           ),
-          // Item total
           Text(
             '₹${item.total.toStringAsFixed(2)}',
             style: TextStyle(
@@ -316,7 +324,6 @@ class MyOrdersView extends StatelessWidget {
       ),
     );
   }
-
   // ── Empty State ──────────────────────────────────────────────────────────────
   Widget _buildEmptyState() {
     return Center(

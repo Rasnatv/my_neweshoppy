@@ -133,4 +133,18 @@ class UserOfferProductDetailController extends GetxController {
     return selectedVariant.value!.price -
         selectedVariant.value!.offerPrice;
   }
+//
+// ✅ ADD THIS BELOW getDiscountAmount
+  void selectVariantById(int variantId) {
+    if (productData.value == null) return;
+    final matched = productData.value!.variants.firstWhereOrNull(
+          (v) => v.variantId == variantId,
+    );
+    if (matched != null) {
+      selectedAttributes.value = Map.from(matched.attributes);
+      selectedVariant.value = matched;
+      _syncImageIndexToVariant(matched);
+    }
+  }
+  //
 }

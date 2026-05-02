@@ -1,9 +1,11 @@
 
 import 'package:eshoppy/app/common/style/app_colors.dart';
+import 'package:eshoppy/app/modules/product/view/prodductdetailscreen.dart';
 import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_text_style.dart';
+import '../../userhome/view/user_offerproductdetail.dart';
 import '../controller/cartcontroller.dart';
 import '../../../data/models/cartmodel.dart';
 import 'addresslistpage.dart';
@@ -77,11 +79,42 @@ class CartScreen extends StatelessWidget {
               child: ListView.builder(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                 itemCount: cartController.cartItems.length,
+
                 itemBuilder: (context, index) {
                   final item = cartController.cartItems[index];
-                  return _CartItemCard(
-                    item: item,
-                    cartController: cartController,
+                //   return InkWell(
+                //     onTap: () {
+                //       if (item.type == 1) {
+                //         // Offer product — but we need offerId!
+                //         // Cart API doesn't return offer_id, so we need product_id as fallback
+                //         Get.to(() => UserOfferProductDetailScreen(
+                //           offerProductId: int.parse(item.productId),
+                //         ));
+                //       } else {
+                //         Get.to(() => ProductDetailPage(
+                //           productId: int.parse(item.productId),
+                //         ));
+                //       }
+                return InkWell(
+                onTap: () {
+        if (item.type == 1) {
+        Get.to(() => UserOfferProductDetailScreen(
+        offerProductId: int.parse(item.productId),
+        preSelectedVariantId: item.variantId, // ✅ pass variantId
+        ));
+        } else {
+        Get.to(() => ProductDetailPage(
+        productId: int.parse(item.productId),
+        preSelectedVariantId: item.variantId, // ✅ pass variantId
+        ));
+        }
+        },
+
+
+                    child: _CartItemCard(
+                      item: item,
+                      cartController: cartController,
+                    ),
                   );
                 },
               ),
@@ -250,9 +283,7 @@ class CartScreen extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────
-// Cart Item Card
-// ─────────────────────────────────────────
+
 class _CartItemCard extends StatelessWidget {
   final CartItem item;
   final CartController cartController;
@@ -266,7 +297,7 @@ class _CartItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Dismissible(
-      key: Key(item.productId),
+      key: Key("${item.productId}_${item.variantId ?? 0}"),
       direction: DismissDirection.endToStart,
       confirmDismiss: (_) async {
         return await showDialog<bool>(
@@ -296,8 +327,10 @@ class _CartItemCard extends StatelessWidget {
           ),
         );
       },
-      onDismissed: (_) =>
-          cartController.removeFromCart(int.parse(item.productId)),
+      onDismissed: (_) => cartController.removeFromCart(
+        int.parse(item.productId),
+        variantId: item.variantId, // ✅ Bug 1 fix (swipe)
+      ),
       background: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
@@ -320,7 +353,10 @@ class _CartItemCard extends StatelessWidget {
         ),
       ),
       child: Obx(() {
-        final isRemoving = cartController.isItemRemoving(item.productId);
+        final isRemoving = cartController.isItemRemoving(
+          item.productId,
+          item.variantId,
+        );
         return AnimatedOpacity(
           duration: const Duration(milliseconds: 200),
           opacity: isRemoving ? 0.5 : 1.0,
@@ -370,7 +406,6 @@ class _CartItemCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      // Offer badge on image
                       if (item.type == 1 && item.offerPercentage > 0)
                         Positioned(
                           top: 0,
@@ -403,7 +438,6 @@ class _CartItemCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Name + Delete button
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -421,11 +455,15 @@ class _CartItemCard extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 8),
+                            // ✅ Bug 3 fix: GestureDetector with opaque behavior
                             GestureDetector(
+                              behavior: HitTestBehavior.opaque,
                               onTap: isRemoving
                                   ? null
                                   : () => cartController.removeFromCart(
-                                  int.parse(item.productId)),
+                                int.parse(item.productId),
+                                variantId: item.variantId, // ✅ Bug 1 fix
+                              ),
                               child: Container(
                                 width: 32,
                                 height: 32,
@@ -450,10 +488,35 @@ class _CartItemCard extends StatelessWidget {
                             ),
                           ],
                         ),
+                        if (item.attributes != null &&
+                            item.attributes!.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
+                              children: item.attributes!.entries.map((e) {
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade100,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    "${e.key.toUpperCase()}: ${e.value}",
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.grey.shade700,
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
                         const SizedBox(height: 6),
-                        // ── Price row ──
                         if (item.type == 1 && item.offerPercentage > 0) ...[
-                          // Offer item: strikethrough original + green final
                           Row(
                             children: [
                               Text(
@@ -477,7 +540,6 @@ class _CartItemCard extends StatelessWidget {
                             ],
                           ),
                         ] else ...[
-                          // Normal item: plain price
                           Text(
                             "₹${item.finalPrice.toStringAsFixed(0)} each",
                             style: TextStyle(
@@ -487,20 +549,27 @@ class _CartItemCard extends StatelessWidget {
                           ),
                         ],
                         const SizedBox(height: 10),
-                        // ── Stepper + Item total ──
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
+                            // ✅ Bug 2 fix: pass variantId to stepper callbacks
                             _QuantityStepper(
                               quantity: item.quantity,
-                              stock: item.stock, // ✅ NEW
-                              onDecrement: () => cartController.updateQuantity(
-                                  int.parse(item.productId), "decrement"),
-                              onIncrement: () => cartController.updateQuantity(
-                                  int.parse(item.productId), "increment"),
+                              stock: item.stock,
+                              onDecrement: () =>
+                                  cartController.updateQuantity(
+                                    int.parse(item.productId),
+                                    "decrement",
+                                    variantId: item.variantId,
+                                  ),
+                              onIncrement: () =>
+                                  cartController.updateQuantity(
+                                    int.parse(item.productId),
+                                    "increment",
+                                    variantId: item.variantId,
+                                  ),
                             ),
                             const Spacer(),
-                            // Item total
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
@@ -539,106 +608,23 @@ class _CartItemCard extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────
-// Quantity Stepper
-// ─────────────────────────────────────────
-// class _QuantityStepper extends StatelessWidget {
-//   final int quantity;
-//   final VoidCallback onDecrement;
-//   final VoidCallback onIncrement;
-//
-//   const _QuantityStepper({
-//     Key? key,
-//     required this.quantity,
-//     required this.onDecrement,
-//     required this.onIncrement,
-//   }) : super(key: key);
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       height: 36,
-//       decoration: BoxDecoration(
-//         color: const Color(0xFFF7F8FA),
-//         borderRadius: BorderRadius.circular(10),
-//         border: Border.all(color: Colors.grey.shade200),
-//       ),
-//       child: Row(
-//         mainAxisSize: MainAxisSize.min,
-//         children: [
-//           GestureDetector(
-//             onTap: onDecrement,
-//             child: Container(
-//               width: 36,
-//               height: 36,
-//               decoration: BoxDecoration(
-//                 borderRadius: BorderRadius.circular(9),
-//               ),
-//               child: Icon(
-//                 Icons.remove_rounded,
-//                 size: 18,
-//                 color: quantity <= 1
-//                     ? Colors.grey.shade400
-//                     : Colors.grey.shade700,
-//               ),
-//             ),
-//           ),
-//           AnimatedSwitcher(
-//             duration: const Duration(milliseconds: 150),
-//             transitionBuilder: (child, anim) =>
-//                 ScaleTransition(scale: anim, child: child),
-//             child: SizedBox(
-//               key: ValueKey(quantity),
-//               width: 32,
-//               child: Center(
-//                 child: Text(
-//                   "$quantity",
-//                   style: const TextStyle(
-//                     fontSize: 15,
-//                     fontWeight: FontWeight.w700,
-//                     color: Color(0xFF1A1A2E),
-//                   ),
-//                 ),
-//               ),
-//             ),
-//           ),
-//           GestureDetector(
-//             onTap: onIncrement,
-//             child: Container(
-//               width: 36,
-//               height: 36,
-//               decoration: BoxDecoration(
-//                 borderRadius: BorderRadius.circular(9),
-//               ),
-//               child: Icon(
-//                 Icons.add_rounded,
-//                 size: 18,
-//                 color: AppColors.kPrimary,
-//               ),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
 class _QuantityStepper extends StatelessWidget {
   final int quantity;
-  final int stock; // ✅ NEW
+  final int stock;
   final VoidCallback onDecrement;
   final VoidCallback onIncrement;
 
   const _QuantityStepper({
     Key? key,
     required this.quantity,
-    required this.stock, // ✅ NEW
+    required this.stock,
     required this.onDecrement,
     required this.onIncrement,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final bool atMax = quantity >= stock; // ✅ NEW
+    final bool atMax = quantity >= stock;
 
     return Container(
       height: 36,
@@ -650,8 +636,9 @@ class _QuantityStepper extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // ── Decrement ──
+          // ✅ Bug 3 fix: opaque behavior on stepper buttons too
           GestureDetector(
+            behavior: HitTestBehavior.opaque,
             onTap: onDecrement,
             child: Container(
               width: 36,
@@ -668,7 +655,6 @@ class _QuantityStepper extends StatelessWidget {
               ),
             ),
           ),
-          // ── Count ──
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 150),
             transitionBuilder: (child, anim) =>
@@ -688,8 +674,8 @@ class _QuantityStepper extends StatelessWidget {
               ),
             ),
           ),
-          // ── Increment ── ✅ greyed out at stock limit
           GestureDetector(
+            behavior: HitTestBehavior.opaque,
             onTap: atMax ? null : onIncrement,
             child: Container(
               width: 36,

@@ -15,7 +15,6 @@ abstract class AppColors {
   static const kScaffoldBackground = Color(0xffffffff);
   static const white = Color(0xffffffff);
   static const black = Colors.black;
-  static const kButtonBlue = Color(0xff1A9859);
   static const shimmerGray = Color(0xffededed);
   static const lightgreycontainer = Color(0xFFF5F5F5);
   static const transparent = Color(0x00000000);

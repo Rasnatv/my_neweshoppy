@@ -414,7 +414,7 @@ class _UserhomeState extends State<Userhome> with TickerProviderStateMixin {
             title: "Categories",
           ),
         ),
-        const SliverToBoxAdapter(child: SizedBox(height: 5)),
+        const SliverToBoxAdapter(child: SizedBox(height: 10)),
 
         // ✅ Shows prompt until location is selected, then shows grid
         SliverToBoxAdapter(

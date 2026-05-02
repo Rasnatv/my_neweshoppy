@@ -17,7 +17,7 @@ class PurchasedProductController extends GetxController {
   // ── State ─────────────────────────────────────
   var isLoading = false.obs;
   var errorMessage = ''.obs;
-  var purchasedProducts = <PurchasedProduct>[].obs;
+  var orders = <OrderItem>[].obs;
   var currentUserId = 0.obs;
 
   // ── Auth ──────────────────────────────────────
@@ -34,7 +34,6 @@ class PurchasedProductController extends GetxController {
     super.onInit();
 
     final args = Get.arguments;
-    print("ARGS RECEIVED: $args");
 
     if (args == null || args['user_id'] == null) {
       errorMessage.value = 'User ID not provided';
@@ -47,7 +46,6 @@ class PurchasedProductController extends GetxController {
 
     if (userId == null || userId <= 0) {
       errorMessage.value = 'Invalid User ID';
-      AppSnackbar.error("Invalid User ID");
       return;
     }
 
@@ -55,11 +53,46 @@ class PurchasedProductController extends GetxController {
     fetchPurchasedProducts(userId);
   }
 
+  // Future<void> fetchPurchasedProducts(int userId) async {
+  //   try {
+  //     isLoading.value = true;
+  //     errorMessage.value = '';
+  //     orders.clear();
+  //
+  //     final response = await http.post(
+  //       Uri.parse(_url),
+  //       headers: _headers,
+  //       body: jsonEncode({'user_id': userId}),
+  //     );
+  //
+  //     if (response.statusCode != 200) {
+  //       final error = ApiErrorHandler.handleResponse(response);
+  //       errorMessage.value = error;
+  //       AppSnackbar.error(error);
+  //       return;
+  //     }
+  //
+  //     final body = jsonDecode(response.body);
+  //
+  //     if (body['status'] == true || body['status'] == 1) {
+  //       final model = PurchasedProductModel.fromJson(body);
+  //       orders.assignAll(model.data);
+  //     }
+  //     // No else — empty state UI handles the no-orders case silently
+  //
+  //   } catch (e) {
+  //     final error = ApiErrorHandler.handleException(e);
+  //     errorMessage.value = error;
+  //     AppSnackbar.error(error);
+  //   } finally {
+  //     isLoading.value = false;
+  //   }
+  // }
   Future<void> fetchPurchasedProducts(int userId) async {
     try {
       isLoading.value = true;
       errorMessage.value = '';
-      purchasedProducts.clear();
+      orders.clear();
 
       final response = await http.post(
         Uri.parse(_url),
@@ -67,39 +100,37 @@ class PurchasedProductController extends GetxController {
         body: jsonEncode({'user_id': userId}),
       );
 
-      // ✅ Handle non-200 status codes FIRST
-      if (response.statusCode != 200) {
-        final error = ApiErrorHandler.handleResponse(response);
-        errorMessage.value = error;
-        AppSnackbar.error(error);
-        return;
-      }
-
       final body = jsonDecode(response.body);
 
-      if (body['status'] == 1 || body['status'] == true) {
+      // Treat status:false or empty data as silent empty state — not an error
+      if (body['status'] == true || body['status'] == 1) {
         final model = PurchasedProductModel.fromJson(body);
-        purchasedProducts.assignAll(model.data);
-
-        // Optional success snackbar
-        if (model.data.isEmpty) {
-          AppSnackbar.warning("No purchased products found");
-        }
-      } else {
-        final msg =
-            body['message'] ?? 'Failed to fetch purchased products';
-        errorMessage.value = msg;
-        AppSnackbar.error(msg);
+        orders.assignAll(model.data);
+        return; // ← done, no snackbar
       }
+
+      // Only show error snackbar for real HTTP failures (non-200 AND not a "no data" response)
+      if (response.statusCode != 200) {
+        final error = ApiErrorHandler.handleResponse(response);
+        if (error.isNotEmpty) {
+          errorMessage.value = error;
+          AppSnackbar.error(error);
+        }
+      }
+
+      // status:false with 200 = no orders — fall through silently
+
     } catch (e) {
       final error = ApiErrorHandler.handleException(e);
-      errorMessage.value = error;
-      AppSnackbar.error(error);
+      if (error.isNotEmpty) {
+        errorMessage.value = error;
+        AppSnackbar.error(error);
+      }
     } finally {
       isLoading.value = false;
     }
   }
 
   double get totalSpend =>
-      purchasedProducts.fold(0.0, (sum, p) => sum + p.total);
+      orders.fold(0.0, (sum, o) => sum + o.totalAmount);
 }

@@ -30,11 +30,12 @@ class RestaurantCartPage extends StatelessWidget {
         foregroundColor: Colors.white,
         title: const Text(
           'Purchased items',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.1,
+            )
         ),
         actions: [
           IconButton(

@@ -1,6 +1,5 @@
 
 import 'dart:convert';
-
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
@@ -25,18 +24,14 @@ class MyOrdersController extends GetxController {
     fetchMyOrders();
   }
 
-  /// ================= FETCH ORDERS =================
   Future<void> fetchMyOrders() async {
-    /// ✅ TOKEN CHECK
     try {
       isLoading.value = true;
       hasError.value = false;
       errorMessage.value = '';
 
       final response = await http.get(
-        Uri.parse(
-          'https://eshoppy.co.in/api/my-orders',
-        ),
+        Uri.parse('https://eshoppy.co.in/api/my-orders'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -46,41 +41,31 @@ class MyOrdersController extends GetxController {
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
-
         if (body['status'] == true) {
           final List data = body['data'];
           orders.value =
               data.map((e) => MyOrdersModel.fromJson(e)).toList();
         } else {
           hasError.value = true;
-          errorMessage.value =
-              body['message'] ?? 'Failed to load orders';
-
+          errorMessage.value = body['message'] ?? 'Failed to load orders';
           AppSnackbar.warning(errorMessage.value);
         }
       } else {
-        /// ✅ API ERROR HANDLING
         final error = ApiErrorHandler.handleResponse(response);
         hasError.value = true;
         errorMessage.value = error;
-
         AppSnackbar.error(error);
       }
-
     } catch (e) {
-      /// ✅ EXCEPTION HANDLING
       final error = ApiErrorHandler.handleException(e);
-      // hasError.value = true;
-      // errorMessage.value = error;
-
+      hasError.value = true;
+      errorMessage.value = error;
       AppSnackbar.error(error);
-
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// ================= FORMAT DATE =================
   String formatDate(String rawDate) {
     try {
       final dt = DateTime.parse(rawDate);

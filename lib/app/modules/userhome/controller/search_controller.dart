@@ -5,6 +5,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import '../../../data/errors/api_error.dart';
 import '../../merchantlogin/widget/successwidget.dart';
+import 'dart:async';  // ✅ Add this import
 
 class SearchController extends GetxController {
   final box = GetStorage();
@@ -12,7 +13,25 @@ class SearchController extends GetxController {
   var isLoading = false.obs;
   var productList = [].obs;
 
+  Timer? _debounce;  // ✅ Add this
+
+  // ✅ Add this method
+  void onSearchChanged(String keyword) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      searchProducts(keyword);
+    });
+  }
+
+  @override
+  void onClose() {
+    _debounce?.cancel();  // ✅ Clean up timer
+    super.onClose();
+  }
+
   Future<void> searchProducts(String keyword) async {
+
+
     try {
       isLoading.value = true;
 

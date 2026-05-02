@@ -69,16 +69,6 @@ class AdminLoginController extends GetxController {
         }),
       );
 
-      debugPrint("🔐 Login status: ${response.statusCode}");
-      debugPrint("🔐 Login body: ${response.body}");
-
-      // ✅ HANDLE NON-200 RESPONSES
-      if (response.statusCode != 200) {
-        final errorMsg = ApiErrorHandler.handleResponse(response);
-        AppSnackbar.error(errorMsg);
-        return;
-      }
-
       final body = jsonDecode(response.body);
 
       final status = body['status'];
@@ -135,7 +125,6 @@ class AdminLoginController extends GetxController {
     await box.write("is_logged_in", true);
 
     final String? savedToken = box.read('auth_token');
-    debugPrint("✅ Token saved: '$savedToken'");
 
     return true;
   }

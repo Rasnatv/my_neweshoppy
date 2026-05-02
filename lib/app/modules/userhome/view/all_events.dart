@@ -58,7 +58,7 @@ class AllEventsPage extends StatelessWidget {
             crossAxisCount: 2,
             mainAxisSpacing: 16,
             crossAxisSpacing: 16,
-            childAspectRatio: 0.86,
+            childAspectRatio: 0.74,
           ),
           itemBuilder: (context, index) {
             final event = controller.events[index];
@@ -119,143 +119,286 @@ class _EventGridCard extends StatelessWidget {
     return event.district;
   }
 
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+//       decoration: BoxDecoration(
+//         color: Colors.white,
+//         borderRadius: BorderRadius.circular(20),
+//         boxShadow: [
+//           BoxShadow(
+//             color: Colors.black.withOpacity(0.08),
+//             blurRadius: 12,
+//             offset: const Offset(0, 5),
+//           ),
+//         ],
+//       ),
+//       child: Column(
+//         crossAxisAlignment: CrossAxisAlignment.start,
+//         children: [
+//           // ── Banner Image ───────────────────────────────────────────────
+//           Stack(
+//             children: [
+//               ClipRRect(
+//                 borderRadius: const BorderRadius.vertical(
+//                   top: Radius.circular(20),
+//                 ),
+//                 child: Image.network(
+//                   event.bannerImage,
+//                   height: 110,
+//                   width: double.infinity,
+//                   fit: BoxFit.cover,
+//                   loadingBuilder: (_, child, progress) {
+//                     if (progress == null) return child;
+//                     return Container(
+//                       height: 110,
+//                       color: Colors.grey[100],
+//                       child: const Center(
+//                         child: CircularProgressIndicator(strokeWidth: 2),
+//                       ),
+//                     );
+//                   },
+//                   errorBuilder: (_, __, ___) => Container(
+//                     height: 110,
+//                     color: Colors.grey[200],
+//                     child: Center(
+//                       child: Icon(Icons.event_rounded,
+//                           size: 36, color: Colors.grey[400]),
+//                     ),
+//                   ),
+//                 ),
+//               ),
+//               // "Event" badge
+//               Positioned(
+//                 top: 8,
+//                 left: 8,
+//                 child: Container(
+//                   padding: const EdgeInsets.symmetric(
+//                       horizontal: 8, vertical: 4),
+//                   decoration: BoxDecoration(
+//                     color: Colors.purple.shade600,
+//                     borderRadius: BorderRadius.circular(8),
+//                   ),
+//                   child: const Row(
+//                     mainAxisSize: MainAxisSize.min,
+//                     children: [
+//                       Icon(Icons.calendar_today_rounded,
+//                           color: Colors.white, size: 10),
+//                       SizedBox(width: 3),
+//                       Text(
+//                         "Event",
+//                         style: TextStyle(
+//                           color: Colors.white,
+//                           fontSize: 10,
+//                           fontWeight: FontWeight.w700,
+//                         ),
+//                       ),
+//                     ],
+//                   ),
+//                 ),
+//               ),
+//             ],
+//           ),
+//
+//           // ── Details ───────────────────────────────────────────────────
+//           Padding(
+//             padding: const EdgeInsets.all(9),
+//             child: Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               children: [
+//                 // Event name
+//                 Text(
+//                   event.eventName,
+//                   maxLines: 2,
+//                   overflow: TextOverflow.ellipsis,
+//                   style: const TextStyle(
+//                     fontWeight: FontWeight.w700,
+//                     fontSize: 13,
+//                     color: Color(0xFF1A1A1A),
+//                     height: 1.3,
+//                   ),
+//                 ),
+//
+//                 const SizedBox(height: 6),
+//
+//                 // Date row
+//                 if (_dateLabel.isNotEmpty) ...[
+//                   _InfoRow(
+//                     icon: Icons.date_range_rounded,
+//                     label: _dateLabel,
+//                     color: Colors.purple.shade400,
+//                   ),
+//                   const SizedBox(height: 3),
+//                 ],
+//
+//                 // Time row
+//                 if (_timeLabel.isNotEmpty) ...[
+//                   _InfoRow(
+//                     icon: Icons.access_time_rounded,
+//                     label: _timeLabel,
+//                     color: Colors.orange.shade400,
+//                   ),
+//                   const SizedBox(height: 3),
+//                 ],
+//
+//                 // Location row
+//                 if (_locationLabel.isNotEmpty)
+//                   _InfoRow(
+//                     icon: Icons.location_on_rounded,
+//                     label: _locationLabel,
+//                     color: Colors.grey.shade500,
+//                   ),
+//               ],
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Banner Image ───────────────────────────────────────────────
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(20),
-                ),
-                child: Image.network(
-                  event.bannerImage,
-                  height: 110,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  loadingBuilder: (_, child, progress) {
-                    if (progress == null) return child;
-                    return Container(
-                      height: 110,
-                      color: Colors.grey[100],
-                      child: const Center(
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                    );
-                  },
-                  errorBuilder: (_, __, ___) => Container(
+    return ClipRRect( // ← hard clip, nothing escapes
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Banner Image ───────────────────────────────────────────────
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(20),
+                  ),
+                  child: Image.network(
+                    event.bannerImage,
                     height: 110,
-                    color: Colors.grey[200],
-                    child: Center(
-                      child: Icon(Icons.event_rounded,
-                          size: 36, color: Colors.grey[400]),
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (_, child, progress) {
+                      if (progress == null) return child;
+                      return Container(
+                        height: 110,
+                        color: Colors.grey[100],
+                        child: const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      );
+                    },
+                    errorBuilder: (_, __, ___) =>
+                        Container(
+                          height: 110,
+                          color: Colors.grey[200],
+                          child: Center(
+                            child: Icon(Icons.event_rounded,
+                                size: 36, color: Colors.grey[400]),
+                          ),
+                        ),
+                  ),
+                ),
+                Positioned(
+                  top: 8,
+                  left: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.purple.shade600,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.calendar_today_rounded,
+                            color: Colors.white, size: 10),
+                        SizedBox(width: 3),
+                        Text(
+                          "Event",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ),
-              // "Event" badge
-              Positioned(
-                top: 8,
-                left: 8,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.purple.shade600,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.calendar_today_rounded,
-                          color: Colors.white, size: 10),
-                      SizedBox(width: 3),
-                      Text(
-                        "Event",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          // ── Details ───────────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.all(9),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Event name
-                Text(
-                  event.eventName,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                    color: Color(0xFF1A1A1A),
-                    height: 1.3,
-                  ),
-                ),
-
-                const SizedBox(height: 6),
-
-                // Date row
-                if (_dateLabel.isNotEmpty) ...[
-                  _InfoRow(
-                    icon: Icons.date_range_rounded,
-                    label: _dateLabel,
-                    color: Colors.purple.shade400,
-                  ),
-                  const SizedBox(height: 3),
-                ],
-
-                // Time row
-                if (_timeLabel.isNotEmpty) ...[
-                  _InfoRow(
-                    icon: Icons.access_time_rounded,
-                    label: _timeLabel,
-                    color: Colors.orange.shade400,
-                  ),
-                  const SizedBox(height: 3),
-                ],
-
-                // Location row
-                if (_locationLabel.isNotEmpty)
-                  _InfoRow(
-                    icon: Icons.location_on_rounded,
-                    label: _locationLabel,
-                    color: Colors.grey.shade500,
-                  ),
               ],
             ),
-          ),
-        ],
+
+            // ── Details ── Expanded stops it growing beyond card bounds ───
+            Expanded( // ← KEY FIX
+              child: Padding(
+                padding: const EdgeInsets.all(9),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min, // ← don't stretch vertically
+                  children: [
+                    // Event name
+                    Text(
+                      event.eventName,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        color: Color(0xFF1A1A1A),
+                        height: 1.3,
+                      ),
+                    ),
+
+                    const SizedBox(height: 6),
+
+                    // Date row
+                    if (_dateLabel.isNotEmpty) ...[
+                      _InfoRow(
+                        icon: Icons.date_range_rounded,
+                        label: _dateLabel,
+                        color: Colors.purple.shade400,
+                      ),
+                      const SizedBox(height: 3),
+                    ],
+
+                    // Time row
+                    if (_timeLabel.isNotEmpty) ...[
+                      _InfoRow(
+                        icon: Icons.access_time_rounded,
+                        label: _timeLabel,
+                        color: Colors.orange.shade400,
+                      ),
+                      const SizedBox(height: 3),
+                    ],
+
+                    // Location row
+                    if (_locationLabel.isNotEmpty)
+                      _InfoRow(
+                        icon: Icons.location_on_rounded,
+                        label: _locationLabel,
+                        color: Colors.grey.shade500,
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
-  }
-}
+  }}
+
 
 // ── Reusable icon + text row ──────────────────────────────────────────────────
 

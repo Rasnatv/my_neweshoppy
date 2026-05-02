@@ -57,42 +57,6 @@ class OrderConfirmationPage extends StatelessWidget {
     ));
   }
 
-  // ── Error State ─────────────────────────────────────────────────────────────
-  Widget _buildErrorState(OrderConfirmationController controller) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline_rounded, size: 60, color: Colors.red.shade300),
-            const SizedBox(height: 16),
-            Text(
-              controller.errorMessage.value,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 14, color: Color(0xFF555555)),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () {
-                final addressId = Get.arguments?['address_id'];
-                if (addressId != null) controller.fetchOrderPreview(addressId);
-              },
-              icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Retry'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor:  AppColors.kPrimary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   // ── Main Body ────────────────────────────────────────────────────────────────
   Widget _buildBody(OrderConfirmationModel preview, OrderConfirmationController controller) {
@@ -327,11 +291,46 @@ class OrderConfirmationPage extends StatelessWidget {
       ),
     );
   }
+  // ── Fix retry button — use controller.addressId instead of Get.arguments
+  Widget _buildErrorState(OrderConfirmationController controller) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline_rounded, size: 60, color: Colors.red.shade300),
+            const SizedBox(height: 16),
+            Text(
+              controller.errorMessage.value,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 14, color: Color(0xFF555555)),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () => controller.fetchOrderPreview(controller.addressId), // ✅ fixed
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Retry'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.kPrimary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
+// ── Updated item tile — attributes are now flat on OrderItem
   Widget _buildItemTile(OrderItem item) {
     return Padding(
       padding: const EdgeInsets.all(14),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Product Image
           ClipRRect(
@@ -380,7 +379,39 @@ class OrderConfirmationPage extends StatelessWidget {
                     color: Color(0xFF1A1A1A),
                   ),
                 ),
-                const SizedBox(height: 5),
+                const SizedBox(height: 4),
+
+                // ✅ Attributes now read directly from item.attributes
+                if (item.attributes.isNotEmpty) ...[
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: item.attributes.entries.map((e) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppColors.kPrimary.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: AppColors.kPrimary.withOpacity(0.2),
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          '${_capitalize(e.key)}: ${e.value}',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.kPrimary,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 5),
+                ],
+
                 Text(
                   '₹${item.price.toStringAsFixed(2)}  ×  ${item.quantity}',
                   style: const TextStyle(
@@ -403,6 +434,10 @@ class OrderConfirmationPage extends StatelessWidget {
       ),
     );
   }
+
+// Helper (add inside the class or as a top-level function)
+  String _capitalize(String s) =>
+      s.isEmpty ? s : s[0].toUpperCase() + s.substring(1).replaceAll('_', ' ');
 
   // ── Total Card ──────────────────────────────────────────────────────────────
   Widget _buildTotalCard(double total) {
@@ -466,9 +501,9 @@ class OrderConfirmationPage extends StatelessWidget {
           const SizedBox(width: 14),
           const Expanded(
             child: Text(
-              'The merchant will contact you soon regarding your order. '
-                  'Delivery and further details will be handled directly by '
-                  'the merchant. For more information, please contact the merchant.',
+              'Once placed, your order cannot be cancelled. '
+                  'The merchant will contact you soon with delivery details. '
+                  'For any queries, please reach out to the merchant directly.',
               style: TextStyle(
                 fontSize: 13,
                 color: Color(0xFF1E40AF),

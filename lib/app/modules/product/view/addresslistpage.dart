@@ -15,55 +15,112 @@ class AddressListPage extends StatelessWidget {
 
   final AddressListController controller = Get.put(AddressListController());
 
-  static Color primary = AppColors.kPrimary;
-  static const Color bg = Color(0xFFF0F0F5);
-  static const Color textDark = Color(0xFF1A1A1A);
+  // ── Design tokens ───────────────────────────────────────────────────────────
+  static const Color _primary     = Colors.teal;
+  static const Color _primarySoft = Color(0xFFEEF2FF);
+  static const Color _surface     = Color(0xFFF5F5F8);
+  static const Color _card        = Colors.white;
+  static const Color _textPrimary = Color(0xFF0F0F10);
+  static const Color _textSec     = Color(0xFF5F6070);
+  static const Color _textTertiary= Color(0xFF9EA0B0);
+  static const Color _border      = Color(0xFFECECF0);
 
   @override
   Widget build(BuildContext context) {
-    return NetworkAwareWrapper(child:Scaffold(
-      backgroundColor: bg,
-      appBar: AppBar(
-        backgroundColor: AppColors.kPrimary,
-        elevation: 0.5,
-        shadowColor: Colors.black12,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Get.back(),
-        ),
-        title: const Text(
-          'Select Address',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.1,
-          ),
+    return NetworkAwareWrapper(
+      child: Scaffold(
+        backgroundColor: _surface,
+        appBar: _buildAppBar(),
+        body: Obx(() {
+          if (controller.isLoading.value) {
+            return const Center(
+              child: CircularProgressIndicator(color: _primary),
+            );
+          }
+          return RefreshIndicator(
+            color: _primary,
+            backgroundColor: Colors.white,
+            onRefresh: controller.fetchAddresses,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(18, 20, 18, 32),
+              children: [
+                _buildAddNewButton(),
+                const SizedBox(height: 16),
+                if (controller.addressList.isEmpty)
+                  _buildEmptyState()
+                else ...[
+                  _buildSectionLabel('Saved Addresses'),
+                  const SizedBox(height: 10),
+                  ...controller.addressList
+                      .map((addr) => _buildAddressCard(addr))
+                      .toList(),
+                ],
+              ],
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  // ── AppBar ──────────────────────────────────────────────────────────────────
+  AppBar _buildAppBar() {
+    return AppBar(
+      backgroundColor: AppColors.kPrimary,
+      elevation: 0,
+      scrolledUnderElevation: 1,
+      shadowColor: Colors.black12,
+      automaticallyImplyLeading: true,
+      iconTheme: IconThemeData(color: Colors.white),
+      title: const Text(
+        'Select Address',
+        style: TextStyle(
+          fontSize: 17,
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
+          letterSpacing: 0.2,
         ),
       ),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return Center(child: CircularProgressIndicator(color: primary));
-        }
-        return RefreshIndicator(
-          color: primary,
-          onRefresh: controller.fetchAddresses,
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              _buildAddNewButton(),
-              const SizedBox(height: 4),
-              if (controller.addressList.isEmpty)
-                _buildEmptyState()
-              else
-                ...controller.addressList
-                    .map((addr) => _buildAddressCard(addr))
-                    .toList(),
-            ],
+      actions: [
+        Obx(() => Padding(
+          padding: const EdgeInsets.only(right: 18),
+          child: controller.addressList.isEmpty
+              ? const SizedBox.shrink()
+              : Container(
+            padding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+            decoration: BoxDecoration(
+              color: _primarySoft,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              '${controller.addressList.length} saved',
+              style: const TextStyle(
+                color: _primary,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
-        );
-      }),
-    ));
+        )),
+      ],
+    );
+  }
+
+  // ── Section label ───────────────────────────────────────────────────────────
+  Widget _buildSectionLabel(String label) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 2, bottom: 2),
+      child: Text(
+        label.toUpperCase(),
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: _textTertiary,
+          letterSpacing: 0.8,
+        ),
+      ),
+    );
   }
 
   // ── Add New Address button ──────────────────────────────────────────────────
@@ -74,25 +131,50 @@ class AddressListPage extends StatelessWidget {
         controller.fetchAddresses();
       },
       child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: primary.withOpacity(0.4), width: 1.4),
+          color: _card,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: _primary.withOpacity(0.3),
+            width: 1.5,
+            strokeAlign: BorderSide.strokeAlignInside,
+          ),
+          // Dashed border workaround via CustomPainter or use solid
         ),
         child: Row(
           children: [
-            Icon(Icons.add_circle_outline, color: primary, size: 20),
-            const SizedBox(width: 10),
-            Text(
-              'ADD NEW ADDRESS',
-              style: TextStyle(
-                color: primary,
-                fontWeight: FontWeight.w700,
-                fontSize: 13.5,
-                letterSpacing: 0.5,
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: _primarySoft,
+                borderRadius: BorderRadius.circular(10),
               ),
+              child: const Icon(Icons.add_rounded, color: _primary, size: 20),
+            ),
+            const SizedBox(width: 14),
+            const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Add New Address',
+                  style: TextStyle(
+                    color: _primary,
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  'Save a delivery location',
+                  style: TextStyle(
+                    color: _textTertiary,
+                    fontSize: 11.5,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -107,28 +189,28 @@ class AddressListPage extends StatelessWidget {
       child: Column(
         children: [
           Container(
-            width: 90,
-            height: 90,
+            width: 88,
+            height: 88,
             decoration: BoxDecoration(
-              color: Colors.grey[100],
+              color: _primarySoft,
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.location_off_outlined,
-                size: 44, color: Color(0xFFCCCCCC)),
+                size: 40, color: _primary),
           ),
           const SizedBox(height: 20),
           const Text(
             'No addresses found',
             style: TextStyle(
-              fontSize: 15,
+              fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF888888),
+              color: _textPrimary,
             ),
           ),
           const SizedBox(height: 6),
           const Text(
-            'Add a new address to continue',
-            style: TextStyle(fontSize: 13, color: Color(0xFFAAAAAA)),
+            'Add a new address to get started',
+            style: TextStyle(fontSize: 13, color: _textTertiary),
           ),
         ],
       ),
@@ -138,7 +220,7 @@ class AddressListPage extends StatelessWidget {
   // ── Address card ────────────────────────────────────────────────────────────
   Widget _buildAddressCard(AddressListModel addr) {
     return Obx(() {
-      final isSelected =
+      final bool isSelected =
           controller.selectedAddressId.value == addr.addressId;
 
       return GestureDetector(
@@ -147,142 +229,205 @@ class AddressListPage extends StatelessWidget {
           duration: const Duration(milliseconds: 200),
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xF0FFFFFF) : Colors.white,
-            borderRadius: BorderRadius.circular(12),
+            color: _card,
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isSelected ? primary : const Color(0xFFE5E5E5),
+              color: isSelected ? _primary : _border,
               width: isSelected ? 1.8 : 1.2,
             ),
-            boxShadow: [
+            boxShadow: isSelected
+                ? [
               BoxShadow(
-                color: isSelected
-                    ? primary.withOpacity(0.08)
-                    : Colors.black.withOpacity(0.04),
+                color: _primary.withOpacity(0.08),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
+            ]
+                : [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
             ],
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Card body ────────────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(
-                        addr.fullName,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: textDark,
-                        ),
+                    // Location icon
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: isSelected ? _primarySoft : const Color(0xFFF3F3F7),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.location_on_rounded,
+                        color: isSelected ? _primary : _textTertiary,
+                        size: 22,
                       ),
                     ),
-                    Radio<int>(
-                      value: addr.addressId,
-                      groupValue: controller.selectedAddressId.value,
-                      onChanged: (v) =>
-                          controller.selectAddress(v ?? addr.addressId),
-                      activeColor: primary,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  addr.fullAddress,
-                  style: const TextStyle(
-                    fontSize: 13.5,
-                    color: Color(0xFF444444),
-                    height: 1.45,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Row(
-                  children: [
-                    const Icon(Icons.phone_outlined,
-                        size: 13, color: Color(0xFF888888)),
-                    const SizedBox(width: 4),
-                    Text(
-                      addr.phoneNumber,
-                      style: const TextStyle(
-                          fontSize: 13, color: Color(0xFF555555)),
-                    ),
-                  ],
-                ),
-                if (isSelected) ...[
-                  const SizedBox(height: 12),
-                  const Divider(height: 1, color: Color(0xFFEEEEEE)),
-                  const SizedBox(height: 10),
+                    const SizedBox(width: 14),
 
-                  // ── EDIT ──────────────────────────────────────────────────
-                  Row(
+                    // Text info
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Name row
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  addr.fullName,
+                                  style: const TextStyle(
+                                    fontSize: 14.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: _textPrimary,
+                                    letterSpacing: -0.1,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 5),
+                          // Address
+                          Text(
+                            addr.fullAddress,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: _textSec,
+                              height: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          // Phone
+                          Row(
+                            children: [
+                              const Icon(Icons.phone_outlined,
+                                  size: 13, color: _textTertiary),
+                              const SizedBox(width: 5),
+                              Text(
+                                addr.phoneNumber,
+                                style: const TextStyle(
+                                  fontSize: 12.5,
+                                  color: _textTertiary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Radio button
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2, left: 8),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: 20,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isSelected ? _primary : _border,
+                            width: isSelected ? 2 : 1.5,
+                          ),
+                        ),
+                        child: isSelected
+                            ? Center(
+                          child: Container(
+                            width: 9,
+                            height: 9,
+                            decoration: const BoxDecoration(
+                              color: _primary,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        )
+                            : null,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Action strip (visible only when selected) ──────────────
+              if (isSelected) ...[
+                const Divider(height: 1, color: _border),
+                Padding(
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
                     children: [
-                      TextButton.icon(
+                      // Edit button
+                      OutlinedButton.icon(
                         onPressed: () async {
                           final result = await Get.to(
-                                  () => EditAddressPage(
-                                  addressId: addr.addressId));
+                                  () => EditAddressPage(addressId: addr.addressId));
                           if (result == true) {
                             await controller.fetchAddresses();
                           }
                         },
-                        icon: Icon(Icons.edit_outlined,
-                            size: 15, color: primary),
-                        label: Text(
-                          'EDIT',
-                          style: TextStyle(
-                            color: primary,
+                        icon: const Icon(Icons.edit_outlined, size: 14),
+                        label: const Text('Edit'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: _primary,
+                          side: const BorderSide(
+                              color: Color(0xFFD0CFFF), width: 1.5),
+                          backgroundColor: _primarySoft,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 9),
+                          textStyle: const TextStyle(
                             fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.6,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(9),
                           ),
                         ),
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      const SizedBox(width: 10),
+
+                      // Deliver button
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Get.to(() => OrderConfirmationPage(
+                              addressId: addr.addressId,
+                            ));
+                          },
+                          icon: const Icon(Icons.check_circle_outline_rounded,
+                              size: 16),
+                          label: const Text('Deliver here'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _primary,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 11),
+                            textStyle: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.2,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
-
-                  // ── DELIVER TO THIS ADDRESS ──────────────────────────────
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // ✅ Pass only addressId — no AddressListModel needed
-                        Get.to(() => OrderConfirmationPage(
-                          addressId: addr.addressId,
-                        ));
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primary,
-                        foregroundColor: Colors.white,
-                        padding:
-                        const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(9)),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'Deliver to this Address',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ],
-            ),
+            ],
           ),
         ),
       );

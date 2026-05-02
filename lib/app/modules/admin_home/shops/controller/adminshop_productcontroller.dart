@@ -76,10 +76,7 @@ class ShopProductController extends GetxController {
         products.assignAll(
           list.map((e) => ShopProduct.fromJson(e)).toList(),
         );
-      } else {
-        AppSnackbar.error(
-          data['message'] ?? 'Failed to fetch products',
-        );
+
       }
     } catch (e) {
       AppSnackbar.error(
