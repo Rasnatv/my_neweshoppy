@@ -16,23 +16,19 @@ class WishlistController extends GetxController {
   var wishlist = <WishlistItem>[].obs;
   var isLoading = false.obs;
 
-  final String addUrl =
-      "https://eshoppy.co.in/api/wishlist/add";
-  final String getUrl =
-      "https://eshoppy.co.in/api/wishlist/get";
-  final String removeUrl =
-      "https://eshoppy.co.in/api/wishlist/remove";
+  final String addUrl    = "https://eshoppy.co.in/api/wishlist/add";
+  final String getUrl    = "https://eshoppy.co.in/api/wishlist/get";
+  final String removeUrl = "https://eshoppy.co.in/api/wishlist/remove";
 
   String get token => (box.read<String>("auth_token") ?? "").trim();
 
   @override
   void onInit() {
     super.onInit();
-
-        fetchWishlist();
+    fetchWishlist();
   }
 
-  /// ================= FETCH =================
+  // ─────────────────────────── FETCH ───────────────────────────
   Future<void> fetchWishlist() async {
     try {
       isLoading(true);
@@ -51,15 +47,19 @@ class WishlistController extends GetxController {
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
 
-        if (body['status'] == "1" || body['status'] == 1) {
+        if (body['status'] == "1" || body['status'] == 1 || body['status'] == true) {
           final List data = body['data'] ?? [];
-          wishlist.value = data.map((e) {
+          wishlist.value = data
+              .map((e) {
             try {
               return WishlistItem.fromJson(e);
             } catch (err) {
+              debugPrint("❌ WishlistItem parse error: $err");
               return null;
             }
-          }).whereType<WishlistItem>().toList();
+          })
+              .whereType<WishlistItem>()
+              .toList();
         } else {
           wishlist.clear();
         }
@@ -68,7 +68,6 @@ class WishlistController extends GetxController {
         AppSnackbar.error(error);
       }
     } catch (e) {
-
       final error = ApiErrorHandler.handleException(e);
       AppSnackbar.error(error);
     } finally {
@@ -76,31 +75,33 @@ class WishlistController extends GetxController {
     }
   }
 
-  /// ================= CHECK =================
-  bool isInWishlist(int productId) {
-    return wishlist.any((e) => e.productId == productId);
+  // ─────────────────────────── CHECK ───────────────────────────
+  /// Returns true only if productId AND type both match
+  bool isInWishlist(int productId, {int type = 0}) {
+    return wishlist.any((e) => e.productId == productId && e.type == type);
   }
 
-  /// ✅ Get wishlist_id for a given productId (needed for remove API)
-  int? getWishlistId(int productId) {
+  /// Returns wishlist_id matched by productId AND type
+  int? getWishlistId(int productId, {int type = 0}) {
     try {
-      return wishlist.firstWhere((e) => e.productId == productId).wishlistId;
+      return wishlist
+          .firstWhere((e) => e.productId == productId && e.type == type)
+          .wishlistId;
     } catch (_) {
       return null;
     }
   }
 
-  /// ================= TOGGLE =================
-  /// [type]: 0 = normal product, 1 = offer product
+  // ─────────────────────────── TOGGLE ───────────────────────────
   Future<void> toggleWishlist(int productId, {int type = 0}) async {
-    if (isInWishlist(productId)) {
-      await removeFromWishlist(productId);
+    if (isInWishlist(productId, type: type)) {
+      await removeFromWishlist(productId, type: type);
     } else {
       await addToWishlist(productId, type: type);
     }
   }
 
-  /// ================= ADD =================
+  // ─────────────────────────── ADD ───────────────────────────
   Future<void> addToWishlist(int productId, {int type = 0}) async {
     try {
       final response = await http.post(
@@ -112,9 +113,12 @@ class WishlistController extends GetxController {
         },
         body: jsonEncode({
           "product_id": productId,
-          "type": type, // ✅ 0 for normal, 1 for offer
+          "type": type,
         }),
       );
+
+      debugPrint("➕ Add wishlist status: ${response.statusCode}");
+      debugPrint("➕ Add wishlist body: ${response.body}");
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
@@ -133,11 +137,13 @@ class WishlistController extends GetxController {
       AppSnackbar.error(error);
     }
   }
-  Future<void> removeFromWishlist(int productId) async {
-    final wishlistId = getWishlistId(productId);
+
+  // ─────────────────────────── REMOVE ───────────────────────────
+  Future<void> removeFromWishlist(int productId, {int type = 0}) async {
+    final wishlistId = getWishlistId(productId, type: type);
 
     if (wishlistId == null) {
-
+      debugPrint("⚠️ wishlistId not found for productId: $productId, type: $type");
       return;
     }
 
@@ -149,8 +155,11 @@ class WishlistController extends GetxController {
           "Authorization": "Bearer $token",
           "Content-Type": "application/json",
         },
-        body: jsonEncode({"wishlist_id": wishlistId}), // ✅ correct field
+        body: jsonEncode({"wishlist_id": wishlistId}),
       );
+
+      debugPrint("🗑️ Remove wishlist status: ${response.statusCode}");
+      debugPrint("🗑️ Remove wishlist body: ${response.body}");
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
@@ -171,7 +180,7 @@ class WishlistController extends GetxController {
     }
   }
 
-  /// ================= CLEAR =================
+  // ─────────────────────────── CLEAR ───────────────────────────
   void clearWishlist() {
     wishlist.clear();
   }

@@ -153,11 +153,13 @@ class AreaAdminAddAdvertisementPage extends StatelessWidget {
                         ? null
                         : controller.selectedDistrict.value,
                     items: controller.districts,
-                    onChanged: controller.districts.isEmpty
-                        ? null
-                        : (val) {
-                      controller.selectedDistrict.value = val ?? '';
-                    },
+                    // onChanged: controller.districts.isEmpty
+                    //     ? null
+                    //     : (val) {
+                    //   controller.selectedDistrict.value = val ?? '';
+                      onChanged: controller.districts.isEmpty
+                          ? null
+                          : controller.onDistrictChanged,
                   );
                 }),
 

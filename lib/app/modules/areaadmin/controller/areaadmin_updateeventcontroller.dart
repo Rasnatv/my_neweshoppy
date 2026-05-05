@@ -19,16 +19,11 @@ class AreaAdminUpdateEventController extends GetxController {
   final Rx<File?> bannerImage = Rx<File?>(null);
 
   // ─── API URLs ─────────────────────────────────────
-  static const String _eventFetchUrl =
-      'https://eshoppy.co.in/api/event';
-  static const String _eventUpdateUrl =
-      'https://eshoppy.co.in/api/event/update';
-  static const String _statesUrl =
-      'https://eshoppy.co.in/api/get-MerchantStates';
-  static const String _districtsUrl =
-      'https://eshoppy.co.in/api/getMerchant-Districts';
-  static const String _locationsUrl =
-      'https://eshoppy.co.in/api/area-admin/main-locations';
+  static const String _eventFetchUrl  = 'https://eshoppy.co.in/api/event';
+  static const String _eventUpdateUrl = 'https://eshoppy.co.in/api/event/update';
+  static const String _statesUrl      = 'https://eshoppy.co.in/api/get-MerchantStates';
+  static const String _districtsUrl   = 'https://eshoppy.co.in/api/getMerchant-Districts';
+  static const String _locationsUrl   = 'https://eshoppy.co.in/api/area-admin/main-locations';
 
   final ImagePicker picker = ImagePicker();
 
@@ -54,6 +49,10 @@ class AreaAdminUpdateEventController extends GetxController {
   String _prefetchedDistrict = '';
   String _prefetchedLocation = '';
 
+  // ✅ Guard flags so ever() watchers don't fire during prefill
+  bool _suppressDistrictWatch = false;
+  bool _suppressLocationWatch = false;
+
   // ─── Date / Time ──────────────────────────────────
   final startDate = RxnString();
   final endDate   = RxnString();
@@ -75,6 +74,7 @@ class AreaAdminUpdateEventController extends GetxController {
     super.onInit();
 
     ever(selectedState, (state) {
+      if (_suppressDistrictWatch) return; // ✅ skip during prefill
       if (state != null && state.isNotEmpty) {
         selectedDistrict.value     = null;
         selectedMainLocation.value = null;
@@ -85,6 +85,7 @@ class AreaAdminUpdateEventController extends GetxController {
     });
 
     ever(selectedDistrict, (district) {
+      if (_suppressLocationWatch) return; // ✅ skip during prefill
       if (district != null && district.isNotEmpty) {
         selectedMainLocation.value = null;
         locationList.clear();
@@ -129,12 +130,15 @@ class AreaAdminUpdateEventController extends GetxController {
       );
 
       if (response.statusCode == 200) {
-        final body = jsonDecode(response.body);
+        final body      = jsonDecode(response.body);
         final eventData = body['0'] ?? body['data'];
 
         if ((body['status'] == true || body['status'] == 1) &&
             eventData != null) {
           _prefillFromResponse(eventData);
+          // ✅ Suppress ever() watchers before starting the prefill chain
+          _suppressDistrictWatch = true;
+          _suppressLocationWatch = true;
           await fetchStates();
         } else {
           AppSnackbar.error(body['message'] ?? 'Failed to fetch event');
@@ -167,6 +171,8 @@ class AreaAdminUpdateEventController extends GetxController {
   }
 
   // ─── Fetch States ─────────────────────────────────
+  // GET /api/get-MerchantStates
+  // Response: { "status": true, "data": ["karnataka", "kerala"] }
   Future<void> fetchStates() async {
     try {
       isLoadingStates.value = true;
@@ -177,18 +183,24 @@ class AreaAdminUpdateEventController extends GetxController {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (data['status'] == '1' && data['data'] != null) {
-          final List<String> states = List<String>.from(data['data']);
+        // ✅ status is boolean true in the real response
+        if ((data['status'] == true ||
+            data['status'] == 1 ||
+            data['status'] == '1') &&
+            data['data'] != null) {
+          final List<String> states =
+          (data['data'] as List).map((e) => e.toString()).toList();
           stateList.assignAll(states);
 
           if (_prefetchedState.isNotEmpty) {
             final match = states.firstWhereOrNull(
-                  (s) => s == _prefetchedState,
-            ) ??
-                states.firstWhereOrNull(
-                      (s) => s.toLowerCase() == _prefetchedState.toLowerCase(),
-                );
-            if (match != null) selectedState.value = match;
+                  (s) => s.toLowerCase() == _prefetchedState.toLowerCase(),
+            );
+            if (match != null) {
+              selectedState.value = match;
+              // ✅ Chain: fetch districts for prefilled state
+              await fetchDistricts();
+            }
           }
         } else {
           AppSnackbar.error(data['message'] ?? 'Failed to load states');
@@ -197,7 +209,6 @@ class AreaAdminUpdateEventController extends GetxController {
         final errorMsg = ApiErrorHandler.handleResponse(response);
         if (response.statusCode != 401) AppSnackbar.error(errorMsg);
       }
-
     } catch (e) {
       AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
@@ -205,33 +216,38 @@ class AreaAdminUpdateEventController extends GetxController {
     }
   }
 
-  // ─── Fetch Districts ──────────────────────────────
+
   Future<void> fetchDistricts() async {
     try {
       isLoadingDistricts.value = true;
-      final response = await http.get(
+
+      // ✅ POST with JSON body instead of GET with query param
+      final response = await http.post(
         Uri.parse(_districtsUrl),
-        headers: _bearerHeaders,
+        headers: {..._bearerHeaders, 'Content-Type': 'application/json'},
+        body: jsonEncode({"state": selectedState.value}),
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (data['status'] == '1' && data['data'] != null) {
-          final List<String> districts = (data['data'] as List)
-              .map((e) => e['district'].toString())
-              .toSet()
-              .toList();
+        if ((data['status'] == true ||
+            data['status'] == 1 ||
+            data['status'] == '1') &&
+            data['data'] != null) {
+          // ✅ flat string list, not objects with 'district' key
+          final List<String> districts =
+          (data['data'] as List).map((e) => e.toString()).toSet().toList();
           districtList.assignAll(districts);
 
           if (_prefetchedDistrict.isNotEmpty) {
             final match = districts.firstWhereOrNull(
-                  (d) => d == _prefetchedDistrict,
-            ) ??
-                districts.firstWhereOrNull(
-                      (d) =>
-                  d.toLowerCase() == _prefetchedDistrict.toLowerCase(),
-                );
-            if (match != null) selectedDistrict.value = match;
+                  (d) => d.toLowerCase() == _prefetchedDistrict.toLowerCase(),
+            );
+            if (match != null) {
+              selectedDistrict.value = match;
+              // ✅ Chain: fetch locations for prefilled district
+              await fetchLocations();
+            }
           }
         } else {
           AppSnackbar.error(data['message'] ?? 'Failed to load districts');
@@ -244,33 +260,39 @@ class AreaAdminUpdateEventController extends GetxController {
       AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoadingDistricts.value = false;
+      _suppressDistrictWatch = false; // ✅ re-enable ever() watcher
     }
   }
 
   // ─── Fetch Locations ──────────────────────────────
+  // POST /api/area-admin/main-locations
+  // Body:     { "district": "Kasaragod" }
+  // Response: { "status": 1, "data": ["bekal", "chattachal", "kanhangad"] }
   Future<void> fetchLocations() async {
     try {
       isLoadingLocations.value = true;
-      final response = await http.get(
+
+      // ✅ POST with JSON body instead of GET with query param
+      final response = await http.post(
         Uri.parse(_locationsUrl),
-        headers: _bearerHeaders,
+        headers: {..._bearerHeaders, 'Content-Type': 'application/json'},
+        body: jsonEncode({"district": selectedDistrict.value}),
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if ((data['status'] == 1 || data['status'] == '1') &&
+        if ((data['status'] == true ||
+            data['status'] == 1 ||
+            data['status'] == '1') &&
             data['data'] != null) {
-          final List<String> locations = List<String>.from(data['data']);
+          final List<String> locations =
+          (data['data'] as List).map((e) => e.toString()).toList();
           locationList.assignAll(locations);
 
           if (_prefetchedLocation.isNotEmpty) {
             final match = locations.firstWhereOrNull(
-                  (l) => l == _prefetchedLocation,
-            ) ??
-                locations.firstWhereOrNull(
-                      (l) =>
-                  l.toLowerCase() == _prefetchedLocation.toLowerCase(),
-                );
+                  (l) => l.toLowerCase() == _prefetchedLocation.toLowerCase(),
+            );
             if (match != null) selectedMainLocation.value = match;
           }
         } else {
@@ -284,13 +306,14 @@ class AreaAdminUpdateEventController extends GetxController {
       AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoadingLocations.value = false;
+      _suppressLocationWatch = false; // ✅ re-enable ever() watcher
     }
   }
 
   // ─── Image Picker ─────────────────────────────────
   Future<void> pickBannerImage() async {
     final picked = await picker.pickImage(
-      source: ImageSource.gallery,
+      source      : ImageSource.gallery,
       imageQuality: 90,
     );
 
@@ -306,17 +329,17 @@ class AreaAdminUpdateEventController extends GetxController {
     }
 
     final croppedFile = await ImageCropper().cropImage(
-      sourcePath: file.path,
-      aspectRatio: const CropAspectRatio(ratioX: 2, ratioY: 1),
-      uiSettings: [
+      sourcePath  : file.path,
+      aspectRatio : const CropAspectRatio(ratioX: 2, ratioY: 1),
+      uiSettings  : [
         AndroidUiSettings(
-          toolbarTitle: 'Crop Banner',
-          toolbarColor: Colors.black,
+          toolbarTitle      : 'Crop Banner',
+          toolbarColor      : Colors.black,
           toolbarWidgetColor: Colors.white,
-          lockAspectRatio: true,
+          lockAspectRatio   : true,
         ),
         IOSUiSettings(
-          title: 'Crop Banner',
+          title                 : 'Crop Banner',
           aspectRatioLockEnabled: true,
         ),
       ],
@@ -324,7 +347,7 @@ class AreaAdminUpdateEventController extends GetxController {
 
     if (croppedFile == null) return;
 
-    file = File(croppedFile.path);
+    file               = File(croppedFile.path);
     pickedImage.value  = file;
     imageChanged.value = true;
     errorBanner.value  = null;
@@ -380,8 +403,8 @@ class AreaAdminUpdateEventController extends GetxController {
 
   // ─── Pick Time ────────────────────────────────────
   Future<void> pickTime(BuildContext context, {required bool isStart}) async {
-    TimeOfDay initial = TimeOfDay.now();
-    final existing = isStart ? startTime.value : endTime.value;
+    TimeOfDay initial  = TimeOfDay.now();
+    final existing     = isStart ? startTime.value : endTime.value;
     if (existing != null) {
       final parsed = _parseTimeOfDay(existing);
       if (parsed != null) initial = parsed;
@@ -415,7 +438,6 @@ class AreaAdminUpdateEventController extends GetxController {
       return;
     }
 
-    // ─── Validation ───────────────────────────────
     if (eventName.text.trim().isEmpty) {
       AppSnackbar.warning('Event name is required');
       return;

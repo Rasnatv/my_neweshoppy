@@ -34,6 +34,7 @@ class CartItem {
     this.attributes,
   });
 
+
   factory CartItem.fromJson(Map<String, dynamic> json) {
     final variant = json['variant'] as Map<String, dynamic>?;
 
@@ -45,16 +46,15 @@ class CartItem {
       itemTotal: double.tryParse(json['item_total'].toString()) ?? 0.0,
       stock: int.tryParse(json['stock'].toString()) ?? 999,
 
-      // ✅ All pulled from variant, not root
       productImage: variant?['image'] ?? '',
       price: double.tryParse(variant?['price'].toString() ?? '') ?? 0.0,
       offerPrice: double.tryParse(variant?['offer_price'].toString() ?? '') ?? 0.0,
       offerPercentage: double.tryParse(variant?['offer_percentage'].toString() ?? '') ?? 0.0,
       finalPrice: double.tryParse(variant?['final_price'].toString() ?? '') ?? 0.0,
+      attributes: variant?['attributes'] as Map<String, dynamic>?,
 
-      // ✅ Variant fields
-      variantId: variant?['variant_id'],
-      attributes: variant?['attributes'],
+      // ✅ Fix: read from ROOT level, cast safely
+      variantId: int.tryParse(json['variant_id'].toString()),
     );
   }
 

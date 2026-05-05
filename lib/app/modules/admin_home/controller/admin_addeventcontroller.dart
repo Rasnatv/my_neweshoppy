@@ -1,3 +1,4 @@
+
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -55,6 +56,7 @@ class AdminEventAddController extends GetxController {
   Map<String, String> get _headers => {
     'Accept': 'application/json',
     'Authorization': 'Bearer $_token',
+    'Content-Type': 'application/json',
   };
 
   // ───────── TOKEN CHECK ─────────
@@ -70,8 +72,44 @@ class AdminEventAddController extends GetxController {
   void onInit() {
     super.onInit();
     fetchStates();
-    fetchDistricts();
-    fetchAreas();
+
+    // ── Auto-fetch districts when state changes ──
+    ever(selectedState, (String? state) {
+      // Reset downstream selections
+      selectedDistrict.value = null;
+      selectedArea.value = null;
+      districtList.clear();
+      areaList.clear();
+
+      if (state != null && state.isNotEmpty) {
+        fetchDistricts(state);
+      }
+    });
+
+    // ── Auto-fetch areas when district changes ──
+    ever(selectedDistrict, (String? district) {
+      // Reset area selection
+      selectedArea.value = null;
+      areaList.clear();
+
+      if (district != null &&
+          district.isNotEmpty &&
+          showMode.value == 'area') {
+        fetchAreas(district);
+      }
+    });
+
+    // ── Re-fetch areas when switching TO area mode ──
+    ever(showMode, (String mode) {
+      if (mode == 'area' &&
+          selectedDistrict.value != null &&
+          selectedDistrict.value!.isNotEmpty) {
+        fetchAreas(selectedDistrict.value!);
+      } else if (mode == 'district') {
+        selectedArea.value = null;
+        areaList.clear();
+      }
+    });
   }
 
   @override
@@ -83,9 +121,8 @@ class AdminEventAddController extends GetxController {
 
   void setShowMode(String mode) {
     showMode.value = mode;
-    selectedState.value = null;
-    selectedDistrict.value = null;
     selectedArea.value = null;
+    // Note: state/district selections are preserved when toggling mode
   }
 
   // ───────── STATES ─────────
@@ -94,12 +131,13 @@ class AdminEventAddController extends GetxController {
 
     isLoadingStates.value = true;
     try {
-      final response = await http.get(Uri.parse(_statesUrl), headers: _headers);
+      final response =
+      await http.get(Uri.parse(_statesUrl), headers: _headers);
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
-
-        if ((body['status'] == true || body['status'] == 1) && body['data'] != null) {
+        if ((body['status'] == true || body['status'] == 1) &&
+            body['data'] != null) {
           stateList.value = List<String>.from(body['data']);
         }
       } else {
@@ -112,18 +150,22 @@ class AdminEventAddController extends GetxController {
     }
   }
 
-  // ───────── DISTRICTS ─────────
-  Future<void> fetchDistricts() async {
+  // ───────── DISTRICTS (POST with state) ─────────
+  Future<void> fetchDistricts(String state) async {
     if (!_checkAuth()) return;
 
     isLoadingDistricts.value = true;
     try {
-      final response = await http.get(Uri.parse(_districtsUrl), headers: _headers);
+      final response = await http.post(
+        Uri.parse(_districtsUrl),
+        headers: _headers,
+        body: jsonEncode({'state': state}),
+      );
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
-
-        if (body['status'] == true && body['data'] != null) {
+        if ((body['status'] == true || body['status'] == 1) &&
+            body['data'] != null) {
           districtList.value = List<String>.from(body['data']);
         }
       } else {
@@ -136,18 +178,22 @@ class AdminEventAddController extends GetxController {
     }
   }
 
-  // ───────── AREAS ─────────
-  Future<void> fetchAreas() async {
+  // ───────── AREAS (POST with district) ─────────
+  Future<void> fetchAreas(String district) async {
     if (!_checkAuth()) return;
 
     isLoadingAreas.value = true;
     try {
-      final response = await http.get(Uri.parse(_areasUrl), headers: _headers);
+      final response = await http.post(
+        Uri.parse(_areasUrl),
+        headers: _headers,
+        body: jsonEncode({'district': district}),
+      );
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
-
-        if (body['status'] == true && body['data'] != null) {
+        if ((body['status'] == true || body['status'] == 1) &&
+            body['data'] != null) {
           areaList.value = List<String>.from(body['data']);
         }
       } else {
@@ -171,14 +217,12 @@ class AdminEventAddController extends GetxController {
 
     File file = File(picked.path);
 
-    // 1️⃣ SIZE CHECK (1MB limit)
     final int bytes = await file.length();
     if (bytes > 1024 * 1024) {
       AppSnackbar.error("Please upload an image less than 1 MB");
       return;
     }
 
-    // 2️⃣ CROP IMAGE (2:1 RATIO)
     final croppedFile = await ImageCropper().cropImage(
       sourcePath: file.path,
       aspectRatio: const CropAspectRatio(ratioX: 2, ratioY: 1),
@@ -198,10 +242,7 @@ class AdminEventAddController extends GetxController {
 
     if (croppedFile == null) return;
 
-    file = File(croppedFile.path);
-
-    // 3️⃣ FINAL ASSIGN
-    bannerImage.value = file;
+    bannerImage.value = File(croppedFile.path);
   }
 
   void removeBannerImage() => bannerImage.value = null;
@@ -305,7 +346,7 @@ class AdminEventAddController extends GetxController {
 
       final response = await http.post(
         Uri.parse(_createUrl),
-        headers: {..._headers, 'Content-Type': 'application/json'},
+        headers: _headers,
         body: jsonEncode(body),
       );
 
@@ -341,6 +382,8 @@ class AdminEventAddController extends GetxController {
     selectedState.value = null;
     selectedDistrict.value = null;
     selectedArea.value = null;
+    districtList.clear();
+    areaList.clear();
     showMode.value = 'district';
   }
 

@@ -423,9 +423,7 @@ class AreaAdminAddEventPage extends StatelessWidget {
     });
   }
 
-  // ─────────────────────────────────────────────────
-  /// DISTRICT DROPDOWN
-  // ─────────────────────────────────────────────────
+
   Widget _districtDropdown() {
     return Obx(() {
       final bool hasError =
@@ -463,7 +461,8 @@ class AreaAdminAddEventPage extends StatelessWidget {
               ),
               focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.kPrimary, width: 2)),
+                  borderSide:
+                  BorderSide(color: AppColors.kPrimary, width: 2)),
               contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             ),
@@ -474,8 +473,8 @@ class AreaAdminAddEventPage extends StatelessWidget {
                     : controller.selectedDistrict.value,
                 hint: Text(
                   isDisabled ? "Select State first" : "Select District",
-                  style: TextStyle(
-                      fontSize: 15, color: Colors.grey.shade600),
+                  style:
+                  TextStyle(fontSize: 15, color: Colors.grey.shade600),
                 ),
                 isExpanded: true,
                 icon: const SizedBox.shrink(),
@@ -489,30 +488,32 @@ class AreaAdminAddEventPage extends StatelessWidget {
                           fontWeight: FontWeight.w500)),
                 ))
                     .toList(),
+
+                /// ✅ FIXED HERE
                 onChanged: isDisabled || controller.isDistrictsLoading.value
                     ? null
                     : (value) {
                   if (value != null) {
-                    controller.selectedDistrict.value = value;
+                    controller.onDistrictSelected(value); // 🔥 FIX
                   }
                 },
               ),
             ),
           ),
-          if (hasError)
-            _errorLabel("District is required"),
+          if (hasError) _errorLabel("District is required"),
         ],
       );
     });
   }
 
-  // ─────────────────────────────────────────────────
-  /// MAIN LOCATION DROPDOWN
-  // ─────────────────────────────────────────────────
+
   Widget _mainLocationDropdown() {
     return Obx(() {
       final bool hasError =
           _submitted.value && controller.selectedMainLocation.value.isEmpty;
+
+      final bool isDisabled =
+          controller.selectedDistrict.value.isEmpty; // ✅ NEW
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -531,7 +532,8 @@ class AreaAdminAddEventPage extends StatelessWidget {
               )
                   : const Icon(Icons.arrow_drop_down, size: 28),
               filled: true,
-              fillColor: Colors.grey.shade50,
+              fillColor:
+              isDisabled ? Colors.grey.shade100 : Colors.grey.shade50,
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(color: Colors.grey.shade300)),
@@ -544,7 +546,8 @@ class AreaAdminAddEventPage extends StatelessWidget {
               ),
               focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.kPrimary, width: 2)),
+                  borderSide:
+                  BorderSide(color: AppColors.kPrimary, width: 2)),
               contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             ),
@@ -553,9 +556,16 @@ class AreaAdminAddEventPage extends StatelessWidget {
                 value: controller.selectedMainLocation.value.isEmpty
                     ? null
                     : controller.selectedMainLocation.value,
-                hint: Text("Select Main Location",
-                    style: TextStyle(
-                        fontSize: 15, color: Colors.grey.shade600)),
+
+                /// ✅ UPDATED HINT
+                hint: Text(
+                  isDisabled
+                      ? "Select District first"
+                      : "Select Main Location",
+                  style:
+                  TextStyle(fontSize: 15, color: Colors.grey.shade600),
+                ),
+
                 isExpanded: true,
                 icon: const SizedBox.shrink(),
                 items: controller.mainLocations
@@ -568,7 +578,9 @@ class AreaAdminAddEventPage extends StatelessWidget {
                           fontWeight: FontWeight.w500)),
                 ))
                     .toList(),
-                onChanged: controller.isLocationsLoading.value
+
+                /// ✅ DISABLE UNTIL DISTRICT SELECTED
+                onChanged: isDisabled || controller.isLocationsLoading.value
                     ? null
                     : (value) {
                   if (value != null) {
@@ -578,8 +590,7 @@ class AreaAdminAddEventPage extends StatelessWidget {
               ),
             ),
           ),
-          if (hasError)
-            _errorLabel("Main Location is required"),
+          if (hasError) _errorLabel("Main Location is required"),
         ],
       );
     });

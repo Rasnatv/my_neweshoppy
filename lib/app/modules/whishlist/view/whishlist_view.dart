@@ -81,9 +81,9 @@ class WishlistScreen extends StatelessWidget {
   }
 }
 
-/// ─────────────────────────────────────────────
-/// Card widget — handles both type 0 and type 1
-/// ─────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// Card widget — handles both type 0 and type 1
+// ─────────────────────────────────────────────
 class _WishlistProductCard extends StatelessWidget {
   final dynamic item; // WishlistItem
   final WishlistController wishlistController;
@@ -169,8 +169,11 @@ class _WishlistProductCard extends StatelessWidget {
                     top: 8,
                     right: 8,
                     child: Obx(() {
-                      final isFav =
-                      wishlistController.isInWishlist(item.productId);
+                      // ✅ Pass item.type so normal and offer don't clash
+                      final isFav = wishlistController.isInWishlist(
+                        item.productId,
+                        type: item.type,
+                      );
                       return GestureDetector(
                         onTap: () => wishlistController.toggleWishlist(
                           item.productId,
@@ -208,7 +211,6 @@ class _WishlistProductCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Product name
                   Text(
                     item.name,
                     maxLines: 2,
@@ -222,7 +224,6 @@ class _WishlistProductCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
 
-                  // ✅ Price row — same row for both types
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -240,7 +241,7 @@ class _WishlistProductCard extends StatelessWidget {
                         const SizedBox(width: 6),
                       ],
 
-                      // ✅ Main price — offer price for type 1, normal price for type 0
+                      // Main price
                       Text(
                         "₹${_formatPrice(item.price)}",
                         style: TextStyle(
@@ -260,7 +261,6 @@ class _WishlistProductCard extends StatelessWidget {
     );
   }
 
-  /// Removes trailing .00 — e.g. "745.00" → "745", "275.50" → "275.50"
   String _formatPrice(String raw) {
     final parsed = double.tryParse(raw);
     if (parsed == null) return raw;

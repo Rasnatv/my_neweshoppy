@@ -1,4 +1,5 @@
 
+
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -43,8 +44,7 @@ class MyOrdersController extends GetxController {
         final body = jsonDecode(response.body);
         if (body['status'] == true) {
           final List data = body['data'];
-          orders.value =
-              data.map((e) => MyOrdersModel.fromJson(e)).toList();
+          orders.value = data.map((e) => MyOrdersModel.fromJson(e)).toList();
         } else {
           hasError.value = true;
           errorMessage.value = body['message'] ?? 'Failed to load orders';
@@ -77,5 +77,8 @@ class MyOrdersController extends GetxController {
     } catch (_) {
       return rawDate;
     }
+  }
+  String formatPrice(double amount) {
+    return amount.round().toString(); // 299.50 → "300", 750.00 → "750"
   }
 }

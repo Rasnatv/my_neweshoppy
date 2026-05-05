@@ -9,7 +9,7 @@ class ProductCard extends StatelessWidget {
   final String productName;
   final String? imageUrl;
   final String price;
-  final int type; // ✅ 0 = normal product, 1 = offer product
+  final int type; // 0 = normal product, 1 = offer product
 
   ProductCard({
     super.key,
@@ -17,7 +17,7 @@ class ProductCard extends StatelessWidget {
     required this.productName,
     required this.imageUrl,
     required this.price,
-    this.type = 0, // ✅ default to normal product
+    this.type = 0,
   });
 
   final WishlistController wishlistController =
@@ -46,11 +46,10 @@ class ProductCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// 🖼️ Product Image Section
+            // 🖼️ Product Image Section
             Expanded(
               child: Stack(
                 children: [
-                  // Product Image
                   Container(
                     decoration: BoxDecoration(
                       color: Colors.grey[100],
@@ -93,16 +92,18 @@ class ProductCard extends StatelessWidget {
                     ),
                   ),
 
-                  /// ❤️ Wishlist Button
+                  // ❤️ Wishlist Button
                   Positioned(
                     top: 8,
                     right: 8,
                     child: Obx(() {
-                      final isFav =
-                      wishlistController.isInWishlist(productId);
+                      // ✅ Pass type — normal product won't affect offer product
+                      final isFav = wishlistController.isInWishlist(
+                        productId,
+                        type: type,
+                      );
                       return GestureDetector(
                         onTap: () {
-                          // ✅ Pass type so API knows normal (0) vs offer (1)
                           wishlistController.toggleWishlist(
                             productId,
                             type: type,
@@ -134,13 +135,12 @@ class ProductCard extends StatelessWidget {
               ),
             ),
 
-            /// 📝 Product Details Section
+            // 📝 Product Details Section
             Padding(
               padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Product Name
                   Text(
                     productName,
                     maxLines: 2,
@@ -154,7 +154,6 @@ class ProductCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
 
-                  // Price
                   Row(
                     children: [
                       Text(

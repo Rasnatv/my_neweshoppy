@@ -1,4 +1,327 @@
-
+//
+// import 'dart:convert';
+// import 'dart:io';
+// import 'package:eshoppy/app/widgets/areaadminsuccesswidget.dart';
+// import 'package:get/get.dart';
+// import 'package:get_storage/get_storage.dart';
+// import 'package:image_picker/image_picker.dart';
+// import 'package:flutter/material.dart';
+// import 'package:http/http.dart' as http;
+// import '../../merchantlogin/widget/successwidget.dart';
+// import '../../userlogin/view/login.dart';
+// import '../view/area_adminhome.dart';
+// import '../../../data/errors/api_error.dart';        // ← same as merchant
+//
+//
+// class AreaAdminAdvertisementController extends GetxController {
+//
+//   // ─── Controllers ─────────────────────────────
+//   final TextEditingController adName = TextEditingController();
+//
+//   // ─── Observables ─────────────────────────────
+//   final Rx<File?> bannerImage = Rx<File?>(null);
+//   final RxBool isLoading = false.obs;
+//   final RxBool isTitleEmpty = false.obs;
+//
+//   // States
+//   final RxList<String> states = <String>[].obs;
+//   final RxString selectedState = ''.obs;
+//   final RxBool isStateLoading = false.obs;
+//
+//   // Districts
+//   final RxList<String> districts = <String>[].obs;
+//   final RxString selectedDistrict = ''.obs;
+//   final RxBool isDistrictLoading = false.obs;
+//
+//   // Locations
+//   final RxList<String> locations = <String>[].obs;
+//   final RxString selectedLocation = ''.obs;
+//   final RxBool isLocationLoading = false.obs;
+//
+//   final _box = GetStorage();
+//   final _picker = ImagePicker();
+//
+//   static const String baseUrl =
+//       'https://eshoppy.co.in/api/area-admin';
+//   static const String publicBaseUrl =
+//       'https://eshoppy.co.in/api';
+//
+//   // ─── Token ──────────────────────────────────
+//   String get token => _box.read('auth_token') ?? '';
+//
+//   Map<String, String> get headers => {
+//     'Authorization': 'Bearer $token',
+//     'Accept': 'application/json',
+//   };
+//
+//   @override
+//   void onInit() {
+//     super.onInit();
+//     fetchStates();
+//     fetchLocations();
+//   }
+//
+//   @override
+//   void onClose() {
+//     adName.dispose();
+//     super.onClose();
+//   }
+//
+//   // ─── Fetch States ────────────────────────────
+//   Future<void> fetchStates() async {
+//     try {
+//       isStateLoading.value = true;
+//
+//       final res = await http.get(
+//         Uri.parse('$publicBaseUrl/get-MerchantStates'),
+//         headers: headers,
+//       );
+//
+//       if (res.statusCode == 200) {
+//         final body = jsonDecode(res.body);
+//         if (body['status'] == '1' || body['status'] == 1) {
+//           states.assignAll(
+//               (body['data'] as List).map((e) => e.toString()).toList());
+//         } else {
+//           AppSnackbar.error(body['message'] ?? 'Failed to load states');
+//         }
+//       } else if (res.statusCode == 401) {
+//         _handleUnauthorized();
+//       } else {
+//         AppSnackbar.error(ApiErrorHandler.handleResponse(res));
+//       }
+//     } catch (e) {
+//       AppSnackbar.error(ApiErrorHandler.handleException(e));
+//     } finally {
+//       isStateLoading.value = false;
+//     }
+//   }
+//
+//   // ─── Fetch Districts ─────────────────────────
+//   Future<void> fetchDistricts(String state) async {
+//     try {
+//       isDistrictLoading.value = true;
+//       districts.clear();
+//       selectedDistrict.value = '';
+//
+//       final res = await http.get(
+//         Uri.parse('$publicBaseUrl/getMerchant-Districts?state=$state'),
+//         headers: headers,
+//       );
+//
+//       if (res.statusCode == 200) {
+//         final body = jsonDecode(res.body);
+//         if (body['status'] == '1' || body['status'] == 1) {
+//           final List data = body['data'] as List;
+//           districts.assignAll(
+//             data.map((e) => e['district'].toString()).toSet().toList(),
+//           );
+//         } else {
+//           AppSnackbar.error(body['message'] ?? 'Failed to load districts');
+//         }
+//       } else if (res.statusCode == 401) {
+//         _handleUnauthorized();
+//       } else {
+//         AppSnackbar.error(ApiErrorHandler.handleResponse(res));
+//       }
+//     } catch (e) {
+//       AppSnackbar.error(ApiErrorHandler.handleException(e));
+//     } finally {
+//       isDistrictLoading.value = false;
+//     }
+//   }
+//
+//   // ─── Fetch Locations ─────────────────────────
+//   Future<void> fetchLocations() async {
+//     if (token.isEmpty) {
+//       _handleUnauthorized();
+//       return;
+//     }
+//
+//     try {
+//       isLocationLoading.value = true;
+//
+//       final res = await http.get(
+//         Uri.parse('$baseUrl/main-locations'),
+//         headers: headers,
+//       );
+//
+//       if (res.statusCode == 200) {
+//         final body = jsonDecode(res.body);
+//         if (body['status'] == true || body['status'] == 1) {
+//           locations.assignAll(
+//               (body['data'] as List).map((e) => e.toString()).toList());
+//         } else {
+//           AppSnackbar.error(body['message'] ?? 'Failed to load locations');
+//         }
+//       } else if (res.statusCode == 401) {
+//         _handleUnauthorized();
+//       } else {
+//         AppSnackbar.error(ApiErrorHandler.handleResponse(res));
+//       }
+//     } catch (e) {
+//       AppSnackbar.error(ApiErrorHandler.handleException(e));
+//     } finally {
+//       isLocationLoading.value = false;
+//     }
+//   }
+//
+//   // ─── On State Selected ───────────────────────
+//   void onStateChanged(String? state) {
+//     if (state == null) return;
+//     selectedState.value = state;
+//     selectedDistrict.value = '';
+//     fetchDistricts(state);
+//   }
+//
+//   // ─── Image Picker (2:1 ratio enforced) ───────
+//   Future<void> pickBannerImage() async {
+//     try {
+//       final picked = await _picker.pickImage(
+//         source: ImageSource.gallery,
+//         imageQuality: 80,
+//       );
+//
+//       if (picked == null) return;
+//
+//       final file = File(picked.path);
+//
+//       // Decode image to get actual dimensions
+//       final bytes = await file.readAsBytes();
+//       final decodedImage = await decodeImageFromList(bytes);
+//
+//       final width  = decodedImage.width;
+//       final height = decodedImage.height;
+//       final ratio  = width / height;
+//
+//       debugPrint(">>> Image size: ${width}x${height}, ratio: $ratio");
+//
+//       // Allow only 2:1 ratio (±0.1 tolerance)
+//       if (ratio < 1.9 || ratio > 2.1) {
+//         AppSnackbar.error(
+//           "Invalid image ratio ${width}x${height}.\nPlease upload a 2:1 ratio image (e.g. 1200x600)",
+//         );
+//         return;
+//       }
+//
+//       bannerImage.value = file;
+//     } catch (e) {
+//       AppSnackbar.error("Image error: $e");
+//     }
+//   }
+//
+//   void removeBannerImage() {
+//     bannerImage.value = null;
+//   }
+//
+//   // ─── Image → Base64 ──────────────────────────
+//   Future<String?> _toBase64(File file) async {
+//     try {
+//       final bytes = await file.readAsBytes();
+//       return 'data:image/jpeg;base64,${base64Encode(bytes)}';
+//     } catch (e) {
+//       return null;
+//     }
+//   }
+//
+//   // ─── Validation ─────────────────────────────
+//   bool validate() {
+//     if (adName.text.trim().isEmpty) {
+//       isTitleEmpty.value = true;
+//       AppSnackbar.error("Enter advertisement title");
+//       return false;
+//     } else if (selectedState.value.isEmpty) {
+//       AppSnackbar.error("Select state");
+//       return false;
+//     } else if (selectedDistrict.value.isEmpty) {
+//       AppSnackbar.error("Select district");
+//       return false;
+//     } else if (selectedLocation.value.isEmpty) {
+//       AppSnackbar.error("Select location");
+//       return false;
+//     } else if (bannerImage.value == null) {
+//       AppSnackbar.error("Select banner image");
+//       return false;
+//     }
+//     return true;
+//   }
+//
+//   // ─── Add Advertisement API ──────────────────
+//   Future<void> addAdvertisement() async {
+//     if (!validate()) return;
+//
+//     if (token.isEmpty) {
+//       _handleUnauthorized();
+//       return;
+//     }
+//
+//     try {
+//       isLoading.value = true;
+//
+//       final base64Image = await _toBase64(bannerImage.value!);
+//       if (base64Image == null) {
+//         AppSnackbar.error("Failed to process image");
+//         return;
+//       }
+//
+//       final response = await http.post(
+//         Uri.parse('$baseUrl/create-advertisement'),
+//         headers: {
+//           ...headers,
+//           'Content-Type': 'application/json',
+//         },
+//         body: jsonEncode({
+//           "advertisement": adName.text.trim(),
+//           "state": selectedState.value,
+//           "district": selectedDistrict.value,
+//           "main_location": selectedLocation.value,
+//           "banner_image": base64Image,
+//         }),
+//       );
+//
+//       if (response.statusCode == 200 || response.statusCode == 201) {
+//         final resData = jsonDecode(response.body);
+//
+//         if (resData['status'] == true ||
+//             resData['status'] == 1 ||
+//             resData['status'] == '1') {
+//           AppSnackbar.success(resData['message'] ?? "Advertisement created");
+//           resetForm();
+//           await Future.delayed(const Duration(milliseconds: 800));
+//           Get.offAll(() => AreaAdminhomepage());
+//         } else {
+//           AppSnackbar.error(resData['message'] ?? "Failed to create advertisement");
+//         }
+//       } else if (response.statusCode == 401) {
+//         _handleUnauthorized();
+//       } else {
+//         AppSnackbar.error(ApiErrorHandler.handleResponse(response));
+//       }
+//     } catch (e) {
+//       AppSnackbar.error(ApiErrorHandler.handleException(e));
+//     } finally {
+//       isLoading.value = false;
+//     }
+//   }
+//
+//   // ─── Reset ─────────────────────────────────
+//   void resetForm() {
+//     adName.clear();
+//     selectedState.value = '';
+//     selectedDistrict.value = '';
+//     districts.clear();
+//     selectedLocation.value = '';
+//     bannerImage.value = null;
+//     isTitleEmpty.value = false;
+//   }
+//
+//   // ─── Unauthorized ───────────────────────────
+//   void _handleUnauthorized() {
+//     AppSnackbar.error("Session expired. Please login again.");
+//     _box.erase();
+//     Get.offAll(() => LoginPageView());
+//   }
+// }
 import 'dart:convert';
 import 'dart:io';
 import 'package:eshoppy/app/widgets/areaadminsuccesswidget.dart';
@@ -10,7 +333,7 @@ import 'package:http/http.dart' as http;
 import '../../merchantlogin/widget/successwidget.dart';
 import '../../userlogin/view/login.dart';
 import '../view/area_adminhome.dart';
-import '../../../data/errors/api_error.dart';        // ← same as merchant
+import '../../../data/errors/api_error.dart';
 
 
 class AreaAdminAdvertisementController extends GetxController {
@@ -41,10 +364,8 @@ class AreaAdminAdvertisementController extends GetxController {
   final _box = GetStorage();
   final _picker = ImagePicker();
 
-  static const String baseUrl =
-      'https://eshoppy.co.in/api/area-admin';
-  static const String publicBaseUrl =
-      'https://eshoppy.co.in/api';
+  static const String baseUrl    = 'https://eshoppy.co.in/api/area-admin';
+  static const String publicBaseUrl = 'https://eshoppy.co.in/api';
 
   // ─── Token ──────────────────────────────────
   String get token => _box.read('auth_token') ?? '';
@@ -52,13 +373,14 @@ class AreaAdminAdvertisementController extends GetxController {
   Map<String, String> get headers => {
     'Authorization': 'Bearer $token',
     'Accept': 'application/json',
+    'Content-Type': 'application/json',   // needed for POST bodies
   };
 
   @override
   void onInit() {
     super.onInit();
     fetchStates();
-    fetchLocations();
+    // ❌ Removed fetchLocations() — locations depend on a selected district
   }
 
   @override
@@ -68,6 +390,7 @@ class AreaAdminAdvertisementController extends GetxController {
   }
 
   // ─── Fetch States ────────────────────────────
+  // GET /api/get-MerchantStates
   Future<void> fetchStates() async {
     try {
       isStateLoading.value = true;
@@ -79,9 +402,11 @@ class AreaAdminAdvertisementController extends GetxController {
 
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
-        if (body['status'] == '1' || body['status'] == 1) {
+        // ✅ status is boolean true in the real response
+        if (body['status'] == true || body['status'] == 1 || body['status'] == '1') {
           states.assignAll(
-              (body['data'] as List).map((e) => e.toString()).toList());
+            (body['data'] as List).map((e) => e.toString()).toList(),
+          );
         } else {
           AppSnackbar.error(body['message'] ?? 'Failed to load states');
         }
@@ -98,23 +423,31 @@ class AreaAdminAdvertisementController extends GetxController {
   }
 
   // ─── Fetch Districts ─────────────────────────
+  // POST /api/getMerchant-Districts
+  // Body:     { "state": "kerala" }
+  // Response: { "status": true, "data": ["Kasaragod", "Kochi", "Malappuram"] }
   Future<void> fetchDistricts(String state) async {
     try {
       isDistrictLoading.value = true;
       districts.clear();
       selectedDistrict.value = '';
+      // ✅ Also clear locations since they depend on district
+      locations.clear();
+      selectedLocation.value = '';
 
-      final res = await http.get(
-        Uri.parse('$publicBaseUrl/getMerchant-Districts?state=$state'),
+      // ✅ Changed: POST with JSON body instead of GET with query param
+      final res = await http.post(
+        Uri.parse('$publicBaseUrl/getMerchant-Districts'),
         headers: headers,
+        body: jsonEncode({"state": state}),
       );
 
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
-        if (body['status'] == '1' || body['status'] == 1) {
-          final List data = body['data'] as List;
+        if (body['status'] == true || body['status'] == 1 || body['status'] == '1') {
+          // ✅ Changed: data is a flat string list, not a list of objects
           districts.assignAll(
-            data.map((e) => e['district'].toString()).toSet().toList(),
+            (body['data'] as List).map((e) => e.toString()).toList(),
           );
         } else {
           AppSnackbar.error(body['message'] ?? 'Failed to load districts');
@@ -131,8 +464,8 @@ class AreaAdminAdvertisementController extends GetxController {
     }
   }
 
-  // ─── Fetch Locations ─────────────────────────
-  Future<void> fetchLocations() async {
+  // ✅ Changed: now takes a district parameter
+  Future<void> fetchLocations(String district) async {
     if (token.isEmpty) {
       _handleUnauthorized();
       return;
@@ -140,17 +473,22 @@ class AreaAdminAdvertisementController extends GetxController {
 
     try {
       isLocationLoading.value = true;
+      locations.clear();
+      selectedLocation.value = '';
 
-      final res = await http.get(
+      // ✅ Changed: POST with JSON body {"district": district}
+      final res = await http.post(
         Uri.parse('$baseUrl/main-locations'),
         headers: headers,
+        body: jsonEncode({"district": district}),
       );
 
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
-        if (body['status'] == true || body['status'] == 1) {
+        if (body['status'] == true || body['status'] == 1 || body['status'] == '1') {
           locations.assignAll(
-              (body['data'] as List).map((e) => e.toString()).toList());
+            (body['data'] as List).map((e) => e.toString()).toList(),
+          );
         } else {
           AppSnackbar.error(body['message'] ?? 'Failed to load locations');
         }
@@ -174,6 +512,14 @@ class AreaAdminAdvertisementController extends GetxController {
     fetchDistricts(state);
   }
 
+  // ─── On District Selected ────────────────────
+  // ✅ New: triggers fetchLocations with the selected district
+  void onDistrictChanged(String? district) {
+    if (district == null) return;
+    selectedDistrict.value = district;
+    fetchLocations(district);
+  }
+
   // ─── Image Picker (2:1 ratio enforced) ───────
   Future<void> pickBannerImage() async {
     try {
@@ -185,8 +531,6 @@ class AreaAdminAdvertisementController extends GetxController {
       if (picked == null) return;
 
       final file = File(picked.path);
-
-      // Decode image to get actual dimensions
       final bytes = await file.readAsBytes();
       final decodedImage = await decodeImageFromList(bytes);
 
@@ -196,7 +540,6 @@ class AreaAdminAdvertisementController extends GetxController {
 
       debugPrint(">>> Image size: ${width}x${height}, ratio: $ratio");
 
-      // Allow only 2:1 ratio (±0.1 tolerance)
       if (ratio < 1.9 || ratio > 2.1) {
         AppSnackbar.error(
           "Invalid image ratio ${width}x${height}.\nPlease upload a 2:1 ratio image (e.g. 1200x600)",
@@ -210,9 +553,7 @@ class AreaAdminAdvertisementController extends GetxController {
     }
   }
 
-  void removeBannerImage() {
-    bannerImage.value = null;
-  }
+  void removeBannerImage() => bannerImage.value = null;
 
   // ─── Image → Base64 ──────────────────────────
   Future<String?> _toBase64(File file) async {
@@ -266,10 +607,7 @@ class AreaAdminAdvertisementController extends GetxController {
 
       final response = await http.post(
         Uri.parse('$baseUrl/create-advertisement'),
-        headers: {
-          ...headers,
-          'Content-Type': 'application/json',
-        },
+        headers: headers,
         body: jsonEncode({
           "advertisement": adName.text.trim(),
           "state": selectedState.value,
@@ -281,7 +619,6 @@ class AreaAdminAdvertisementController extends GetxController {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final resData = jsonDecode(response.body);
-
         if (resData['status'] == true ||
             resData['status'] == 1 ||
             resData['status'] == '1') {
@@ -311,13 +648,13 @@ class AreaAdminAdvertisementController extends GetxController {
     selectedDistrict.value = '';
     districts.clear();
     selectedLocation.value = '';
+    locations.clear();
     bannerImage.value = null;
     isTitleEmpty.value = false;
   }
 
   // ─── Unauthorized ───────────────────────────
-  void _handleUnauthorized() {
-    AppSnackbar.error("Session expired. Please login again.");
+  void _handleUnauthorized() {;
     _box.erase();
     Get.offAll(() => LoginPageView());
   }

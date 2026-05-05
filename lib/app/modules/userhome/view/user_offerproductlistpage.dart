@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 
 import '../../../common/style/app_colors.dart';
-import '../../../common/style/app_text_style.dart';
 import '../controller/userofferproduct_controller.dart';
 
 class UserOfferProductPage extends StatelessWidget {
@@ -24,13 +23,14 @@ class UserOfferProductPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Offer Products',style: TextStyle(
-          color: Colors.white,
-          fontSize: 17,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.1,
-        )
+        title: const Text(
+          'Offer Products',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.1,
+          ),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
         backgroundColor: AppColors.kPrimary,
@@ -126,7 +126,7 @@ class UserOfferProductPage extends StatelessWidget {
                             ),
                           ),
 
-                          // ✅ Discount Badge — top LEFT of image
+                          // 🏷️ Discount Badge — top left
                           Positioned(
                             top: 8,
                             left: 8,
@@ -136,19 +136,20 @@ class UserOfferProductPage extends StatelessWidget {
                             ),
                           ),
 
-                          // Wishlist Heart Button — top RIGHT
+                          // ❤️ Wishlist Heart — top right
                           Positioned(
                             top: 8,
                             right: 8,
                             child: Obx(() {
+                              // ✅ Pass product.type (1) — won't clash with normal products
                               final isFav = controller.wishlistController
-                                  .isInWishlist(product.id);
+                                  .isInWishlist(product.id, type: product.type);
                               return GestureDetector(
-                                onTap: () => controller.wishlistController
-                                    .toggleWishlist(
-                                  product.id,
-                                  type: product.type,
-                                ),
+                                onTap: () =>
+                                    controller.wishlistController.toggleWishlist(
+                                      product.id,
+                                      type: product.type,
+                                    ),
                                 child: Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
@@ -166,8 +167,7 @@ class UserOfferProductPage extends StatelessWidget {
                                     isFav
                                         ? Icons.favorite
                                         : Icons.favorite_border,
-                                    color:
-                                    isFav ? Colors.red : Colors.grey[600],
+                                    color: isFav ? Colors.red : Colors.grey[600],
                                     size: 20,
                                   ),
                                 ),
@@ -193,7 +193,6 @@ class UserOfferProductPage extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 6),
-
                           Row(
                             children: [
                               Text(
@@ -228,7 +227,6 @@ class UserOfferProductPage extends StatelessWidget {
     );
   }
 
-  /// ✅ Overlay badge shown on top-left of product image
   Widget _buildDiscountBadgeOverlay(String original, String offer) {
     final orig = double.tryParse(original);
     final off = double.tryParse(offer);

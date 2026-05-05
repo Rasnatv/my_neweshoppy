@@ -1,3 +1,4 @@
+
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -8,33 +9,32 @@ import '../../../data/models/locationmodel.dart';
 import '../../../data/errors/api_error.dart';
 import '../../merchantlogin/widget/successwidget.dart';
 
-
 class LocationController extends GetxController {
   final box = GetStorage();
 
-  // APIs
-  final String addApiUrl =
-      "https://eshoppy.co.in/api/admin/location/add";
+  final String addApiUrl  = "https://eshoppy.co.in/api/admin/location/add";
+  final String listApiUrl = "https://eshoppy.co.in/api/admin/location/list";
 
-  final String listApiUrl =
-      "https://eshoppy.co.in/api/admin/location/list";
+  // ── Data ──────────────────────────────────────────
+  /// Flat list of all districts across all states (used by the list page).
+  RxList<DistrictItem> districtList  = <DistrictItem>[].obs;
 
-  // Data
-  RxList<StateItem> stateList = <StateItem>[].obs;
-  RxList<String> tempLocations = <String>[].obs;
+  /// Full state → district tree (available if you need it elsewhere).
+  RxList<StateItem>    stateList     = <StateItem>[].obs;
 
-  RxString selectedState = "".obs;
+  RxList<String>       tempLocations = <String>[].obs;
+
+  RxString selectedState    = "".obs;
   RxString selectedDistrict = "".obs;
+  RxBool   isLoading        = false.obs;
 
-  RxBool isLoading = false.obs;
-
-  // ================= AUTH =================
+  // ── Auth ──────────────────────────────────────────
   String get authToken => box.read('auth_token') ?? '';
 
   Map<String, String> get authHeader => {
-    'Accept': 'application/json',
+    'Accept'       : 'application/json',
     'Authorization': 'Bearer $authToken',
-    'Content-Type': 'application/json',
+    'Content-Type' : 'application/json',
   };
 
   @override
@@ -43,15 +43,13 @@ class LocationController extends GetxController {
     fetchLocations();
   }
 
-  // ================= ADD TEMP LOCATION =================
+  // ── Add Temp Location ─────────────────────────────
   void addTempLocation(String name) {
     final value = name.trim();
-
     if (value.isEmpty) {
       AppSnackbar.warning("Location cannot be empty");
       return;
     }
-
     if (!tempLocations.contains(value)) {
       tempLocations.add(value);
     } else {
@@ -59,9 +57,8 @@ class LocationController extends GetxController {
     }
   }
 
-  // ================= SAVE ALL =================
+  // ── Save All ──────────────────────────────────────
   Future<void> saveAll() async {
-    /// ✅ Validation
     if (selectedState.value.isEmpty ||
         selectedDistrict.value.isEmpty ||
         tempLocations.isEmpty) {
@@ -69,7 +66,6 @@ class LocationController extends GetxController {
       return;
     }
 
-    /// ✅ Auth check
     if (authToken.isEmpty) {
       AppSnackbar.error("Session expired. Please login again");
       Get.offAllNamed('/login');
@@ -79,32 +75,34 @@ class LocationController extends GetxController {
     isLoading.value = true;
 
     try {
-      for (final loc in tempLocations) {
+      for (final loc in List<String>.from(tempLocations)) {
         final response = await http.post(
           Uri.parse(addApiUrl),
           headers: authHeader,
           body: jsonEncode({
-            "state": selectedState.value,
+            // Keys match the API: state / district / location
+            "state"   : selectedState.value,
             "district": selectedDistrict.value,
             "location": loc,
           }),
         );
 
-        /// ✅ Success
         if (response.statusCode == 200) {
           final body = jsonDecode(response.body);
-
           if (body['status'] == 1) {
-            _updateLocalState(loc);
+            // Use the server-normalised values from the response
+            final data = body['data'] as Map<String, dynamic>? ?? {};
+            _updateLocalDistrict(
+              serverState   : data['state']    ?.toString() ?? selectedState.value,
+              serverDistrict: data['district'] ?.toString() ?? selectedDistrict.value,
+              serverLocation: data['location'] ?.toString() ?? loc,
+            );
           } else {
             AppSnackbar.error(body['message'] ?? "Failed to add location");
           }
         } else {
-          /// ✅ API Error Handler
           final errorMessage = ApiErrorHandler.handleResponse(response);
           AppSnackbar.error(errorMessage);
-
-          /// Stop loop if unauthorized
           if (response.statusCode == 401) break;
         }
       }
@@ -112,23 +110,24 @@ class LocationController extends GetxController {
       tempLocations.clear();
       AppSnackbar.success("Locations added successfully");
     } catch (e) {
-      /// ✅ Exception Handling
-      final errorMessage = ApiErrorHandler.handleException(e);
-      AppSnackbar.error(errorMessage);
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoading.value = false;
     }
   }
 
-  // ================= FETCH LOCATIONS =================
+  // ── Fetch Locations ───────────────────────────────
+  /// Parses the new API shape:
+  /// { "data": [ { "state": "kerala", "districts": [ { "district": "kannur",
+  ///   "main_locations": ["caltex", ...] } ] } ] }
   Future<void> fetchLocations() async {
-    /// ✅ Auth check
     if (authToken.isEmpty) {
       Get.offAllNamed('/login');
       return;
     }
 
     isLoading.value = true;
+    districtList.clear();
     stateList.clear();
 
     try {
@@ -141,87 +140,127 @@ class LocationController extends GetxController {
         final body = jsonDecode(response.body);
 
         if (body['status'] == 1) {
-          final Map<String, dynamic> data = body['data'];
+          final List<dynamic> data = body['data'] as List<dynamic>? ?? [];
 
-          data.forEach((stateName, districtMap) {
-            List<DistrictItem> districts = [];
+          // ── Build state list ──────────────────────
+          // Merge states that share the same normalised name
+          // (e.g. "tamil nadu" vs "tamilnadu" are kept separate as-is;
+          //  only exact case-insensitive duplicates are merged).
+          final Map<String, StateItem> mergedStates = {};
 
-            (districtMap as Map<String, dynamic>)
-                .forEach((districtName, locations) {
-              List<LocationItem> locationItems =
-              (locations as List).toSet().map((loc) {
-                return LocationItem(location: loc.toString());
-              }).toList();
+          for (final raw in data) {
+            final item = StateItem.fromJson(raw as Map<String, dynamic>);
+            final key  = item.state.toLowerCase().trim();
 
-              districts.add(
-                DistrictItem(
-                  district: districtName,
-                  locations: locationItems,
-                ),
+            if (mergedStates.containsKey(key)) {
+              // Merge districts into the existing state entry
+              final existing = mergedStates[key]!;
+              final Map<String, DistrictItem> districtMap = {
+                for (final d in existing.districts)
+                  d.district.toLowerCase(): d,
+              };
+              for (final d in item.districts) {
+                final dk = d.district.toLowerCase();
+                districtMap[dk] = districtMap.containsKey(dk)
+                    ? districtMap[dk]!.merge(d)
+                    : d;
+              }
+              mergedStates[key] = StateItem(
+                state    : existing.state,
+                districts: districtMap.values.toList(),
               );
-            });
+            } else {
+              mergedStates[key] = item;
+            }
+          }
 
-            stateList.add(
-              StateItem(
-                state: stateName,
-                districts: districts,
-              ),
-            );
-          });
+          stateList.addAll(mergedStates.values);
+
+          // ── Flatten to districtList (used by list page) ──
+          // Merge districts that share the same name across states.
+          final Map<String, DistrictItem> flatDistricts = {};
+          for (final state in mergedStates.values) {
+            for (final district in state.districts) {
+              final dk = district.district.toLowerCase();
+              flatDistricts[dk] = flatDistricts.containsKey(dk)
+                  ? flatDistricts[dk]!.merge(district)
+                  : district;
+            }
+          }
+          districtList.addAll(flatDistricts.values);
+
         } else {
           AppSnackbar.error(body['message'] ?? "Failed to load locations");
         }
       } else {
-        /// ✅ API Error Handler
-        final errorMessage = ApiErrorHandler.handleResponse(response);
-        AppSnackbar.error(errorMessage);
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
-      /// ✅ Exception Handling
-      final errorMessage = ApiErrorHandler.handleException(e);
-      AppSnackbar.error(errorMessage);
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoading.value = false;
     }
   }
 
-  // ================= LOCAL UPDATE =================
-  void _updateLocalState(String loc) {
-    StateItem? state = stateList.firstWhereOrNull(
-          (s) => s.state == selectedState.value,
+  // ── Local Update After Successful POST ────────────
+  /// Updates [districtList] immediately after a successful add so the UI
+  /// reflects the change without a full refresh.
+  void _updateLocalDistrict({
+    required String serverState,
+    required String serverDistrict,
+    required String serverLocation,
+  }) {
+    final dk = serverDistrict.toLowerCase();
+
+    final existing = districtList.firstWhereOrNull(
+          (d) => d.district.toLowerCase() == dk,
     );
 
-    if (state == null) {
-      stateList.add(
-        StateItem(
-          state: selectedState.value,
-          districts: [
-            DistrictItem(
-              district: selectedDistrict.value,
-              locations: [LocationItem(location: loc)],
-            ),
-          ],
-        ),
-      );
-      return;
+    if (existing == null) {
+      districtList.add(DistrictItem(
+        district : serverDistrict,
+        locations: [LocationItem(location: serverLocation)],
+      ));
+    } else {
+      if (!existing.locations.any(
+            (l) => l.location.toLowerCase() == serverLocation.toLowerCase(),
+      )) {
+        existing.locations.add(LocationItem(location: serverLocation));
+        districtList.refresh();
+      }
     }
 
-    DistrictItem? district = state.districts.firstWhereOrNull(
-          (d) => d.district == selectedDistrict.value,
+    // Also update stateList
+    final sk = serverState.toLowerCase();
+    final existingState = stateList.firstWhereOrNull(
+          (s) => s.state.toLowerCase() == sk,
     );
 
-    if (district == null) {
-      state.districts.add(
-        DistrictItem(
-          district: selectedDistrict.value,
-          locations: [LocationItem(location: loc)],
-        ),
+    if (existingState == null) {
+      stateList.add(StateItem(
+        state    : serverState,
+        districts: [
+          DistrictItem(
+            district : serverDistrict,
+            locations: [LocationItem(location: serverLocation)],
+          ),
+        ],
+      ));
+    } else {
+      final existingDist = existingState.districts.firstWhereOrNull(
+            (d) => d.district.toLowerCase() == dk,
       );
-      return;
-    }
-
-    if (!district.locations.any((l) => l.location == loc)) {
-      district.locations.add(LocationItem(location: loc));
+      if (existingDist == null) {
+        existingState.districts.add(DistrictItem(
+          district : serverDistrict,
+          locations: [LocationItem(location: serverLocation)],
+        ));
+      } else if (!existingDist.locations.any(
+            (l) => l.location.toLowerCase() == serverLocation.toLowerCase(),
+      )) {
+        existingDist.locations.add(LocationItem(location: serverLocation));
+      }
+      stateList.refresh();
     }
   }
 }

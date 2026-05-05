@@ -1,7 +1,6 @@
 
 import 'dart:convert';
 import 'dart:io';
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -13,16 +12,14 @@ import 'package:http/http.dart' as http;
 
 import '../../../../data/errors/api_error.dart';
 import '../../../../data/models/merchant_eventupadatemodel.dart';
-  // ← adjust path
 import '../../../merchantlogin/widget/successwidget.dart';
-import '../view/admin_event.dart';
 
 class AdminEventUpdateController extends GetxController {
   // ─── State ────────────────────────────────────────────────────────────────
-  final isLoading  = false.obs;
+  final isLoading = false.obs;
   final isUpdating = false.obs;
-  final event      = Rxn<HEventModel>();
-  final showMode   = "district".obs;
+  final event = Rxn<HEventModel>();
+  final showMode = "district".obs;
 
   // ─── Form key & controllers ───────────────────────────────────────────────
   final formKey = GlobalKey<FormState>();
@@ -30,31 +27,30 @@ class AdminEventUpdateController extends GetxController {
   late TextEditingController locationCtrl;
 
   // ─── Region dropdowns ─────────────────────────────────────────────────────
-  final statesList    = <String>[].obs;
+  final statesList = <String>[].obs;
   final districtsList = <String>[].obs;
-  final areasList     = <String>[].obs;
+  final areasList = <String>[].obs;
 
-  final selectedState    = RxnString();
+  final selectedState = RxnString();
   final selectedDistrict = RxnString();
-  final selectedArea     = RxnString();
+  final selectedArea = RxnString();
 
-  final isLoadingStates    = false.obs;
+  final isLoadingStates = false.obs;
   final isLoadingDistricts = false.obs;
-  final isLoadingAreas     = false.obs;
+  final isLoadingAreas = false.obs;
 
   // ─── Date / time observables ──────────────────────────────────────────────
   final startDate = Rxn<DateTime>();
-  final endDate   = Rxn<DateTime>();
+  final endDate = Rxn<DateTime>();
   final startTime = Rxn<TimeOfDay>();
-  final endTime   = Rxn<TimeOfDay>();
+  final endTime = Rxn<TimeOfDay>();
 
   // ─── Banner image ─────────────────────────────────────────────────────────
-  final pickedImageFile   = Rxn<File>();
+  final pickedImageFile = Rxn<File>();
   final pickedImageBase64 = RxnString();
 
   // ─── API ──────────────────────────────────────────────────────────────────
-  static const _baseUrl =
-      'https://eshoppy.co.in/api';
+  static const _baseUrl = 'https://eshoppy.co.in/api';
 
   final _box = GetStorage();
 
@@ -71,17 +67,60 @@ class AdminEventUpdateController extends GetxController {
   void onInit() {
     super.onInit();
     eventNameCtrl = TextEditingController();
-    locationCtrl  = TextEditingController();
+    locationCtrl = TextEditingController();
 
+    // ── Fetch states first ──
     fetchStates();
-    fetchDistricts();
-    fetchAreas();
 
+    // ── Auto-fetch districts when state changes ──
+    ever(selectedState, (String? state) {
+      // Don't cascade if we're still populating from fetchEvent
+      if (_isPopulating) return;
+
+      selectedDistrict.value = null;
+      selectedArea.value = null;
+      districtsList.clear();
+      areasList.clear();
+
+      if (state != null && state.isNotEmpty) {
+        fetchDistricts(state);
+      }
+    });
+
+    // ── Auto-fetch areas when district changes (only in area mode) ──
+    ever(selectedDistrict, (String? district) {
+      if (_isPopulating) return;
+
+      selectedArea.value = null;
+      areasList.clear();
+
+      if (district != null &&
+          district.isNotEmpty &&
+          showMode.value == 'area') {
+        fetchAreas(district);
+      }
+    });
+
+    // ── Re-fetch areas when switching TO area mode ──
+    ever(showMode, (String mode) {
+      if (_isPopulating) return;
+
+      if (mode == 'area' &&
+          selectedDistrict.value != null &&
+          selectedDistrict.value!.isNotEmpty) {
+        fetchAreas(selectedDistrict.value!);
+      } else if (mode == 'district') {
+        selectedArea.value = null;
+        areasList.clear();
+      }
+    });
+
+    // ── Load event from args ──
     final Map<String, dynamic>? args = Get.arguments != null
         ? Map<String, dynamic>.from(Get.arguments as Map)
         : null;
-    final dynamic raw     = args?['event_id'];
-    final int?    eventId = raw == null
+    final dynamic raw = args?['event_id'];
+    final int? eventId = raw == null
         ? null
         : raw is int
         ? raw
@@ -101,7 +140,11 @@ class AdminEventUpdateController extends GetxController {
     super.onClose();
   }
 
-  // ─── Fetch dropdowns ──────────────────────────────────────────────────────
+  // ─── Populate guard ───────────────────────────────────────────────────────
+  // Prevents ever() listeners from firing cascading fetches during _populateForm
+  bool _isPopulating = false;
+
+  // ─── Fetch states ─────────────────────────────────────────────────────────
   Future<void> fetchStates() async {
     try {
       isLoadingStates.value = true;
@@ -111,9 +154,8 @@ class AdminEventUpdateController extends GetxController {
       );
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
-        if (body['status'] == true) {
+        if (body['status'] == true || body['status'] == 1) {
           statesList.assignAll(List<String>.from(body['data']));
-          _validateSelectedState();
         } else {
           AppSnackbar.error(body['message'] ?? 'Failed to load states');
         }
@@ -127,18 +169,21 @@ class AdminEventUpdateController extends GetxController {
     }
   }
 
-  Future<void> fetchDistricts() async {
+  // ─── Fetch districts (POST with state) ───────────────────────────────────
+  Future<void> fetchDistricts(String state) async {
     try {
       isLoadingDistricts.value = true;
-      final response = await http.get(
+      final response = await http.post(
         Uri.parse('$_baseUrl/districts'),
         headers: _authHeaders,
+        body: jsonEncode({'state': state}),
       );
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
-        if (body['status'] == true) {
+        if (body['status'] == true || body['status'] == 1) {
           districtsList.assignAll(List<String>.from(body['data']));
-          _validateSelectedDistrict();
+          // Re-validate in case pre-selected district is in the new list
+          _revalidateDistrict();
         } else {
           AppSnackbar.error(body['message'] ?? 'Failed to load districts');
         }
@@ -152,18 +197,21 @@ class AdminEventUpdateController extends GetxController {
     }
   }
 
-  Future<void> fetchAreas() async {
+  // ─── Fetch areas (POST with district) ────────────────────────────────────
+  Future<void> fetchAreas(String district) async {
     try {
       isLoadingAreas.value = true;
-      final response = await http.get(
+      final response = await http.post(
         Uri.parse('$_baseUrl/areas'),
         headers: _authHeaders,
+        body: jsonEncode({'district': district}),
       );
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
-        if (body['status'] == true) {
+        if (body['status'] == true || body['status'] == 1) {
           areasList.assignAll(List<String>.from(body['data']));
-          _validateSelectedArea();
+          // Re-validate in case pre-selected area is in the new list
+          _revalidateArea();
         } else {
           AppSnackbar.error(body['message'] ?? 'Failed to load areas');
         }
@@ -177,68 +225,69 @@ class AdminEventUpdateController extends GetxController {
     }
   }
 
-  void _validateSelectedState() {
-    if (selectedState.value == null) return;
-    final match = statesList.firstWhereOrNull(
-          (s) => s.toLowerCase() == selectedState.value!.toLowerCase(),
-    );
-    selectedState.value = match ?? selectedState.value;
-  }
-
-  void _validateSelectedDistrict() {
+  // ─── Case-insensitive re-validation helpers ───────────────────────────────
+  void _revalidateDistrict() {
     if (selectedDistrict.value == null) return;
     final match = districtsList.firstWhereOrNull(
           (d) => d.toLowerCase() == selectedDistrict.value!.toLowerCase(),
     );
-    selectedDistrict.value = match ?? selectedDistrict.value;
+    if (match != null) selectedDistrict.value = match;
   }
 
-  void _validateSelectedArea() {
+  void _revalidateArea() {
     if (selectedArea.value == null) return;
     final match = areasList.firstWhereOrNull(
           (a) => a.toLowerCase() == selectedArea.value!.toLowerCase(),
     );
-    selectedArea.value = match ?? selectedArea.value;
+    if (match != null) selectedArea.value = match;
   }
 
   // ─── Mode toggle ──────────────────────────────────────────────────────────
   void switchToDistrict() {
-    showMode.value     = "district";
+    showMode.value = "district";
     selectedArea.value = null;
+    areasList.clear();
   }
 
   void switchToArea() {
     showMode.value = "area";
+    // ever(showMode) listener will trigger fetchAreas if district is set
   }
 
   // ─── Display helpers ──────────────────────────────────────────────────────
-  String get formattedStartDate => startDate.value != null
-      ? DateFormat('yyyy-MM-dd').format(startDate.value!)
-      : '';
+  String get formattedStartDate =>
+      startDate.value != null
+          ? DateFormat('yyyy-MM-dd').format(startDate.value!)
+          : '';
 
-  String get formattedEndDate => endDate.value != null
-      ? DateFormat('yyyy-MM-dd').format(endDate.value!)
-      : '';
+  String get formattedEndDate =>
+      endDate.value != null
+          ? DateFormat('yyyy-MM-dd').format(endDate.value!)
+          : '';
 
-  String get displayStartDate => startDate.value != null
-      ? DateFormat('MMM dd, yyyy').format(startDate.value!)
-      : 'Select date';
+  String get displayStartDate =>
+      startDate.value != null
+          ? DateFormat('MMM dd, yyyy').format(startDate.value!)
+          : 'Select date';
 
-  String get displayEndDate => endDate.value != null
-      ? DateFormat('MMM dd, yyyy').format(endDate.value!)
-      : 'Select date';
+  String get displayEndDate =>
+      endDate.value != null
+          ? DateFormat('MMM dd, yyyy').format(endDate.value!)
+          : 'Select date';
 
-  String get displayStartTime => startTime.value != null
-      ? startTime.value!.format(Get.context!)
-      : 'Select time';
+  String get displayStartTime =>
+      startTime.value != null
+          ? startTime.value!.format(Get.context!)
+          : 'Select time';
 
-  String get displayEndTime => endTime.value != null
-      ? endTime.value!.format(Get.context!)
-      : 'Select time';
+  String get displayEndTime =>
+      endTime.value != null
+          ? endTime.value!.format(Get.context!)
+          : 'Select time';
 
   String _formatTime(TimeOfDay time) {
     final now = DateTime.now();
-    final dt  = DateTime(now.year, now.month, now.day, time.hour, time.minute);
+    final dt = DateTime(now.year, now.month, now.day, time.hour, time.minute);
     return DateFormat('hh:mm a').format(dt);
   }
 
@@ -258,30 +307,59 @@ class AdminEventUpdateController extends GetxController {
   }
 
   // ─── Populate form ────────────────────────────────────────────────────────
-  void _populateForm(HEventModel e) {
+  Future<void> _populateForm(HEventModel e) async {
+    // Guard: suppress ever() listeners during population
+    _isPopulating = true;
+
     eventNameCtrl.text = e.eventName;
-    locationCtrl.text  = e.eventLocation;
-    startDate.value    = DateTime.tryParse(e.startDate);
-    endDate.value      = DateTime.tryParse(e.endDate);
-    startTime.value    = _parseTime(e.startTime);
-    endTime.value      = _parseTime(e.endTime);
+    locationCtrl.text = e.eventLocation;
+    startDate.value = DateTime.tryParse(e.startDate);
+    endDate.value = DateTime.tryParse(e.endDate);
+    startTime.value = _parseTime(e.startTime);
+    endTime.value = _parseTime(e.endTime);
 
-    selectedState.value    = (e.state != null && e.state!.isNotEmpty)
-        ? e.state : null;
-    selectedDistrict.value = (e.district != null && e.district!.isNotEmpty)
-        ? e.district : null;
+    final hasState = e.state != null && e.state!.isNotEmpty;
+    final hasDistrict = e.district != null && e.district!.isNotEmpty;
+    final hasArea = e.mainLocation != null && e.mainLocation!.isNotEmpty;
 
-    if (e.mainLocation != null && e.mainLocation!.isNotEmpty) {
-      showMode.value     = "area";
-      selectedArea.value = e.mainLocation;
+    // Set mode first (no listeners firing due to guard)
+    showMode.value = hasArea ? "area" : "district";
+
+    // Set state and fetch districts
+    if (hasState) {
+      selectedState.value = e.state;
+      _isPopulating = false; // Allow fetchDistricts to assign list
+      await fetchDistricts(e.state!);
+      _isPopulating = true; // Re-enable guard after fetch
+    }
+
+    // Set district and fetch areas if needed
+    if (hasDistrict) {
+      selectedDistrict.value =
+          _matchCaseInsensitive(districtsList, e.district!);
+      if (hasArea) {
+        _isPopulating = false;
+        await fetchAreas(e.district!);
+        _isPopulating = true;
+      }
+    }
+
+    // Set area after areasList is populated
+    if (hasArea) {
+      selectedArea.value = _matchCaseInsensitive(areasList, e.mainLocation!);
     } else {
-      showMode.value     = "district";
       selectedArea.value = null;
     }
 
-    _validateSelectedState();
-    _validateSelectedDistrict();
-    _validateSelectedArea();
+    _isPopulating = false;
+  }
+
+  /// Returns the matching string from [list] (case-insensitive), or [value] as fallback.
+  String _matchCaseInsensitive(List<String> list, String value) {
+    return list.firstWhereOrNull(
+          (item) => item.toLowerCase() == value.toLowerCase(),
+    ) ??
+        value;
   }
 
   // ─── Fetch event ──────────────────────────────────────────────────────────
@@ -297,7 +375,7 @@ class AdminEventUpdateController extends GetxController {
         final body = jsonDecode(response.body);
         if (body['status'] == '1') {
           event.value = HEventModel.fromJson(body['data']);
-          _populateForm(event.value!);
+          await _populateForm(event.value!);
         } else {
           AppSnackbar.error(body['message'] ?? 'Failed to fetch event');
         }
@@ -314,8 +392,8 @@ class AdminEventUpdateController extends GetxController {
   // ─── Banner image pick ────────────────────────────────────────────────────
   Future<void> pickBannerImage() async {
     try {
-      final picker  = ImagePicker();
-      final picked  = await picker.pickImage(
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(
         source: ImageSource.gallery,
         imageQuality: 85,
       );
@@ -354,10 +432,13 @@ class AdminEventUpdateController extends GetxController {
       }
 
       final rawBytes = await file.readAsBytes();
-      final ext      = file.path.split('.').last.toLowerCase();
-      final mime     = ext == 'png' ? 'image/png' : 'image/jpeg';
+      final ext = file.path
+          .split('.')
+          .last
+          .toLowerCase();
+      final mime = ext == 'png' ? 'image/png' : 'image/jpeg';
 
-      pickedImageFile.value   = file;
+      pickedImageFile.value = file;
       pickedImageBase64.value = 'data:$mime;base64,${base64Encode(rawBytes)}';
     } catch (e) {
       AppSnackbar.error('Something went wrong while picking image');
@@ -366,8 +447,8 @@ class AdminEventUpdateController extends GetxController {
 
   // ─── Date pickers ─────────────────────────────────────────────────────────
   Future<void> selectStartDate(BuildContext context) async {
-    final now         = DateTime.now();
-    final today       = DateTime(now.year, now.month, now.day);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
     final safeInitial = (startDate.value != null &&
         !startDate.value!.isBefore(today))
         ? startDate.value!
@@ -397,10 +478,10 @@ class AdminEventUpdateController extends GetxController {
   }
 
   Future<void> selectEndDate(BuildContext context) async {
-    final now       = DateTime.now();
-    final today     = DateTime(now.year, now.month, now.day);
-    final firstDate = (startDate.value != null &&
-        startDate.value!.isAfter(today))
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final firstDate =
+    (startDate.value != null && startDate.value!.isAfter(today))
         ? startDate.value!
         : today;
 
@@ -468,7 +549,6 @@ class AdminEventUpdateController extends GetxController {
     return s.year == e.year && s.month == e.month && s.day == e.day;
   }
 
-  // ─── Update event ─────────────────────────────────────────────────────────
   Future<void> updateEvent() async {
     if (!formKey.currentState!.validate()) return;
     if (startDate.value == null || endDate.value == null) {
@@ -488,15 +568,15 @@ class AdminEventUpdateController extends GetxController {
       isUpdating.value = true;
 
       final payload = <String, dynamic>{
-        'event_id'      : int.parse(event.value!.id),
-        'event_name'    : eventNameCtrl.text.trim(),
-        'start_date'    : formattedStartDate,
-        'end_date'      : formattedEndDate,
-        'start_time'    : _formatTime(startTime.value!),
-        'end_time'      : _formatTime(endTime.value!),
+        'event_id': int.parse(event.value!.id),
+        'event_name': eventNameCtrl.text.trim(),
+        'start_date': formattedStartDate,
+        'end_date': formattedEndDate,
+        'start_time': _formatTime(startTime.value!),
+        'end_time': _formatTime(endTime.value!),
         'event_location': locationCtrl.text.trim(),
-        if (selectedState.value != null)    'state'    : selectedState.value!,
-        if (selectedDistrict.value != null) 'district' : selectedDistrict.value!,
+        if (selectedState.value != null) 'state': selectedState.value!,
+        if (selectedDistrict.value != null) 'district': selectedDistrict.value!,
         if (showMode.value == "area" && selectedArea.value != null)
           'main_location': selectedArea.value!,
       };
@@ -513,10 +593,21 @@ class AdminEventUpdateController extends GetxController {
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
-        if (body['status'] == '1') {
+
+        // ✅ Handle both '1', 1, and true from API
+        final isSuccess = body['status'] == '1' ||
+            body['status'] == 1 ||
+            body['status'] == true;
+
+        if (isSuccess) {
           event.value = HEventModel.fromJson(body['data']);
-          AppSnackbar.success(body['message'] ?? 'Event updated successfully');
+          final message = body['message'] ?? 'Event updated successfully';
+
+          // ✅ Navigate back first, then show snackbar on the previous page
           Get.back(result: true);
+          Future.delayed(const Duration(milliseconds: 300), () {
+            AppSnackbar.success(message);
+          });
         } else {
           AppSnackbar.error(body['message'] ?? 'Failed to update event');
         }

@@ -11,14 +11,12 @@ import '../controller/order_confirmation_controller.dart';
 
 
 class OrderConfirmationPage extends StatelessWidget {
-  final int addressId; // ✅ direct constructor param
+  final int addressId;
   const OrderConfirmationPage({super.key, required this.addressId});
 
   @override
   Widget build(BuildContext context) {
-    // ✅ Pass addressId directly into controller
     final controller = Get.put(OrderConfirmationController(addressId: addressId));
-
 
     return NetworkAwareWrapper(child: Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
@@ -90,11 +88,9 @@ class OrderConfirmationPage extends StatelessWidget {
   Widget _buildSuccessBanner() {
     return Container(
       width: double.infinity,
-
       padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18), color: AppColors.kPrimary,
-
       ),
       child: Column(
         children: [
@@ -193,7 +189,7 @@ class OrderConfirmationPage extends StatelessWidget {
                   color: AppColors.kPrimary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(Icons.person_outline_rounded, color:AppColors.kPrimary, size: 22),
+                child: Icon(Icons.person_outline_rounded, color: AppColors.kPrimary, size: 22),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -291,7 +287,8 @@ class OrderConfirmationPage extends StatelessWidget {
       ),
     );
   }
-  // ── Fix retry button — use controller.addressId instead of Get.arguments
+
+  // ── Error State ──────────────────────────────────────────────────────────────
   Widget _buildErrorState(OrderConfirmationController controller) {
     return Center(
       child: Padding(
@@ -308,7 +305,7 @@ class OrderConfirmationPage extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: () => controller.fetchOrderPreview(controller.addressId), // ✅ fixed
+              onPressed: () => controller.fetchOrderPreview(controller.addressId),
               icon: const Icon(Icons.refresh_rounded),
               label: const Text('Retry'),
               style: ElevatedButton.styleFrom(
@@ -325,7 +322,7 @@ class OrderConfirmationPage extends StatelessWidget {
     );
   }
 
-// ── Updated item tile — attributes are now flat on OrderItem
+  // ── Item Tile ────────────────────────────────────────────────────────────────
   Widget _buildItemTile(OrderItem item) {
     return Padding(
       padding: const EdgeInsets.all(14),
@@ -381,7 +378,7 @@ class OrderConfirmationPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
 
-                // ✅ Attributes now read directly from item.attributes
+                // Attributes
                 if (item.attributes.isNotEmpty) ...[
                   Wrap(
                     spacing: 6,
@@ -412,8 +409,9 @@ class OrderConfirmationPage extends StatelessWidget {
                   const SizedBox(height: 5),
                 ],
 
+                // ✅ Price rounded — no decimals
                 Text(
-                  '₹${item.price.toStringAsFixed(2)}  ×  ${item.quantity}',
+                  '₹${item.price.toStringAsFixed(0)}  ×  ${item.quantity}',
                   style: const TextStyle(
                     fontSize: 12.5,
                     color: Color(0xFF888888),
@@ -422,8 +420,10 @@ class OrderConfirmationPage extends StatelessWidget {
               ],
             ),
           ),
+
+          // ✅ Item total rounded — no decimals
           Text(
-            '₹${(item.price * item.quantity).toStringAsFixed(2)}',
+            '₹${(item.price * item.quantity).toStringAsFixed(0)}',
             style: TextStyle(
               fontSize: 14.5,
               fontWeight: FontWeight.w700,
@@ -435,7 +435,7 @@ class OrderConfirmationPage extends StatelessWidget {
     );
   }
 
-// Helper (add inside the class or as a top-level function)
+  // Helper
   String _capitalize(String s) =>
       s.isEmpty ? s : s[0].toUpperCase() + s.substring(1).replaceAll('_', ' ');
 
@@ -459,8 +459,10 @@ class OrderConfirmationPage extends StatelessWidget {
               color: Color(0xFF2D3748),
             ),
           ),
+
+          // ✅ Total rounded — no decimals
           Text(
-            '₹${total.toStringAsFixed(2)}',
+            '₹${total.toStringAsFixed(0)}',
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w800,
@@ -516,6 +518,7 @@ class OrderConfirmationPage extends StatelessWidget {
     );
   }
 
+  // ── Confirm Button ──────────────────────────────────────────────────────────
   Widget _buildConfirmButton(OrderConfirmationController controller) {
     return Obx(
           () => SizedBox(
@@ -579,4 +582,5 @@ class OrderConfirmationPage extends StatelessWidget {
         ),
       ),
     );
-  }}
+  }
+}

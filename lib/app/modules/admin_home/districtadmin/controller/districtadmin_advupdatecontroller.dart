@@ -14,7 +14,6 @@ import '../../../merchantlogin/widget/successwidget.dart';
 import '../view/districtadmin_home.dart';
 import 'districtadminadvertismentgetcontroller.dart';
 
-
 class AdvertisementUpdateController extends GetxController {
   final box = GetStorage();
 
@@ -39,10 +38,7 @@ class AdvertisementUpdateController extends GetxController {
 
   final picker = ImagePicker();
 
-  final Rx<File?> bannerImage = Rx<File?>(null);
-
-  static const String baseUrl =
-      'https://eshoppy.co.in/api';
+  static const String baseUrl = 'https://eshoppy.co.in/api';
 
   String get authToken => box.read('auth_token') ?? '';
 
@@ -51,25 +47,38 @@ class AdvertisementUpdateController extends GetxController {
     'Accept': 'application/json',
   };
 
+  Map<String, String> get jsonHeaders => {
+    ...headers,
+    'Content-Type': 'application/json',
+  };
+
   @override
   void onInit() {
     super.onInit();
+    initLoad();
+  }
+
+  Future<void> initLoad() async {
+    isFetching.value = true;
 
     final rawId = Get.arguments?['advertisement_id']?.toString() ?? '0';
     advertisementId = int.tryParse(rawId) ?? 0;
 
-    fetchStates();
-    fetchDistricts();
+    await fetchStates();
 
     if (advertisementId != 0) {
-      fetchAdvertisementDetails();
+      await fetchAdvertisementDetails();
     }
+
+    isFetching.value = false;
   }
 
-  @override
-  void onClose() {
-    advertisementController.dispose();
-    super.onClose();
+  // ───────── STATE CHANGE ─────────
+  void onStateChanged(String state) {
+    selectedState.value = state;
+    selectedDistrict.value = '';
+    districtList.clear();
+    fetchDistricts(state);
   }
 
   // ───────── STATES ─────────
@@ -84,7 +93,7 @@ class AdvertisementUpdateController extends GetxController {
 
       if (response.statusCode == 200 && data['status'] == true) {
         stateList.value =
-            (data['data'] as List).map((e) => e['state'].toString()).toList();
+            (data['data'] as List).map((e) => e['state'].toString().trim()).toList();
       } else {
         AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
@@ -93,25 +102,20 @@ class AdvertisementUpdateController extends GetxController {
     }
   }
 
-
-  Future<void> fetchDistricts() async {
+  // ───────── DISTRICTS ─────────
+  Future<void> fetchDistricts(String state) async {
     try {
-      final response = await http.get(
+      final response = await http.post(
         Uri.parse('$baseUrl/district-admin/districts'),
-        headers: headers,
+        headers: jsonHeaders,
+        body: jsonEncode({'state': state}),
       );
 
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200 && data['status'] == true) {
-
-        final list = (data['data'] as List)
-            .map((e) => e.toString().trim())
-            .toSet() // ✅ remove duplicates
-            .toList();
-
-        districtList.value = list;
-
+        districtList.value =
+            (data['data'] as List).map((e) => e.toString().trim()).toList();
       } else {
         AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
@@ -122,16 +126,10 @@ class AdvertisementUpdateController extends GetxController {
 
   // ───────── FETCH AD ─────────
   Future<void> fetchAdvertisementDetails() async {
-
-    isFetching.value = true;
-
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/district-admin/advertisement'),
-        headers: {
-          ...headers,
-          'Content-Type': 'application/json',
-        },
+        headers: jsonHeaders,
         body: jsonEncode({'advertisement_id': advertisementId}),
       );
 
@@ -143,19 +141,34 @@ class AdvertisementUpdateController extends GetxController {
         advertisementController.text = ad['advertisement'] ?? '';
         bannerImageUrl.value = ad['banner_image'] ?? '';
 
-        selectedState.value =
-            (ad['state'] ?? '').toString().capitalizeFirst ?? '';
+        // ✅ MATCH STATE (kerala → Kerala)
+        final apiState = (ad['state'] ?? '').toString().toLowerCase();
 
-        selectedDistrict.value = (ad['district'] ?? '').toString();
+        selectedState.value = stateList.firstWhere(
+              (s) => s.toLowerCase() == apiState,
+          orElse: () => '',
+        );
+
+        // ✅ LOAD DISTRICTS
+        if (selectedState.value.isNotEmpty) {
+          await fetchDistricts(selectedState.value);
+        }
+
+        // ✅ MATCH DISTRICT
+        final apiDistrict = (ad['district'] ?? '').toString().toLowerCase();
+
+        selectedDistrict.value = districtList.firstWhere(
+              (d) => d.toLowerCase() == apiDistrict,
+          orElse: () => '',
+        );
       } else {
         AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
       AppSnackbar.error(ApiErrorHandler.handleException(e));
-    } finally {
-      isFetching.value = false;
     }
   }
+
   Future<void> pickBanner() async {
     try {
       final picked = await picker.pickImage(
@@ -193,12 +206,9 @@ class AdvertisementUpdateController extends GetxController {
     pickedImageFile.value = null;
     base64Image.value = '';
   }
-
   // ───────── UPDATE ─────────
   Future<void> updateAdvertisement() async {
     if (!formKey.currentState!.validate()) return;
-
-
 
     isLoading.value = true;
 
@@ -216,28 +226,16 @@ class AdvertisementUpdateController extends GetxController {
 
       final response = await http.put(
         Uri.parse('$baseUrl/district-admin/advertisement/update'),
-        headers: {
-          ...headers,
-          'Content-Type': 'application/json',
-        },
+        headers: jsonHeaders,
         body: jsonEncode(body),
       );
 
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200 && data['status'] == true) {
-
         AppSnackbar.success(data['message'] ?? "Updated successfully");
 
-        Future.delayed(const Duration(milliseconds: 1200), () {
-          if (Get.isRegistered<DistrictAdminAdvertisementGetController>()) {
-            Get.find<DistrictAdminAdvertisementGetController>()
-                .fetchAdvertisements();
-          }
-
-          Get.offAll(() => Districtadminhomepage());
-        });
-
+        Get.offAll(() => Districtadminhomepage());
       } else {
         AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }

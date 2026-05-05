@@ -1,4 +1,5 @@
 
+
 class MyOrdersModel {
   final String orderId;
   final String orderDate;
@@ -27,13 +28,15 @@ class MyOrdersModel {
 class OrderVariant {
   final int variantId;
   final Map<String, String> attributes;
-  final double price;
+  final double price;      // original price
+  final double finalPrice; // discounted price
   final String image;
 
   OrderVariant({
     required this.variantId,
     required this.attributes,
     required this.price,
+    required this.finalPrice,
     required this.image,
   });
 
@@ -48,11 +51,13 @@ class OrderVariant {
       variantId: int.tryParse(json['variant_id'].toString()) ?? 0,
       attributes: attrs,
       price: double.tryParse(json['price'].toString()) ?? 0.0,
+      finalPrice: double.tryParse(json['final_price']?.toString() ?? '') ??
+          double.tryParse(json['price'].toString()) ?? 0.0,
       image: json['image']?.toString() ?? '',
     );
   }
 
-  // e.g. "Size: M · Color: Purple"
+  // "Size: XXL  ·  Color: Lavender"
   String get displayAttributes => attributes.entries
       .map((e) => '${_cap(e.key)}: ${_cap(e.value)}')
       .join('  ·  ');
@@ -78,11 +83,11 @@ class OrderProduct {
     this.variant,
   });
 
-  // ✅ price comes from variant if present, else derive from total/quantity
-  double get price =>
-      variant?.price ?? (quantity > 0 ? total / quantity : 0.0);
+  // Use final_price from variant if available
+  double get price => variant?.finalPrice ??
+      (quantity > 0 ? total / quantity : 0.0);
 
-  // ✅ image: prefer variant image if non-empty, else product-level image
+  // Prefer variant image if non-empty
   String get displayImage =>
       (variant?.image.isNotEmpty == true) ? variant!.image : productImage;
 

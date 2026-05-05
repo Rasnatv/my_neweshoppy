@@ -16,16 +16,17 @@ class DistrictAdvertisementUpdatePage extends StatelessWidget{
     return NetworkAwareWrapper(child: Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: _buildAppBar(),
+
       body: Obx(() {
-        if (controller.isFetching.value) {
-          return const Center(
-            child: CircularProgressIndicator(color: Color(0xFF084E43)),
-          );
-        }
-        return _buildBody(context);
-      }),
+    if (controller.isFetching.value || controller.stateList.isEmpty) {
+    return const Center(
+    child: CircularProgressIndicator(color: Color(0xFF084E43)),
+    );
+    }
+    return _buildBody(context);
+    }),
     ));
-  }
+     }
 
   // ─── APP BAR ────────────────────────────────────────────────────────────────
 
@@ -257,78 +258,69 @@ class DistrictAdvertisementUpdatePage extends StatelessWidget{
       },
     );
   }
-
-  // ─── DISTRICT FIELD (LOCKED) ──────────────────────────────────────────────────
   Widget _buildDistrictDropdown() {
-    return Obx(() => Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: DropdownButtonFormField<String>(
-        value: controller.selectedDistrict.value.isEmpty
-            ? null
-            : controller.selectedDistrict.value,
-        hint: const Text('Select District'),
-        items: controller.districtList.map((district) {
-          return DropdownMenuItem(
-            value: district,
-            child: Text(
-              district.toUpperCase(),
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF374151),
-              ),
-            ),
-          );
-        }).toList(),
-        onChanged: (value) {
-          controller.selectedDistrict.value = value ?? '';
-        },
-        decoration: const InputDecoration(
-          border: InputBorder.none,
+    return Obx(() {
+      final selected = controller.selectedDistrict.value;
+
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
         ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'District is required';
-          }
-          return null;
-        },
-      ),
-    ));
-  }
-  Widget _buildStateDropdown() {
-    return Obx(() => Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: DropdownButtonFormField<String>(
-        value: controller.selectedState.value.isEmpty
-            ? null
-            : controller.selectedState.value,
-        hint: const Text('Select State'),
-        items: controller.stateList.map((state) {
-          return DropdownMenuItem(
-            value: state,
-            child: Text(state),
-          );
-        }).toList(),
-        onChanged: (value) {
-          controller.selectedState.value = value ?? '';
-        },
-        decoration: const InputDecoration(border: InputBorder.none),
-        validator: (value) =>
-        value == null || value.isEmpty ? 'State required' : null,
-      ),
-    ));
+        child: DropdownButtonFormField<String>(
+          value: controller.districtList.contains(selected) ? selected : null,
+          hint: const Text('Select District'),
+          items: controller.districtList.map((district) {
+            return DropdownMenuItem(
+              value: district,
+              child: Text(district.toUpperCase()),
+            );
+          }).toList(),
+          onChanged: (value) {
+            controller.selectedDistrict.value = value ?? '';
+          },
+          decoration: const InputDecoration(border: InputBorder.none),
+          validator: (value) =>
+          value == null || value.isEmpty ? 'District required' : null,
+        ),
+      );
+    });
   }
 
+  Widget _buildStateDropdown() {
+    return Obx(() {
+      final selected = controller.selectedState.value;
+
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+        ),
+        child: DropdownButtonFormField<String>(
+          value: controller.stateList.contains(selected) ? selected : null,
+          hint: const Text('Select State'),
+          items: controller.stateList.map((state) {
+            return DropdownMenuItem(
+              value: state,
+              child: Text(state),
+            );
+          }).toList(),
+          onChanged: (value) {
+            if (value != null) {
+              controller.onStateChanged(value); // ✅ important
+            }
+          },
+          decoration: const InputDecoration(border: InputBorder.none),
+          validator: (value) =>
+          value == null || value.isEmpty ? 'State required' : null,
+        ),
+      );
+    });
+  }
   // ─── BANNER IMAGE SECTION ─────────────────────────────────────────────────────
 
   Widget _buildBannerImageSection(BuildContext context) {

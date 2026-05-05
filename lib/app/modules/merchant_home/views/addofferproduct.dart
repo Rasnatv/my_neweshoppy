@@ -6,7 +6,6 @@ import 'package:get/get.dart';
 import '../../../common/style/app_colors.dart';
 import '../controller/merchant_addofferproductcontroller.dart';
 
-
 class AddOfferProductPage extends StatelessWidget {
   final AddOfferProductController controller =
   Get.find<AddOfferProductController>();
@@ -21,96 +20,97 @@ class AddOfferProductPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return NetworkAwareWrapper(child:Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        elevation: 0,
-        backgroundColor: AppColors.kPrimary,
-        foregroundColor: Colors.white,
-        title: Text(
-          'Add Products · Offer #${controller.offerId}',
-            style: TextStyle(
+    return NetworkAwareWrapper(
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8F9FA),
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          elevation: 0,
+          backgroundColor: AppColors.kPrimary,
+          foregroundColor: Colors.white,
+          title: Text(
+            'Add Products · Offer #${controller.offerId}',
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 17,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.1,
             ),
-        ),
-        actions: [
-          Obx(() => Center(
-            child: Container(
-              margin: const EdgeInsets.only(right: 8),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                    color: Colors.white.withOpacity(0.5)),
+          ),
+          actions: [
+            Obx(() => Center(
+              child: Container(
+                margin: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                      color: Colors.white.withOpacity(0.5)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.inventory_2_outlined,
+                        color: Colors.white, size: 14),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${controller.totalProductsAdded.value}/10',
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
+            )),
+            TextButton.icon(
+              onPressed: controller.finishOffer,
+              icon: const Icon(Icons.check_circle, color: Colors.white),
+              label: const Text('Done',
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.w600)),
+            ),
+          ],
+        ),
+        body: Stack(
+          children: [
+            SingleChildScrollView(
+              child: Column(
                 children: [
-                  const Icon(Icons.inventory_2_outlined,
-                      color: Colors.white, size: 14),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${controller.totalProductsAdded.value}/10',
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600),
+                  _buildOfferInfoBanner(),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        _buildProductLimitIndicator(),
+                        const SizedBox(height: 16),
+                        Obx(() =>
+                        controller.totalProductsAdded.value >= 10
+                            ? _buildMaxProductsReachedCard()
+                            : _buildProductForm(context)),
+                        const SizedBox(height: 120),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
-          )),
-          TextButton.icon(
-            onPressed: controller.finishOffer,
-            icon: const Icon(Icons.check_circle, color: Colors.white),
-            label: const Text('Done',
-                style: TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.w600)),
-          ),
-        ],
+            _buildLoadingOverlay(),
+          ],
+        ),
+        floatingActionButton: _buildFab(context),
       ),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            child: Column(
-              children: [
-                _buildOfferInfoBanner(),
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      _buildProductLimitIndicator(),
-                      const SizedBox(height: 16),
-                      Obx(() =>
-                      controller.totalProductsAdded.value >= 10
-                          ? _buildMaxProductsReachedCard()
-                          : _buildProductForm(context)),
-                      const SizedBox(height: 120),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          _buildLoadingOverlay(),
-        ],
-      ),
-      floatingActionButton: _buildFab(context),
-    ));
+    );
   }
 
   // ── Offer info banner ─────────────────────────────────────────────────────
   Widget _buildOfferInfoBanner() {
     return Container(
       width: double.infinity,
-      padding:
-      const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       decoration: BoxDecoration(
         color: kGreen.withOpacity(0.08),
         border:
@@ -124,8 +124,7 @@ class AddOfferProductPage extends StatelessWidget {
               color: kGreen.withOpacity(0.15),
               shape: BoxShape.circle,
             ),
-            child:
-            const Icon(Icons.verified, color: kGreen, size: 18),
+            child: const Icon(Icons.verified, color: kGreen, size: 18),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -164,8 +163,7 @@ class AddOfferProductPage extends StatelessWidget {
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16)),
             child: const Padding(
-              padding:
-              EdgeInsets.symmetric(horizontal: 32, vertical: 28),
+              padding: EdgeInsets.symmetric(horizontal: 32, vertical: 28),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -225,8 +223,7 @@ class AddOfferProductPage extends StatelessWidget {
         indicatorColor = kAmber;
         bgColor = const Color(0xFFFEF3C7);
         icon = Icons.warning_amber_rounded;
-        message =
-        'Almost at limit! ${maxCount - currentCount} remaining.';
+        message = 'Almost at limit! ${maxCount - currentCount} remaining.';
       } else {
         indicatorColor = kGreen;
         bgColor = const Color(0xFFD1FAE5);
@@ -239,8 +236,7 @@ class AddOfferProductPage extends StatelessWidget {
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(12),
-          border:
-          Border.all(color: indicatorColor.withOpacity(0.3)),
+          border: Border.all(color: indicatorColor.withOpacity(0.3)),
         ),
         child: Column(
           children: [
@@ -261,8 +257,7 @@ class AddOfferProductPage extends StatelessWidget {
                       Text(message,
                           style: TextStyle(
                               fontSize: 13,
-                              color:
-                              indicatorColor.withOpacity(0.8))),
+                              color: indicatorColor.withOpacity(0.8))),
                     ],
                   ),
                 ),
@@ -321,8 +316,8 @@ class AddOfferProductPage extends StatelessWidget {
             ),
             icon: const Icon(Icons.check_circle),
             label: const Text('Finish Offer',
-                style: TextStyle(
-                    fontWeight: FontWeight.w600, fontSize: 15)),
+                style:
+                TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
           ),
         ],
       ),
@@ -377,11 +372,10 @@ class AddOfferProductPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionTitle(
-              'Product Name', Icons.shopping_bag_outlined),
+          _buildSectionTitle('Product Name', Icons.shopping_bag_outlined),
           const SizedBox(height: 12),
           _buildTextField(
-              controller: controller.productNameController,
+            controller: controller.productNameController,
             hint: 'e.g., Classic Cotton T-Shirt',
             icon: Icons.label_outline,
             onChanged: (val) => controller.productName.value = val,
@@ -396,8 +390,7 @@ class AddOfferProductPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionTitle(
-              'Description', Icons.description_outlined),
+          _buildSectionTitle('Description', Icons.description_outlined),
           const SizedBox(height: 12),
           Container(
             decoration: BoxDecoration(
@@ -409,7 +402,6 @@ class AddOfferProductPage extends StatelessWidget {
               controller: controller.productDescriptionController,
               onChanged: (val) =>
               controller.productDescription.value = val,
-
               maxLines: 4,
               style: const TextStyle(
                   fontSize: 15, color: Color(0xFF1A1A1A)),
@@ -433,7 +425,7 @@ class AddOfferProductPage extends StatelessWidget {
     );
   }
 
-  // ── Category ──────────────────────────────────────────────────────────────
+  // ── Category — FIXED layout ───────────────────────────────────────────────
   Widget _buildCategoryCard() {
     return _buildCard(
       child: Column(
@@ -443,54 +435,75 @@ class AddOfferProductPage extends StatelessWidget {
           const SizedBox(height: 12),
           Obx(() {
             if (controller.isLoadingCategories.value) {
-              return const Center(
-                  child: CircularProgressIndicator());
+              return const Center(child: CircularProgressIndicator());
             }
             if (controller.apiCategories.isEmpty) {
               return Row(children: [
-                const Icon(Icons.warning_amber,
-                    color: Colors.orange),
+                const Icon(Icons.warning_amber, color: Colors.orange),
                 const SizedBox(width: 12),
-                const Expanded(
-                    child: Text('No categories available')),
+                const Expanded(child: Text('No categories available')),
                 TextButton(
                     onPressed: controller.fetchCategories,
                     child: const Text('Retry')),
               ]);
             }
+
+            // FIX: use a plain InputDecorator + DropdownButton instead of
+            // DropdownButtonFormField with a conflicting prefixIcon.
             return Container(
               decoration: BoxDecoration(
                 color: const Color(0xFFF9FAFB),
                 borderRadius: BorderRadius.circular(12),
-                border:
-                Border.all(color: const Color(0xFFE5E7EB)),
+                border: Border.all(color: const Color(0xFFE5E7EB)),
               ),
-              padding:
-              const EdgeInsets.symmetric(horizontal: 16),
-              child: DropdownButtonFormField<String>(
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  prefixIcon: Icon(Icons.list_alt,
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 12, vertical: 4),
+              child: Row(
+                children: [
+                  // Leading icon — always visible, never clipped
+                  const Icon(Icons.list_alt,
                       color: Color(0xFF6B7280), size: 20),
-                  hintText: 'Choose a category',
-                  hintStyle: TextStyle(
-                      color: Color(0xFF9CA3AF), fontSize: 14),
-                ),
-                value: controller.selectedCategory.value.isEmpty
-                    ? null
-                    : controller.selectedCategory.value,
-                items: controller.apiCategories
-                    .map((c) => DropdownMenuItem(
-                    value: c.name,
-                    child: Text(c.name,
-                        style: const TextStyle(fontSize: 15))))
-                    .toList(),
-                onChanged: (val) {
-                  if (val != null) controller.onCategoryChanged(val);
-                },
-                dropdownColor: Colors.white,
-                icon: const Icon(Icons.keyboard_arrow_down,
-                    color: Color(0xFF6B7280)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: DropdownButtonHideUnderline(
+                      child: Obx(() => DropdownButton<String>(
+                        isExpanded: true,
+                        hint: const Text(
+                          'Choose a category',
+                          style: TextStyle(
+                              color: Color(0xFF9CA3AF),
+                              fontSize: 14),
+                        ),
+                        value: controller
+                            .selectedCategory.value.isEmpty
+                            ? null
+                            : controller.selectedCategory.value,
+                        items: controller.apiCategories
+                            .map((c) => DropdownMenuItem(
+                          value: c.name,
+                          child: Text(c.name,
+                              style: const TextStyle(
+                                  fontSize: 15,
+                                  color:
+                                  Color(0xFF1A1A1A))),
+                        ))
+                            .toList(),
+                        onChanged: (val) {
+                          if (val != null) {
+                            controller.onCategoryChanged(val);
+                          }
+                        },
+                        dropdownColor: Colors.white,
+                        icon: const Icon(
+                            Icons.keyboard_arrow_down,
+                            color: Color(0xFF6B7280)),
+                        style: const TextStyle(
+                            fontSize: 15,
+                            color: Color(0xFF1A1A1A)),
+                      )),
+                    ),
+                  ),
+                ],
               ),
             );
           }),
@@ -510,10 +523,12 @@ class AddOfferProductPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionTitle('Common Attributes', Icons.info_outline),
+          _buildSectionTitle(
+              'Common Attributes', Icons.info_outline),
           const SizedBox(height: 6),
           const Text('These attributes apply to all variants',
-              style: TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
+              style:
+              TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
           const SizedBox(height: 16),
           ...config.commonAttributes.map((attr) => Padding(
             padding: const EdgeInsets.only(bottom: 12),
@@ -566,7 +581,8 @@ class AddOfferProductPage extends StatelessWidget {
           const SizedBox(height: 6),
           const Text(
             'Select a variant type, add values, then generate variants.',
-            style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+            style:
+            TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
           ),
           const SizedBox(height: 16),
 
@@ -612,8 +628,10 @@ class AddOfferProductPage extends StatelessWidget {
                           controller.configuredVariantTypes
                               .refresh();
                         },
-                        child: const Icon(Icons.delete_outline,
-                            size: 18, color: kRed),
+                        child: const Icon(
+                            Icons.delete_outline,
+                            size: 18,
+                            color: kRed),
                       ),
                     ],
                   ),
@@ -625,45 +643,60 @@ class AddOfferProductPage extends StatelessWidget {
             );
           }),
 
-          // ── Variant type dropdown ──
-          Obx(() => Container(
+          // ── Variant type dropdown — FIXED same way as category ──
+          Container(
             decoration: BoxDecoration(
               color: const Color(0xFFF9FAFB),
               borderRadius: BorderRadius.circular(12),
-              border:
-              Border.all(color: const Color(0xFFE5E7EB)),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
             ),
             padding:
-            const EdgeInsets.symmetric(horizontal: 16),
-            child: DropdownButtonFormField<String>(
-              isExpanded: true,
-              decoration: const InputDecoration(
-                border: InputBorder.none,
-                prefixIcon: Icon(Icons.category,
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: Row(
+              children: [
+                const Icon(Icons.category,
                     color: Color(0xFF6B7280), size: 20),
-                hintText: 'Select variant type (e.g., Color, Size)',
-                hintStyle: TextStyle(
-                    color: Color(0xFF9CA3AF), fontSize: 14),
-              ),
-              value: controller.selectedVariantType.value.isEmpty
-                  ? null
-                  : controller.selectedVariantType.value,
-              items: config.variantAttributes
-                  .map((attr) => DropdownMenuItem(
-                  value: attr,
-                  child: Text(attr,
-                      style: const TextStyle(fontSize: 15))))
-                  .toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  controller.onVariantTypeSelected(value);
-                }
-              },
-              dropdownColor: Colors.white,
-              icon: const Icon(Icons.keyboard_arrow_down,
-                  color: Color(0xFF6B7280)),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: DropdownButtonHideUnderline(
+                    child: Obx(() => DropdownButton<String>(
+                      isExpanded: true,
+                      hint: const Text(
+                        'Select variant type (e.g., Color, Size)',
+                        style: TextStyle(
+                            color: Color(0xFF9CA3AF),
+                            fontSize: 14),
+                      ),
+                      value: controller
+                          .selectedVariantType.value.isEmpty
+                          ? null
+                          : controller.selectedVariantType.value,
+                      items: config.variantAttributes
+                          .map((attr) => DropdownMenuItem(
+                        value: attr,
+                        child: Text(attr,
+                            style: const TextStyle(
+                                fontSize: 15,
+                                color: Color(0xFF1A1A1A))),
+                      ))
+                          .toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          controller.onVariantTypeSelected(value);
+                        }
+                      },
+                      dropdownColor: Colors.white,
+                      icon: const Icon(Icons.keyboard_arrow_down,
+                          color: Color(0xFF6B7280)),
+                      style: const TextStyle(
+                          fontSize: 15,
+                          color: Color(0xFF1A1A1A)),
+                    )),
+                  ),
+                ),
+              ],
             ),
-          )),
+          ),
 
           // ── Value input section ──
           Obx(() => controller.selectedVariantType.value.isNotEmpty
@@ -684,7 +717,8 @@ class AddOfferProductPage extends StatelessWidget {
               const Text(
                   'Tip: separate multiple values with a comma (e.g. S, M, L)',
                   style: TextStyle(
-                      fontSize: 12, color: Color(0xFF6B7280))),
+                      fontSize: 12,
+                      color: Color(0xFF6B7280))),
               const SizedBox(height: 12),
               Obx(() {
                 if (controller.currentVariantValues.isEmpty) {
@@ -708,8 +742,7 @@ class AddOfferProductPage extends StatelessWidget {
                       label: Text(value,
                           style: const TextStyle(
                               fontSize: 13)),
-                      deleteIcon: const Icon(
-                          Icons.close,
+                      deleteIcon: const Icon(Icons.close,
                           size: 16),
                       onDeleted: () => controller
                           .removeVariantValue(value),
@@ -784,10 +817,11 @@ class AddOfferProductPage extends StatelessWidget {
                     onPressed: controller.generateVariantsFromType,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: kGreen,
-                      padding:
-                      const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 14),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                          borderRadius:
+                          BorderRadius.circular(12)),
                     ),
                     icon: const Icon(Icons.auto_awesome),
                     label: const Text('Generate All Variants',
@@ -819,8 +853,7 @@ class AddOfferProductPage extends StatelessWidget {
           return Text('$count variant(s) for this product',
               style: TextStyle(
                   fontSize: 13,
-                  color:
-                  count >= 10 ? kRed : const Color(0xFF6B7280),
+                  color: count >= 10 ? kRed : const Color(0xFF6B7280),
                   fontWeight: count >= 10
                       ? FontWeight.w600
                       : FontWeight.normal));
@@ -877,8 +910,7 @@ class AddOfferProductPage extends StatelessWidget {
               IconButton(
                 icon: const Icon(Icons.delete_outline,
                     color: kRed, size: 20),
-                onPressed: () =>
-                    _showDeleteDialog(context, index),
+                onPressed: () => _showDeleteDialog(context, index),
               ),
             ]),
           ),
@@ -888,16 +920,22 @@ class AddOfferProductPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Image picker — keyed per variant index ──────────────
                 _buildImagePicker(index),
                 const SizedBox(height: 20),
-                Row(children: [
-                  Expanded(
-                      child: _buildPriceField(variant, index)),
-                  const SizedBox(width: 12),
-                  Expanded(
-                      child: _buildStockField(variant, index)),
-                ]),
+
+                // FIX: Price & Stock side-by-side with CrossAxisAlignment.start
+                // so the discount badge under price doesn't push stock field down
+                IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: _buildPriceField(variant, index)),
+                      const SizedBox(width: 12),
+                      Expanded(child: _buildStockField(variant, index)),
+                    ],
+                  ),
+                ),
+
                 if (variant.attributes.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   const Text('Variant Attributes',
@@ -921,61 +959,89 @@ class AddOfferProductPage extends StatelessWidget {
     );
   }
 
-  // ── Price field ───────────────────────────────────────────────────────────
+  // ── Price field — FIXED: self-contained column, no overflow ───────────────
   Widget _buildPriceField(OfferProductVariant variant, int index) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
+        // Label
+        const Text(
+          'Original Price (₹)',
+          style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF374151)),
+        ),
+        const SizedBox(height: 6),
+        // Input box
         Container(
           decoration: BoxDecoration(
-            color: kGreen.withOpacity(0.05),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: kGreen.withOpacity(0.3)),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: kGreen.withOpacity(0.4)),
+            boxShadow: [
+              BoxShadow(
+                  color: kGreen.withOpacity(0.06),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2))
+            ],
           ),
-          child: TextField(
-            key: Key('price_$index'),
-            onChanged: (val) {
-              variant.price = double.tryParse(val);
-              controller.variants.refresh();
-            },
-            keyboardType:
-            const TextInputType.numberWithOptions(decimal: true),
-            style: const TextStyle(
-                fontSize: 14, fontWeight: FontWeight.w600),
-            decoration: const InputDecoration(
-              labelText: 'Original Price (₹)',
-              hintText: '0.00',
-              prefixIcon:
-              Icon(Icons.currency_rupee, color: kGreen, size: 18),
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(8)),
-                  borderSide: BorderSide.none),
-              contentPadding:
-              EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              labelStyle: TextStyle(fontSize: 12, color: kGreen),
-            ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 14),
+                decoration: BoxDecoration(
+                  color: kGreen.withOpacity(0.08),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(10),
+                    bottomLeft: Radius.circular(10),
+                  ),
+                ),
+                child: const Icon(Icons.currency_rupee,
+                    color: kGreen, size: 16),
+              ),
+              Expanded(
+                child: TextField(
+                  key: Key('price_$index'),
+                  onChanged: (val) {
+                    variant.price = double.tryParse(val);
+                    controller.variants.refresh();
+                  },
+                  keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true),
+                  style: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w600),
+                  decoration: const InputDecoration(
+                    hintText: '0.00',
+                    hintStyle: TextStyle(
+                        fontSize: 13, color: Color(0xFF9CA3AF)),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 14),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
+        // Offer price badge
         Obx(() {
           final _ = controller.variants.length;
           if (variant.price != null && variant.price! > 0) {
-            // Prefer server-confirmed finalPrice; fall back to local calc
             final double? displayFinal = variant.finalPrice ??
                 controller.computeOfferPrice(variant.price!);
-
             if (displayFinal != null) {
               final bool isConfirmed = variant.finalPrice != null;
-
               return Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 6),
+                    horizontal: 8, vertical: 5),
                 decoration: BoxDecoration(
                   color: isConfirmed
-                      ? const Color(0xFFD1FAE5)  // green — server confirmed
-                      : const Color(0xFFFEF3C7), // amber — local estimate
+                      ? const Color(0xFFD1FAE5)
+                      : const Color(0xFFFEF3C7),
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(
                       color: (isConfirmed ? kGreen : kAmber)
@@ -989,7 +1055,7 @@ class AddOfferProductPage extends StatelessWidget {
                           ? Icons.verified_outlined
                           : Icons.local_offer,
                       color: isConfirmed ? kGreen : kAmber,
-                      size: 12,
+                      size: 11,
                     ),
                     const SizedBox(width: 4),
                     Flexible(
@@ -998,9 +1064,10 @@ class AddOfferProductPage extends StatelessWidget {
                             '(${controller.discountPercentage}% off)'
                             '${isConfirmed ? ' ✓' : ''}',
                         style: TextStyle(
-                            fontSize: 11,
+                            fontSize: 10,
                             fontWeight: FontWeight.w700,
-                            color: isConfirmed ? kGreen : kAmber),
+                            color:
+                            isConfirmed ? kGreen : kAmber),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -1015,38 +1082,71 @@ class AddOfferProductPage extends StatelessWidget {
     );
   }
 
-  // ── Stock field ───────────────────────────────────────────────────────────
+  // ── Stock field — FIXED: same label style, consistent height ─────────────
   Widget _buildStockField(OfferProductVariant variant, int index) {
-    return Container(
-      decoration: BoxDecoration(
-        color: kBlue.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: kBlue.withOpacity(0.3)),
-      ),
-      child: TextField(
-        key: Key('stock_$index'),
-        onChanged: (val) {
-          variant.stock = int.tryParse(val);
-          controller.variants.refresh();
-        },
-        keyboardType: TextInputType.number,
-        style: const TextStyle(
-            fontSize: 14, fontWeight: FontWeight.w600),
-        decoration: const InputDecoration(
-          labelText: 'Stock',
-          hintText: '0',
-          prefixIcon: Icon(Icons.inventory_outlined,
-              color: kBlue, size: 18),
-          filled: true,
-          fillColor: Colors.white,
-          border: OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(8)),
-              borderSide: BorderSide.none),
-          contentPadding:
-          EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          labelStyle: TextStyle(fontSize: 12, color: kBlue),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Text(
+          'Stock',
+          style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF374151)),
         ),
-      ),
+        const SizedBox(height: 6),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: kBlue.withOpacity(0.4)),
+            boxShadow: [
+              BoxShadow(
+                  color: kBlue.withOpacity(0.06),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2))
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 14),
+                decoration: BoxDecoration(
+                  color: kBlue.withOpacity(0.08),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(10),
+                    bottomLeft: Radius.circular(10),
+                  ),
+                ),
+                child: const Icon(Icons.inventory_outlined,
+                    color: kBlue, size: 16),
+              ),
+              Expanded(
+                child: TextField(
+                  key: Key('stock_$index'),
+                  onChanged: (val) {
+                    variant.stock = int.tryParse(val);
+                    controller.variants.refresh();
+                  },
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w600),
+                  decoration: const InputDecoration(
+                    hintText: '0',
+                    hintStyle: TextStyle(
+                        fontSize: 13, color: Color(0xFF9CA3AF)),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 14),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -1061,8 +1161,8 @@ class AddOfferProductPage extends StatelessWidget {
       child: TextField(
         controller: TextEditingController(text: value),
         enabled: false,
-        style: const TextStyle(
-            fontSize: 14, color: Color(0xFF6B7280)),
+        style:
+        const TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
         decoration: InputDecoration(
           labelText: attribute,
           border: InputBorder.none,
@@ -1076,9 +1176,6 @@ class AddOfferProductPage extends StatelessWidget {
   }
 
   // ── Image picker ──────────────────────────────────────────────────────────
-  /// Uses [controller.variantImagePaths] (a reactive RxMap keyed by index)
-  /// so each card independently reacts to its own image change without
-  /// triggering a full list rebuild.
   Widget _buildImagePicker(int index) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1090,8 +1187,6 @@ class AddOfferProductPage extends StatelessWidget {
                 color: Color(0xFF1A1A1A))),
         const SizedBox(height: 12),
         Obx(() {
-          // Reading from the reactive map ensures this Obx rebuilds only
-          // when THIS variant's image changes, not when others change.
           final imagePath = controller.variantImagePaths[index];
 
           return GestureDetector(
@@ -1134,11 +1229,9 @@ class AddOfferProductPage extends StatelessWidget {
                     child: Image.file(
                       File(imagePath),
                       fit: BoxFit.cover,
-                      // Force re-decode when the path changes
                       key: ValueKey(imagePath),
                     ),
                   ),
-                  // Image index badge — confirms which variant this is
                   Positioned(
                     top: 8,
                     left: 8,
@@ -1159,7 +1252,6 @@ class AddOfferProductPage extends StatelessWidget {
                       ),
                     ),
                   ),
-                  // Edit / Remove action buttons
                   Positioned(
                     top: 8,
                     right: 8,
@@ -1256,7 +1348,7 @@ class AddOfferProductPage extends StatelessWidget {
     required String hint,
     required IconData icon,
     required Function(String) onChanged,
-  TextEditingController? controller,
+    TextEditingController? controller,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -1307,8 +1399,7 @@ class AddOfferProductPage extends StatelessWidget {
               controller.removeVariant(index);
               Navigator.of(ctx).pop();
             },
-            style:
-            ElevatedButton.styleFrom(backgroundColor: kRed),
+            style: ElevatedButton.styleFrom(backgroundColor: kRed),
             child: const Text('Remove'),
           ),
         ],

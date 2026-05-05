@@ -1,3 +1,4 @@
+
 import 'dart:io';
 import 'dart:convert';
 
@@ -22,8 +23,7 @@ class AdminAdvertisementController extends GetxController {
     'Content-Type': 'application/json',
   };
 
-  static const _base =
-      'https://eshoppy.co.in/api';
+  static const _base = 'https://eshoppy.co.in/api';
 
   final ImagePicker picker = ImagePicker();
 
@@ -73,11 +73,14 @@ class AdminAdvertisementController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-
     fetchAdvertisements();
-    fetchStates();
-    fetchDistricts();
-    fetchAreas();
+    fetchStates(); // ✅ Only states initially
+  }
+
+  // ✅ HELPER (FIX CASE ISSUE)
+  String capitalize(String value) {
+    if (value.isEmpty) return value;
+    return value[0].toUpperCase() + value.substring(1).toLowerCase();
   }
 
   // ───────────────── FILTER ─────────────────
@@ -102,13 +105,18 @@ class AdminAdvertisementController extends GetxController {
     isLoadingStates.value = true;
 
     try {
-      final res =
-      await http.get(Uri.parse('$_base/get-states'), headers: _headers);
+      final res = await http.get(
+        Uri.parse('$_base/get-states'),
+        headers: _headers,
+      );
 
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
-        if (body['status'] == true) {
-          statesList.assignAll(List<String>.from(body['data']));
+
+        if (body['status'] == true && body['data'] is List) {
+          statesList.assignAll(
+            (body['data'] as List).map((e) => e.toString()).toList(),
+          );
         }
       } else {
         AppSnackbar.error(ApiErrorHandler.handleResponse(res));
@@ -120,17 +128,31 @@ class AdminAdvertisementController extends GetxController {
     isLoadingStates.value = false;
   }
 
-  Future<void> fetchDistricts() async {
+  // ───────────────── DISTRICTS (FIXED) ─────────────────
+  Future<void> fetchDistricts(String state) async {
+    districtsList.clear();
+    areasList.clear();
+    selectedEditDistrict.value = null;
+    selectedEditArea.value = null;
+
     isLoadingDistricts.value = true;
 
     try {
-      final res =
-      await http.get(Uri.parse('$_base/districts'), headers: _headers);
+      final res = await http.post(
+        Uri.parse('$_base/districts'),
+        headers: _headers,
+        body: jsonEncode({
+          "state": capitalize(state), // ✅ IMPORTANT
+        }),
+      );
 
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
-        if (body['status'] == true) {
-          districtsList.assignAll(List<String>.from(body['data']));
+
+        if (body['status'] == true && body['data'] is List) {
+          districtsList.assignAll(
+            (body['data'] as List).map((e) => e.toString()).toList(),
+          );
         }
       } else {
         AppSnackbar.error(ApiErrorHandler.handleResponse(res));
@@ -142,17 +164,29 @@ class AdminAdvertisementController extends GetxController {
     isLoadingDistricts.value = false;
   }
 
-  Future<void> fetchAreas() async {
+  // ───────────────── AREAS (FIXED) ─────────────────
+  Future<void> fetchAreas(String district) async {
+    areasList.clear();
+    selectedEditArea.value = null;
+
     isLoadingAreas.value = true;
 
     try {
-      final res =
-      await http.get(Uri.parse('$_base/areas'), headers: _headers);
+      final res = await http.post(
+        Uri.parse('$_base/areas'),
+        headers: _headers,
+        body: jsonEncode({
+          "district": district,
+        }),
+      );
 
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
-        if (body['status'] == true) {
-          areasList.assignAll(List<String>.from(body['data']));
+
+        if (body['status'] == true && body['data'] is List) {
+          areasList.assignAll(
+            (body['data'] as List).map((e) => e.toString()).toList(),
+          );
         }
       } else {
         AppSnackbar.error(ApiErrorHandler.handleResponse(res));
@@ -162,6 +196,21 @@ class AdminAdvertisementController extends GetxController {
     }
 
     isLoadingAreas.value = false;
+  }
+
+  // ───────────────── DROPDOWN HANDLERS ─────────────────
+  void onEditStateChanged(String? state) {
+    selectedEditState.value = state;
+    if (state != null) fetchDistricts(state);
+  }
+
+  void onEditDistrictChanged(String? district) {
+    selectedEditDistrict.value = district;
+    if (district != null) fetchAreas(district);
+  }
+
+  void onEditAreaChanged(String? area) {
+    selectedEditArea.value = area;
   }
 
   // ───────────────── IMAGE ─────────────────
@@ -218,6 +267,9 @@ class AdminAdvertisementController extends GetxController {
         body: jsonEncode({
           'advertisement': adName.text.trim(),
           'banner_image': base64Image,
+          'state': selectedEditState.value,
+          'district': selectedEditDistrict.value,
+          'main_location': selectedEditArea.value ?? "",
         }),
       );
 

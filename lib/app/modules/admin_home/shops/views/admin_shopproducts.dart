@@ -12,7 +12,6 @@ import 'admin_productdetailsscreen.dart';
 class ShopProductPage extends StatelessWidget {
   ShopProductPage({super.key});
 
-  // Controller reads shop_id from Get.arguments in onInit automatically
   final ShopProductController controller = Get.put(ShopProductController());
 
   static const Color _teal = Color(0xFF00897B);
@@ -68,25 +67,49 @@ class ShopProductPage extends StatelessWidget {
             ],
           ),
           body: Obx(() {
-            // ── Loading ──
-            if (controller.isLoading.value) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const CircularProgressIndicator(
-                        color: _teal, strokeWidth: 2.5),
-                    const SizedBox(height: 14),
-                    Text(
-                      "Loading products…",
-                      style: TextStyle(
-                          fontSize: 13, color: _textSecondary),
-                    ),
-                  ],
-                ),
-              );
-            }
 
+              if (controller.isLoading.value) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const CircularProgressIndicator(color: _teal, strokeWidth: 2.5),
+                      const SizedBox(height: 14),
+                      Text(
+                        "Loading products…",
+                        style: TextStyle(fontSize: 13, color: _textSecondary),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              // ── Empty State ──   ← ADD THIS BLOCK HERE
+              if (controller.products.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.storefront_outlined, size: 80, color: Colors.grey[300]),
+                      const SizedBox(height: 16),
+                      const Text(
+                        "No products yet",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1C1C1E),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "This shop hasn't added any products.\nCheck back later.",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 13, color: _textSecondary, height: 1.6),
+                      ),
+                    ],
+                  ),
+                );
+              }
             // ── Grid ──
             return RefreshIndicator(
               color: _teal,

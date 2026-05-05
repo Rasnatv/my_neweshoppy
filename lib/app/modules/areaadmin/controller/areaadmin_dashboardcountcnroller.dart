@@ -52,14 +52,12 @@ class AreaAdminDashboardController extends GetxController {
             data['data']['total_advertisements'] ?? 0;
 
       } else {
-        /// ❌ 4. Handle API Errors centrally
         final errorMessage = ApiErrorHandler.handleResponse(response);
         AppSnackbar.error(errorMessage);
       }
 
     } catch (e) {
 
-      /// ❌ 6. Other Exceptions
       final errorMessage = ApiErrorHandler.handleException(e);
       AppSnackbar.error(errorMessage);
 

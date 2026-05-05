@@ -1,4 +1,6 @@
 
+import '../../../../data/errors/api_error.dart';
+import '../../../merchantlogin/widget/successwidget.dart';  // ← adjust path
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -8,43 +10,42 @@ import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import '../../../../data/errors/api_error.dart';
-import '../../../merchantlogin/widget/successwidget.dart';  // ← adjust path
 
 class AdminAddMerchantController extends GetxController {
   final box = GetStorage();
 
   // ─── Text Controllers ─────────────────────────────────────────────────────
-  final ownerNameController  = TextEditingController();
-  final shopNameController   = TextEditingController();
-  final emailController      = TextEditingController();
-  final phoneNo1Controller   = TextEditingController();
-  final phoneNo2Controller   = TextEditingController();
-  final whatsappController   = TextEditingController();
-  final facebookController   = TextEditingController();
-  final instagramController  = TextEditingController();
-  final websiteController    = TextEditingController();
+  final ownerNameController = TextEditingController();
+  final shopNameController = TextEditingController();
+  final emailController = TextEditingController();
+  final phoneNo1Controller = TextEditingController();
+  final phoneNo2Controller = TextEditingController();
+  final whatsappController = TextEditingController();
+  final facebookController = TextEditingController();
+  final instagramController = TextEditingController();
+  final websiteController = TextEditingController();
 
   // ─── Observables ──────────────────────────────────────────────────────────
-  final storeImage                = Rx<File?>(null);
-  final isLoading                 = false.obs;
-  final isLoadingStates           = false.obs;
-  final isLoadingDistricts        = false.obs;
-  final isLoadingLocations        = false.obs;
-  final isGettingCurrentLocation  = false.obs;
+  final storeImage = Rx<File?>(null);
+  final isLoading = false.obs;
+  final isLoadingStates = false.obs;
+  final isLoadingDistricts = false.obs;
+  final isLoadingLocations = false.obs;
+  final isGettingCurrentLocation = false.obs;
 
   // Location
-  final shopLat        = 0.0.obs;
-  final shopLng        = 0.0.obs;
+  final shopLat = 0.0.obs;
+  final shopLng = 0.0.obs;
   final pickedLocation =
       'Tap to pick location or use current location'.obs;
 
   // Dropdowns
-  final selectedState    = ''.obs;
+  final selectedState = ''.obs;
   final selectedDistrict = ''.obs;
   final selectedLocation = ''.obs;
 
   // Dropdown data
-  final states    = <String>[].obs;
+  final states = <String>[].obs;
   final districts = <String>[].obs;
   final locations = <String>[].obs;
 
@@ -62,8 +63,8 @@ class AdminAddMerchantController extends GetxController {
   String get _authToken => box.read('auth_token') ?? '';
 
   Map<String, String> get _headers => {
-    'Content-Type' : 'application/json',
-    'Accept'       : 'application/json',
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
     'Authorization': 'Bearer $_authToken',
   };
 
@@ -112,9 +113,7 @@ class AdminAddMerchantController extends GetxController {
       } else {
         AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
-    } on SocketException {
-      AppSnackbar.error(ApiErrorHandler.handleException(SocketException('')));
-    } catch (e) {
+    }  catch (e) {
       AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoadingStates.value = false;
@@ -146,14 +145,13 @@ class AdminAddMerchantController extends GetxController {
             List<String>.from(data['data']).toSet().toList(),
           );
         } else {
-          AppSnackbar.error(data['message'] ?? 'Failed to load districts');
+          AppSnackbar.error(
+              data['message'] ?? 'Failed to load districts');
         }
       } else {
         AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
-    } on SocketException {
-      AppSnackbar.error(ApiErrorHandler.handleException(SocketException('')));
-    } catch (e) {
+    }  catch (e) {
       AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoadingDistricts.value = false;
@@ -183,14 +181,13 @@ class AdminAddMerchantController extends GetxController {
             List<String>.from(data['data']).toSet().toList(),
           );
         } else {
-          AppSnackbar.error(data['message'] ?? 'Failed to load locations');
+          AppSnackbar.error(
+              data['message'] ?? 'Failed to load locations');
         }
       } else {
         AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
-    } on SocketException {
-      AppSnackbar.error(ApiErrorHandler.handleException(SocketException('')));
-    } catch (e) {
+    }  catch (e) {
       AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoadingLocations.value = false;
@@ -253,9 +250,7 @@ class AdminAddMerchantController extends GetxController {
       }
 
       AppSnackbar.success('Current location fetched successfully');
-    } on SocketException {
-      AppSnackbar.error(ApiErrorHandler.handleException(SocketException('')));
-    } catch (e) {
+    }  catch (e) {
       AppSnackbar.error('Failed to get location: ${e.toString()}');
     } finally {
       isGettingCurrentLocation.value = false;
@@ -266,55 +261,18 @@ class AdminAddMerchantController extends GetxController {
   void setStoreImage(File image) => storeImage.value = image;
 
   void updateLocation(double lat, double lng, String address) {
-    shopLat.value        = lat;
-    shopLng.value        = lng;
+    shopLat.value = lat;
+    shopLng.value = lng;
     pickedLocation.value = address;
   }
 
-  // ─── Validation ───────────────────────────────────────────────────────────
   bool validateInputs() {
     if (storeImage.value == null) {
       AppSnackbar.warning('Please select a store image');
       return false;
     }
-    if (ownerNameController.text.trim().isEmpty) {
-      AppSnackbar.warning('Please enter owner name');
-      return false;
-    }
-    if (shopNameController.text.trim().isEmpty) {
-      AppSnackbar.warning('Please enter shop name');
-      return false;
-    }
-    if (emailController.text.trim().isEmpty) {
-      AppSnackbar.warning('Please enter email address');
-      return false;
-    }
-    if (!GetUtils.isEmail(emailController.text.trim())) {
-      AppSnackbar.warning('Please enter a valid email address');
-      return false;
-    }
-    if (phoneNo1Controller.text.trim().isEmpty) {
-      AppSnackbar.warning('Please enter phone number');
-      return false;
-    }
-    if (phoneNo1Controller.text.trim().length != 10) {
-      AppSnackbar.warning('Phone number must be 10 digits');
-      return false;
-    }
-    if (selectedState.value.isEmpty) {
-      AppSnackbar.warning('Please select state');
-      return false;
-    }
-    if (selectedDistrict.value.isEmpty) {
-      AppSnackbar.warning('Please select district');
-      return false;
-    }
-    if (selectedLocation.value.isEmpty) {
-      AppSnackbar.warning('Please select main location');
-      return false;
-    }
     if (shopLat.value == 0.0 || shopLng.value == 0.0) {
-      AppSnackbar.warning('Please set shop location');
+      AppSnackbar.warning('Please set shop location on the map');
       return false;
     }
     return true;
@@ -326,188 +284,137 @@ class AdminAddMerchantController extends GetxController {
     return 'data:image/jpeg;base64,${base64Encode(bytes)}';
   }
 
-  // ─── Success Dialog ───────────────────────────────────────────────────────
+  // ─── SUCCESS DIALOG (clean, no glassmorphism) ─────────────────────────────
   void _showSuccessDialog(String email) {
     Get.dialog(
       WillPopScope(
         onWillPop: () async => false,
         child: Dialog(
-          backgroundColor: const Color(0xFF1E1E1E),
+          backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(28),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // ── Success icon ──────────────────────────────────────────
                 Container(
-                  padding: const EdgeInsets.all(20),
+                  width: 80,
+                  height: 80,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF4CAF50).withOpacity(0.2),
+                    color: const Color(0xFF089385).withOpacity(0.12),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
-                    Icons.check_circle,
-                    color: Color(0xFF4CAF50),
-                    size: 64,
+                    Icons.check_circle_rounded,
+                    color: Color(0xFF089385),
+                    size: 52,
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // ── Title ─────────────────────────────────────────────────
+                const Text(
+                  'Merchant Registered!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xFF1A1A1A),
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'The merchant has been successfully added to the platform.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 13.5,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 24),
-                const Text(
-                  'Merchant Registered Successfully!',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
+
+                // ── Email card ────────────────────────────────────────────
                 Container(
-                  padding: const EdgeInsets.all(18),
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        const Color(0xFF64B5F6).withOpacity(0.15),
-                        const Color(0xFF42A5F5).withOpacity(0.1),
-                      ],
-                    ),
+                    color: const Color(0xFFF0FAF9),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: const Color(0xFF64B5F6).withOpacity(0.3),
+                      color: const Color(0xFF089385).withOpacity(0.25),
                     ),
                   ),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF64B5F6).withOpacity(0.2),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.mark_email_read,
-                              color: Color(0xFF64B5F6),
-                              size: 28,
-                            ),
+                          const Icon(
+                            Icons.mark_email_read_outlined,
+                            color: Color(0xFF089385),
+                            size: 20,
                           ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Credentials Sent!',
-                                  style: TextStyle(
-                                    color: Color(0xFF64B5F6),
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  'Login credentials have been sent to:',
-                                  style: TextStyle(
-                                    color: Colors.grey[400],
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Credentials Sent',
+                            style: TextStyle(
+                              color: Color(0xFF089385),
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF252525),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.email_outlined,
-                              color: Colors.white70,
-                              size: 18,
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                email,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Icon(Icons.email_outlined,
+                              size: 16, color: Colors.grey[500]),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              email,
+                              style: const TextStyle(
+                                color: Color(0xFF1A1A1A),
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w500,
                               ),
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: Colors.green.withOpacity(0.3),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.info_outline,
-                        color: Colors.green,
-                        size: 22,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Email Delivery',
-                              style: TextStyle(
-                                color: Colors.green,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'The merchant should check their inbox and spam folder for the login credentials.',
-                              style: TextStyle(
-                                color: Colors.grey[400],
-                                fontSize: 12,
-                                height: 1.3,
-                              ),
-                            ),
-                          ],
+                      const SizedBox(height: 8),
+                      Text(
+                        'Ask the merchant to check their inbox and spam folder.',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 12,
+                          height: 1.4,
                         ),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 24),
+
+                // ── Done button ───────────────────────────────────────────
                 SizedBox(
                   width: double.infinity,
-                  height: 52,
+                  height: 50,
                   child: ElevatedButton(
                     onPressed: () {
                       Get.back(); // close dialog
                       Get.back(); // go back to previous screen
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF64B5F6),
+                      backgroundColor: const Color(0xFF089385),
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -516,10 +423,9 @@ class AdminAddMerchantController extends GetxController {
                     child: const Text(
                       'Done',
                       style: TextStyle(
-                        color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
+                        letterSpacing: 0.4,
                       ),
                     ),
                   ),
@@ -534,7 +440,9 @@ class AdminAddMerchantController extends GetxController {
   }
 
   // ─── Add Merchant ─────────────────────────────────────────────────────────
+  // Called from the view AFTER _formKey.currentState!.validate() passes.
   Future<void> addMerchant() async {
+    // Secondary check: image + GPS (not covered by form validators)
     if (!validateInputs()) return;
 
     if (_authToken.isEmpty) {
@@ -550,17 +458,17 @@ class AdminAddMerchantController extends GetxController {
       final base64Image = await convertImageToBase64(storeImage.value!);
 
       final Map<String, dynamic> requestBody = {
-        'store_image'  : base64Image,
-        'owner_name'   : ownerNameController.text.trim(),
-        'shop_name'    : shopNameController.text.trim(),
-        'email'        : merchantEmail,
-        'phone_no_1'   : phoneNo1Controller.text.trim(),
-        'phone_no_2'   : phoneNo2Controller.text.trim(),
-        'state'        : selectedState.value,
-        'district'     : selectedDistrict.value,
+        'store_image': base64Image,
+        'owner_name': ownerNameController.text.trim(),
+        'shop_name': shopNameController.text.trim(),
+        'email': merchantEmail,
+        'phone_no_1': phoneNo1Controller.text.trim(),
+        'phone_no_2': phoneNo2Controller.text.trim(),
+        'state': selectedState.value,
+        'district': selectedDistrict.value,
         'main_location': selectedLocation.value,
-        'latitude'     : shopLat.value,
-        'longitude'    : shopLng.value,
+        'latitude': shopLat.value,
+        'longitude': shopLng.value,
       };
 
       if (whatsappController.text.trim().isNotEmpty) {
@@ -588,13 +496,15 @@ class AdminAddMerchantController extends GetxController {
           _clearAllFields();
           _showSuccessDialog(merchantEmail);
         } else {
-          AppSnackbar.error(data['message'] ?? 'Failed to register merchant');
+          AppSnackbar.error(
+              data['message'] ?? 'Failed to register merchant');
         }
       } else {
         AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
     } on SocketException {
-      AppSnackbar.error(ApiErrorHandler.handleException(SocketException('')));
+      AppSnackbar.error(
+          ApiErrorHandler.handleException(SocketException('')));
     } catch (e) {
       AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
@@ -614,13 +524,13 @@ class AdminAddMerchantController extends GetxController {
     instagramController.clear();
     websiteController.clear();
 
-    storeImage.value       = null;
-    selectedState.value    = '';
+    storeImage.value = null;
+    selectedState.value = '';
     selectedDistrict.value = '';
     selectedLocation.value = '';
-    shopLat.value          = 0.0;
-    shopLng.value          = 0.0;
-    pickedLocation.value   = 'Tap to pick location or use current location';
+    shopLat.value = 0.0;
+    shopLng.value = 0.0;
+    pickedLocation.value = 'Tap to pick location or use current location';
 
     districts.clear();
     locations.clear();

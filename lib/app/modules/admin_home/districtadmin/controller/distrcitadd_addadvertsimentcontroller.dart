@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../../data/errors/api_error.dart';
-import '../../../../widgets/areaadminsuccesswidget.dart';
 import '../../../merchantlogin/widget/successwidget.dart';
 import '../view/districtadmin_home.dart';
 import 'districtadminadvertismentgetcontroller.dart';
@@ -18,39 +17,44 @@ class DistrictAdminAdvertisementController extends GetxController {
   final TextEditingController adName = TextEditingController();
   final picker = ImagePicker();
 
-  final Rx<File?> bannerImage = Rx<File?>(null);
-  final RxBool isLoading = false.obs;
-  final RxBool isTitleEmpty = false.obs;
+  final Rx<File?> bannerImage       = Rx<File?>(null);
+  final RxBool    isLoading         = false.obs;
+  final RxBool    isTitleEmpty      = false.obs;
 
-  final RxList<String> states = <String>[].obs;
+  final RxList<String> states    = <String>[].obs;
   final RxList<String> districts = <String>[].obs;
 
-  final RxString selectedState = ''.obs;
-  final RxString selectedDistrict = ''.obs;
+  // Use RxnString so null = nothing selected (cleaner than empty string)
+  final selectedState    = RxnString();
+  final selectedDistrict = RxnString();
 
-  final RxBool isStatesLoading = false.obs;
+  final RxBool isStatesLoading   = false.obs;
   final RxBool isDistrictLoading = false.obs;
 
   final _box = GetStorage();
 
-  static const String _baseUrl =
-      // 'https://rasma.astradevelops.in/e_shoppyy/public/api/district-admin';
-  "https://eshoppy.co.in/api/district-admin";
-  static const String _publicBaseUrl =
-      'https://eshoppy.co.in/api';
+  static const String _baseUrl       = 'https://eshoppy.co.in/api/district-admin';
+  static const String _publicBaseUrl = 'https://eshoppy.co.in/api';
 
   String get token => _box.read('auth_token') ?? '';
 
   Map<String, String> get headers => {
     'Authorization': 'Bearer $token',
-    'Accept': 'application/json',
+    'Accept'       : 'application/json',
   };
 
+  Map<String, String> get _jsonHeaders => {
+    'Authorization': 'Bearer $token',
+    'Accept'       : 'application/json',
+    'Content-Type' : 'application/json',
+  };
+
+  // ─── Lifecycle ────────────────────────────────
   @override
   void onInit() {
     super.onInit();
     fetchStates();
-    fetchDistricts();
+    // Districts are NOT fetched on init — they load after state is chosen
   }
 
   @override
@@ -59,23 +63,28 @@ class DistrictAdminAdvertisementController extends GetxController {
     super.onClose();
   }
 
+  // ─── STATE CHANGED ────────────────────────────
+  /// Called when user picks a state from dropdown.
+  void onStateChanged(String state) {
+    selectedState.value    = state;
+    selectedDistrict.value = null; // reset district
+    districts.clear();
+    fetchDistricts(state);
+  }
+
   // ─── FETCH STATES ─────────────────────────────
   Future<void> fetchStates() async {
     if (token.isEmpty) {
       Get.toNamed('/login');
       return;
     }
-
     try {
       isStatesLoading.value = true;
-
       final res = await http.get(
         Uri.parse('$_publicBaseUrl/getStates-fordistrict'),
         headers: headers,
       );
-
       final body = jsonDecode(res.body);
-
       if (res.statusCode == 200 && body['status'] == true) {
         final List data = body['data'] ?? [];
         states.assignAll(
@@ -91,19 +100,17 @@ class DistrictAdminAdvertisementController extends GetxController {
     }
   }
 
-  // ─── FETCH DISTRICTS ──────────────────────────
-  Future<void> fetchDistricts() async {
+  // ─── FETCH DISTRICTS (POST with state) ────────
+  Future<void> fetchDistricts(String state) async {
 
     try {
       isDistrictLoading.value = true;
-
-      final res = await http.get(
+      final res = await http.post(
         Uri.parse('$_baseUrl/districts'),
-        headers: headers,
+        headers: _jsonHeaders,
+        body   : jsonEncode({'state': state}),
       );
-
       final body = jsonDecode(res.body);
-
       if (res.statusCode == 200 && body['status'] == true) {
         final List data = body['data'] ?? [];
         districts.assignAll(data.map((e) => e.toString()).toList());
@@ -117,18 +124,16 @@ class DistrictAdminAdvertisementController extends GetxController {
     }
   }
 
+  // ─── PICK BANNER ──────────────────────────────
   Future<void> pickBanner() async {
     try {
       final picked = await picker.pickImage(
-        source: ImageSource.gallery,
+        source      : ImageSource.gallery,
         imageQuality: 85,
       );
-
       if (picked == null) return;
 
-      final file = File(picked.path);
-
-      // ✅ Decode image to get actual width & height
+      final file  = File(picked.path);
       final bytes = await file.readAsBytes();
       final decodedImage = await decodeImageFromList(bytes);
 
@@ -136,21 +141,18 @@ class DistrictAdminAdvertisementController extends GetxController {
       final height = decodedImage.height;
       final ratio  = width / height;
 
-      debugPrint(">>> Image size: ${width}x${height}, ratio: $ratio");
+      debugPrint('>>> Image size: ${width}x${height}, ratio: $ratio');
 
-      // ✅ Allow only 2:1 ratio (small tolerance ±0.1)
       if (ratio < 1.9 || ratio > 2.1) {
         AppSnackbar.error(
-          "Invalid image ratio ${width}x${height}.\nPlease upload a 2:1 ratio image (e.g. 1200x600)",
+          'Invalid image ratio ${width}x${height}.\nPlease upload a 2:1 ratio image (e.g. 1200x600)',
         );
         return;
       }
 
-      // ✅ Ratio is correct — set directly, no cropper needed
-      bannerImage.value = File(picked.path);
-
+      bannerImage.value = file;
     } catch (e) {
-      AppSnackbar.error("Image error: $e");
+      AppSnackbar.error('Image error: $e');
     }
   }
 
@@ -160,16 +162,19 @@ class DistrictAdminAdvertisementController extends GetxController {
   bool validate() {
     if (adName.text.trim().isEmpty) {
       isTitleEmpty.value = true;
-      AppSnackbar.warning("Enter advertisement title");
+      AppSnackbar.warning('Enter advertisement title');
       return false;
-    } else if (selectedState.value.isEmpty) {
-      AppSnackbar.warning("Select a state");
+    }
+    if (selectedState.value == null) {
+      AppSnackbar.warning('Select a state');
       return false;
-    } else if (selectedDistrict.value.isEmpty) {
-      AppSnackbar.warning("Select a district");
+    }
+    if (selectedDistrict.value == null) {
+      AppSnackbar.warning('Select a district');
       return false;
-    } else if (bannerImage.value == null) {
-      AppSnackbar.warning("Select banner image");
+    }
+    if (bannerImage.value == null) {
+      AppSnackbar.warning('Select banner image');
       return false;
     }
     return true;
@@ -182,32 +187,27 @@ class DistrictAdminAdvertisementController extends GetxController {
     try {
       isLoading.value = true;
 
-      final bytes = await bannerImage.value!.readAsBytes();
+      final bytes       = await bannerImage.value!.readAsBytes();
       final base64Image = 'data:image/png;base64,${base64Encode(bytes)}';
 
       final body = {
-        "advertisement": adName.text.trim(),
-        "state": selectedState.value,
-        "district": selectedDistrict.value,
-        "banner_image": base64Image,
+        'advertisement': adName.text.trim(),
+        'state'        : selectedState.value,
+        'district'     : selectedDistrict.value,
+        'banner_image' : base64Image,
       };
 
       final response = await http.post(
         Uri.parse('$_baseUrl/create-advertisement'),
-        headers: {
-          ...headers,
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(body),
+        headers: _jsonHeaders,
+        body   : jsonEncode(body),
       );
 
       final resData = jsonDecode(response.body);
 
       if ((response.statusCode == 200 || response.statusCode == 201) &&
           resData['status'] == true) {
-
-        AppSnackbar.success(
-            resData['message'] ?? "Advertisement created");
+        AppSnackbar.success(resData['message'] ?? 'Advertisement created');
 
         if (Get.isRegistered<DistrictAdminAdvertisementGetController>()) {
           Get.find<DistrictAdminAdvertisementGetController>()
@@ -216,7 +216,6 @@ class DistrictAdminAdvertisementController extends GetxController {
 
         resetForm();
         Get.offAll(() => Districtadminhomepage());
-
       } else {
         AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
@@ -230,9 +229,10 @@ class DistrictAdminAdvertisementController extends GetxController {
   // ─── RESET ────────────────────────────────────
   void resetForm() {
     adName.clear();
-    selectedState.value = '';
-    selectedDistrict.value = '';
-    bannerImage.value = null;
+    selectedState.value    = null;
+    selectedDistrict.value = null;
+    districts.clear();
+    bannerImage.value  = null;
     isTitleEmpty.value = false;
   }
 }

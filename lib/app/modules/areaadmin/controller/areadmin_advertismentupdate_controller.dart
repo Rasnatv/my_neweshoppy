@@ -1,4 +1,5 @@
 
+
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -38,6 +39,10 @@ class AreaAdminUpdateAdvertisementController extends GetxController {
   String _prefetchedDistrict = '';
   String _prefetchedLocation = '';
 
+  // Guard flags so ever() watchers don't double-fire on pre-fill
+  bool _suppressDistrictWatch = false;
+  bool _suppressLocationWatch = false;
+
   final bannerImage = Rx<File?>(null);
   final existingBannerUrl = ''.obs;
 
@@ -60,21 +65,25 @@ class AreaAdminUpdateAdvertisementController extends GetxController {
 
     fetchAdvertisement();
 
+    // Triggered when user manually changes state after initial load
     ever(selectedState, (state) {
+      if (_suppressDistrictWatch) return;
       if (state != null && state.isNotEmpty) {
         selectedDistrict.value = null;
         selectedLocation.value = null;
         districtList.clear();
         locationList.clear();
-        fetchDistricts();
+        fetchDistricts(state);
       }
     });
 
+    // Triggered when user manually changes district after initial load
     ever(selectedDistrict, (district) {
+      if (_suppressLocationWatch) return;
       if (district != null && district.isNotEmpty) {
         selectedLocation.value = null;
         locationList.clear();
-        fetchLocations();
+        fetchLocations(district);
       }
     });
   }
@@ -93,8 +102,7 @@ class AreaAdminUpdateAdvertisementController extends GetxController {
       errorMessage('');
 
       final response = await http.post(
-        Uri.parse(
-            'https://eshoppy.co.in/api/area-admin/advertisement'),
+        Uri.parse('https://eshoppy.co.in/api/area-admin/advertisement'),
         headers: {
           ...headers,
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -105,18 +113,23 @@ class AreaAdminUpdateAdvertisementController extends GetxController {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
-        if (data['status'] == true && data['data'] != null) {
+        if ((data['status'] == true || data['status'] == 1) &&
+            data['data'] != null) {
           final model =
           AreaAdminAdvertisementupdateModel.fromJson(data['data']);
 
           adName.text = model.advertisement;
           existingBannerUrl.value = model.bannerImage;
 
-          _prefetchedState = data['data']['state'] ?? '';
-          _prefetchedDistrict = data['data']['district'] ?? '';
+          _prefetchedState    = data['data']['state']     ?? '';
+          _prefetchedDistrict = data['data']['district']  ?? '';
           _prefetchedLocation = model.mainLocation;
 
-          await fetchStates();
+          // Suppress ever() watchers during programmatic pre-fill
+          _suppressDistrictWatch = true;
+          _suppressLocationWatch = true;
+
+          await fetchStates(); // chains → fetchDistricts → fetchLocations
         } else {
           hasError(true);
           errorMessage(data['message'] ?? 'Failed to load advertisement.');
@@ -139,30 +152,36 @@ class AreaAdminUpdateAdvertisementController extends GetxController {
   }
 
   // ───────── STATES ─────────
+  // Response: { "status": true, "data": ["karnataka", "kerala"] }
   Future<void> fetchStates() async {
     try {
       isLoadingStates(true);
 
       final response = await http.get(
-        Uri.parse(
-            'https://eshoppy.co.in/api/get-MerchantStates'),
+        Uri.parse('https://eshoppy.co.in/api/get-MerchantStates'),
         headers: headers,
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (data['status'] == '1' && data['data'] != null) {
-          final List<String> states = List<String>.from(data['data']);
+        // API returns status as boolean true
+        if ((data['status'] == true ||
+            data['status'] == 1 ||
+            data['status'] == '1') &&
+            data['data'] != null) {
+          final List<String> states =
+          (data['data'] as List).map((e) => e.toString()).toList();
           stateList.assignAll(states);
 
-          if (_prefetchedState.isNotEmpty &&
-              states.contains(_prefetchedState)) {
-            selectedState.value = _prefetchedState;
-          } else {
+          if (_prefetchedState.isNotEmpty) {
             final match = states.firstWhereOrNull(
                   (s) => s.toLowerCase() == _prefetchedState.toLowerCase(),
             );
-            if (match != null) selectedState.value = match;
+            if (match != null) {
+              selectedState.value = match;
+              // Chain: now fetch districts for the pre-filled state
+              await fetchDistricts(match);
+            }
           }
         }
       } else {
@@ -176,35 +195,40 @@ class AreaAdminUpdateAdvertisementController extends GetxController {
   }
 
   // ───────── DISTRICTS ─────────
-  Future<void> fetchDistricts() async {
+  // Response: { "status": true, "data": ["Kasaragod", "Kochi", "Malappuram"] }
+  // Data is a flat string array — NOT objects with a 'district' key.
+  // ───────── DISTRICTS ─────────
+// ✅ Changed: POST with JSON body, not GET with query param
+  Future<void> fetchDistricts(String state) async {
     try {
       isLoadingDistricts(true);
 
-      final response = await http.get(
-        Uri.parse(
-            'https://eshoppy.co.in/api/getMerchant-Districts'),
-        headers: headers,
+      final response = await http.post(
+        Uri.parse('https://eshoppy.co.in/api/getMerchant-Districts'),
+        headers: {...headers, 'Content-Type': 'application/json'},
+        body: jsonEncode({"state": state}),   // ✅ POST body
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (data['status'] == '1' && data['data'] != null) {
-          final List<String> districts = (data['data'] as List)
-              .map((e) => e['district'].toString())
-              .toList();
-
+        if ((data['status'] == true ||
+            data['status'] == 1 ||
+            data['status'] == '1') &&
+            data['data'] != null) {
+          // ✅ flat string list
+          final List<String> districts =
+          (data['data'] as List).map((e) => e.toString()).toList();
           final unique = districts.toSet().toList();
           districtList.assignAll(unique);
 
-          if (_prefetchedDistrict.isNotEmpty &&
-              unique.contains(_prefetchedDistrict)) {
-            selectedDistrict.value = _prefetchedDistrict;
-          } else {
+          if (_prefetchedDistrict.isNotEmpty) {
             final match = unique.firstWhereOrNull(
-                  (d) => d.toLowerCase() ==
-                  _prefetchedDistrict.toLowerCase(),
+                  (d) => d.toLowerCase() == _prefetchedDistrict.toLowerCase(),
             );
-            if (match != null) selectedDistrict.value = match;
+            if (match != null) {
+              selectedDistrict.value = match;
+              await fetchLocations(match);
+            }
           }
         }
       } else {
@@ -214,35 +238,35 @@ class AreaAdminUpdateAdvertisementController extends GetxController {
       AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoadingDistricts(false);
+      _suppressDistrictWatch = false;
     }
   }
 
-  // ───────── LOCATIONS ─────────
-  Future<void> fetchLocations() async {
+// ───────── LOCATIONS ─────────
+// ✅ Changed: POST with JSON body, not GET with query param
+  Future<void> fetchLocations(String district) async {
     try {
       isLoadingLocations(true);
 
-      final response = await http.get(
-        Uri.parse(
-            'https://eshoppy.co.in/api/area-admin/main-locations'),
-        headers: headers,
+      final response = await http.post(
+        Uri.parse('https://eshoppy.co.in/api/area-admin/main-locations'),
+        headers: {...headers, 'Content-Type': 'application/json'},
+        body: jsonEncode({"district": district}),   // ✅ POST body
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if ((data['status'] == 1 || data['status'] == '1') &&
+        if ((data['status'] == true ||
+            data['status'] == 1 ||
+            data['status'] == '1') &&
             data['data'] != null) {
-          final List<String> locations =
-          List<String>.from(data['data']);
-          locationList.assignAll(locations);
+          final List<String> locs =
+          (data['data'] as List).map((e) => e.toString()).toList();
+          locationList.assignAll(locs);
 
-          if (_prefetchedLocation.isNotEmpty &&
-              locations.contains(_prefetchedLocation)) {
-            selectedLocation.value = _prefetchedLocation;
-          } else {
-            final match = locations.firstWhereOrNull(
-                  (l) => l.toLowerCase() ==
-                  _prefetchedLocation.toLowerCase(),
+          if (_prefetchedLocation.isNotEmpty) {
+            final match = locs.firstWhereOrNull(
+                  (l) => l.toLowerCase() == _prefetchedLocation.toLowerCase(),
             );
             if (match != null) selectedLocation.value = match;
           }
@@ -254,6 +278,7 @@ class AreaAdminUpdateAdvertisementController extends GetxController {
       AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoadingLocations(false);
+      _suppressLocationWatch = false;
     }
   }
 
@@ -274,8 +299,7 @@ class AreaAdminUpdateAdvertisementController extends GetxController {
       final ratio = decodedImage.width / decodedImage.height;
 
       if (ratio < 1.9 || ratio > 2.1) {
-        AppSnackbar.error(
-            "Invalid image ratio. Use 2:1 (e.g. 1200x600)");
+        AppSnackbar.error("Invalid image ratio. Use 2:1 (e.g. 1200x600)");
         return;
       }
 
@@ -300,14 +324,12 @@ class AreaAdminUpdateAdvertisementController extends GetxController {
       return;
     }
 
-    if (selectedDistrict.value == null ||
-        selectedDistrict.value!.isEmpty) {
+    if (selectedDistrict.value == null || selectedDistrict.value!.isEmpty) {
       AppSnackbar.warning("Please select a district.");
       return;
     }
 
-    if (selectedLocation.value == null ||
-        selectedLocation.value!.isEmpty) {
+    if (selectedLocation.value == null || selectedLocation.value!.isEmpty) {
       AppSnackbar.warning("Please select a location.");
       return;
     }
@@ -331,13 +353,13 @@ class AreaAdminUpdateAdvertisementController extends GetxController {
       if (bannerImage.value != null) {
         final bytes = await bannerImage.value!.readAsBytes();
         final base64Image = base64Encode(bytes);
-        body['banner_image'] =
-        'data:image/jpeg;base64,$base64Image';
+        body['banner_image'] = 'data:image/jpeg;base64,$base64Image';
       }
 
       final response = await http.put(
         Uri.parse(
-            'https://eshoppy.co.in/api/area-admin/advertisement/update'),
+          'https://eshoppy.co.in/api/area-admin/advertisement/update',
+        ),
         headers: {
           ...headers,
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -347,21 +369,19 @@ class AreaAdminUpdateAdvertisementController extends GetxController {
 
       final data = jsonDecode(response.body);
 
-      if (response.statusCode == 200 && data['status'] == true) {
+      if (response.statusCode == 200 &&
+          (data['status'] == true || data['status'] == 1)) {
         if (data['data']?['banner_image'] != null) {
-          existingBannerUrl.value =
-          data['data']['banner_image'];
+          existingBannerUrl.value = data['data']['banner_image'];
           bannerImage.value = null;
         }
 
-        AppSnackbar.success(
-            data['message'] ?? "Advertisement updated!");
+        AppSnackbar.success(data['message'] ?? "Advertisement updated!");
 
         await Future.delayed(const Duration(milliseconds: 500));
         Get.offAll(() => AreaAdminhomepage());
       } else {
-        AppSnackbar.error(
-            ApiErrorHandler.handleResponse(response));
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
       AppSnackbar.error(ApiErrorHandler.handleException(e));

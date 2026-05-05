@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 
- import '../../../data/errors/api_error.dart';
+import '../../../data/errors/api_error.dart';
 import '../../../data/models/userlocation_model.dart';
 import '../../../widgets/network_trihgiger.dart';
 import '../../merchantlogin/widget/successwidget.dart';
@@ -19,20 +19,17 @@ class UserLocationController extends GetxController {
 
   var isLoading = false.obs;
 
-  var allLocations = <UserLocationModel>[].obs;
-  var states       = <String>[].obs;
-  var districts    = <String>[].obs;
+  var allLocations  = <UserLocationModel>[].obs;
+  var states        = <String>[].obs;
+  var districts     = <String>[].obs;
   var mainLocations = <String>[].obs;
 
   var selectedState        = ''.obs;
   var selectedDistrict     = ''.obs;
   var selectedMainLocation = ''.obs;
 
-  /// True if at least state is picked
-  bool get hasAnySelection =>
-      selectedState.value.isNotEmpty ||
-          selectedDistrict.value.isNotEmpty ||
-          selectedMainLocation.value.isNotEmpty;
+  /// District is mandatory — true only when district is selected
+  bool get hasAnySelection => selectedDistrict.value.isNotEmpty;
 
   /// True if at least state + district are picked (enough for events/categories)
   bool get hasPartialSelection =>
@@ -97,37 +94,6 @@ class UserLocationController extends GetxController {
     selectedMainLocation.value = box.read('main_location_$token') ?? '';
   }
 
-  // Future<void> fetchLocations() async {
-  //   final token = box.read("auth_token");
-  //
-  //   try {
-  //     final res = await http.get(
-  //       Uri.parse(locationApi),
-  //       headers: {
-  //         "Accept": "application/json",
-  //         "Authorization": "Bearer $token",
-  //       },
-  //     );
-  //
-  //     if (res.statusCode == 200) {
-  //       final decoded = json.decode(res.body);
-  //       final List data = decoded['data'] ?? [];
-  //       allLocations.value =
-  //           data.map((e) => UserLocationModel.fromJson(e)).toList();
-  //       states.value =
-  //           allLocations.map((e) => _cap(e.state)).toSet().toList();
-  //     } else {
-  //       allLocations.clear();
-  //       states.clear();
-  //       AppSnackbar.error(ApiErrorHandler.handleResponse(res));
-  //     }
-  //   } catch (e) {
-  //     allLocations.clear();
-  //     states.clear();
-  //   }
-  // }
-  // userlocation_controller.dart  — updated fetchLocations()
-
   Future<void> fetchLocations() async {
     final token = box.read("auth_token");
 
@@ -150,18 +116,17 @@ class UserLocationController extends GetxController {
       } else {
         allLocations.clear();
         states.clear();
-        // handleResponse calls handleUnauthorized() automatically on 401
         AppSnackbar.error(ApiErrorHandler.handleResponse(res));
       }
     } catch (e) {
       allLocations.clear();
       states.clear();
 
-      // Returns "" for SocketException — skip snackbar in that case
       final msg = ApiErrorHandler.handleException(e);
       if (msg.isNotEmpty) AppSnackbar.error(msg);
     }
   }
+
   void onStateSelected(String v) {
     selectedState.value        = v;
     selectedDistrict.value     = '';
@@ -200,41 +165,22 @@ class UserLocationController extends GetxController {
     // 2. Need at least state + district to show anything
     if (!hasPartialSelection) return;
 
-    // 3. Refresh events & banners (location is optional — backend filters)
+    // 3. Refresh events & banners
     try {
       await Get.find<HomeDataController>().fetchHomeData(
         state:        selectedState.value,
         district:     selectedDistrict.value,
-        mainLocation: selectedMainLocation.value, // '' when not chosen
+        mainLocation: selectedMainLocation.value,
       );
     } catch (_) {}
 
-    // 4. Refresh categories (same partial logic)
+    // 4. Refresh categories
     try {
       await Get.find<UserCategoryController>().fetchCategories(
         state:        selectedState.value,
         district:     selectedDistrict.value,
-        mainLocation: selectedMainLocation.value, // '' when not chosen
+        mainLocation: selectedMainLocation.value,
       );
-    } catch (_) {}
-  }
-
-  Future<void> skipLocation() async {
-    clearSelected();
-
-    final token = box.read('auth_token');
-    if (token != null) {
-      box.remove('state_$token');
-      box.remove('district_$token');
-      box.remove('main_location_$token');
-    }
-
-    try {
-      Get.find<HomeDataController>().clearHomeData();
-    } catch (_) {}
-
-    try {
-      Get.find<UserCategoryController>().categories.clear();
     } catch (_) {}
   }
 

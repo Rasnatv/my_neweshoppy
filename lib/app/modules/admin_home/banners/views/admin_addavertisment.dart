@@ -1,5 +1,4 @@
 
-
 import 'dart:io';
 import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
@@ -7,12 +6,10 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../../../common/style/app_colors.dart';
-import '../../../../common/style/app_text_style.dart';
 import '../controller/admin_addadvertsimentcontroller.dart';
 
-
-class AdminAddAdvertisementPage  extends StatelessWidget {
-  AdminAddAdvertisementPage ({super.key});
+class AdminAddAdvertisementPage extends StatelessWidget {
+  AdminAddAdvertisementPage({super.key});
 
   final controller = Get.put(AdminaddAdvertisementController());
 
@@ -26,114 +23,103 @@ class AdminAddAdvertisementPage  extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
-      child: NetworkAwareWrapper(child: Scaffold(
-        backgroundColor: _bg,
-        appBar: AppBar(
-          elevation: 0,
-          backgroundColor: AppColors.kPrimary,
-          surfaceTintColor: Colors.transparent,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Get.back(result: true), // ✅ always return true on back
-          ),
-          iconTheme: IconThemeData(color: Colors.white),
-
-          title: Text(
-            "Create Advertisement",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 17,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.1,
+      child: NetworkAwareWrapper(
+        child: Scaffold(
+          backgroundColor: _bg,
+          appBar: AppBar(
+            elevation: 0,
+            backgroundColor: AppColors.kPrimary,
+            surfaceTintColor: Colors.transparent,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => Get.back(result: true),
             ),
-          ),
-        ),
-        body: Stack(
-          children: [
-            SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 110),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-
-                  // ── Banner Card ─────────────────────────────────
-                  _sectionCard(
-                    title: "ADVERTISEMENT BANNER",
-                    icon: Icons.image_outlined,
-                    children: [_buildBanner()],
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  // ── Details Card ────────────────────────────────
-                  _sectionCard(
-                    title: "ADVERTISEMENT DETAILS",
-                    icon: Icons.campaign_outlined,
-                    children: [
-                      _fieldLabel("Advertisement Name"),
-                      const SizedBox(height: 6),
-                      _inputField(
-                        ctrl: controller.adNameController,
-                        hint: "e.g. Big Summer Sale – Up to 50% Off!",
-                        icon: Icons.title_rounded,
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  // ── Coverage Card ───────────────────────────────
-                  _sectionCard(
-                    title: "AD COVERAGE",
-                    icon: Icons.map_outlined,
-                    children: [_buildCoverageSection()],
-                  ),
-                ],
+            iconTheme: const IconThemeData(color: Colors.white),
+            title: const Text(
+              "Create Advertisement",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.1,
               ),
             ),
-
-            // ── Sticky Submit ───────────────────────────────────
-            Positioned(
-              bottom: 0, left: 0, right: 0,
-              child: _buildSubmitButton(),
-            ),
-
-            // ── Loading Overlay ─────────────────────────────────
-            Obx(() => controller.isLoading.value
-                ? Container(
-              color: Colors.black45,
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 32, vertical: 28),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CircularProgressIndicator(
-                          color: AppColors.kPrimary, strokeWidth: 2.5),
-                      const SizedBox(height: 16),
-                      const Text(
-                        "Posting advertisement…",
-                        style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: _textSecondary),
-                      ),
-                    ],
-                  ),
+          ),
+          body: Stack(
+            children: [
+              SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(16, 20, 16, 110),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _sectionCard(
+                      title: "ADVERTISEMENT BANNER",
+                      icon: Icons.image_outlined,
+                      children: [_buildBanner()],
+                    ),
+                    const SizedBox(height: 14),
+                    _sectionCard(
+                      title: "ADVERTISEMENT DETAILS",
+                      icon: Icons.campaign_outlined,
+                      children: [
+                        _fieldLabel("Advertisement Name"),
+                        const SizedBox(height: 6),
+                        _inputField(
+                          ctrl: controller.adNameController,
+                          hint: "e.g. Big Summer Sale – Up to 50% Off!",
+                          icon: Icons.title_rounded,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    _sectionCard(
+                      title: "AD COVERAGE",
+                      icon: Icons.map_outlined,
+                      children: [_buildCoverageSection()],
+                    ),
+                  ],
                 ),
               ),
-            )
-                : const SizedBox.shrink()),
-          ],
+              Positioned(
+                bottom: 0, left: 0, right: 0,
+                child: _buildSubmitButton(),
+              ),
+              Obx(() => controller.isLoading.value
+                  ? Container(
+                color: Colors.black45,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 32, vertical: 28),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(
+                            color: AppColors.kPrimary, strokeWidth: 2.5),
+                        const SizedBox(height: 16),
+                        const Text(
+                          "Posting advertisement…",
+                          style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: _textSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              )
+                  : const SizedBox.shrink()),
+            ],
+          ),
         ),
       ),
-    ));
+    );
   }
 
   // ── COVERAGE SECTION ──────────────────────────────────────
@@ -144,8 +130,7 @@ class AdminAddAdvertisementPage  extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
-          // ── Toggle Tabs ────────────────────────────────────
+          // ── Toggle Tabs ──────────────────────────────────
           Container(
             decoration: BoxDecoration(
               color: _bg,
@@ -158,19 +143,13 @@ class AdminAddAdvertisementPage  extends StatelessWidget {
                   label: "District Wise",
                   icon: Icons.location_city_rounded,
                   selected: !isArea,
-                  onTap: () {
-                    controller.showMode.value = "district";
-                    // Clear area when switching to district mode
-                    controller.selectedArea.value = null;
-                  },
+                  onTap: () => controller.onModeChanged("district"), // ✅ cascade
                 ),
                 _modeTab(
                   label: "Area Wise",
                   icon: Icons.grid_view_rounded,
                   selected: isArea,
-                  onTap: () {
-                    controller.showMode.value = "area";
-                  },
+                  onTap: () => controller.onModeChanged("area"), // ✅ cascade
                 ),
               ],
             ),
@@ -178,7 +157,7 @@ class AdminAddAdvertisementPage  extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // ── STATE (always shown) ───────────────────────────
+          // ── STATE ────────────────────────────────────────
           _fieldLabel("Select State"),
           const SizedBox(height: 8),
           Obx(() {
@@ -193,16 +172,20 @@ class AdminAddAdvertisementPage  extends StatelessWidget {
               hint: "Choose a state",
               icon: Icons.flag_outlined,
               items: controller.stateList,
-              onChanged: (val) => controller.selectedState.value = val,
+              onChanged: controller.onStateChanged, // ✅ triggers fetchDistricts
             );
           }),
 
           const SizedBox(height: 14),
 
-          // ── DISTRICT (always shown in both modes) ──────────
+          // ── DISTRICT ─────────────────────────────────────
           _fieldLabel("Select District"),
           const SizedBox(height: 8),
           Obx(() {
+            // Show hint if no state selected yet
+            if (controller.selectedState.value == null) {
+              return _emptyDropdown("Select a state first");
+            }
             if (controller.isLoadingDistricts.value) {
               return _loadingDropdown("Loading districts…");
             }
@@ -214,16 +197,19 @@ class AdminAddAdvertisementPage  extends StatelessWidget {
               hint: "Choose a district",
               icon: Icons.location_city_rounded,
               items: controller.districtList,
-              onChanged: (val) => controller.selectedDistrict.value = val,
+              onChanged: controller.onDistrictChanged, // ✅ triggers fetchAreas
             );
           }),
 
-          // ── AREA (only in Area Wise mode) ──────────────────
+          // ── AREA (Area Wise mode only) ────────────────────
           if (isArea) ...[
             const SizedBox(height: 14),
             _fieldLabel("Select Location"),
             const SizedBox(height: 8),
             Obx(() {
+              if (controller.selectedDistrict.value == null) {
+                return _emptyDropdown("Select a district first");
+              }
               if (controller.isLoadingAreas.value) {
                 return _loadingDropdown("Loading areas…");
               }
@@ -343,19 +329,6 @@ class AdminAddAdvertisementPage  extends StatelessWidget {
             );
           }).toList(),
           onChanged: onChanged,
-          // selectedItemBuilder: (context) => items.map((item) {
-          //   return Row(
-          //     children: [
-          //       Icon(icon, size: 16, color: AppColors.kPrimary),
-          //       const SizedBox(width: 8),
-          //       Text(item,
-          //           style: const TextStyle(
-          //               fontSize: 14,
-          //               fontWeight: FontWeight.w600,
-          //               color: _textPrimary)),
-          //     ],
-          //   );
-          // }).toList(),
           selectedItemBuilder: (context) => items
               .map((s) => SizedBox(
             width: double.infinity,
@@ -378,7 +351,6 @@ class AdminAddAdvertisementPage  extends StatelessWidget {
     );
   }
 
-  // ── LOADING PLACEHOLDER ───────────────────────────────────
   Widget _loadingDropdown(String msg) {
     return Container(
       height: 50,
@@ -404,7 +376,6 @@ class AdminAddAdvertisementPage  extends StatelessWidget {
     );
   }
 
-  // ── EMPTY PLACEHOLDER ─────────────────────────────────────
   Widget _emptyDropdown(String msg) {
     return Container(
       height: 50,
@@ -420,7 +391,6 @@ class AdminAddAdvertisementPage  extends StatelessWidget {
     );
   }
 
-  // ── SECTION CARD ──────────────────────────────────────────
   Widget _sectionCard({
     required String title,
     required IconData icon,
@@ -467,7 +437,6 @@ class AdminAddAdvertisementPage  extends StatelessWidget {
     );
   }
 
-  // ── FIELD LABEL ───────────────────────────────────────────
   Widget _fieldLabel(String text) => Text(
     text,
     style: const TextStyle(
@@ -477,7 +446,6 @@ class AdminAddAdvertisementPage  extends StatelessWidget {
     ),
   );
 
-  // ── TEXT INPUT ────────────────────────────────────────────
   Widget _inputField({
     required TextEditingController ctrl,
     required String hint,
@@ -524,8 +492,8 @@ class AdminAddAdvertisementPage  extends StatelessWidget {
             width: 1.4,
           ),
         ),
-        child: AspectRatio(           // ← replaces fixed height: 180
-          aspectRatio: 16 / 6,        // ← standard ecommerce banner ratio
+        child: AspectRatio(
+          aspectRatio: 16 / 6,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(9),
             child: controller.bannerImage.value == null
@@ -552,7 +520,8 @@ class AdminAddAdvertisementPage  extends StatelessWidget {
                 const SizedBox(height: 3),
                 const Text(
                   "Recommended: 1200 × 450px",
-                  style: TextStyle(fontSize: 11, color: _textSecondary),
+                  style: TextStyle(
+                      fontSize: 11, color: _textSecondary),
                 ),
               ],
             )
@@ -628,7 +597,6 @@ class AdminAddAdvertisementPage  extends StatelessWidget {
     ));
   }
 
-  // ── SUBMIT BUTTON ─────────────────────────────────────────
   Widget _buildSubmitButton() {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),

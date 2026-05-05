@@ -1,13 +1,9 @@
 
 import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_instance/src/extension_instance.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart';
-import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
+import 'package:get/get.dart';
 
 import '../../../../common/style/app_colors.dart';
-import '../../../../common/style/app_text_style.dart';
 import '../controller/admin_updateadvertismnetcontroller.dart';
 
 class AdminEditAdvertisementPage extends StatefulWidget {
@@ -30,33 +26,34 @@ class _AdminEditAdvertisementPageState
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      controller.fetchSingleAdvertisement(widget.adId);
-    });
+    Future.microtask(
+            () => controller.fetchSingleAdvertisement(widget.adId));
   }
 
   @override
   Widget build(BuildContext context) {
-    return NetworkAwareWrapper(child: Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
-      appBar: _buildAppBar(),
-      body: Obx(() {
-        if (controller.isFetchingAd.value) {
-          return _buildShimmerLoader();
-        }
-        return _buildBody(context);
-      }),
-    ));
+    return NetworkAwareWrapper(
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF5F6FA),
+        appBar: _buildAppBar(),
+        body: Obx(() {
+          if (controller.isFetchingAd.value) {
+            return _buildShimmerLoader();
+          }
+          return _buildBody(context);
+        }),
+      ),
+    );
   }
 
-  // ── AppBar ──
+  // ── AppBar ────────────────────────────────────────────────
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
       backgroundColor: AppColors.kPrimary,
       elevation: 0,
       surfaceTintColor: Colors.transparent,
       automaticallyImplyLeading: true,
-      iconTheme: IconThemeData(color: Colors.white),
+      iconTheme: const IconThemeData(color: Colors.white),
       title: const Text(
         "Edit Advertisement",
         style: TextStyle(
@@ -76,15 +73,14 @@ class _AdminEditAdvertisementPageState
                   borderRadius: BorderRadius.circular(10)),
             ),
             icon: controller.isFetchingAd.value
-                ? SizedBox(
+                ? const SizedBox(
               width: 18,
               height: 18,
               child: CircularProgressIndicator(
-                color: _kPrimary,
-                strokeWidth: 2,
-              ),
+                  color: Colors.white, strokeWidth: 2),
             )
-                : Icon(Icons.refresh_rounded, color: _kPrimary, size: 20),
+                : const Icon(Icons.refresh_rounded,
+                color: Colors.white, size: 20),
             onPressed: controller.isFetchingAd.value
                 ? null
                 : () => controller.fetchSingleAdvertisement(widget.adId),
@@ -98,7 +94,7 @@ class _AdminEditAdvertisementPageState
     );
   }
 
-  // ── Body ──
+  // ── Body ──────────────────────────────────────────────────
   Widget _buildBody(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 40),
@@ -108,51 +104,42 @@ class _AdminEditAdvertisementPageState
           _buildMetaCard(),
           const SizedBox(height: 24),
 
-          _buildCard(
-            children: [
-              _sectionHeader(
-                icon: Icons.title_rounded,
-                label: "Advertisement Title",
-                badge: "Editable",
-                badgeColor: const Color(0xFF2D9CDB),
-              ),
-              const SizedBox(height: 14),
-              _buildTitleField(),
-            ],
-          ),
+          _buildCard(children: [
+            _sectionHeader(
+              icon: Icons.title_rounded,
+              label: "Advertisement Title",
+              badge: "Editable",
+              badgeColor: const Color(0xFF2D9CDB),
+            ),
+            const SizedBox(height: 14),
+            _buildTitleField(),
+          ]),
 
           const SizedBox(height: 16),
 
-          _buildCard(
-            children: [
-              _sectionHeader(
-                icon: Icons.image_rounded,
-                label: "Banner Image",
-                badge: "Editable",
-                badgeColor: const Color(0xFF2D9CDB),
-              ),
-              const SizedBox(height: 14),
-              _buildBannerSection(context),
-            ],
-          ),
+          _buildCard(children: [
+            _sectionHeader(
+              icon: Icons.image_rounded,
+              label: "Banner Image",
+              badge: "Editable",
+              badgeColor: const Color(0xFF2D9CDB),
+            ),
+            const SizedBox(height: 14),
+            _buildBannerSection(context),
+          ]),
 
           const SizedBox(height: 16),
 
-          _buildCard(
-            children: [
-              _sectionHeader(
-                icon: Icons.public_rounded,
-                label: "Region Info",
-                badge: "Editable",
-                badgeColor: const Color(0xFF2D9CDB),
-              ),
-              const SizedBox(height: 14),
-              _buildRegionDropdowns(),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
+          _buildCard(children: [
+            _sectionHeader(
+              icon: Icons.public_rounded,
+              label: "Region Info",
+              badge: "Editable",
+              badgeColor: const Color(0xFF2D9CDB),
+            ),
+            const SizedBox(height: 14),
+            _buildRegionDropdowns(),
+          ]),
 
           const SizedBox(height: 28),
           _buildSaveButton(),
@@ -161,16 +148,13 @@ class _AdminEditAdvertisementPageState
     );
   }
 
-  // ── Reusable card wrapper ──
-  Widget _buildCard({
-    required List<Widget> children,
-    Color? backgroundColor,
-  }) {
+  // ── Card wrapper ──────────────────────────────────────────
+  Widget _buildCard({required List<Widget> children}) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: backgroundColor ?? Colors.white,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -187,17 +171,15 @@ class _AdminEditAdvertisementPageState
     );
   }
 
-  // ── Meta card ──
+  // ── Meta card ─────────────────────────────────────────────
   Widget _buildMetaCard() {
     return Obx(() => Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding:
+      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            _kPrimary,
-            _kPrimary.withOpacity(0.8),
-          ],
+          colors: [_kPrimary, _kPrimary.withOpacity(0.8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -229,26 +211,24 @@ class _AdminEditAdvertisementPageState
                 Text(
                   "Ad ID: ${widget.adId}",
                   style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                  ),
+                      color: Colors.white70,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   "By: ${controller.editCreatedByType.value.isNotEmpty ? controller.editCreatedByType.value : '—'}",
                   style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600),
                 ),
               ],
             ),
           ),
           Container(
-            padding:
-            const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            padding: const EdgeInsets.symmetric(
+                horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.2),
               borderRadius: BorderRadius.circular(20),
@@ -256,10 +236,9 @@ class _AdminEditAdvertisementPageState
             child: const Text(
               "Editing",
               style: TextStyle(
-                color: Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-              ),
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -267,42 +246,86 @@ class _AdminEditAdvertisementPageState
     ));
   }
 
-  // ── Region dropdowns ──
+  // ── Region dropdowns ──────────────────────────────────────
   Widget _buildRegionDropdowns() {
     return Obx(() => Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // ── STATE ──────────────────────────────────────
         _buildDropdownField(
           label: 'State',
           icon: Icons.map_outlined,
           value: controller.selectedEditState.value,
           items: controller.statesList,
           isLoading: controller.isLoadingStates.value,
-          onChanged: (v) => controller.selectedEditState.value = v,
+          onChanged: controller.onStateChanged, // ✅ cascade
         ),
+
         const SizedBox(height: 12),
-        _buildDropdownField(
-          label: 'District',
-          icon: Icons.location_city_outlined,
-          value: controller.selectedEditDistrict.value,
-          items: controller.districtsList,
-          isLoading: controller.isLoadingDistricts.value,
-          onChanged: (v) => controller.selectedEditDistrict.value = v,
-        ),
+
+        // ── DISTRICT ───────────────────────────────────
+        if (controller.selectedEditState.value == null &&
+            !controller.isLoadingDistricts.value)
+          _infoTile(
+              icon: Icons.info_outline_rounded,
+              message: "Select a state to load districts")
+        else
+          _buildDropdownField(
+            label: 'District',
+            icon: Icons.location_city_outlined,
+            value: controller.selectedEditDistrict.value,
+            items: controller.districtsList,
+            isLoading: controller.isLoadingDistricts.value,
+            onChanged: controller.onDistrictChanged, // ✅ cascade
+          ),
+
+        // ── AREA ───────────────────────────────────────
         if (controller.showMainLocationDropdown) ...[
           const SizedBox(height: 12),
-          _buildDropdownField(
-            label: 'Main Location',
-            icon: Icons.place_outlined,
-            value: controller.selectedEditArea.value,
-            items: controller.areasList,
-            isLoading: controller.isLoadingAreas.value,
-            onChanged: (v) => controller.selectedEditArea.value = v,
-          ),
+          if (controller.selectedEditDistrict.value == null &&
+              !controller.isLoadingAreas.value)
+            _infoTile(
+                icon: Icons.info_outline_rounded,
+                message: "Select a district to load areas")
+          else
+            _buildDropdownField(
+              label: 'Main Location',
+              icon: Icons.place_outlined,
+              value: controller.selectedEditArea.value,
+              items: controller.areasList,
+              isLoading: controller.isLoadingAreas.value,
+              onChanged: (v) =>
+              controller.selectedEditArea.value = v,
+            ),
         ],
       ],
     ));
   }
 
+  // ── Info tile ─────────────────────────────────────────────
+  Widget _infoTile({required IconData icon, required String message}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF2F3F8),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE8E8F0)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: const Color(0xFF9E9EA7)),
+          const SizedBox(width: 8),
+          Text(
+            message,
+            style: const TextStyle(
+                fontSize: 13, color: Color(0xFF9E9EA7)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Dropdown field ────────────────────────────────────────
   Widget _buildDropdownField({
     required String label,
     required IconData icon,
@@ -354,7 +377,7 @@ class _AdminEditAdvertisementPageState
     );
   }
 
-  // ── Title field ──
+  // ── Title field ───────────────────────────────────────────
   Widget _buildTitleField() {
     return Obx(() => TextField(
       controller: controller.editAdName,
@@ -365,11 +388,13 @@ class _AdminEditAdvertisementPageState
       ),
       decoration: InputDecoration(
         hintText: "Enter advertisement title",
-        hintStyle:
-        const TextStyle(color: Color(0xFFBDBDC7), fontSize: 14),
+        hintStyle: const TextStyle(
+            color: Color(0xFFBDBDC7), fontSize: 14),
         prefixIcon:
         Icon(Icons.edit_outlined, color: _kPrimary, size: 20),
-        errorText: controller.editIsTitleEmpty.value ? "Title is required" : null,
+        errorText: controller.editIsTitleEmpty.value
+            ? "Title is required"
+            : null,
         filled: true,
         fillColor: const Color(0xFFF9F9FB),
         contentPadding:
@@ -390,7 +415,7 @@ class _AdminEditAdvertisementPageState
     ));
   }
 
-  // ── Banner section ──
+  // ── Banner section ────────────────────────────────────────
   Widget _buildBannerSection(BuildContext context) {
     return Obx(() {
       final file = controller.editBannerImage.value;
@@ -406,28 +431,24 @@ class _AdminEditAdvertisementPageState
             color: const Color(0xFFF2F3F8),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: hasImage ? _kPrimary.withOpacity(0.4) : const Color(0xFFDDDDE8),
+              color: hasImage
+                  ? _kPrimary.withOpacity(0.4)
+                  : const Color(0xFFDDDDE8),
               width: 1.5,
             ),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(13),
             child: file != null
-                ? Stack(
-              fit: StackFit.expand,
-              children: [
-                Image.file(file, fit: BoxFit.cover),
-                _buildImageOverlay(),
-              ],
-            )
+                ? Stack(fit: StackFit.expand, children: [
+              Image.file(file, fit: BoxFit.cover),
+              _buildImageOverlay(),
+            ])
                 : url.isNotEmpty
-                ? Stack(
-              fit: StackFit.expand,
-              children: [
-                Image.network(url, fit: BoxFit.cover),
-                _buildImageOverlay(),
-              ],
-            )
+                ? Stack(fit: StackFit.expand, children: [
+              Image.network(url, fit: BoxFit.cover),
+              _buildImageOverlay(),
+            ])
                 : _buildEmptyBanner(),
           ),
         ),
@@ -440,7 +461,8 @@ class _AdminEditAdvertisementPageState
       bottom: 10,
       right: 10,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding:
+        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: Colors.black.withOpacity(0.55),
           borderRadius: BorderRadius.circular(20),
@@ -478,10 +500,9 @@ class _AdminEditAdvertisementPageState
         const Text(
           "Tap to upload banner image",
           style: TextStyle(
-            color: Color(0xFF9E9EA7),
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
+              color: Color(0xFF9E9EA7),
+              fontSize: 13,
+              fontWeight: FontWeight.w500),
         ),
         const SizedBox(height: 4),
         const Text(
@@ -492,63 +513,7 @@ class _AdminEditAdvertisementPageState
     );
   }
 
-  // // ── Locked fields ──
-  // Widget _buildLockedFields() {
-  //   return Obx(() => Column(
-  //     children: [
-  //       _buildLockedTile(
-  //         icon: Icons.calendar_today_outlined,
-  //         label: "Posted On",
-  //         value: controller.editCreatedAt.value.isNotEmpty
-  //             ? controller.editCreatedAt.value
-  //             : '—',
-  //       ),
-  //     ],
-  //   ));
-  // }
-
-  Widget _buildLockedTile({
-    required IconData icon,
-    required String label,
-    required String value,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF2F3F7),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE8E8F0)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: const Color(0xFFBDBDC7), size: 18),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label,
-                    style: const TextStyle(
-                        color: Color(0xFF9E9EA7),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500)),
-                const SizedBox(height: 2),
-                Text(value,
-                    style: const TextStyle(
-                        color: Color(0xFF555566),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500)),
-              ],
-            ),
-          ),
-          const Icon(Icons.lock_outline_rounded,
-              color: Color(0xFFCCCCD6), size: 15),
-        ],
-      ),
-    );
-  }
-
-  // ── Save button ──
+  // ── Save button ───────────────────────────────────────────
   Widget _buildSaveButton() {
     return Obx(() => SizedBox(
       width: double.infinity,
@@ -562,8 +527,7 @@ class _AdminEditAdvertisementPageState
           disabledBackgroundColor: _kPrimary.withOpacity(0.5),
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
+              borderRadius: BorderRadius.circular(14)),
         ),
         child: controller.isEditLoading.value
             ? const SizedBox(
@@ -593,7 +557,7 @@ class _AdminEditAdvertisementPageState
     ));
   }
 
-  // ── Section header ──
+  // ── Section header ────────────────────────────────────────
   Widget _sectionHeader({
     required IconData icon,
     required String label,
@@ -611,38 +575,35 @@ class _AdminEditAdvertisementPageState
           child: Icon(icon, color: badgeColor, size: 16),
         ),
         const SizedBox(width: 10),
-        Text(
-          label,
-          style: const TextStyle(
-            color: Color(0xFF1A1A2E),
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            letterSpacing: -0.2,
-          ),
-        ),
+        Text(label,
+            style: const TextStyle(
+              color: Color(0xFF1A1A2E),
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              letterSpacing: -0.2,
+            )),
         const Spacer(),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+          padding:
+          const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
           decoration: BoxDecoration(
             color: badgeColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: badgeColor.withOpacity(0.25)),
           ),
-          child: Text(
-            badge,
-            style: TextStyle(
-              color: badgeColor,
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.3,
-            ),
-          ),
+          child: Text(badge,
+              style: TextStyle(
+                color: badgeColor,
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.3,
+              )),
         ),
       ],
     );
   }
 
-  // ── Shimmer loader ──
+  // ── Shimmer loader ────────────────────────────────────────
   Widget _buildShimmerLoader() {
     return Padding(
       padding: const EdgeInsets.all(16),

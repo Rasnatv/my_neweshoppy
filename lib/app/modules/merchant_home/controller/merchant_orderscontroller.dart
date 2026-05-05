@@ -22,15 +22,49 @@ class MerchantOrdersController extends GetxController {
     fetchMerchantOrders();
   }
 
+  // Future<void> fetchMerchantOrders() async {
+  //
+  //   try {
+  //     isLoading.value = true;
+  //
+  //     final response = await http.get(
+  //       Uri.parse(
+  //         'https://eshoppy.co.in/api/merchant/orders',
+  //       ),
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Accept': 'application/json',
+  //         'Authorization': 'Bearer $_token',
+  //       },
+  //     );
+  //
+  //     if (response.statusCode == 200) {
+  //       final body = jsonDecode(response.body);
+  //
+  //       if (body['status'] == true) {
+  //         final List data = body['data'];
+  //         orders.value =
+  //             data.map((e) => MerchantOrderModel.fromJson(e)).toList();
+  //       } else {
+  //         AppSnackbar.error(body['message'] ?? 'Failed to load orders');
+  //       }
+  //     } else {
+  //       final error = ApiErrorHandler.handleResponse(response);
+  //       AppSnackbar.error(error);
+  //     }
+  //   } catch (e) {
+  //     final error = ApiErrorHandler.handleException(e);
+  //     AppSnackbar.error(error);
+  //   } finally {
+  //     isLoading.value = false;
+  //   }
+  // }
   Future<void> fetchMerchantOrders() async {
-
     try {
       isLoading.value = true;
 
       final response = await http.get(
-        Uri.parse(
-          'https://eshoppy.co.in/api/merchant/orders',
-        ),
+        Uri.parse('https://eshoppy.co.in/api/merchant/orders'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -40,21 +74,18 @@ class MerchantOrdersController extends GetxController {
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
-
         if (body['status'] == true) {
-          final List data = body['data'];
+          final List data = body['data'] as List;
           orders.value =
               data.map((e) => MerchantOrderModel.fromJson(e)).toList();
         } else {
           AppSnackbar.error(body['message'] ?? 'Failed to load orders');
         }
       } else {
-        final error = ApiErrorHandler.handleResponse(response);
-        AppSnackbar.error(error);
+        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
-      final error = ApiErrorHandler.handleException(e);
-      AppSnackbar.error(error);
+      AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoading.value = false;
     }

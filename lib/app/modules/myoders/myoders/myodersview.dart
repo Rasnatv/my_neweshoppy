@@ -1,11 +1,11 @@
+
+
 import 'package:eshoppy/app/data/models/user_myordersmodel.dart';
 import 'package:eshoppy/app/modules/myoders/controller/my_orderscontroller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_colors.dart';
 import '../../../widgets/networkconnection_checkpage.dart';
-
-
 
 class MyOrdersView extends StatelessWidget {
   MyOrdersView({super.key});
@@ -16,61 +16,58 @@ class MyOrdersView extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.put(MyOrdersController());
 
-    return NetworkAwareWrapper(child:Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
-      appBar: AppBar(
-        backgroundColor: primary,
-        iconTheme: IconThemeData(color: Colors.white),
-        elevation: 0.5,
-        shadowColor: Colors.black12,
-        title: const Text(
-          'My Orders',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.1,
+    return NetworkAwareWrapper(
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF5F6FA),
+        appBar: AppBar(
+          backgroundColor: primary,
+          iconTheme: const IconThemeData(color: Colors.white),
+          elevation: 0.5,
+          shadowColor: Colors.black12,
+          title: const Text(
+            'My Orders',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.1,
+            ),
           ),
+          actions: [
+            Obx(
+                  () => !controller.isLoading.value
+                  ? IconButton(
+                icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+                onPressed: controller.fetchMyOrders,
+              )
+                  : const SizedBox.shrink(),
+            ),
+          ],
         ),
-        actions: [
-          Obx(
-                () => !controller.isLoading.value
-                ? IconButton(
-              icon: const Icon(Icons.refresh_rounded, color: Colors.white),
-              onPressed: controller.fetchMyOrders,
-            )
-                : const SizedBox.shrink(),
-          ),
-        ],
-      ),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return Center(
-            child: CircularProgressIndicator(color: primary),
+        body: Obx(() {
+          if (controller.isLoading.value) {
+            return Center(child: CircularProgressIndicator(color: primary));
+          }
+          if (controller.hasError.value) {
+            return _buildErrorState(controller);
+          }
+          if (controller.orders.isEmpty) {
+            return _buildEmptyState();
+          }
+          return RefreshIndicator(
+            color: primary,
+            onRefresh: controller.fetchMyOrders,
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: controller.orders.length,
+              itemBuilder: (context, index) {
+                return _buildOrderCard(controller.orders[index], controller);
+              },
+            ),
           );
-        }
-
-        if (controller.hasError.value) {
-          return _buildErrorState(controller);
-        }
-
-        if (controller.orders.isEmpty) {
-          return _buildEmptyState();
-        }
-
-        return RefreshIndicator(
-          color: primary,
-          onRefresh: controller.fetchMyOrders,
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: controller.orders.length,
-            itemBuilder: (context, index) {
-              return _buildOrderCard(controller.orders[index], controller);
-            },
-          ),
-        );
-      }),
-    ));
+        }),
+      ),
+    );
   }
 
   // ── Order Card ───────────────────────────────────────────────────────────────
@@ -150,7 +147,6 @@ class MyOrdersView extends StatelessWidget {
                     ],
                   ),
                 ),
-
               ],
             ),
           ),
@@ -160,21 +156,20 @@ class MyOrdersView extends StatelessWidget {
             padding: const EdgeInsets.all(14),
             child: Column(
               children: order.items
-                  .map((item) => _buildItemRow(item))
+                  .map((item) => _buildItemRow(item, controller))
                   .toList(),
             ),
           ),
 
           // ── Footer ─────────────────────────────────────────────────────
           Container(
-            padding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF9FAFB),
-              borderRadius: const BorderRadius.vertical(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF9FAFB),
+              borderRadius: BorderRadius.vertical(
                 bottom: Radius.circular(18),
               ),
-              border: const Border(
+              border: Border(
                 top: BorderSide(color: Color(0xFFF0F0F0)),
               ),
             ),
@@ -193,7 +188,7 @@ class MyOrdersView extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '₹${order.totalAmount.toStringAsFixed(2)}',
+                      '₹${controller.formatPrice(order.totalAmount)}',
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
@@ -203,23 +198,13 @@ class MyOrdersView extends StatelessWidget {
                     ),
                   ],
                 ),
-                Row(
-                  children: [
-                    Text(
-                      '${order.items.length} ${order.items.length == 1 ? 'item' : 'items'}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade500,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      color: Colors.grey.shade400,
-                      size: 20,
-                    ),
-                  ],
+                Text(
+                  '${order.items.length} ${order.items.length == 1 ? 'item' : 'items'}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade500,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
@@ -229,12 +214,14 @@ class MyOrdersView extends StatelessWidget {
     );
   }
 
-  Widget _buildItemRow(OrderProduct item) {
+  // ── Item Row ─────────────────────────────────────────────────────────────────
+  Widget _buildItemRow(OrderProduct item, MyOrdersController controller) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ✅ use displayImage (variant image preferred)
+          // Product image
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: Image.network(
@@ -275,10 +262,13 @@ class MyOrdersView extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
+
+          // Product details
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Product name
                 Text(
                   item.productName,
                   style: const TextStyle(
@@ -287,33 +277,74 @@ class MyOrdersView extends StatelessWidget {
                     color: Color(0xFF1A1A1A),
                   ),
                 ),
-                // ✅ show variant attributes if present
+
+                // ✅ Variant attributes as badge chips
                 if (item.variant != null &&
                     item.variant!.attributes.isNotEmpty) ...[
-                  const SizedBox(height: 3),
-                  Text(
-                    item.variant!.displayAttributes,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey.shade500,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  const SizedBox(height: 5),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: item.variant!.attributes.entries.map((e) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: primary.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: primary.withOpacity(0.2),
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Text(
+                          '${_cap(e.key)}: ${_cap(e.value)}',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            color: primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      );
+                    }).toList(),
                   ),
                 ],
-                const SizedBox(height: 4),
-                // ✅ price from variant or derived
-                Text(
-                  '₹${item.price.toStringAsFixed(2)}  ×  ${item.quantity}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF888888),
-                  ),
+
+                const SizedBox(height: 5),
+
+                // Price line: final_price (strikethrough original if discounted)
+                Row(
+                  children: [
+                    if (item.variant != null &&
+                        item.variant!.finalPrice < item.variant!.price) ...[
+                      Text(
+                        '₹${controller.formatPrice(item.variant!.price)}',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFFAAAAAA),
+                          decoration: TextDecoration.lineThrough,
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                    ],
+                    Text(
+                      '₹${controller.formatPrice(item.price)}  ×  ${item.quantity}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF888888),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
+
+          // Item total
           Text(
-            '₹${item.total.toStringAsFixed(2)}',
+            '₹${controller.formatPrice(item.total)}',
             style: TextStyle(
               fontSize: 13.5,
               fontWeight: FontWeight.w700,
@@ -324,6 +355,10 @@ class MyOrdersView extends StatelessWidget {
       ),
     );
   }
+
+  String _cap(String s) =>
+      s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+
   // ── Empty State ──────────────────────────────────────────────────────────────
   Widget _buildEmptyState() {
     return Center(
@@ -378,19 +413,13 @@ class MyOrdersView extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline_rounded,
-              size: 60,
-              color: Colors.red.shade300,
-            ),
+            Icon(Icons.error_outline_rounded,
+                size: 60, color: Colors.red.shade300),
             const SizedBox(height: 16),
             Text(
               controller.errorMessage.value,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF555555),
-              ),
+              style: const TextStyle(fontSize: 14, color: Color(0xFF555555)),
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
@@ -400,10 +429,8 @@ class MyOrdersView extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: primary,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 28,
-                  vertical: 12,
-                ),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
