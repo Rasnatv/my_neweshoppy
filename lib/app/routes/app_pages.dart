@@ -15,10 +15,9 @@ import '../modules/admin_home/shops/views/admin_userpurchasedprodcutpage.dart';
 import '../modules/forgotpassowrd/binding/checkemailotp_binding.dart';
 import '../modules/forgotpassowrd/binding/forgotpswd_binding.dart';
 import '../modules/forgotpassowrd/binding/newpswd_bindings.dart';
-import '../modules/forgotpassowrd/view/checkemail.dart';
+
 import '../modules/forgotpassowrd/view/forgotpassword.dart';
 import '../modules/forgotpassowrd/view/newpasswordscreen.dart';
-
 import '../modules/merchant_home/views/manageproducts.dart';
 import '../modules/merchant_home/views/merchant_offerviewpage.dart';
 import '../modules/splashscreen/splashscreen.dart';
@@ -57,15 +56,13 @@ class AppPages {
 
     GetPage(
       name: _Paths.FORGOTPSWD,
-      page: () =>ForgotPasswordEmailView(),
-     binding:ForgotpswdBinding(),
+      page: () =>  ForgotPasswordEmailView(),
+      binding: ForgotpswdBinding(),
     ),
-
     GetPage(
       name: _Paths.NewPSWD,
-      page: () => SetNewPasswordView(),
+      page: () => const SetNewPasswordView(),
       binding: NewpswdBindings(),
-     // bindings: [HomeBinding(),WishlistBinding()]
     ),
     GetPage(
       name: _Paths.DISTRICTADMINADVUPDATION,
@@ -82,10 +79,10 @@ class AppPages {
       page: () => UserSignup(),
       binding: UsersignupBindings(),
     ),
-    GetPage(
-      name: Routes.CHECKEMAIL,
-      page: () => const CheckemailScreen(),
-    ),
+    // GetPage(
+    //   name: Routes.CHECKEMAIL,
+    //   page: () => const CheckemailScreen(),
+    // ),
 
     //
     GetPage(

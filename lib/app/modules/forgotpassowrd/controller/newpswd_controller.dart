@@ -4,10 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 
+// ← import DValidator
+import '../../../common/utils/validators.dart';
 import '../../../data/errors/api_error.dart';
 import '../../merchantlogin/widget/successwidget.dart';
 
 class NewPasswordController extends GetxController {
+  final formKey = GlobalKey<FormState>(); // ← Form key for validation
+
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
@@ -17,7 +21,7 @@ class NewPasswordController extends GetxController {
 
   late final String email;
   late final String otp;
-  late final int role; // ✅ role received here too
+  late final int role;
 
   @override
   void onInit() {
@@ -25,7 +29,7 @@ class NewPasswordController extends GetxController {
     final args = Get.arguments as Map<String, dynamic>;
     email = args['email'];
     otp = args['otp'];
-    role = args['role'] ?? 1; // ✅ default to user if missing
+    role = args['role'] ?? 1;
   }
 
   @override
@@ -38,48 +42,41 @@ class NewPasswordController extends GetxController {
   void togglePasswordVisibility() => isPasswordHidden.toggle();
   void toggleConfirmPasswordVisibility() => isConfirmPasswordHidden.toggle();
 
+  // Validator for confirm password field — checks match against password
+  String? validateConfirmPassword(String? value) {
+    final baseError = DValidator.validateEmptyText("Confirm password", value);
+    if (baseError != null) return baseError;
+    if (value != passwordController.text.trim()) {
+      return 'Passwords do not match';
+    }
+    return null;
+  }
+
   Future<void> updatePassword() async {
+    // Trigger all field validators at once
+    if (!formKey.currentState!.validate()) return;
     if (isLoading.value) return;
 
     final password = passwordController.text.trim();
     final confirmPassword = confirmPasswordController.text.trim();
 
-    if (password.isEmpty || confirmPassword.isEmpty) {
-      AppSnackbar.error("Please fill all fields");
-      return;
-    }
-
-    if (password != confirmPassword) {
-      AppSnackbar.error("Passwords do not match");
-      return;
-    }
-
-    if (password.length < 6) {
-      AppSnackbar.error("Password must be at least 6 characters");
-      return;
-    }
-
     try {
       isLoading.value = true;
 
       final response = await http.post(
-        Uri.parse(
-          "https://eshoppy.co.in/api/reset-password"
-          //"https://rasma.astradevelops.in/e_shoppyy/public/api/reset-password",
-        ),
+        Uri.parse("https://eshoppy.co.in/api/reset-password"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "email": email,
           "otp": otp,
           "password": password,
           "password_confirmation": confirmPassword,
-          "role": role, // ✅ role included
+          "role": role,
         }),
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-
         if (data["status"] == 1 || data["status"] == "1") {
           AppSnackbar.success(data["message"] ?? "Password updated successfully");
           Get.offAllNamed('/login');

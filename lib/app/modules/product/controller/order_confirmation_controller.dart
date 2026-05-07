@@ -86,16 +86,12 @@ class OrderConfirmationController extends GetxController {
     }
   }
 
-  /// ================= CONFIRM ORDER =================
   Future<void> confirmOrder() async {
-
     try {
       isConfirming.value = true;
 
       final response = await http.post(
-        Uri.parse(
-          'https://eshoppy.co.in/api/confirm-order',
-        ),
+        Uri.parse('https://eshoppy.co.in/api/confirm-order'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -108,36 +104,29 @@ class OrderConfirmationController extends GetxController {
         final body = jsonDecode(response.body);
 
         if (body['status'] == true) {
-          final orderId = body['data']['order_id'];
-          final totalAmount =
-          (body['data']['total_amount'] as num).toDouble();
+          // ✅ FIX: API returns no 'data' field — use preview values instead
+          final orderId = body['data']?['order_id']?.toString() ?? 'N/A';
+          final totalAmount = orderPreview.value?.totalAmount ?? 0.0;
 
-          /// ✅ Refresh cart
           if (Get.isRegistered<CartController>()) {
             await Get.find<CartController>().fetchCart();
           }
 
-          /// ✅ Navigate
           Get.off(() => OrderSuccessScreen(
             orderId: orderId,
             totalAmount: totalAmount,
           ));
         } else {
-          AppSnackbar.error(
-              body['message'] ?? 'Could not place order');
+          AppSnackbar.error(body['message'] ?? 'Could not place order');
         }
       } else {
         final error = ApiErrorHandler.handleResponse(response);
         AppSnackbar.error(error);
       }
-
     } catch (e) {
-
       final error = ApiErrorHandler.handleException(e);
       AppSnackbar.error(error);
-
     } finally {
       isConfirming.value = false;
     }
-  }
-}
+  }}

@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 
 import '../../../data/errors/api_error.dart';
 import '../../merchantlogin/widget/successwidget.dart';
+import '../view/addresslistpage.dart';
 import '../view/addressposttingmodel.dart';
 
 class NewAddAddressController extends GetxController {
@@ -72,7 +73,7 @@ class NewAddAddressController extends GetxController {
           AppSnackbar.success('Address added successfully!');
 
           _clearFields();
-          Get.back(result: savedAddress);
+          Get.off(AddressListPage());
         } else {
           AppSnackbar.warning(
               responseData['message'] ?? 'Failed to add address');

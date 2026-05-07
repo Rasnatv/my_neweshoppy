@@ -8,7 +8,7 @@ import '../../../widgets/Headline2.dart';
 import '../controller/forgotpswd_controller.dart';
 
 class ForgotPasswordEmailView extends GetView<ForgotPasswordController> {
-  const ForgotPasswordEmailView({super.key});
+   ForgotPasswordEmailView({super.key});
 
   @override
   Widget build(BuildContext context) {

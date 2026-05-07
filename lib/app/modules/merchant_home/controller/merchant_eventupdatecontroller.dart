@@ -369,6 +369,8 @@ class EventUpdateController extends GetxController {
         event.value = HEventModel.fromJson(body['data']);
 
         AppSnackbar.success("Event updated successfully");
+        Get.off(MerchantEventsPage());
+
 
       } else if (response.statusCode != 200) {
         AppSnackbar.error(ApiErrorHandler.handleResponse(response));

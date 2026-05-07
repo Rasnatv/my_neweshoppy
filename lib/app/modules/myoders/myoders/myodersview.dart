@@ -209,7 +209,9 @@ class MyOrdersView extends StatelessWidget {
               ],
             ),
           ),
+          SizedBox(height:20)
         ],
+
       ),
     );
   }
