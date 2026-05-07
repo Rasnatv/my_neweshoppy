@@ -10,8 +10,10 @@ import '../../../data/models/restaurantmaincartmodel.dart';
 import '../../merchantlogin/widget/successwidget.dart'; // ← adjust path
 
 class FinalCartController extends GetxController {
+  static const int maxQty = 10;
   // ── Storage ────────────────────────────────────────────────────────────────
   final _box = GetStorage();
+  final RxInt cartItemCount = 0.obs;
 
   // ── Observable state ───────────────────────────────────────────────────────
   final RxList<FinalCartRestaurantModel> restaurants =
@@ -28,6 +30,7 @@ class FinalCartController extends GetxController {
 
   // ── Computed ───────────────────────────────────────────────────────────────
   bool get isEmpty => restaurants.isEmpty;
+
 
   double get grandTotal =>
       restaurants.fold(0.0, (sum, r) => sum + r.restaurantTotal);
@@ -97,15 +100,37 @@ class FinalCartController extends GetxController {
       isLoading.value = false;
     }
   }
-
-  // ── Update Quantity (increase / decrease) ──────────────────────────────────
   Future<void> updateQuantity({
     required int restaurantId,
     required int bookingId,
     required String cartId,
     required String action,
   }) async {
-    if (_authToken.isEmpty) return;
+
+    // ✅ FIND CURRENT ITEM
+    final rIndex =
+    restaurants.indexWhere((r) => r.restaurantId == restaurantId);
+    if (rIndex == -1) return;
+
+    final bIndex = restaurants[rIndex]
+        .bookings
+        .indexWhere((b) => b.bookingId == bookingId);
+    if (bIndex == -1) return;
+
+    final iIndex = restaurants[rIndex]
+        .bookings[bIndex]
+        .items
+        .indexWhere((i) => i.cartId == cartId);
+    if (iIndex == -1) return;
+
+    final currentItem =
+    restaurants[rIndex].bookings[bIndex].items[iIndex];
+
+    // ✅ MAX LIMIT CHECK (100)
+    if (action == 'increase' && currentItem.quantity >= maxQty) {
+      AppSnackbar.warning( "Limit Reached Maximum 10 items can be purchased at a time",);
+      return;
+    }
 
     final key = '${cartId}_$action';
     updatingQuantityItems.add(key);
@@ -147,7 +172,8 @@ class FinalCartController extends GetxController {
             );
           }
         } else {
-          final msg = jsonData['message'] ?? 'Could not update quantity. Try again.';
+          final msg = jsonData['message'] ??
+              'Could not update quantity. Try again.';
           AppSnackbar.error(msg);
         }
       } else {
@@ -220,7 +246,6 @@ class FinalCartController extends GetxController {
 
   // ── Delete Entire Restaurant ───────────────────────────────────────────────
   Future<void> removeRestaurant(int restaurantId) async {
-    if (_authToken.isEmpty) return;
 
     deletingRestaurants.add(restaurantId);
 
@@ -254,8 +279,7 @@ class FinalCartController extends GetxController {
     required int restaurantId,
     required int bookingId,
     required String cartId,
-  }) async {
-    if (_authToken.isEmpty) return;
+  }) async{
 
     deletingCartItems.add(cartId);
 

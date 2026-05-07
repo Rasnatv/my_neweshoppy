@@ -37,7 +37,8 @@ class RestaurantListPage extends StatelessWidget {
   RestaurantListPage({super.key});
 
   final RestaurantController controller = Get.put(RestaurantController());
-  final FinalCartController  cartController=Get.put(FinalCartController());
+  // final FinalCartController  cartController=Get.put(FinalCartController());
+  final FinalCartController cartController = Get.put(FinalCartController(), permanent: true);
 
   @override
   Widget build(BuildContext context) {
@@ -98,7 +99,7 @@ class RestaurantListPage extends StatelessWidget {
           ),
           actions: [
             Obx(() {
-              final cartController = Get.find<FinalCartController>();
+
               final count = cartController.totalItemCount;
               return SizedBox(          // ✅ Constrain the Stack
                 width: 48,
@@ -334,113 +335,113 @@ class RestaurantCard extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Open badge
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Open badge
 
-                  const SizedBox(height: 7),
+                    const SizedBox(height: 7),
 
-                  // Restaurant name
-                  Text(
-                    restaurant.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 15.5,
-                      fontWeight: FontWeight.w800,
-                      color: _P.textDark,
-                      letterSpacing: -0.3,
-                      height: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-
-                  // Amber underline accent
-                  Container(
-                    width: 26,
-                    height: 2,
-                    margin: const EdgeInsets.only(bottom: 6),
-                    decoration: BoxDecoration(
-                      color: _P.amber,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-
-                  // Address
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.only(top: 1.5),
-                        child: Icon(
-                          Icons.location_on_outlined,
-                          size: 12,
-                          color: _P.textLight,
-                        ),
+                    // Restaurant name
+                    Text(
+                      restaurant.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.w800,
+                        color: _P.textDark,
+                        letterSpacing: -0.3,
+                        height: 1.2,
                       ),
-                      const SizedBox(width: 3),
-                      Expanded(
-                        child: Text(
-                          restaurant.address,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 11.5,
-                            color: _P.textMid,
-                            height: 1.5,
-                            letterSpacing: 0.1,
+                    ),
+                    const SizedBox(height: 4),
+
+                    // Amber underline accent
+                    Container(
+                      width: 26,
+                      height: 2,
+                      margin: const EdgeInsets.only(bottom: 6),
+                      decoration: BoxDecoration(
+                        color: _P.amber,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+
+                    // Address
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.only(top: 1.5),
+                          child: Icon(
+                            Icons.location_on_outlined,
+                            size: 12,
+                            color: _P.textLight,
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // Book a Table button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 38,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        HapticFeedback.mediumImpact();
-                        Get.to(() =>
-                            RestaurantDetailPage(restaurant: restaurant));
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _P.amber,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shadowColor: _P.amberGlow,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        padding: EdgeInsets.zero,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(
-                            Icons.table_restaurant_rounded,
-                            size: 14,
-                            color: Colors.white,
-                          ),
-                          SizedBox(width: 6),
-                          Text(
-                            'Book a Table',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                              letterSpacing: 0.2,
+                        const SizedBox(width: 3),
+                        Expanded(
+                          child: Text(
+                            restaurant.address,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 11.5,
+                              color: _P.textMid,
+                              height: 1.5,
+                              letterSpacing: 0.1,
                             ),
                           ),
-                        ],
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // Book a Table button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 38,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          HapticFeedback.mediumImpact();
+                          Get.to(() =>
+                              RestaurantDetailPage(restaurant: restaurant));
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _P.amber,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shadowColor: _P.amberGlow,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: EdgeInsets.zero,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Icon(
+                              Icons.table_restaurant_rounded,
+                              size: 14,
+                              color: Colors.white,
+                            ),
+                            SizedBox(width: 6),
+                            Text(
+                              'Book a Table',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
 
-              ]),
+                  ]),
             ),
           ) ],
       ),

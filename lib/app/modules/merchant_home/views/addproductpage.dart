@@ -1,4 +1,5 @@
 
+
 import 'dart:io';
 import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
@@ -6,7 +7,6 @@ import 'package:get/get.dart';
 import '../../../common/style/app_colors.dart';
 import '../../merchantlogin/widget/successwidget.dart';
 import '../controller/addproduct_controller.dart';
-// import '../../../common/utils/app_snackbars.dart';
 
 class AddProductPage extends StatelessWidget {
   final ProductController controller = Get.put(ProductController());
@@ -21,12 +21,12 @@ class AddProductPage extends StatelessWidget {
         foregroundColor: Colors.white,
         title: const Text(
           "Add New Product",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 17,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.1,
-            ),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.1,
+          ),
         ),
         actions: [
           Obx(() => controller.isSubmitting.value
@@ -78,8 +78,6 @@ class AddProductPage extends StatelessWidget {
                         const SizedBox(height: 24),
                       ],
 
-                      // "Add Variant" button — ALWAYS visible (no category needed)
-                      _buildAddPlainVariantButton(),
                       const SizedBox(height: 24),
 
                       if (controller.variants.isNotEmpty) ...[
@@ -259,38 +257,7 @@ class AddProductPage extends StatelessWidget {
                 ),
               );
             }
-            //           return _infoBox(
-            //             padding:
-            //             const EdgeInsets.symmetric(horizontal: 16),
-            //             child: DropdownButtonFormField<String>(
-            //               decoration: const InputDecoration(
-            //                 border: InputBorder.none,
-            //                 prefixIcon: Icon(Icons.list_alt,
-            //                     color: Color(0xFF6B7280), size: 20),
-            //                 hintText: "Choose a category",
-            //                 hintStyle: TextStyle(
-            //                     color: Color(0xFF9CA3AF), fontSize: 14),
-            //               ),
-            //               value: controller.selectedCategory.value.isEmpty
-            //                   ? null
-            //                   : controller.selectedCategory.value,
-            //               items: controller.apiCategories
-            //                   .map((c) => DropdownMenuItem(
-            //                   value: c.name,
-            //                   child: Text(c.name,
-            //                       style: const TextStyle(fontSize: 15))))
-            //                   .toList(),
-            //               onChanged: (v) => controller.onCategoryChanged(v!),
-            //               dropdownColor: Colors.white,
-            //               icon: const Icon(Icons.keyboard_arrow_down,
-            //                   color: Color(0xFF6B7280)),
-            //             ),
-            //           );
-            //         }),
-            //       ],
-            //     ),
-            //   );
-            // }
+
             return Container(
               decoration: BoxDecoration(
                 color: const Color(0xFFF9FAFB),
@@ -324,11 +291,11 @@ class AddProductPage extends StatelessWidget {
                 isExpanded: true, // ← prevents overflow
               ),
             );
-                    }),
-                  ],
-                ),
-              );
-            }
+          }),
+        ],
+      ),
+    );
+  }
 
   // ── Common Attributes ────────────────────────────────────────────────────────
 
@@ -765,31 +732,6 @@ class AddProductPage extends StatelessWidget {
     );
   }
 
-  // ── Plain variant (no variant attributes) ────────────────────────────────────
-
-  Widget _buildAddPlainVariantButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton.icon(
-        onPressed: () {
-          controller.variants.add(ProductVariant(attributes: {}));
-        },
-        style: OutlinedButton.styleFrom(
-          foregroundColor: const Color(0xFF3B82F6),
-          side: const BorderSide(color: Color(0xFF3B82F6)),
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12)),
-        ),
-        icon: const Icon(Icons.add),
-        label: const Text("Add Variant",
-            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
-      ),
-    );
-  }
-
-  // ── Variants Header ──────────────────────────────────────────────────────────
-
   Widget _buildVariantsHeader() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -820,7 +762,8 @@ class AddProductPage extends StatelessWidget {
                         fontWeight: FontWeight.w600,
                         color: Color(0xFF1A1A1A))),
                 Text(
-                  "${controller.variants.length} variant(s) • Name *, Image * and Price * required",
+                  // "${controller.variants.length} variant(s) • Name *, Image * and Price * required",
+                  "${controller.variants.length} variant(s) • Name *, Image *, Price * and Stock * required",
                   style: const TextStyle(
                       fontSize: 13, color: Color(0xFF6B7280)),
                 ),
@@ -1154,7 +1097,7 @@ class AddProductPage extends StatelessWidget {
         style: const TextStyle(
             fontSize: 14, fontWeight: FontWeight.w600),
         decoration: InputDecoration(
-          labelText: "Stock (optional)",
+          labelText: "Stock *",
           hintText: "0",
           prefixIcon: const Icon(Icons.inventory_outlined,
               color: Color(0xFF3B82F6), size: 18),

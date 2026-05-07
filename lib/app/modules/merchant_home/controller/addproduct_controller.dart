@@ -1,4 +1,5 @@
 
+
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -324,7 +325,6 @@ class ProductController extends GetxController {
     }
   }
 
-  // ---------------- VALIDATION (only name, image, price mandatory) ----------------
   bool validateForm() {
     if (productName.value.trim().isEmpty) {
       AppSnackbar.warning("Product name is required");
@@ -342,6 +342,24 @@ class ProductController extends GetxController {
 
       if (variant.price == null || variant.price! <= 0) {
         AppSnackbar.warning("$label: Valid price is required");
+        return false;
+      }
+
+      // ← ADD: price digit count guard
+      final priceStr = variant.price!.toStringAsFixed(0);
+      if (priceStr.length > 10) {
+        AppSnackbar.warning("$label: Price cannot exceed 10 digits");
+        return false;
+      }
+
+      if (variant.stock == null || variant.stock! <= 0) {
+        AppSnackbar.warning("$label: Stock is required");
+        return false;
+      }
+
+      // ← ADD: stock digit count guard
+      if (variant.stock! > 999) {
+        AppSnackbar.warning("$label: Stock cannot exceed 999 (3 digits)");
         return false;
       }
 

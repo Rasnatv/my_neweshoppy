@@ -67,9 +67,6 @@ class AreaadminGettingEventController extends GetxController {
           allEvents.value = events;
           recentEvents.value = events.take(3).toList();
 
-        } else {
-          hasError(true);
-          errorMessage(data['message'] ?? 'No events found');
         }
 
       } else {

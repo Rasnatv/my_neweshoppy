@@ -1,4 +1,5 @@
 
+
 class UserOfferProductDetail {
   final int productId;
   final int offerId;       // ✅ NEW

@@ -433,137 +433,135 @@ class RestaurantBookingPage extends StatelessWidget {
     return "$weekday, ${d.day} ${months[d.month - 1]} ${d.year}";
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SUCCESS BOTTOM SHEET
-// ─────────────────────────────────────────────────────────────────────────────
 class _BookingSuccessSheet extends StatelessWidget {
   final int restaurantId;
   const _BookingSuccessSheet({required this.restaurantId});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 28, 24, 40),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 40,
-            height: 4,
-            margin: const EdgeInsets.only(bottom: 24),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade300,
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-
-          Container(
-            width: 88,
-            height: 88,
-            decoration: BoxDecoration(
-              color: Colors.green.shade50,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.green.withOpacity(0.22),
-                  blurRadius: 22,
-                  spreadRadius: 4,
-                ),
-              ],
-            ),
-            child: const Icon(Icons.check_circle_rounded,
-                color: Colors.green, size: 52),
-          ),
-
-          const SizedBox(height: 20),
-
-          const Text(
-            "Booking Confirmed!",
-            style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF2D2D2D)),
-          ),
-
-          const SizedBox(height: 10),
-
-          const Text(
-            "Your table booking has been saved successfully.",
-            textAlign: TextAlign.center,
-            style: TextStyle(
-                fontSize: 13, color: Colors.grey, height: 1.6),
-          ),
-
-          const SizedBox(height: 30),
-
-          // ✅ FIX 4: Go to Cart button — FinalCartController is already
-          // deleted before this sheet opened, so RestaurantFinalCart will
-          // create a fresh one and fetch latest data automatically.
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.restaurantclr,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
+    return PopScope(
+      canPop: false, // ✅ blocks Android back button
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(24, 28, 24, 40),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 24),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(10),
               ),
-              onPressed: () {
-                Get.back(); // close sheet
-                Get.off(() => RestaurantFinalCart());
-              },
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.shopping_cart_rounded,
-                      color: Colors.white, size: 20),
-                  SizedBox(width: 10),
-                  Text('Go to Cart',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700)),
+            ),
+
+            Container(
+              width: 88,
+              height: 88,
+              decoration: BoxDecoration(
+                color: Colors.green.shade50,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.green.withOpacity(0.22),
+                    blurRadius: 22,
+                    spreadRadius: 4,
+                  ),
                 ],
               ),
+              child: const Icon(Icons.check_circle_rounded,
+                  color: Colors.green, size: 52),
             ),
-          ),
 
-          const SizedBox(height: 12),
+            const SizedBox(height: 16),
 
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: OutlinedButton(
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.restaurantclr,
-                side: BorderSide(
-                    color: AppColors.restaurantclr.withOpacity(0.5),
-                    width: 1.4),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
-              ),
-              onPressed: () => Get.to(() => RestaurantListPage()),
-              child: const Text(
-                "Continue Browsing",
-                style:
-                TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            const Text(
+              "Table Reserved! 🎉",
+              style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2D2D2D)),
+            ),
+
+            const SizedBox(height: 8),
+
+            const Text(
+              "Your table is reserved.\nGo to cart → complete payment to confirm your booking.",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontSize: 13, color: Colors.grey, height: 1.6),
+            ),
+
+            const SizedBox(height: 30),
+
+            // ── Go to Cart ──────────────────────────────────────────
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.restaurantclr,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
+                ),
+                onPressed: () {
+                  Navigator.of(context).pop(); // ✅ close sheet
+                  Get.off(() => RestaurantFinalCart()); // ✅ go to cart
+                },
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.shopping_cart_rounded,
+                        color: Colors.white, size: 20),
+                    SizedBox(width: 10),
+                    Text('Go to Cart',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700)),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+
+            const SizedBox(height: 12),
+
+            // ── Continue Browsing ───────────────────────────────────
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.restaurantclr,
+                  side: BorderSide(
+                      color: AppColors.restaurantclr.withOpacity(0.5),
+                      width: 1.4),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
+                ),
+                onPressed: () {
+                  Navigator.of(context).pop(); // ✅ close sheet
+                  Get.off(() => RestaurantListPage()); // ✅ go to list
+                },
+                child: const Text(
+                  "Continue Browsing",
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
 // SECTION CARD
 // ─────────────────────────────────────────────────────────────────────────────
 class _SectionCard extends StatelessWidget {

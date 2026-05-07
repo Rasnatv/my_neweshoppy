@@ -7,7 +7,6 @@ import 'package:intl/intl.dart';
 import '../../../data/models/restaurantmaincartmodel.dart';
 import '../controller/restaurant_maincartcontroller.dart';
 
-// ── BINDINGS ──────────────────────────────────────────────────────────────────
 class FinalCartBinding extends Bindings {
   @override
   void dependencies() {
@@ -15,17 +14,12 @@ class FinalCartBinding extends Bindings {
   }
 }
 
-// ── MAIN PAGE ─────────────────────────────────────────────────────────────────
 class RestaurantFinalCart extends StatelessWidget {
   RestaurantFinalCart({super.key});
 
-  // ✅ FIX 1: Force delete old controller so onInit always runs fresh
-  final FinalCartController controller = () {
-    if (Get.isRegistered<FinalCartController>()) {
-      Get.delete<FinalCartController>(force: true);
-    }
-    return Get.put(FinalCartController());
-  }();
+  final FinalCartController controller = Get.isRegistered<FinalCartController>()
+      ? Get.find<FinalCartController>()
+      : Get.put(FinalCartController());
 
   static const _primary = Color(0xFF0F5151);
 

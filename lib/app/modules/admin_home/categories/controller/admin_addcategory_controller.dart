@@ -106,7 +106,6 @@ class AdminCategoryController extends GetxController {
         AppSnackbar.success(body["message"] ?? "Success");
         clearForm();
       } else {
-        /// ❌ USE API ERROR HANDLER
         if (response.statusCode != 201) {
           AppSnackbar.error(ApiErrorHandler.handleResponse(response));
         } else {

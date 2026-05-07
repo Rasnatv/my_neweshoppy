@@ -1,4 +1,5 @@
 
+
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -183,7 +184,7 @@ class AddOfferProductController extends GetxController {
     variants.clear();
     variantImagePaths.clear();
     variantValueController.clear();
-   // ← ADD
+    // ← ADD
   }
 
   bool hasVariantAttributes() {
@@ -381,8 +382,7 @@ class AddOfferProductController extends GetxController {
     return originalPrice - (originalPrice * discountPercentage / 100);
   }
 
-  // ── Validation ─────────────────────────────────────────────
-  // Common attributes are OPTIONAL — only variant fields are mandatory
+
   bool validateForm() {
     if (productName.value.trim().isEmpty) {
       AppSnackbar.warning("Product name is required");
@@ -396,20 +396,37 @@ class AddOfferProductController extends GetxController {
 
     // ✅ Variant attribute — at least one variant required
     if (variants.isEmpty) {
-      AppSnackbar.warning(
-          "Please generate at least one variant");
+      AppSnackbar.warning("Please generate at least one variant");
       return false;
     }
 
     for (int i = 0; i < variants.length; i++) {
       final variant = variants[i];
-      final label   =
-          "Variant ${i + 1} (${variant.getDisplayName()})";
+      final label = "Variant ${i + 1} (${variant.getDisplayName()})";
 
       if (variant.price == null || variant.price! <= 0) {
         AppSnackbar.warning("$label: Valid price is required");
         return false;
       }
+
+      // ✅ Price digit count guard (max 10 digits)
+      final priceStr = variant.price!.toStringAsFixed(0);
+      if (priceStr.length > 10) {
+        AppSnackbar.warning("$label: Price cannot exceed 10 digits");
+        return false;
+      }
+
+      if (variant.stock == null || variant.stock! <= 0) {
+        AppSnackbar.warning("$label: Stock is required");
+        return false;
+      }
+
+      // ✅ Stock digit count guard (max 3 digits → 999)
+      if (variant.stock! > 999) {
+        AppSnackbar.warning("$label: Stock cannot exceed 999 (3 digits)");
+        return false;
+      }
+
       if (variant.imagePath == null) {
         AppSnackbar.warning("$label: Image is required");
         return false;

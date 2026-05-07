@@ -294,11 +294,11 @@ class RestaurantBookingController extends GetxController {
         final parsed = ConfirmBookingResponse.fromJson(_safe(res.body));
         if (parsed.status == 1) {
           // ✅ Success
-          AppSnackbar.success(
-            parsed.message.isNotEmpty
-                ? parsed.message
-                : "Booking confirmed successfully!",
-          );
+          // AppSnackbar.success(
+          //   parsed.message.isNotEmpty
+          //       ? parsed.message
+          //       : "Booking confirmed successfully!",
+          // );
           currentSummary = null;
           return true;
         } else {

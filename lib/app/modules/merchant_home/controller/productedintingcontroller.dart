@@ -70,6 +70,8 @@ class merchantProductDetailController extends GetxController {
     'Content-Type': 'application/json',
     'Authorization': 'Bearer $_token',
   };
+
+  // ── Fetch product ─────────────────────────────────────────────────────────────
   Future<void> fetchProduct(int productId) async {
     try {
       isLoading(true);
@@ -87,7 +89,6 @@ class merchantProductDetailController extends GetxController {
       final json = jsonDecode(resp.body) as Map<String, dynamic>;
 
       if (json['status'] == true) {
-        // ── FIX: handle both List and Map from API ──
         final rawData = json['data'];
         final Map<String, dynamic> productMap = rawData is List
             ? rawData.first as Map<String, dynamic>
@@ -140,10 +141,54 @@ class merchantProductDetailController extends GetxController {
     }
   }
 
+  // ── Validate variant forms ────────────────────────────────────────────────────
+  bool validateVariantForms() {
+    for (int i = 0; i < variantForms.length; i++) {
+      final vf = variantForms[i];
+      final label = 'Variant ${i + 1}';
+
+      // ── Price validation ────────────────────────────────────────────────────
+      final priceText = vf.priceCtrl.text.trim();
+      final price = double.tryParse(priceText);
+
+      if (price == null || price <= 0) {
+        AppSnackbar.warning('$label: Valid price is required');
+        return false;
+      }
+
+      // Count only integer digits (ignore decimal point and sign)
+      final priceIntegerDigits =
+      priceText.split('.').first.replaceAll('-', '');
+      if (priceIntegerDigits.length > 10) {
+        AppSnackbar.warning('$label: Price cannot exceed 10 digits');
+        return false;
+      }
+
+      // ── Stock validation ────────────────────────────────────────────────────
+      final stockText = vf.stockCtrl.text.trim();
+      final stock = int.tryParse(stockText);
+
+      if (stock == null || stock <= 0) {
+        AppSnackbar.warning('$label: Stock is required');
+        return false;
+      }
+
+      if (stock > 999) {
+        AppSnackbar.warning('$label: Stock cannot exceed 999 (3 digits)');
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   // ── Update product ────────────────────────────────────────────────────────────
   Future<void> updateProduct() async {
     final p = product.value;
     if (p == null) return;
+
+    // ── Validate before hitting the API ──────────────────────────────────────
+    if (!validateVariantForms()) return;
 
     // Build variants payload (include base64 image only if new image picked)
     final List<Map<String, dynamic>> variantsPayload = [];
@@ -153,10 +198,7 @@ class merchantProductDetailController extends GetxController {
       if (file != null) {
         final bytes = await file.readAsBytes();
         final base64Str = base64Encode(bytes);
-        final ext = file.path
-            .split('.')
-            .last
-            .toLowerCase();
+        final ext = file.path.split('.').last.toLowerCase();
         map['image'] = 'data:image/$ext;base64,$base64Str';
       }
       variantsPayload.add(map);
@@ -192,7 +234,6 @@ class merchantProductDetailController extends GetxController {
       final json = jsonDecode(resp.body) as Map<String, dynamic>;
 
       if (json['status'] == true) {
-        // ── FIX: same guard here too ──
         final rawData = json['data'];
         final Map<String, dynamic> productMap = rawData is List
             ? rawData.first as Map<String, dynamic>
@@ -213,7 +254,8 @@ class merchantProductDetailController extends GetxController {
     } finally {
       isUpdating(false);
     }
-  }}
+  }
+}
 
 // ── Variant form-state helper ─────────────────────────────────────────────────
 class VariantForm {
@@ -232,29 +274,26 @@ class VariantForm {
     required Map<String, dynamic> attributes,
     required double price,
     required int stock,
-  })
-      : priceCtrl = TextEditingController(text: price.toStringAsFixed(2)),
+  })  : priceCtrl = TextEditingController(text: price.toStringAsFixed(2)),
         stockCtrl = TextEditingController(text: stock.toString()) {
     attributes.forEach((k, v) {
       attrCtrls[k] = TextEditingController(text: v.toString());
     });
   }
 
-  factory VariantForm.fromVariant(VariantModel v) =>
-      VariantForm(
-        id: v.id,
-        existingImageUrl: v.image,
-        attributes: v.attributes,
-        price: v.price,
-        stock: v.stock,
-      );
+  factory VariantForm.fromVariant(VariantModel v) => VariantForm(
+    id: v.id,
+    existingImageUrl: v.image,
+    attributes: v.attributes,
+    price: v.price,
+    stock: v.stock,
+  );
 
-  factory VariantForm.empty() =>
-      VariantForm(
-        attributes: {'size': '', 'color': ''},
-        price: 0,
-        stock: 0,
-      );
+  factory VariantForm.empty() => VariantForm(
+    attributes: {'size': '', 'color': ''},
+    price: 0,
+    stock: 0,
+  );
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> attrs = {};
@@ -269,8 +308,7 @@ class VariantForm {
   }
 
   void dispose() {
-    for (final c in attrCtrls.values)
-      c.dispose();
+    for (final c in attrCtrls.values) c.dispose();
     priceCtrl.dispose();
     stockCtrl.dispose();
   }

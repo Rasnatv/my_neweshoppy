@@ -29,11 +29,6 @@ class AreaAdminAdvertisementgetController extends GetxController {
 
       final String? token = box.read('auth_token');
 
-      if (token == null || token.isEmpty) {
-        Get.toNamed('/login');
-        return;
-      }
-
       final response = await http.get(
         Uri.parse(
           'https://eshoppy.co.in/api/area-admin/advertisements',
