@@ -344,6 +344,10 @@ class MerchantRegController extends GetxController {
         "password": passwordController.text.trim(),
         "phone_no_1": phoneNo1Controller.text.trim(),
         "phone_no_2": phoneNo2Controller.text.trim(),
+        "whatsapp_no": whatsappController.text.trim(),       // ✅ add
+        "facebook_link": facebookController.text.trim(),    // ✅ add
+        "instagram_link": instagramController.text.trim(),  // ✅ add
+        "website_link": websiteController.text.trim(),      // ✅ add
         "state": selectedState.value,
         "district": selectedDistrict.value,
         "main_location": selectedLocation.value,

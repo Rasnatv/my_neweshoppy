@@ -117,16 +117,6 @@ class CreateOfferController extends GetxController {
             ),
 
             ListTile(
-              leading: const Icon(Icons.photo_camera,
-                  color: Color(0xFF00BFA5)),
-              title: const Text('Camera',
-                  style: TextStyle(fontWeight: FontWeight.w600)),
-              onTap: () async {
-                Get.back();
-                await _pickFromSource(ImageSource.camera);
-              },
-            ),
-            ListTile(
               leading: const Icon(Icons.photo_library,
                   color: Color(0xFF00BFA5)),
               title: const Text('Gallery',

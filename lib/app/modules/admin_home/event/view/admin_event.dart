@@ -81,8 +81,27 @@ class AdminEventPage extends StatelessWidget {
                 return const Center(child: CircularProgressIndicator());
               }
               if (controller.filteredEvents.isEmpty) {
-                return const Center(child: Text("No events found"));
+                return Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.event_busy_rounded,
+                          size: 64, color: Colors.grey.shade300),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'No Events Found',
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey),
+                      ),
+                      const SizedBox(height: 8),
+
+                    ],
+                  ),
+                );
               }
+
               return ListView.builder(
                 padding: const EdgeInsets.all(16),
                 itemCount: controller.filteredEvents.length,

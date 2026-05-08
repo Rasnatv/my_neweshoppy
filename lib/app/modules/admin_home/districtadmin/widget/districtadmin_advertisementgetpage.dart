@@ -23,9 +23,26 @@ class DistrictAdminHomeAdvertisementWidget extends StatelessWidget {
       }
 
       if (controller.latestAds.isEmpty) {
-        return const SizedBox();
+        return  Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(height: 30,),
+              Icon(Icons.campaign_outlined,
+                  size: 60, color: Colors.grey.shade300),
+              SizedBox(height: 12),
+              Text(
+                'No Advertisements Found',
+                style: TextStyle(
+                  color: Color(0xFF9CA3AF),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        );
       }
-
       return ListView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),

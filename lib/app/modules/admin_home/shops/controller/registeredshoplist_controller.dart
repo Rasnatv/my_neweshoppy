@@ -17,10 +17,6 @@ class AdminShopController extends GetxController {
   final String apiUrl =
       'https://eshoppy.co.in/api/merc/reg/shop';
 
-
-  // ─────────────────────────────────────────────
-  // 🔐 HEADERS
-  // ─────────────────────────────────────────────
   Map<String, String> _headers() {
     final token = box.read('auth_token') ?? '';
 
@@ -30,18 +26,12 @@ class AdminShopController extends GetxController {
     };
   }
 
-  // ─────────────────────────────────────────────
-  // 🚀 INIT
-  // ─────────────────────────────────────────────
   @override
   void onInit() {
     super.onInit();
     fetchShops();
   }
 
-  // ─────────────────────────────────────────────
-  // 📦 FETCH SHOPS
-  // ─────────────────────────────────────────────
   Future<void> fetchShops() async {
 
     try {
@@ -80,6 +70,4 @@ class AdminShopController extends GetxController {
   Future<void> refreshShops() async {
     await fetchShops();
   }
-
-
 }

@@ -28,7 +28,25 @@ class HomeAdvertisementWidget extends StatelessWidget {
         );
       }
 
-      if (controller.latestAds.isEmpty) return const SizedBox();
+      if (controller.latestAds.isEmpty) return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.campaign_outlined,
+                size: 60, color: Colors.grey.shade300),
+            SizedBox(height: 12),
+            Text(
+              "No Advertisements Found",
+              style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey),
+            ),
+          ],
+        ),
+      );
+
+
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -59,6 +77,7 @@ class HomeAdvertisementWidget extends StatelessWidget {
       );
     });
   }
+
 
   void _confirmDelete(
       BuildContext context,
@@ -403,9 +422,6 @@ class _AdCardState extends State<AdCard> with SingleTickerProviderStateMixin {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// _ActionButton
-// ─────────────────────────────────────────────────────────────────────────────
 class _ActionButton extends StatefulWidget {
   final IconData icon;
   final Color color;
@@ -453,4 +469,5 @@ class _ActionButtonState extends State<_ActionButton> {
       ),
     );
   }
+
 }

@@ -271,4 +271,5 @@ class AreaAdminAddAdvertisementPage extends StatelessWidget {
       ),
     );
   }
+
 }

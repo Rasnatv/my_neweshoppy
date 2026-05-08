@@ -81,13 +81,25 @@ class RecentEventsWidget extends StatelessWidget {
       }
 
       if (controller.recentEvents.isEmpty) {
-        return const Center(
-          child: Padding(
-            padding: EdgeInsets.all(32),
-            child: Text(
-              'No events found',
-              style: TextStyle(color: Colors.grey, fontSize: 14),
-            ),
+        return
+         Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(height: 20,),
+              Icon(Icons.event_busy_rounded,
+                  size: 55, color: Colors.grey.shade300),
+              const SizedBox(height: 16),
+              const Text(
+                'No Events Found',
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey),
+              ),
+              const SizedBox(height: 8),
+
+            ],
           ),
         );
       }

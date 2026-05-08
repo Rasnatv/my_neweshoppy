@@ -67,15 +67,26 @@ class DistrictAdminRecentEventsWidget extends StatelessWidget {
       }
 
       if (controller.recentEvents.isEmpty) {
-        return const Center(
-          child: Padding(
-            padding: EdgeInsets.all(32),
-            child: Text(
-              'No events found',
-              style: TextStyle(color: Colors.grey, fontSize: 14),
+        return
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(height: 20,),
+                Icon(Icons.event_busy_rounded,
+                    size: 55, color: Colors.grey.shade300),
+                const SizedBox(height: 16),
+                const Text(
+                  'No Events Found',
+                  style: TextStyle(
+                    color: Color(0xFF9CA3AF),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),),
+                const SizedBox(height: 8),
+              ],
             ),
-          ),
-        );
+          );
       }
 
       return ListView.separated(
@@ -95,30 +106,6 @@ class DistrictAdminRecentEventsWidget extends StatelessWidget {
     });
   }
 
-  // void _confirmDelete(BuildContext context, DistrictAdminEventModel event) {
-  //   showDialog(
-  //     context: context,
-  //     builder: (_) => AlertDialog(
-  //       title: const Text('Delete Event'),
-  //       content: Text('Are you sure you want to delete "${event.eventName}"?'),
-  //       actions: [
-  //         TextButton(
-  //           onPressed: () => Navigator.pop(context),
-  //           child: const Text('Cancel'),
-  //         ),
-  //         TextButton(
-  //           onPressed: () {
-  //             Navigator.pop(context);
-  //             controller.deleteEvent(event.id);
-  //           },
-  //           child: const Text('Delete', style: TextStyle(color: Colors.red)),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
-  //
-  // // ✅ Navigate to update page, refresh list only when update succeeds
   void _confirmDelete(BuildContext context, DistrictAdminEventModel event) {
     showDialog(
       context: context,

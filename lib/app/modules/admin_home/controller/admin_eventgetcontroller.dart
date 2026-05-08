@@ -20,15 +20,6 @@ class AdminEventGetController extends GetxController {
       "https://eshoppy.co.in/api/get-all-events-admin-district";
 
   String get _token => box.read('auth_token')?.toString().trim() ?? '';
-
-  bool _checkAuth() {
-    if (_token.isEmpty) {
-      Get.offAllNamed('/login');
-      return false;
-    }
-    return true;
-  }
-
   @override
   void onInit() {
     super.onInit();
@@ -37,7 +28,7 @@ class AdminEventGetController extends GetxController {
 
   // ───────────────── FETCH EVENTS ─────────────────
   Future<void> fetchEvents() async {
-    if (!_checkAuth()) return;
+
 
     try {
       isLoading.value = true;
@@ -140,7 +131,6 @@ class AdminEventGetController extends GetxController {
 
   // ───────────────── DELETE EVENT ─────────────────
   Future<void> deleteEvent(int eventId) async {
-    if (!_checkAuth()) return;
 
     try {
       final response = await http.delete(

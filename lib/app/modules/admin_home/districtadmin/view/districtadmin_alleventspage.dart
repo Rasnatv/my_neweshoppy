@@ -116,10 +116,6 @@ class DistrictAdminAllEventsPage extends StatelessWidget {
                       color: Colors.grey),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Events you create will appear here.',
-                  style: TextStyle(fontSize: 13, color: Colors.grey),
-                ),
               ],
             ),
           );

@@ -50,12 +50,12 @@ class DistrictAdminAllAdvertisementsPage extends StatelessWidget {
         }
 
         if (controller.advertisementList.isEmpty) {
-          return const Center(
+          return  Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.campaign_outlined,
-                    size: 60, color: Color(0xFFB0BAF4)),
+                    size: 60, color: Colors.grey.shade300),
                 SizedBox(height: 12),
                 Text(
                   'No Advertisements Found',

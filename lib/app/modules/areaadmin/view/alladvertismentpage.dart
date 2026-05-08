@@ -46,7 +46,7 @@ class AreaAdminAllAdvertismentViewPage extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.campaign_outlined,
-                    size: 60, color: Color(0xFFB0BAF4)),
+                    size: 60, color: Colors.grey),
                 SizedBox(height: 12),
                 Text(
                   "No Advertisements Found",

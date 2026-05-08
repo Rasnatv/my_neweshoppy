@@ -202,7 +202,7 @@ class MerchantEventsPage extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 13),
                 decoration: BoxDecoration(
-                  color: _T.textPrimary,
+                  color: Colors.teal,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Row(
@@ -228,10 +228,6 @@ class MerchantEventsPage extends StatelessWidget {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Event Card
-// ─────────────────────────────────────────────────────────────────────────────
 class _EventCard extends StatelessWidget {
   final dynamic event;
   final int index;
@@ -566,10 +562,6 @@ class _LocationSection extends StatelessWidget {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Widgets
-// ─────────────────────────────────────────────────────────────────────────────
 
 /// Small date / time tag below the banner
 class _MetaTag extends StatelessWidget {
