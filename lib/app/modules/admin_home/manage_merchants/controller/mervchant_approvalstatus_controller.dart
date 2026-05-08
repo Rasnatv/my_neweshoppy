@@ -60,4 +60,47 @@ class AdminMerchantController extends GetxController {
       isLoading.value = false;
     }
   }
+
+  /// ---------------- DELETE MERCHANT ----------------
+  Future<void> deleteMerchant(int merchantId) async {
+    try {
+      isLoading.value = true;
+
+      final response = await http.delete(
+        Uri.parse(
+          "https://eshoppy.co.in/api/admin/delete-merchant",
+        ),
+        headers: {
+          ..._headers(),
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({
+          "merchant_id": merchantId,
+        }),
+      );
+
+      final body = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && body['status'] == true) {
+
+        // Remove deleted merchant from list
+        merchants.removeWhere((e) => e.id == merchantId);
+
+        AppSnackbar.success(
+          body['message'] ??
+              "Merchant deleted successfully",
+        );
+      } else {
+        AppSnackbar.error(
+          body['message'] ?? "Failed to delete merchant",
+        );
+      }
+    } catch (e) {
+      AppSnackbar.error(
+        ApiErrorHandler.handleException(e),
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
 }

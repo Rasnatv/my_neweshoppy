@@ -189,15 +189,6 @@ class UpdateAdvertisementController extends GetxController {
               ),
             ),
             ListTile(
-              leading: const Icon(Icons.photo_camera, color: Color(0xFF00BFA5)),
-              title: const Text('Camera',
-                  style: TextStyle(fontWeight: FontWeight.w600)),
-              onTap: () {
-                Get.back();
-                pickBannerImage(ImageSource.camera);
-              },
-            ),
-            ListTile(
               leading: const Icon(Icons.photo_library, color: Color(0xFF00BFA5)),
               title: const Text('Gallery',
                   style: TextStyle(fontWeight: FontWeight.w600)),
@@ -259,7 +250,8 @@ class UpdateAdvertisementController extends GetxController {
 
         // ✅ Wait for snackbar to appear, then go back
         await Future.delayed(const Duration(seconds: 2));
-        Get.back();
+        Get.close(1);
+        // Get.back();
       } else {
         errorMessage.value = adResponse.message.isNotEmpty
             ? adResponse.message

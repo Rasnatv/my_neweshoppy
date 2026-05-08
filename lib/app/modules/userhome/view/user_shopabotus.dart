@@ -168,9 +168,11 @@ class MerchantAboutPage extends StatelessWidget {
           _SocialTile(
             iconWidget: _SocialIcon.website(),
             platform: "Website",
-            value: about.website,
+            // ✅ Display: strips http:// or https:// → shows "example.com"
+            value: _stripHttps(about.website),
             accentColor: const Color(0xFF5C6BC0),
             bgColor: const Color(0xFFEDE7F6),
+            // ✅ Launch: uses full URL with https:// prefix
             onTap: () => _launchUrl(_formatUrl(about.website)),
           ),
         if (about.whatsapp.isNotEmpty)
@@ -186,7 +188,7 @@ class MerchantAboutPage extends StatelessWidget {
           _SocialTile(
             iconWidget: _FacebookIcon(size: 22),
             platform: "Facebook",
-            value: about.facebook,
+            value: _stripHttps(about.facebook),  // ✅ Clean display
             accentColor: const Color(0xFF1877F2),
             bgColor: const Color(0xFFE3F2FD),
             onTap: () => _launchUrl(_formatUrl(about.facebook)),
@@ -195,13 +197,21 @@ class MerchantAboutPage extends StatelessWidget {
           _SocialTile(
             iconWidget: _InstagramIcon(size: 22),
             platform: "Instagram",
-            value: about.instagram,
+            value: _stripHttps(about.instagram),  // ✅ Clean display
             accentColor: const Color(0xFFE1306C),
             bgColor: const Color(0xFFFCE4EC),
             onTap: () => _launchUrl(_formatUrl(about.instagram)),
           ),
       ],
     );
+  }
+
+  /// ✅ NEW: Strips http:// or https:// and trailing slash for clean UI display.
+  /// e.g. "https://example.com/" → "example.com"
+  String _stripHttps(String url) {
+    return url
+        .replaceFirst(RegExp(r'^https?://'), '')
+        .replaceFirst(RegExp(r'/$'), '');
   }
 
   String _formatUrl(String url) {
@@ -512,7 +522,6 @@ class _WhatsAppPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     final phonePath = Path();
-    // Simplified phone handset path centered in icon
     phonePath.moveTo(9.0 * scale, 5.5 * scale);
     phonePath.cubicTo(8.5 * scale, 5.5 * scale, 7.5 * scale, 5.9 * scale, 7.0 * scale, 7.0 * scale);
     phonePath.cubicTo(6.5 * scale, 8.1 * scale, 6.6 * scale, 9.8 * scale, 7.8 * scale, 11.5 * scale);

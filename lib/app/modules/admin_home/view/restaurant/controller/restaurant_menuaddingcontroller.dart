@@ -198,13 +198,50 @@ class RestaurantmenuController extends GetxController {
   }
 
   // ==================== FOOD ITEM FORM ====================
+  //
+  // Future<void> submitFoodItem(MealType mealType) async {
+  //   final price = double.tryParse(foodPriceCtrls[mealType]!.text.trim());
+  //   if (foodNameCtrls[mealType]!.text.trim().isEmpty || price == null) {
+  //     AppSnackbar.warning('Please enter food name and valid price');
+  //     return;
+  //   }
+  //   await addFoodItem(
+  //     mealType,
+  //     FoodItem(
+  //       name:        foodNameCtrls[mealType]!.text.trim(),
+  //       price:       price,
+  //       imageFile:   pickedImages[mealType]?.value,
+  //       description: descriptionCtrls[mealType]!.text.trim(),
+  //     ),
+  //   );
+  //   clearFoodForm(mealType);
+  // }
+  // ==================== FOOD ITEM FORM ====================
 
   Future<void> submitFoodItem(MealType mealType) async {
-    final price = double.tryParse(foodPriceCtrls[mealType]!.text.trim());
-    if (foodNameCtrls[mealType]!.text.trim().isEmpty || price == null) {
-      AppSnackbar.warning('Please enter food name and valid price');
+    final rawPrice = foodPriceCtrls[mealType]!.text.trim();
+    final price    = double.tryParse(rawPrice);
+
+    // ── Validation ──────────────────────────────────────────────────────
+    if (foodNameCtrls[mealType]!.text.trim().isEmpty) {
+      AppSnackbar.warning('Please enter the food name');
       return;
     }
+    if (rawPrice.isEmpty || price == null) {
+      AppSnackbar.warning('Please enter a valid price');
+      return;
+    }
+    if (price <= 0) {
+      AppSnackbar.warning('Price must be greater than 0');
+      return;
+    }
+    // Integer part must not exceed 10 digits
+    final intPart = rawPrice.split('.').first;
+    if (intPart.length > 10) {
+      AppSnackbar.warning('Price cannot exceed 10 digits');
+      return;
+    }
+
     await addFoodItem(
       mealType,
       FoodItem(

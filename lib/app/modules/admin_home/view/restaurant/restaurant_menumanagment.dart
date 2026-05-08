@@ -7,7 +7,6 @@ import '../../../../data/models/adminretaurant_menumodel.dart';
 import '../admin_home.dart';
 import 'controller/restaurant_menuaddingcontroller.dart';
 
-// ─── Meal Helpers ─────────────────────────────────────────────────────────────
 Color _mealColor(MealType m) {
   switch (m) {
     case MealType.breakfast: return const Color(0xFFE07B00);

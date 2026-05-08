@@ -342,12 +342,11 @@ class _EventCard extends StatelessWidget {
           right: 12,
           child: Row(
             children: [
-              // Edit
               GestureDetector(
-                onTap: () => Get.to(
+                onTap: () => Get.off(
                       () => EventUpdatePage(),
                   arguments: {'event_id': event.id},
-                )?.then((_) => onRefresh()),
+                ),
                 child: _ImageActionBtn(icon: Icons.edit_outlined),
               ),
               const SizedBox(width: 8),

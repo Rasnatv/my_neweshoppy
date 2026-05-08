@@ -304,7 +304,7 @@ class MyAdvertisements extends StatelessWidget {
                   onTap: () => Get.to(
                         () => const UpdateAdvertisementPage(),
                     arguments: {'advertisement_id': ad['id']},
-                  )?.then((_) => controller.fetchAdvertisements()),
+                   )?.then((_) => controller.fetchAdvertisements()),
                   child: Container(
                     padding: const EdgeInsets.all(7),
                     decoration: BoxDecoration(

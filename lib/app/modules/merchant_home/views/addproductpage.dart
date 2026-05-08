@@ -1127,7 +1127,7 @@ class AddProductPage extends StatelessWidget {
             borderRadius: BorderRadius.circular(16)),
         title: Row(children: const [
           Icon(Icons.warning_amber_rounded,
-              color: Color(0xFFEF4444)),
+              color: Colors.teal),
           SizedBox(width: 12),
           Text("Reset Configuration?"),
         ]),
@@ -1145,7 +1145,7 @@ class AddProductPage extends StatelessWidget {
               Navigator.of(context).pop();
             },
             style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFEF4444)),
+                backgroundColor: Colors.teal),
             child: const Text("Reset"),
           ),
         ],
@@ -1161,7 +1161,7 @@ class AddProductPage extends StatelessWidget {
             borderRadius: BorderRadius.circular(16)),
         title: Row(children: const [
           Icon(Icons.warning_amber_rounded,
-              color: Color(0xFFEF4444)),
+              color: Colors.teal),
           SizedBox(width: 12),
           Text("Clear All Variants?"),
         ]),
@@ -1180,7 +1180,7 @@ class AddProductPage extends StatelessWidget {
               AppSnackbar.success("All variants have been removed");
             },
             style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFEF4444)),
+                backgroundColor: Colors.teal),
             child: const Text("Clear All"),
           ),
         ],
@@ -1196,7 +1196,7 @@ class AddProductPage extends StatelessWidget {
             borderRadius: BorderRadius.circular(16)),
         title: Row(children: const [
           Icon(Icons.warning_amber_rounded,
-              color: Color(0xFFEF4444)),
+              color: Colors.teal),
           SizedBox(width: 12),
           Text("Remove Variant?"),
         ]),
@@ -1214,7 +1214,7 @@ class AddProductPage extends StatelessWidget {
               Navigator.of(context).pop();
             },
             style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFEF4444)),
+                backgroundColor: Colors.teal),
             child: const Text("Remove"),
           ),
         ],

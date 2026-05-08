@@ -245,6 +245,7 @@ class merchantProductDetailController extends GetxController {
         AppSnackbar.success(json['message'] ?? 'Product updated successfully');
         Get.back(result: true);
         Get.delete<ManageproductController>();
+        Get.close(1);
         Get.offNamed('/manageproduct');
       } else {
         AppSnackbar.error(json['message'] ?? 'Update failed');

@@ -265,6 +265,7 @@ class OfferProductDetailController extends GetxController {
           _patchParentController();
           await Future.delayed(const Duration(milliseconds: 800));
           Get.off(MerchantOfferViewPage());
+          Get.close(1);
           // Get.back();
         } else {
           AppSnackbar.warning(body['message'] ?? 'Update failed');
