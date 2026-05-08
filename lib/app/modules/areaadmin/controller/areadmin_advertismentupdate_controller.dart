@@ -9,7 +9,6 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
 import '../../../data/models/areaadmin_updateadvertismentmodel.dart';
-import '../../../widgets/areaadminsuccesswidget.dart';
 import '../../merchantlogin/widget/successwidget.dart';
 import '../view/area_adminhome.dart';
 import '../../../data/errors/api_error.dart';

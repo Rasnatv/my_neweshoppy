@@ -957,9 +957,6 @@ class _LoadingView extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-// Error View
-// ─────────────────────────────────────────────
 class _ErrorView extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;

@@ -7,7 +7,6 @@ import 'package:http/http.dart' as http;
 
 import '../../../data/models/area_admin_advertismentgetmodel.dart';
 import '../../../data/errors/api_error.dart';
-import '../../../widgets/areaadminsuccesswidget.dart';
 import '../../merchantlogin/widget/successwidget.dart';
 
 class AreaAdminAdvertisementgetController extends GetxController {

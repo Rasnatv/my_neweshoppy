@@ -53,41 +53,6 @@ class PurchasedProductController extends GetxController {
     fetchPurchasedProducts(userId);
   }
 
-  // Future<void> fetchPurchasedProducts(int userId) async {
-  //   try {
-  //     isLoading.value = true;
-  //     errorMessage.value = '';
-  //     orders.clear();
-  //
-  //     final response = await http.post(
-  //       Uri.parse(_url),
-  //       headers: _headers,
-  //       body: jsonEncode({'user_id': userId}),
-  //     );
-  //
-  //     if (response.statusCode != 200) {
-  //       final error = ApiErrorHandler.handleResponse(response);
-  //       errorMessage.value = error;
-  //       AppSnackbar.error(error);
-  //       return;
-  //     }
-  //
-  //     final body = jsonDecode(response.body);
-  //
-  //     if (body['status'] == true || body['status'] == 1) {
-  //       final model = PurchasedProductModel.fromJson(body);
-  //       orders.assignAll(model.data);
-  //     }
-  //     // No else — empty state UI handles the no-orders case silently
-  //
-  //   } catch (e) {
-  //     final error = ApiErrorHandler.handleException(e);
-  //     errorMessage.value = error;
-  //     AppSnackbar.error(error);
-  //   } finally {
-  //     isLoading.value = false;
-  //   }
-  // }
   Future<void> fetchPurchasedProducts(int userId) async {
     try {
       isLoading.value = true;

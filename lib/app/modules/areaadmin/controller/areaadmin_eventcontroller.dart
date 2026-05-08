@@ -10,7 +10,6 @@ import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../data/errors/api_error.dart';
-import '../../../widgets/areaadminsuccesswidget.dart';
 import '../../merchantlogin/widget/successwidget.dart';
 import '../view/area_adminhome.dart';
 

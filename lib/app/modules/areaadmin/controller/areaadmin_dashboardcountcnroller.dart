@@ -5,7 +5,6 @@ import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../data/errors/api_error.dart';
-import '../../../widgets/areaadminsuccesswidget.dart';
 import '../../merchantlogin/widget/successwidget.dart';
 
 class AreaAdminDashboardController extends GetxController {

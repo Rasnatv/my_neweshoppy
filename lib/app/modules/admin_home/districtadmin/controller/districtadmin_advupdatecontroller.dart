@@ -8,7 +8,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../../data/errors/api_error.dart';
-import '../../../../widgets/areaadminsuccesswidget.dart';
 
 import '../../../merchantlogin/widget/successwidget.dart';
 import '../view/districtadmin_home.dart';

@@ -6,7 +6,6 @@ import 'package:get/get.dart';
 import '../../../../common/style/app_colors.dart';
 import '../../../../common/style/app_text_style.dart';
 import '../../../../common/utils/validators.dart';
-import '../../../../widgets/areaadminsuccesswidget.dart';
 import '../../../merchantlogin/widget/successwidget.dart';
 import '../controller/districtadmin_addeventcontroller.dart';
 

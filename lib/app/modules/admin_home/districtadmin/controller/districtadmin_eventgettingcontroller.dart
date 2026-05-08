@@ -6,7 +6,6 @@ import 'package:http/http.dart' as http;
 
 import '../../../../data/errors/api_error.dart';
 import '../../../../data/models/districtadmineventmodel.dart';
-import '../../../../widgets/areaadminsuccesswidget.dart';
 import '../../../merchantlogin/widget/successwidget.dart';
 
 

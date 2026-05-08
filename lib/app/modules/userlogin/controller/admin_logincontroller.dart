@@ -4,8 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
-
-import '../../../widgets/areaadminsuccesswidget.dart';
 import '../../admin_home/districtadmin/view/districtadmin_home.dart';
 import '../../admin_home/view/admin_home.dart';
 import '../../areaadmin/view/area_adminhome.dart';

@@ -23,10 +23,6 @@ import 'all_offers.dart';
 const kPurplePrimary = Color(0xFF00796B);
 const kPurpleMid     = Color(0xFF00796B);
 const kPurpleLight   = Color(0xFF00796B);
-
-// ─────────────────────────────────────────────
-//  SHIMMER BOX
-// ─────────────────────────────────────────────
 class ShimmerBox extends StatefulWidget {
   final double width;
   final double height;
@@ -248,9 +244,6 @@ class HomeShimmerSkeleton extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-//  MAIN HOME PAGE
-// ─────────────────────────────────────────────
 class Userhome extends StatefulWidget {
   const Userhome({super.key});
 
@@ -531,9 +524,6 @@ class _UserhomeState extends State<Userhome> with TickerProviderStateMixin {
   }
 }
 
-// ─────────────────────────────────────────────
-//  HEADER
-// ─────────────────────────────────────────────
 class _PurpleHeader extends StatelessWidget {
   final UserLocationController locationController;
   final CartController cartController;

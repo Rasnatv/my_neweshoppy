@@ -929,9 +929,6 @@ class _TimeSlotsWidget extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TABLES WIDGET
-// ─────────────────────────────────────────────────────────────────────────────
 class _TablesWidget extends StatelessWidget {
   final int index;
   final RestaurantBookingController controller;

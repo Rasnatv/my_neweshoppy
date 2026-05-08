@@ -342,6 +342,4 @@ class OfferProductScreen extends StatelessWidget {
       ),
     );
   }
-
-// ═══════════════════════════ EMPTY ═══════════════════════════
 }

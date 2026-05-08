@@ -174,12 +174,6 @@ class AddEventPage extends StatelessWidget {
       ),
     ));
   }
-
-  // ─────────────────────────────────────────────────────────
-  // DATE / TIME PICKER WRAPPERS
-  // Each returns a Column: [tile] + optional inline error text
-  // ─────────────────────────────────────────────────────────
-
   Widget _buildStartDatePicker(BuildContext context) {
     return Obx(() => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -391,9 +385,6 @@ class AddEventPage extends StatelessWidget {
     });
   }
 
-  // ─────────────────────────────────────────────────────────
-  // BANNER  (fixed 16:9 ratio, matches home card)
-  // ─────────────────────────────────────────────────────────
   Widget _buildBanner() {
     return Obx(() => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -519,12 +510,6 @@ class AddEventPage extends StatelessWidget {
     );
   }
 
-  // ─────────────────────────────────────────────────────────
-  // SHARED UI COMPONENTS
-  // ─────────────────────────────────────────────────────────
-
-  /// Small red error text — shown inline under a field.
-  /// Renders nothing when [error] is null.
   Widget _inlineError(String? error) {
     if (error == null) return const SizedBox.shrink();
     return Padding(

@@ -96,7 +96,5 @@ class AddressListController extends GetxController {
 
     AppSnackbar.success('Delivering to ${addr.fullName}\'s address.');
 
-    // Navigate to payment — replace with your actual route
-    // Get.to(() => PaymentPage());
   }
 }

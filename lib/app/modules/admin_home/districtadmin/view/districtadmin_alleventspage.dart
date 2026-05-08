@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 
 import '../../../../common/style/app_colors.dart';
 import '../../../../data/models/districtadmineventmodel.dart';
-import '../../../../widgets/areaadminsuccesswidget.dart';
+
 import '../../../merchantlogin/widget/successwidget.dart';
 import '../controller/districtadmin_eventgettingcontroller.dart';
 import '../widget/recent_eventwidget.dart';

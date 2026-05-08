@@ -27,8 +27,6 @@ class _UpdateOfferProductPageState extends State<UpdateOfferProductPage> {
   final Map<int, TextEditingController> _priceControllers = {};
   final Map<int, TextEditingController> _stockControllers = {};
 
-  // ✅ FIX: Cache read-only attribute controllers so they are not
-  // recreated on every rebuild (which leaks TextEditingControllers).
   final Map<String, TextEditingController> _readOnlyAttrControllers = {};
 
   int _lastVariantCount = 0;
@@ -312,11 +310,6 @@ class _UpdateOfferProductPageState extends State<UpdateOfferProductPage> {
       ),
     );
   }
-
-  // ── Variants Section ───────────────────────────────────────────
-  // ✅ FIX: This Obx only rebuilds when variants list length/identity
-  // changes (add/remove). Price edits no longer trigger this rebuild
-  // because updateVariantPrice() no longer calls variants.refresh().
   Widget _buildVariantsSection() {
     return Obx(() {
       if (controller.variants.isEmpty) return const SizedBox.shrink();
@@ -429,9 +422,6 @@ class _UpdateOfferProductPageState extends State<UpdateOfferProductPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ✅ FIX: Pass variantIndex to _buildReadOnlyAttr
-                      // so controllers are keyed per variant, not just
-                      // per attribute name (which collides across variants).
                       if (attrs.isNotEmpty)
                         ...attrs.entries.map((e) => Padding(
                           padding: const EdgeInsets.only(bottom: 10),
@@ -754,8 +744,6 @@ class _UpdateOfferProductPageState extends State<UpdateOfferProductPage> {
     );
   }
 }
-
-// ─── Card wrapper ──────────────────────────────────────────────────────────
 class _Card extends StatelessWidget {
   final Widget child;
   const _Card({required this.child});

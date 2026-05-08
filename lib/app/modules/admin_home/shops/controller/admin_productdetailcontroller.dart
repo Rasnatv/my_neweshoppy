@@ -25,17 +25,6 @@ class mAdminProductDetailController extends GetxController {
   static const String _authTokenKey = 'auth_token';
   static const String authTokenKey = _authTokenKey;
 
-  /// ✅ AUTH CHECK (EMPTY TOKEN)
-  // bool _checkAuth() {
-  //   final token = box.read(_authTokenKey);
-  //
-  //   if (token == null || token.toString().isEmpty) {
-  //     Get.offAllNamed('/login');
-  //     return false;
-  //   }
-  //   return true;
-  // }
-
   String? get authToken => box.read<String>(_authTokenKey);
 
   void saveAuthToken(String token) {
