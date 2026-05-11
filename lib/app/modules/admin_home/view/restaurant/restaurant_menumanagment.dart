@@ -1,9 +1,11 @@
 
 import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../../common/style/app_colors.dart';
 import '../../../../data/models/adminretaurant_menumodel.dart';
+import '../../../merchantlogin/widget/successwidget.dart';
 import '../admin_home.dart';
 import 'controller/restaurant_menuaddingcontroller.dart';
 
@@ -35,24 +37,28 @@ class MenuManagementPage extends StatelessWidget {
 
     return DefaultTabController(
       length: 3,
-      child: NetworkAwareWrapper(child: Scaffold(
-        backgroundColor: Colors.grey.shade50,
-        appBar: _buildAppBar(),
-        body: TabBarView(
-          children: [
-            _buildTablesTab(context),
-            _buildTimingsTab(context),
-            _buildMenuTab(context),
-          ],
+      child: NetworkAwareWrapper(
+        child: Scaffold(
+          backgroundColor: Colors.grey.shade50,
+          appBar: _buildAppBar(),
+          body: TabBarView(
+            // Disable swipe so locked tabs cannot be swiped into
+            physics: const NeverScrollableScrollPhysics(),
+            children: [
+              _buildTablesTab(context),
+              _buildTimingsTab(context),
+              _buildMenuTab(context),
+            ],
+          ),
         ),
       ),
-    ));
+    );
   }
 
   // ── AppBar ──────────────────────────────────────────────────────────────────
   PreferredSizeWidget _buildAppBar() => AppBar(
     automaticallyImplyLeading: true,
-    iconTheme: IconThemeData(color: Colors.white),
+    iconTheme: const IconThemeData(color: Colors.white),
     backgroundColor: AppColors.kPrimary,
     elevation: 0,
     title: const Text(
@@ -83,27 +89,91 @@ class MenuManagementPage extends StatelessWidget {
           ),
         );
       }),
-      IconButton(onPressed: ()=>Get.offAll(()=> AdminDashboard()), icon:Icon(Icons.home)
-      )],
+      IconButton(
+        onPressed: () => Get.offAll(() => AdminDashboard()),
+        icon: const Icon(Icons.home),
+      ),
+    ],
     bottom: PreferredSize(
       preferredSize: const Size.fromHeight(56),
       child: Container(
         color: AppColors.kPrimary,
-        child: const TabBar(
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white60,
-          indicatorColor: Colors.white,
-          indicatorWeight: 3,
-          labelStyle: TextStyle(
-              fontSize: 13, fontWeight: FontWeight.w700, letterSpacing: 0.8),
-          unselectedLabelStyle:
-          TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-          tabs: [
-            Tab(icon: Icon(Icons.table_restaurant_outlined, size: 18), text: 'TABLES'),
-            Tab(icon: Icon(Icons.schedule_outlined, size: 18), text: 'TIMINGS'),
-            Tab(icon: Icon(Icons.menu_book_outlined, size: 18), text: 'MENU'),
-          ],
-        ),
+        child: Obx(() {
+          final hasTable  = c.tableTypes.isNotEmpty;
+          final hasTiming = c.timeSlots.isNotEmpty;
+          return TabBar(
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white60,
+            indicatorColor: Colors.white,
+            indicatorWeight: 3,
+            labelStyle: const TextStyle(
+                fontSize: 13, fontWeight: FontWeight.w700, letterSpacing: 0.8),
+            unselectedLabelStyle:
+            const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+            // Tap on locked tabs shows a snackbar instead of navigating
+            onTap: (index) {
+              if (index == 1 && !hasTable) {
+                AppSnackbar.warning('Please add at least one table first');
+                // Jump back to tab 0
+                DefaultTabController.of(Get.context!)?.animateTo(0);
+              } else if (index == 2 && !hasTiming) {
+                AppSnackbar.warning('Please add meal timings first');
+                DefaultTabController.of(Get.context!)
+                    ?.animateTo(hasTable ? 1 : 0);
+              }
+            },
+            tabs: [
+              const Tab(
+                icon: Icon(Icons.table_restaurant_outlined, size: 18),
+                text: 'TABLES',
+              ),
+              Tab(
+                icon: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    const Icon(Icons.schedule_outlined, size: 18),
+                    if (!hasTable)
+                      Positioned(
+                        right: -4,
+                        top: -4,
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: Colors.orange,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                text: 'TIMINGS',
+              ),
+              Tab(
+                icon: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    const Icon(Icons.menu_book_outlined, size: 18),
+                    if (!hasTiming)
+                      Positioned(
+                        right: -4,
+                        top: -4,
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: Colors.orange,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                text: 'MENU',
+              ),
+            ],
+          );
+        }),
       ),
     ),
   );
@@ -242,7 +312,7 @@ class MenuManagementPage extends StatelessWidget {
   );
 
   // ══════════════════════════════════════════════════════════════════════════
-  // TAB 2 — TIMINGS
+  // TAB 2 — TIMINGS  (locked until at least 1 table exists)
   // ══════════════════════════════════════════════════════════════════════════
   Widget _buildTimingsTab(BuildContext context) {
     Future<void> pickTime(TextEditingController ctrl) async {
@@ -267,289 +337,479 @@ class MenuManagementPage extends StatelessWidget {
       }
     }
 
-    return SingleChildScrollView(
-      child: Column(children: [
-        _gradientStrip(),
-        Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    return Obx(() {
+      final hasTable = c.tableTypes.isNotEmpty;
 
-            // Info banner
-            Container(
-              margin: const EdgeInsets.only(bottom: 20),
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: AppColors.kPrimary.withOpacity(0.06),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                    color: AppColors.kPrimary.withOpacity(0.2)),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.info_outline_rounded,
-                      color: AppColors.kPrimary, size: 18),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Each meal period can only have one time slot. '
-                          'To change a saved slot, delete it first using the × button.',
-                      style: TextStyle(
-                          color: AppColors.kPrimary,
-                          fontSize: 12,
-                          height: 1.5),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+      if (!hasTable) {
+        return _lockedTab(
+          icon: Icons.table_restaurant_outlined,
+          title: 'Tables Required',
+          subtitle: 'Please add at least one table type\nbefore setting up meal timings.',
+          actionLabel: 'Go to Tables',
+          onAction: () =>
+              DefaultTabController.of(context)?.animateTo(0),
+        );
+      }
 
-            // Add Timing Form
-            _buildCard(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                _sectionHeader(
-                  icon: Icons.alarm_add_outlined,
-                  title: 'Schedule Meal Slots',
-                  subtitle: 'Define service windows for each meal period',
+      return SingleChildScrollView(
+        child: Column(children: [
+          _gradientStrip(),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+
+              // Info banner
+              Container(
+                margin: const EdgeInsets.only(bottom: 20),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.kPrimary.withOpacity(0.06),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                      color: AppColors.kPrimary.withOpacity(0.2)),
                 ),
-                const SizedBox(height: 20),
-                Obx(() => _modernDropdown<MealType>(
-                  label: 'Meal Period',
-                  icon: Icons.restaurant_outlined,
-                  value: c.selectedMealType.value,
-                  items: MealType.values,
-                  itemLabel: (m) => m.name.capitalizeFirst!,
-                  onChanged: (v) => c.selectedMealType.value = v!,
-                )),
-                const SizedBox(height: 16),
-                Row(children: [
-                  Expanded(child: _pickerTextField(
-                    controller: c.startCtrl,
-                    label: 'Start Time',
-                    icon: Icons.access_time_outlined,
-                    onTap: () => pickTime(c.startCtrl),
-                  )),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    child: Icon(Icons.arrow_forward_rounded,
-                        color: Colors.grey.shade400, size: 18),
-                  ),
-                  Expanded(child: _pickerTextField(
-                    controller: c.endCtrl,
-                    label: 'End Time',
-                    icon: Icons.access_time_rounded,
-                    onTap: () => pickTime(c.endCtrl),
-                  )),
-                ]),
-                const SizedBox(height: 16),
-
-                // ── BREAK DURATION FIELD (editable number input) ──
-                _modernTextField(
-                  controller: c.breakDurationCtrl,
-                  label: 'Break Duration (mins)',
-                  hint: 'e.g. 20',
-                  icon: Icons.coffee_outlined,
-                  type: TextInputType.number,
-                ),
-
-                const SizedBox(height: 16),
-
-                // Queue button
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.kPrimary,
-                      side: BorderSide(
-                          color: AppColors.kPrimary, width: 1.5),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                    icon: const Icon(Icons.add_alarm_rounded, size: 18),
-                    label: const Text('Queue Slot',
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.info_outline_rounded,
+                        color: AppColors.kPrimary, size: 18),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Each meal period can only have one time slot. '
+                            'To change a saved slot, delete it first using the × button.',
                         style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.5)),
-                    onPressed: c.addToPendingSlots,
+                            color: AppColors.kPrimary,
+                            fontSize: 12,
+                            height: 1.5),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Add Timing Form
+              _buildCard(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  _sectionHeader(
+                    icon: Icons.alarm_add_outlined,
+                    title: 'Schedule Meal Slots',
+                    subtitle: 'Define service windows for each meal period',
                   ),
-                ),
-
-                // Pending queue
-                Obx(() {
-                  final total = c.pendingSlots.values
-                      .fold(0, (s, e) => s + e.length);
-                  if (total == 0) return const SizedBox();
-                  return Container(
-                    margin: const EdgeInsets.only(top: 16),
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.shade50,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                          color: Colors.orange.shade200),
+                  const SizedBox(height: 20),
+                  Obx(() => _modernDropdown<MealType>(
+                    label: 'Meal Period',
+                    icon: Icons.restaurant_outlined,
+                    value: c.selectedMealType.value,
+                    items: MealType.values,
+                    itemLabel: (m) => m.name.capitalizeFirst!,
+                    onChanged: (v) => c.selectedMealType.value = v!,
+                  )),
+                  const SizedBox(height: 16),
+                  Row(children: [
+                    Expanded(child: _pickerTextField(
+                      controller: c.startCtrl,
+                      label: 'Start Time',
+                      icon: Icons.access_time_outlined,
+                      onTap: () => pickTime(c.startCtrl),
+                    )),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Icon(Icons.arrow_forward_rounded,
+                          color: Colors.grey.shade400, size: 18),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(children: [
-                          Icon(Icons.pending_actions,
-                              color: Colors.orange.shade700, size: 18),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text('$total slot(s) queued',
-                                style: TextStyle(
-                                    color: Colors.orange.shade800,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600)),
-                          ),
-                          GestureDetector(
-                            onTap: () => c.pendingSlots.clear(),
-                            child: Text('Clear all',
-                                style: TextStyle(
-                                    color: Colors.red.shade400,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600)),
-                          ),
-                        ]),
-                        const SizedBox(height: 8),
-                        ...c.pendingSlots.entries.map((entry) =>
-                            Column(children: entry.value.map((slot) =>
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 4),
-                                  child: Row(children: [
-                                    Icon(_mealIcon(entry.key),
-                                        size: 14,
-                                        color: _mealColor(entry.key)),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        '${entry.key.name.capitalizeFirst}: '
-                                            '${slot.startTime} → ${slot.endTime}'
-                                            '${slot.breakDuration > 0 ? '  (${slot.breakDuration} min break)' : ''}',
-                                        style: const TextStyle(
-                                            fontSize: 12,
-                                            color: Color(0xFF5C6080)),
-                                      ),
-                                    ),
-                                  ]),
-                                )).toList())),
-                      ],
+                    Expanded(child: _pickerTextField(
+                      controller: c.endCtrl,
+                      label: 'End Time',
+                      icon: Icons.access_time_rounded,
+                      onTap: () => pickTime(c.endCtrl),
+                    )),
+                  ]),
+                  const SizedBox(height: 16),
+
+                  // ── BREAK DURATION — max 2 digits ──
+                  _modernTextField(
+                    controller: c.breakDurationCtrl,
+                    label: 'Break Duration (mins)',
+                    hint: 'e.g. 20',
+                    icon: Icons.coffee_outlined,
+                    type: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(2), // max 2 digits
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Queue button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.kPrimary,
+                        side: BorderSide(
+                            color: AppColors.kPrimary, width: 1.5),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                      icon: const Icon(Icons.add_alarm_rounded, size: 18),
+                      label: const Text('Queue Slot',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5)),
+                      onPressed: c.addToPendingSlots,
                     ),
-                  );
-                }),
+                  ),
 
-                const SizedBox(height: 20),
-                Obx(() => _primaryBtn(
-                  label: 'Save Timings',
-                  icon: Icons.save_rounded,
-                  loading: c.isAddingTimings.value,
-                  onPressed: c.isAddingTimings.value || c.pendingSlots.isEmpty
-                      ? null
-                      : () async {
-                    await c.addMealTimings(c.pendingSlots);
-                    c.pendingSlots.clear();
-                  },
-                )),
-              ]),
-            ),
-
-            // Saved Timings
-            _buildCard(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                _sectionHeader(
-                  icon: Icons.event_available_outlined,
-                  title: 'Saved Timings',
-                  subtitle: 'Current service schedule — tap × to delete',
-                ),
-                const SizedBox(height: 16),
-                Obx(() => Column(
-                  children: MealType.values.map((meal) {
-                    final slots = c.getSlotsByMeal(meal);
-                    final color = _mealColor(meal);
+                  // Pending queue
+                  Obx(() {
+                    final total = c.pendingSlots.values
+                        .fold(0, (s, e) => s + e.length);
+                    if (total == 0) return const SizedBox();
                     return Container(
-                      margin: const EdgeInsets.only(bottom: 10),
+                      margin: const EdgeInsets.only(top: 16),
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: slots.isNotEmpty
-                            ? color.withOpacity(0.04)
-                            : Colors.grey.shade50,
-                        borderRadius: BorderRadius.circular(14),
+                        color: Colors.orange.shade50,
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: slots.isNotEmpty
-                              ? color.withOpacity(0.25)
-                              : Colors.grey.shade200,
-                          width: slots.isNotEmpty ? 1.5 : 1.0,
-                        ),
+                            color: Colors.orange.shade200),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: color.withOpacity(0.12),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Icon(_mealIcon(meal),
-                                  color: color, size: 18),
+                            Icon(Icons.pending_actions,
+                                color: Colors.orange.shade700, size: 18),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text('$total slot(s) queued',
+                                  style: TextStyle(
+                                      color: Colors.orange.shade800,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600)),
                             ),
-                            const SizedBox(width: 10),
-                            Text(meal.name.capitalizeFirst!,
-                                style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF1A1D2E))),
-                            const Spacer(),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: slots.isNotEmpty
-                                    ? Colors.green.shade50
-                                    : Colors.grey.shade100,
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(
-                                  color: slots.isNotEmpty
-                                      ? Colors.green.shade200
-                                      : Colors.grey.shade300,
-                                ),
-                              ),
-                              child: Text(
-                                slots.isNotEmpty ? '✓ Configured' : 'Not set',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: slots.isNotEmpty
-                                      ? Colors.green.shade700
-                                      : Colors.grey.shade500,
-                                ),
-                              ),
+                            GestureDetector(
+                              onTap: () => c.pendingSlots.clear(),
+                              child: Text('Clear all',
+                                  style: TextStyle(
+                                      color: Colors.red.shade400,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600)),
                             ),
                           ]),
-                          if (slots.isNotEmpty) ...[
-                            const SizedBox(height: 10),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: slots.map((s) => Container(
-                                padding: const EdgeInsets.only(
-                                    left: 10, right: 6, top: 5, bottom: 5),
+                          const SizedBox(height: 8),
+                          ...c.pendingSlots.entries.map((entry) =>
+                              Column(children: entry.value.map((slot) =>
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Row(children: [
+                                      Icon(_mealIcon(entry.key),
+                                          size: 14,
+                                          color: _mealColor(entry.key)),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          '${entry.key.name.capitalizeFirst}: '
+                                              '${slot.startTime} → ${slot.endTime}'
+                                              '${slot.breakDuration > 0 ? '  (${slot.breakDuration} min break)' : ''}',
+                                          style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Color(0xFF5C6080)),
+                                        ),
+                                      ),
+                                    ]),
+                                  )).toList())),
+                        ],
+                      ),
+                    );
+                  }),
+
+                  const SizedBox(height: 20),
+                  Obx(() => _primaryBtn(
+                    label: 'Save Timings',
+                    icon: Icons.save_rounded,
+                    loading: c.isAddingTimings.value,
+                    onPressed: c.isAddingTimings.value || c.pendingSlots.isEmpty
+                        ? null
+                        : () async {
+                      await c.addMealTimings(c.pendingSlots);
+                      c.pendingSlots.clear();
+                    },
+                  )),
+                ]),
+              ),
+
+              // Saved Timings
+              _buildCard(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  _sectionHeader(
+                    icon: Icons.event_available_outlined,
+                    title: 'Saved Timings',
+                    subtitle: 'Current service schedule — tap × to delete',
+                  ),
+                  const SizedBox(height: 16),
+                  Obx(() => Column(
+                    children: MealType.values.map((meal) {
+                      final slots = c.getSlotsByMeal(meal);
+                      final color = _mealColor(meal);
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: slots.isNotEmpty
+                              ? color.withOpacity(0.04)
+                              : Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: slots.isNotEmpty
+                                ? color.withOpacity(0.25)
+                                : Colors.grey.shade200,
+                            width: slots.isNotEmpty ? 1.5 : 1.0,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: color.withOpacity(0.10),
+                                  color: color.withOpacity(0.12),
                                   borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                      color: color.withOpacity(0.3)),
                                 ),
-                                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                child: Icon(_mealIcon(meal),
+                                    color: color, size: 18),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(meal.name.capitalizeFirst!,
+                                  style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF1A1D2E))),
+                              const Spacer(),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: slots.isNotEmpty
+                                      ? Colors.green.shade50
+                                      : Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: slots.isNotEmpty
+                                        ? Colors.green.shade200
+                                        : Colors.grey.shade300,
+                                  ),
+                                ),
+                                child: Text(
+                                  slots.isNotEmpty ? '✓ Configured' : 'Not set',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: slots.isNotEmpty
+                                        ? Colors.green.shade700
+                                        : Colors.grey.shade500,
+                                  ),
+                                ),
+                              ),
+                            ]),
+                            if (slots.isNotEmpty) ...[
+                              const SizedBox(height: 10),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: slots.map((s) => Container(
+                                  padding: const EdgeInsets.only(
+                                      left: 10, right: 6, top: 5, bottom: 5),
+                                  decoration: BoxDecoration(
+                                    color: color.withOpacity(0.10),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                        color: color.withOpacity(0.3)),
+                                  ),
+                                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                                    Column(
+                                      crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(s.displayTime,
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                color: color,
+                                                fontWeight: FontWeight.w600)),
+                                        if (s.breakDuration > 0)
+                                          Text(
+                                            '${s.breakDuration} min break',
+                                            style: TextStyle(
+                                                fontSize: 10,
+                                                color: color.withOpacity(0.7)),
+                                          ),
+                                      ],
+                                    ),
+                                    const SizedBox(width: 6),
+                                    GestureDetector(
+                                      onTap: () => c.removeTimeSlot(s),
+                                      child: Icon(Icons.close_rounded,
+                                          size: 14, color: color),
+                                    ),
+                                  ]),
+                                )).toList(),
+                              ),
+                            ] else ...[
+                              const SizedBox(height: 6),
+                              Text('No slots added',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade400)),
+                            ],
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  )),
+                ]),
+              ),
+            ]),
+          ),
+        ]),
+      );
+    });
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // TAB 3 — MENU  (locked until at least 1 timing exists)
+  // ══════════════════════════════════════════════════════════════════════════
+  Widget _buildMenuTab(BuildContext context) {
+    return Obx(() {
+      final hasTable  = c.tableTypes.isNotEmpty;
+      final hasTiming = c.timeSlots.isNotEmpty;
+
+      if (!hasTable) {
+        return _lockedTab(
+          icon: Icons.table_restaurant_outlined,
+          title: 'Tables Required',
+          subtitle: 'Please add at least one table type\nbefore building the menu.',
+          actionLabel: 'Go to Tables',
+          onAction: () =>
+              DefaultTabController.of(context)?.animateTo(0),
+        );
+      }
+
+      if (!hasTiming) {
+        return _lockedTab(
+          icon: Icons.schedule_outlined,
+          title: 'Meal Timings Required',
+          subtitle: 'Please set up meal timings\nbefore adding menu items.',
+          actionLabel: 'Go to Timings',
+          onAction: () =>
+              DefaultTabController.of(context)?.animateTo(1),
+        );
+      }
+
+      return SingleChildScrollView(
+        child: Column(children: [
+          _gradientStrip(),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+
+              // Meal type cards
+              _buildCard(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  _sectionHeader(
+                    icon: Icons.restaurant_menu_rounded,
+                    title: 'Menu Builder',
+                    subtitle: 'Add food items by meal period',
+                  ),
+                  const SizedBox(height: 16),
+                  ...MealType.values.map((m) => _MealTypeCard(mealType: m)),
+                ]),
+              ),
+
+              // Setup Preview
+              _buildCard(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  _sectionHeader(
+                    icon: Icons.preview_outlined,
+                    title: 'Setup Preview',
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Tables preview
+                  _previewSection(
+                    icon: Icons.table_restaurant_outlined,
+                    title: 'Tables & Seating',
+                    child: Obx(() => c.tableTypes.isEmpty
+                        ? Text('No tables configured',
+                        style: TextStyle(
+                            fontSize: 13, color: Colors.grey.shade400))
+                        : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: c.tableTypes.map((t) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 3),
+                        child: Row(children: [
+                          Icon(Icons.fiber_manual_record,
+                              size: 6, color: AppColors.kPrimary),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '${t.name}  ·  ${t.capacityRange} seats  ·  ${t.availableTables.join(', ')}',
+                              style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF5C6080),
+                                  height: 1.5),
+                            ),
+                          ),
+                        ]),
+                      )).toList(),
+                    )),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Timings preview
+                  _previewSection(
+                    icon: Icons.schedule_outlined,
+                    title: 'Meal Timings',
+                    child: Obx(() => Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: MealType.values.map((meal) {
+                        final slots = c.getSlotsByMeal(meal);
+                        if (slots.isEmpty) return const SizedBox();
+                        final color = _mealColor(meal);
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(meal.name.capitalizeFirst!,
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: color)),
+                              const SizedBox(height: 4),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: slots.map((s) => Container(
+                                  margin: const EdgeInsets.only(bottom: 6),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: color.withOpacity(0.10),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                    CrossAxisAlignment.start,
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Text(s.displayTime,
                                           style: TextStyle(
-                                              fontSize: 12,
+                                              fontSize: 11,
                                               color: color,
                                               fontWeight: FontWeight.w600)),
                                       if (s.breakDuration > 0)
@@ -561,272 +821,200 @@ class MenuManagementPage extends StatelessWidget {
                                         ),
                                     ],
                                   ),
-                                  const SizedBox(width: 6),
-                                  GestureDetector(
-                                    onTap: () => c.removeTimeSlot(s),
-                                    child: Icon(Icons.close_rounded,
-                                        size: 14, color: color),
-                                  ),
-                                ]),
-                              )).toList(),
-                            ),
-                          ] else ...[
-                            const SizedBox(height: 6),
-                            Text('No slots added',
-                                style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey.shade400)),
-                          ],
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                )),
-              ]),
-            ),
-          ]),
-        ),
-      ]),
-    );
-  }
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // TAB 3 — MENU
-  // ══════════════════════════════════════════════════════════════════════════
-  Widget _buildMenuTab(BuildContext context) => SingleChildScrollView(
-    child: Column(children: [
-      _gradientStrip(),
-      Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-
-          // Meal type cards
-          _buildCard(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              _sectionHeader(
-                icon: Icons.restaurant_menu_rounded,
-                title: 'Menu Builder',
-                subtitle: 'Add food items by meal period',
-              ),
-              const SizedBox(height: 16),
-              ...MealType.values.map((m) => _MealTypeCard(mealType: m)),
-            ]),
-          ),
-
-          // Setup Preview
-          _buildCard(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              _sectionHeader(
-                icon: Icons.preview_outlined,
-                title: 'Setup Preview',
-              ),
-              const SizedBox(height: 16),
-
-              // Tables preview
-              _previewSection(
-                icon: Icons.table_restaurant_outlined,
-                title: 'Tables & Seating',
-                child: Obx(() => c.tableTypes.isEmpty
-                    ? Text('No tables configured',
-                    style: TextStyle(
-                        fontSize: 13, color: Colors.grey.shade400))
-                    : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: c.tableTypes.map((t) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 3),
-                    child: Row(children: [
-                      Icon(Icons.fiber_manual_record,
-                          size: 6, color: AppColors.kPrimary),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          '${t.name}  ·  ${t.capacityRange} seats  ·  ${t.availableTables.join(', ')}',
-                          style: const TextStyle(
-                              fontSize: 13,
-                              color: Color(0xFF5C6080),
-                              height: 1.5),
-                        ),
-                      ),
-                    ]),
-                  )).toList(),
-                )),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Timings preview
-              _previewSection(
-                icon: Icons.schedule_outlined,
-                title: 'Meal Timings',
-                child: Obx(() => Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: MealType.values.map((meal) {
-                    final slots = c.getSlotsByMeal(meal);
-                    if (slots.isEmpty) return const SizedBox();
-                    final color = _mealColor(meal);
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(meal.name.capitalizeFirst!,
-                              style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: color)),
-                          const SizedBox(height: 4),
-                          Column(                          // ← Column directly, NO Wrap wrapper
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: slots.map((s) => Container(
-                              margin: const EdgeInsets.only(bottom: 6),
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: color.withOpacity(0.10),
-                                borderRadius: BorderRadius.circular(6),
+                                )).toList(),
                               ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(s.displayTime,
-                                      style: TextStyle(
-                                          fontSize: 11,
-                                          color: color,
-                                          fontWeight: FontWeight.w600)),
-                                  if (s.breakDuration > 0)
-                                    Text(
-                                      '${s.breakDuration} min break',
-                                      style: TextStyle(
-                                          fontSize: 10,
-                                          color: color.withOpacity(0.7)),
-                                    ),
-                                ],
-                              ),
-                            )).toList(),
+                            ],
                           ),
+                        );
+                      }).toList(),
+                    )),
+                  ),
 
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                )),
-              ),
+                  const SizedBox(height: 12),
 
-              const SizedBox(height: 12),
-
-              // Menu preview
-              _previewSection(
-                icon: Icons.menu_book_outlined,
-                title: 'Menu Items',
-                child: Obx(() {
-                  final hasItems =
-                  c.mealMenus.any((m) => m.foodItems.isNotEmpty);
-                  if (!hasItems) {
-                    return Text('No menu items added',
-                        style: TextStyle(
-                            fontSize: 13, color: Colors.grey.shade400));
-                  }
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: c.mealMenus.map((menu) {
-                      if (menu.foodItems.isEmpty) return const SizedBox();
-                      final color = _mealColor(menu.mealType);
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(menu.mealType.name.capitalizeFirst!,
-                                style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: color)),
-                            const SizedBox(height: 6),
-
-                            ...menu.foodItems.map((food) => Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: Row(children: [
-                                // ── Image ──────────────────────────────
-                                Builder(builder: (_) {
-                                  final placeholder = Container(
-                                    width: 44, height: 44,
-                                    decoration: BoxDecoration(
-                                      color: color.withOpacity(0.10),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Icon(Icons.fastfood_rounded, color: color, size: 20),
-                                  );
-                                  if (food.imageFile != null) {
-                                    return ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Image.file(food.imageFile!,
-                                          width: 44, height: 44, fit: BoxFit.cover),
-                                    );
-                                  }
-                                  if (food.imageUrl != null && food.imageUrl!.isNotEmpty) {
-                                    return ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Image.network(
-                                        food.imageUrl!,
-                                        width: 44, height: 44, fit: BoxFit.cover,
-                                        errorBuilder: (_, __, ___) => placeholder,
+                  // Menu preview
+                  _previewSection(
+                    icon: Icons.menu_book_outlined,
+                    title: 'Menu Items',
+                    child: Obx(() {
+                      final hasItems =
+                      c.mealMenus.any((m) => m.foodItems.isNotEmpty);
+                      if (!hasItems) {
+                        return Text('No menu items added',
+                            style: TextStyle(
+                                fontSize: 13, color: Colors.grey.shade400));
+                      }
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: c.mealMenus.map((menu) {
+                          if (menu.foodItems.isEmpty) return const SizedBox();
+                          final color = _mealColor(menu.mealType);
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(menu.mealType.name.capitalizeFirst!,
+                                    style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: color)),
+                                const SizedBox(height: 6),
+                                ...menu.foodItems.map((food) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: Row(children: [
+                                    Builder(builder: (_) {
+                                      final placeholder = Container(
+                                        width: 44, height: 44,
+                                        decoration: BoxDecoration(
+                                          color: color.withOpacity(0.10),
+                                          borderRadius:
+                                          BorderRadius.circular(8),
+                                        ),
+                                        child: Icon(Icons.fastfood_rounded,
+                                            color: color, size: 20),
+                                      );
+                                      if (food.imageFile != null) {
+                                        return ClipRRect(
+                                          borderRadius:
+                                          BorderRadius.circular(8),
+                                          child: Image.file(food.imageFile!,
+                                              width: 44,
+                                              height: 44,
+                                              fit: BoxFit.cover),
+                                        );
+                                      }
+                                      if (food.imageUrl != null &&
+                                          food.imageUrl!.isNotEmpty) {
+                                        return ClipRRect(
+                                          borderRadius:
+                                          BorderRadius.circular(8),
+                                          child: Image.network(
+                                            food.imageUrl!,
+                                            width: 44,
+                                            height: 44,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (_, __, ___) =>
+                                            placeholder,
+                                          ),
+                                        );
+                                      }
+                                      return placeholder;
+                                    }),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                        children: [
+                                          Text(food.name,
+                                              style: const TextStyle(
+                                                  fontSize: 13,
+                                                  color: Color(0xFF5C6080))),
+                                          if (food.description.isNotEmpty)
+                                            Text(food.description,
+                                                maxLines: 1,
+                                                overflow:
+                                                TextOverflow.ellipsis,
+                                                style: TextStyle(
+                                                    fontSize: 11,
+                                                    color: Colors
+                                                        .grey.shade400)),
+                                        ],
                                       ),
-                                    );
-                                  }
-                                  return placeholder;
-                                }),
-                                const SizedBox(width: 10),
-                                // ── Name & Price ────────────────────────
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(food.name,
-                                          style: const TextStyle(
-                                              fontSize: 13,
-                                              color: Color(0xFF5C6080))),
-                                      if (food.description.isNotEmpty)
-                                        Text(food.description,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(
-                                                fontSize: 11,
-                                                color: Colors.grey.shade400)),
-                                    ],
-                                  ),
-                                ),
-                                Text(
-                                  '₹${food.price.toStringAsFixed(0)}',
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF1DA87A),
-                                  ),
-                                ),
-                              ]),
-                            )),
-                          ],
-                        ),
+                                    ),
+                                    Text(
+                                      '₹${food.price.toStringAsFixed(0)}',
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFF1DA87A),
+                                      ),
+                                    ),
+                                  ]),
+                                )),
+                              ],
+                            ),
+                          );
+                        }).toList(),
                       );
-                    }).toList(),
-                  );
-                }),
-              ),
+                    }),
+                  ),
 
-              const SizedBox(height: 20),
-              _primaryBtn(
-                label: 'Refresh Preview',
-                icon: Icons.refresh_rounded,
-                loading: false,
-                onPressed: c.fetchSetupPreview,
+                  const SizedBox(height: 20),
+                  _primaryBtn(
+                    label: 'Refresh Preview',
+                    icon: Icons.refresh_rounded,
+                    loading: false,
+                    onPressed: c.fetchSetupPreview,
+                  ),
+                ]),
               ),
             ]),
           ),
         ]),
-      ),
-    ]),
-  );
+      );
+    });
+  }
 }
+
+// ─── Locked Tab Placeholder ───────────────────────────────────────────────────
+Widget _lockedTab({
+  required IconData icon,
+  required String title,
+  required String subtitle,
+  required String actionLabel,
+  required VoidCallback onAction,
+}) =>
+    Center(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.lock_outline_rounded,
+                  size: 40, color: Colors.grey.shade400),
+            ),
+            const SizedBox(height: 20),
+            Text(title,
+                style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1A1D2E))),
+            const SizedBox(height: 8),
+            Text(subtitle,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey.shade500,
+                    height: 1.5)),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: 180,
+              height: 44,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.kPrimary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+                icon: Icon(icon, size: 18),
+                label: Text(actionLabel,
+                    style: const TextStyle(fontWeight: FontWeight.w700)),
+                onPressed: onAction,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
 
 // ─── Shared UI Helpers ────────────────────────────────────────────────────────
 
@@ -897,11 +1085,13 @@ Widget _modernTextField({
   required IconData icon,
   TextInputType type = TextInputType.text,
   int maxLines = 1,
+  List<TextInputFormatter>? inputFormatters,
 }) =>
     TextField(
       controller: controller,
       keyboardType: type,
       maxLines: maxLines,
+      inputFormatters: inputFormatters,
       style: const TextStyle(fontSize: 15),
       decoration: InputDecoration(
         labelText: label,
@@ -1137,6 +1327,26 @@ Widget _previewSection({
       ]),
     );
 
+// ─── Price Input Formatter — max 8 integer digits + 2 decimal ────────────────
+class _PriceInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    final text = newValue.text;
+    if (text.isEmpty) return newValue;
+
+    // Allow only digits and a single dot
+    final regex = RegExp(r'^\d*\.?\d{0,2}$');
+    if (!regex.hasMatch(text)) return oldValue;
+
+    // Integer part must not exceed 8 digits
+    final parts = text.split('.');
+    if (parts[0].length > 8) return oldValue;
+
+    return newValue;
+  }
+}
+
 // ─── Meal Type Card ───────────────────────────────────────────────────────────
 class _MealTypeCard extends StatelessWidget {
   final MealType mealType;
@@ -1148,9 +1358,9 @@ class _MealTypeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final menu         = c.getMealMenu(mealType);
-    final isExpanded   = c.expandedCards[mealType]!;
-    final pickedImage  = c.pickedImages[mealType]!;
+    final menu        = c.getMealMenu(mealType);
+    final isExpanded  = c.expandedCards[mealType]!;
+    final pickedImage = c.pickedImages[mealType]!;
 
     return Obx(() {
       final expanded = isExpanded.value;
@@ -1187,7 +1397,10 @@ class _MealTypeCard extends StatelessWidget {
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [_color, Color.lerp(_color, Colors.black, 0.25)!],
+                      colors: [
+                        _color,
+                        Color.lerp(_color, Colors.black, 0.25)!
+                      ],
                     ),
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
@@ -1243,7 +1456,7 @@ class _MealTypeCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // New item form
+                  // New item form header
                   Row(children: [
                     Container(
                       padding: const EdgeInsets.all(6),
@@ -1262,36 +1475,25 @@ class _MealTypeCard extends StatelessWidget {
                             letterSpacing: 0.5)),
                   ]),
                   const SizedBox(height: 14),
-                  Row(children: [
-                    Expanded(
-                      flex: 2,
-                      child: _modernTextField(
-                        controller: c.foodNameCtrls[mealType]!,
-                        label: 'Food Name',
-                        hint: 'e.g. Masala Dosa',
-                        icon: Icons.fastfood_outlined,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                  //   Expanded(
-                  //     child: _modernTextField(
-                  //       controller: c.foodPriceCtrls[mealType]!,
-                  //       label: 'Price ₹',
-                  //       hint: '0.00',
-                  //       icon: Icons.currency_rupee_outlined,
-                  //       type: const TextInputType.numberWithOptions(
-                  //           decimal: true),
-                  //     ),
-                  //   ),
-                   ]),
-      _modernTextField(
-            controller: c.foodPriceCtrls[mealType]!,
-            label: 'Price ₹',
-            hint: '0.00',
-            icon: Icons.currency_rupee_outlined,
-            type: const TextInputType.numberWithOptions(
-                decimal: true),
-          ),
+
+                  // ── Food Name (full width) ──────────────────────────
+                  _modernTextField(
+                    controller: c.foodNameCtrls[mealType]!,
+                    label: 'Food Name',
+                    hint: 'e.g. Masala Dosa',
+                    icon: Icons.fastfood_outlined,
+                  ),
+                  const SizedBox(height: 12),
+
+                  // ── Price (full width, 8-digit limit) ──────────────
+                  _modernTextField(
+                    controller: c.foodPriceCtrls[mealType]!,
+                    label: 'Price ₹',
+                    hint: '0.00',
+                    icon: Icons.currency_rupee_outlined,
+                    type: const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [_PriceInputFormatter()],
+                  ),
 
                   const SizedBox(height: 12),
                   _modernTextField(

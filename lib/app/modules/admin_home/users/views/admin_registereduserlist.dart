@@ -2,9 +2,7 @@
 import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../../common/style/app_text_style.dart';
 import '../../controller/admin_registeredusers_controller.dart';
-import '../../shops/views/admin_userpurchasedprodcutpage.dart';
 
 class AdminUserListPage extends StatelessWidget {
   AdminUserListPage({super.key});
@@ -13,113 +11,168 @@ class AdminUserListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return NetworkAwareWrapper(child:Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        automaticallyImplyLeading: true,
-        iconTheme: IconThemeData(color: Colors.white),
-        title: Text(
-          "Registered Users",
+    return NetworkAwareWrapper(
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          automaticallyImplyLeading: true,
+          iconTheme: const IconThemeData(color: Colors.white),
+          title: const Text(
+            "Registered Users",
             style: TextStyle(
               color: Colors.white,
               fontSize: 17,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.1,
             ),
+          ),
+          backgroundColor: Colors.teal,
+          elevation: 0,
+          actions: [
+            Obx(() {
+              if (controller.isLoading.value || controller.users.isEmpty) {
+                return const SizedBox.shrink();
+              }
+              return Row(
+                children: [
+                  // ── Excel Button ──────────────────────────────
+                  Obx(() => controller.isExcelGenerating.value
+                      ? const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 10),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2.2,
+                      ),
+                    ),
+                  )
+                      : IconButton(
+                    icon: const Icon(
+                      Icons.table_chart_rounded,
+                      color: Colors.white,
+                    ),
+                    tooltip: 'Download Excel',
+                    onPressed: controller.downloadUsersExcel,
+                  )),
+
+                  // ── PDF Button ────────────────────────────────
+                  Obx(() => controller.isPdfGenerating.value
+                      ? const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 10),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2.2,
+                      ),
+                    ),
+                  )
+                      : IconButton(
+                    icon: const Icon(
+                      Icons.picture_as_pdf_rounded,
+                      color: Colors.white,
+                    ),
+                    tooltip: 'Download PDF',
+                    onPressed: controller.downloadUsersPdf,
+                  )),
+                ],
+              );
+            }),
+          ],
         ),
-        backgroundColor: Colors.teal,
-        elevation: 0,
+        body: Obx(() {
+          if (controller.isLoading.value) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const CircularProgressIndicator(
+                    color: Colors.teal,
+                    strokeWidth: 3,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    "Loading users...",
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          if (controller.users.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(32),
+                    decoration: BoxDecoration(
+                      color: Colors.teal.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.people_outline,
+                      size: 80,
+                      color: Colors.teal.withOpacity(0.5),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    "No Registered Users",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey.shade800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Users will appear here once they register",
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade500,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            itemCount: controller.users.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 16),
+            itemBuilder: (context, index) {
+              final user = controller.users[index];
+              return _buildModernUserCard(context, user, index);
+            },
+          );
+        }),
       ),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(
-                  color: Colors.teal,
-                  strokeWidth: 3,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  "Loading users...",
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-
-        if (controller.users.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(32),
-                  decoration: BoxDecoration(
-                    color: Colors.teal.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.people_outline,
-                    size: 80,
-                    color: Colors.teal.withOpacity(0.5),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  "No Registered Users",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.grey.shade800,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  "Users will appear here once they register",
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade500,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-
-        return ListView.separated(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-          itemCount: controller.users.length,
-          separatorBuilder: (context, index) => const SizedBox(height: 16),
-          itemBuilder: (context, index) {
-            final user = controller.users[index];
-            return _buildModernUserCard(context, user);
-          },
-        );
-      }),
-    ));
+    );
   }
 
-  /// ================= MODERN USER CARD =================
-  Widget _buildModernUserCard(BuildContext context, Map<String, dynamic> user) {
+  // ── Modern User Card ──────────────────────────────────────────
+  Widget _buildModernUserCard(
+      BuildContext context,
+      Map<String, dynamic> user,
+      int index,
+      ) {
     return InkWell(
-      onTap: () {
-
-      },
+      onTap: () {},
       borderRadius: BorderRadius.circular(20),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: Colors.grey.shade200,
-            width: 1.5,
-          ),
+          border: Border.all(color: Colors.grey.shade200, width: 1.5),
           boxShadow: [
             BoxShadow(
               color: Colors.teal.withOpacity(0.08),
@@ -130,12 +183,12 @@ class AdminUserListPage extends StatelessWidget {
         ),
         child: Column(
           children: [
-            /// Top section with avatar and name
+            // ── Top section ───────────────────────────────────
             Container(
               padding: const EdgeInsets.all(20),
               child: Row(
                 children: [
-                  /// Avatar
+                  // Avatar
                   Hero(
                     tag: 'user_${user["id"]}',
                     child: Container(
@@ -167,7 +220,7 @@ class AdminUserListPage extends StatelessWidget {
                   ),
                   const SizedBox(width: 16),
 
-                  /// Name and view arrow
+                  // Name
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,17 +234,33 @@ class AdminUserListPage extends StatelessWidget {
                             letterSpacing: 0.3,
                           ),
                         ),
-                        const SizedBox(height: 6),
-
+                        const SizedBox(height: 4),
+                        // Serial number badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.teal.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            'User #${index + 1}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.teal.shade700,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
 
-                  /// Registered date chip
+                  // Reg date chip
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
+                      horizontal: 12, vertical: 8,
                     ),
                     decoration: BoxDecoration(
                       color: Colors.grey.shade100,
@@ -199,11 +268,8 @@ class AdminUserListPage extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        Icon(
-                          Icons.calendar_today,
-                          size: 16,
-                          color: Colors.grey.shade600,
-                        ),
+                        Icon(Icons.calendar_today,
+                            size: 16, color: Colors.grey.shade600),
                         const SizedBox(height: 4),
                         Text(
                           user["regDate"],
@@ -220,14 +286,14 @@ class AdminUserListPage extends StatelessWidget {
               ),
             ),
 
-            /// Divider
+            // ── Divider ───────────────────────────────────────
             Container(
               height: 1,
               margin: const EdgeInsets.symmetric(horizontal: 20),
               color: Colors.grey.shade200,
             ),
 
-            /// Contact details grid
+            // ── Contact details ───────────────────────────────
             Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -265,7 +331,7 @@ class AdminUserListPage extends StatelessWidget {
               ),
             ),
 
-            /// Action button
+            // ── Action button ─────────────────────────────────
             Container(
               width: double.infinity,
               margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
@@ -274,9 +340,8 @@ class AdminUserListPage extends StatelessWidget {
                 onPressed: () {
                   Get.toNamed(
                     '/purchased-products',
-                    arguments: {
-                      'user_id': user["id"], // 🔥 CORRECT
-                    },);
+                    arguments: {'user_id': user["id"]},
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.teal,
@@ -286,9 +351,9 @@ class AdminUserListPage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                child: Row(
+                child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
+                  children: [
                     Icon(Icons.shopping_bag_outlined, size: 20),
                     SizedBox(width: 10),
                     Text(
@@ -309,7 +374,7 @@ class AdminUserListPage extends StatelessWidget {
     );
   }
 
-  /// ================= COMPACT INFO WIDGET =================
+  // ── Compact Info Widget ───────────────────────────────────────
   Widget _buildCompactInfo({
     required IconData icon,
     required String title,
@@ -322,21 +387,14 @@ class AdminUserListPage extends StatelessWidget {
       decoration: BoxDecoration(
         color: color.withOpacity(0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: color.withOpacity(0.2),
-          width: 1,
-        ),
+        border: Border.all(color: color.withOpacity(0.2), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                icon,
-                size: 16,
-                color: color,
-              ),
+              Icon(icon, size: 16, color: color),
               const SizedBox(width: 6),
               Text(
                 title,
@@ -365,14 +423,10 @@ class AdminUserListPage extends StatelessWidget {
     );
   }
 
-  /// ================= GET INITIALS =================
+  // ── Get Initials ──────────────────────────────────────────────
   String _getInitials(String name) {
-    List<String> nameParts = name.trim().split(' ');
-    if (nameParts.length == 1) {
-      return nameParts[0][0].toUpperCase();
-    } else {
-      return (nameParts[0][0] + nameParts[nameParts.length - 1][0])
-          .toUpperCase();
-    }
+    final parts = name.trim().split(' ');
+    if (parts.length == 1) return parts[0][0].toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   }
 }

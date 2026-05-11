@@ -213,7 +213,6 @@ class MerchantSettingPage extends StatelessWidget {
                         bgColor: AppColors.shopIconBg,
                       ),
                       const SizedBox(width: 8),
-                      _activeDot(),
                     ],
                   ),
                 ],
@@ -310,26 +309,6 @@ class MerchantSettingPage extends StatelessWidget {
     );
   }
 
-  Widget _activeDot() => Row(
-    children: [
-      Container(
-        width: 6,
-        height: 6,
-        decoration: const BoxDecoration(
-            color: AppColors.success, shape: BoxShape.circle),
-      ),
-      const SizedBox(width: 4),
-      const Text(
-        "Active",
-        style: TextStyle(
-            fontSize: 11,
-            color: AppColors.success,
-            fontWeight: FontWeight.w600),
-      ),
-    ],
-  );
-
-  // ── Section Label ─────────────────────────────────────────────────────────
   Widget _sectionLabel(String label) => Row(
     children: [
       Text(

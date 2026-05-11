@@ -30,22 +30,75 @@ class MerchantOrdersView extends StatelessWidget {
             ),
           ),
           actions: [
-            Obx(
-                  () => !controller.isLoading.value
-                  ? IconButton(
-                icon: const Icon(Icons.refresh_rounded,
-                    color: Colors.white),
-                onPressed: controller.fetchMerchantOrders,
-              )
-                  : const SizedBox.shrink(),
-            ),
+            Obx(() {
+              if (controller.isLoading.value) {
+                return const SizedBox.shrink();
+              }
+              return Row(
+                children: [
+                  if (controller.orders.isNotEmpty) ...[
+                    // ── Excel Download Button ─────────────────────
+                    Obx(() => controller.isExcelGenerating.value
+                        ? const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 10),
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2.2,
+                        ),
+                      ),
+                    )
+                        : IconButton(
+                      icon: const Icon(
+                        Icons.table_chart_rounded,
+                        color: Colors.white,
+                      ),
+                      tooltip: 'Download Excel',
+                      onPressed: controller.downloadOrdersExcel,
+                    )),
+
+                    // ── PDF Download Button ───────────────────────
+                    Obx(() => controller.isPdfGenerating.value
+                        ? const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 10),
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2.2,
+                        ),
+                      ),
+                    )
+                        : IconButton(
+                      icon: const Icon(
+                        Icons.picture_as_pdf_rounded,
+                        color: Colors.white,
+                      ),
+                      tooltip: 'Download PDF',
+                      onPressed: controller.downloadOrdersPdf,
+                    )),
+                  ],
+
+                  // ── Refresh Button ────────────────────────────
+                  IconButton(
+                    icon: const Icon(
+                      Icons.refresh_rounded,
+                      color: Colors.white,
+                    ),
+                    onPressed: controller.fetchMerchantOrders,
+                  ),
+                ],
+              );
+            }),
           ],
         ),
         body: Obx(() {
           if (controller.isLoading.value) {
             return Center(
-              child:
-              CircularProgressIndicator(color: AppColors.kPrimary),
+              child: CircularProgressIndicator(color: AppColors.kPrimary),
             );
           }
           if (controller.orders.isEmpty) {
@@ -56,11 +109,11 @@ class MerchantOrdersView extends StatelessWidget {
             onRefresh: controller.fetchMerchantOrders,
             child: CustomScrollView(
               slivers: [
-                // ── Summary Header ────────────────────────────────
+                // ── Summary Header ────────────────────────────
                 SliverToBoxAdapter(
                   child: _buildSummaryHeader(controller),
                 ),
-                // ── Orders List ───────────────────────────────────
+                // ── Orders List ───────────────────────────────
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                   sliver: SliverList(
@@ -81,7 +134,7 @@ class MerchantOrdersView extends StatelessWidget {
     );
   }
 
-  // ── Summary Header ────────────────────────────────────────────────────
+  // ── Summary Header ────────────────────────────────────────────
   Widget _buildSummaryHeader(MerchantOrdersController controller) {
     return Container(
       margin: const EdgeInsets.all(16),
@@ -120,7 +173,7 @@ class MerchantOrdersView extends StatelessWidget {
           _statBox(
             icon: Icons.currency_rupee_rounded,
             label: 'Total Revenue',
-            value: '₹${controller.totalRevenue.toStringAsFixed(0)}', // ✅
+            value: '₹${controller.totalRevenue.toStringAsFixed(0)}',
           ),
         ],
       ),
@@ -171,7 +224,7 @@ class MerchantOrdersView extends StatelessWidget {
     );
   }
 
-  // ── Order Card ────────────────────────────────────────────────────────
+  // ── Order Card ────────────────────────────────────────────────
   Widget _buildOrderCard(
       MerchantOrderModel order,
       MerchantOrdersController controller,
@@ -192,10 +245,9 @@ class MerchantOrdersView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Card Header ──────────────────────────────────────
+          // ── Card Header ───────────────────────────────────────
           Container(
-            padding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               color: AppColors.kPrimary.withOpacity(0.05),
               borderRadius: const BorderRadius.vertical(
@@ -256,7 +308,7 @@ class MerchantOrdersView extends StatelessWidget {
             ),
           ),
 
-          // ── Products ─────────────────────────────────────────
+          // ── Products ──────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
             child: Column(
@@ -268,8 +320,7 @@ class MerchantOrdersView extends StatelessWidget {
                       _buildProductRow(entry.value),
                       if (!isLast) ...[
                         const SizedBox(height: 10),
-                        const Divider(
-                            height: 1, color: Color(0xFFF0F0F0)),
+                        const Divider(height: 1, color: Color(0xFFF0F0F0)),
                         const SizedBox(height: 10),
                       ],
                     ],
@@ -285,8 +336,8 @@ class MerchantOrdersView extends StatelessWidget {
           // ── Footer ───────────────────────────────────────────
           Container(
             margin: const EdgeInsets.only(top: 0),
-            padding: const EdgeInsets.symmetric(
-                horizontal: 16, vertical: 14),
+            padding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: const BoxDecoration(
               color: Color(0xFFF9FAFB),
               borderRadius: BorderRadius.vertical(
@@ -308,7 +359,8 @@ class MerchantOrdersView extends StatelessWidget {
                     ),
                     const SizedBox(width: 5),
                     Text(
-                      '${order.products.length} ${order.products.length == 1 ? 'product' : 'products'}',
+                      '${order.products.length} '
+                          '${order.products.length == 1 ? 'product' : 'products'}',
                       style: TextStyle(
                         fontSize: 12.5,
                         color: Colors.grey.shade500,
@@ -328,7 +380,7 @@ class MerchantOrdersView extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '₹${order.totalAmount.toStringAsFixed(0)}', // ✅
+                      '₹${order.totalAmount.toStringAsFixed(0)}',
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
@@ -346,7 +398,7 @@ class MerchantOrdersView extends StatelessWidget {
     );
   }
 
-  // ── Address Section ───────────────────────────────────────────────────
+  // ── Address Section ───────────────────────────────────────────
   Widget _buildAddressSection(MerchantOrderAddress address) {
     return Container(
       margin: const EdgeInsets.fromLTRB(14, 12, 14, 0),
@@ -403,14 +455,14 @@ class MerchantOrdersView extends StatelessWidget {
     );
   }
 
-  // ── Product Row ───────────────────────────────────────────────────────
+  // ── Product Row ───────────────────────────────────────────────
   Widget _buildProductRow(MerchantOrderProduct product) {
     final displayPrice =
         product.selectedVariant?.effectivePrice ?? product.price;
 
     return Row(
       children: [
-        // ── Product Image ───────────────────────────────────────
+        // ── Product Image ────────────────────────────────────────
         ClipRRect(
           borderRadius: BorderRadius.circular(10),
           child: Image.network(
@@ -420,8 +472,7 @@ class MerchantOrdersView extends StatelessWidget {
             width: 58,
             height: 58,
             fit: BoxFit.cover,
-            loadingBuilder: (context, child, progress) =>
-            progress == null
+            loadingBuilder: (context, child, progress) => progress == null
                 ? child
                 : Container(
               width: 58,
@@ -451,7 +502,7 @@ class MerchantOrdersView extends StatelessWidget {
         ),
         const SizedBox(width: 12),
 
-        // ── Product Details ─────────────────────────────────────
+        // ── Product Details ──────────────────────────────────────
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -464,14 +515,13 @@ class MerchantOrdersView extends StatelessWidget {
                 ),
               ),
 
-              // ── Variant attribute chips ─────────────────────
+              // ── Variant attribute chips ───────────────────────
               if (product.selectedVariant != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
                   child: Wrap(
                     spacing: 6,
-                    children: product
-                        .selectedVariant!.attributes.entries
+                    children: product.selectedVariant!.attributes.entries
                         .map((e) {
                       return Container(
                         padding: const EdgeInsets.symmetric(
@@ -493,7 +543,7 @@ class MerchantOrdersView extends StatelessWidget {
 
               const SizedBox(height: 5),
 
-              // ── Price row ───────────────────────────────────
+              // ── Price row ─────────────────────────────────────
               Builder(
                 builder: (_) {
                   final variant = product.selectedVariant;
@@ -505,7 +555,7 @@ class MerchantOrdersView extends StatelessWidget {
                     return Row(
                       children: [
                         Text(
-                          '₹${variant.price.toStringAsFixed(0)}', // ✅
+                          '₹${variant.price.toStringAsFixed(0)}',
                           style: TextStyle(
                             fontSize: 11,
                             color: Colors.grey.shade400,
@@ -514,7 +564,7 @@ class MerchantOrdersView extends StatelessWidget {
                         ),
                         const SizedBox(width: 5),
                         Text(
-                          '₹${displayPrice.toStringAsFixed(0)} × ${product.quantity}', // ✅
+                          '₹${displayPrice.toStringAsFixed(0)} × ${product.quantity}',
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey.shade500,
@@ -525,7 +575,7 @@ class MerchantOrdersView extends StatelessWidget {
                   }
 
                   return Text(
-                    '₹${displayPrice.toStringAsFixed(0)} × ${product.quantity}', // ✅
+                    '₹${displayPrice.toStringAsFixed(0)} × ${product.quantity}',
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.grey.shade500,
@@ -537,9 +587,9 @@ class MerchantOrdersView extends StatelessWidget {
           ),
         ),
 
-        // ── Product Total ───────────────────────────────────────
+        // ── Product Total ────────────────────────────────────────
         Text(
-          '₹${product.total.toStringAsFixed(0)}', // ✅
+          '₹${product.total.toStringAsFixed(0)}',
           style: TextStyle(
             fontWeight: FontWeight.w700,
             color: AppColors.kPrimary,
@@ -549,7 +599,7 @@ class MerchantOrdersView extends StatelessWidget {
     );
   }
 
-  // ── Empty State with Retry ────────────────────────────────────────────
+  // ── Empty State with Retry ────────────────────────────────────
   Widget _buildEmptyStateWithRetry(MerchantOrdersController controller) {
     return Center(
       child: Padding(

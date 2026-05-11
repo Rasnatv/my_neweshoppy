@@ -10,6 +10,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../merchantlogin/widget/successwidget.dart';
 import '../../../data/errors/api_error.dart';
+import '../views/myadvetisment.dart';
 import 'merchant_advertismentlistcontroller.dart';
 
 class MerchantAdvertisementController extends GetxController {
@@ -269,7 +270,7 @@ class MerchantAdvertisementController extends GetxController {
         _clearForm();
         AppSnackbar.success(data["message"] ?? "Advertisement posted");
         await Future.delayed(const Duration(milliseconds: 800));
-        Get.back();
+        Get.off(MyAdvertisements());
       } else {
         AppSnackbar.error(data["message"] ?? "Something went wrong");
       }
