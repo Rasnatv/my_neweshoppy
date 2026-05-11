@@ -42,7 +42,7 @@ class AddCategoryPage extends StatelessWidget {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.fromLTRB(20, 20, 20, 35),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

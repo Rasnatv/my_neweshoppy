@@ -58,7 +58,7 @@ class UpdateAdvertisementPage extends StatelessWidget {
       ),
       actions: [
         Obx(() => Padding(
-          padding: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
+          padding: const EdgeInsets.only(right: 16, top: 8, bottom: 30),
           child: ctrl.isSubmitting.value
               ? const SizedBox(
             width: 24,

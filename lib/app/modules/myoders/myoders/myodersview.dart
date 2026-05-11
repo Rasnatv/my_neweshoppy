@@ -58,7 +58,7 @@ class MyOrdersView extends StatelessWidget {
             color: primary,
             onRefresh: controller.fetchMyOrders,
             child: ListView.builder(
-              padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
               itemCount: controller.orders.length,
               itemBuilder: (context, index) {
                 return _buildOrderCard(controller.orders[index], controller);
@@ -209,7 +209,6 @@ class MyOrdersView extends StatelessWidget {
               ],
             ),
           ),
-          SizedBox(height:20)
         ],
 
       ),

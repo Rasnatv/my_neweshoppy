@@ -1020,12 +1020,12 @@ class _BottomPayBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: const Color(0xFFF7F8FA),
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 55),
       child: Column(
         children: [
           Container(
             padding:
-            const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+           EdgeInsets.fromLTRB(20, 20, 20, 55),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),

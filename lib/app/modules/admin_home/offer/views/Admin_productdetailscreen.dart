@@ -30,9 +30,7 @@ class AdminSingleOfferProductScreen extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-// Main Detail Content
-// ─────────────────────────────────────────────
+
 class _DetailContent extends StatelessWidget {
   final AdminSingleOfferProductController controller;
   const _DetailContent({required this.controller});
@@ -98,9 +96,6 @@ class _DetailContent extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-// Image Gallery AppBar  ← NOW StatefulWidget
-// ─────────────────────────────────────────────
 class _ImageGalleryAppBar extends StatefulWidget {
   final AdminSingleOfferProductController controller;
   const _ImageGalleryAppBar({required this.controller});

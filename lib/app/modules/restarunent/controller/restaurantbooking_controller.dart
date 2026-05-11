@@ -187,7 +187,8 @@ class RestaurantBookingController extends GetxController {
         .toList();
   }
 
-  List<String> timeSlotsForRow(int i) {
+  // ── Returns full TimeSlot objects so UI can show disabled state ──────
+  List<TimeSlot> timeSlotsForRow(int i) {
     if (i >= bookingRows.length) return [];
     final m = bookingRows[i]["mealType"] ?? "";
     return meals
@@ -251,9 +252,7 @@ class RestaurantBookingController extends GetxController {
     return currentSummary;
   }
 
-  // ── Single entry point — UI calls ONLY this ───────────────────────────
   Future<bool> confirmAndSave() async {
-    // ✅ Build summary here — NOT in the UI
     final summary = buildSummary();
     if (summary == null || summary.bookings.isEmpty) {
       AppSnackbar.warning(
@@ -296,7 +295,6 @@ class RestaurantBookingController extends GetxController {
           currentSummary = null;
           return true;
         } else {
-          // 🟡 API returned status=0 — always a warning
           final msg = parsed.message.isNotEmpty
               ? parsed.message
               : "Booking failed.";
@@ -305,7 +303,6 @@ class RestaurantBookingController extends GetxController {
           return false;
         }
       } else {
-        // 🔴 Real HTTP error
         final msg = ApiErrorHandler.handleResponse(res);
         if (msg.isNotEmpty) {
           errorMessage.value = msg;

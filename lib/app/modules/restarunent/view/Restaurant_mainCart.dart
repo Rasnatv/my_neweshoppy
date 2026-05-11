@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../../data/models/restaurantmaincartmodel.dart';
+import '../../../widgets/delete_widget.dart';
 import '../controller/restaurant_maincartcontroller.dart';
 
 class FinalCartBinding extends Bindings {
@@ -53,7 +54,6 @@ class RestaurantFinalCart extends StatelessWidget {
           );
         }),
 
-        // ── BOTTOM BAR — only when exactly 1 restaurant ──────────────────────
         bottomNavigationBar: Obx(() {
           if (controller.isLoading.value || controller.isEmpty) {
             return const SizedBox(height: 0);
@@ -113,111 +113,18 @@ class RestaurantFinalCart extends StatelessWidget {
     );
   }
 
-  void _confirmRemoveRestaurant(
-      BuildContext context, FinalCartRestaurantModel restaurant) {
-    showModalBottomSheet(
+  // ── In RestaurantFinalCart ────────────────────────────────────────────────────
+  void _confirmRemoveRestaurant(BuildContext context,
+      FinalCartRestaurantModel restaurant) {
+    DeleteConfirmDialog.show(
       context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.fromLTRB(24, 12, 24, 36),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2)),
-            ),
-            const SizedBox(height: 24),
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.08),
-                  shape: BoxShape.circle),
-              child: const Icon(Icons.delete_sweep_rounded,
-                  color: Colors.red, size: 34),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Remove Restaurant?',
-              style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'All bookings from "${restaurant.restaurantName}" will be removed.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-            ),
-            const SizedBox(height: 28),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Get.back(),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
-                      side: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    child: const Text('Cancel',
-                        style: TextStyle(
-                            color: Colors.black87,
-                            fontWeight: FontWeight.w600)),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Obx(() {
-                    final isDeleting = controller
-                        .isDeletingRestaurant(restaurant.restaurantId);
-                    return ElevatedButton(
-                      onPressed: isDeleting
-                          ? null
-                          : () {
-                        Get.back();
-                        controller
-                            .removeRestaurant(restaurant.restaurantId);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        disabledBackgroundColor:
-                        Colors.red.withOpacity(0.5),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14)),
-                        elevation: 0,
-                      ),
-                      child: isDeleting
-                          ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white))
-                          : const Text('Remove',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold)),
-                    );
-                  }),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
+      title: 'Remove Restaurant?',
+      message: 'All bookings from "${restaurant
+          .restaurantName}" will be removed.',
+      onConfirm: () => controller.removeRestaurant(restaurant.restaurantId),
     );
   }
 }
-
 // ── RESTAURANT CARD ───────────────────────────────────────────────────────────
 class _RestaurantCard extends StatelessWidget {
   final FinalCartRestaurantModel restaurant;
@@ -443,7 +350,7 @@ class _RestaurantHeader extends StatelessWidget {
   }
 }
 
-// ── BOOKING CARD ──────────────────────────────────────────────────────────────
+
 class _BookingCard extends StatelessWidget {
   final FinalCartBookingModel booking;
   final int restaurantId;
@@ -758,96 +665,19 @@ class _ItemRow extends StatelessWidget {
     });
   }
 
+  // ── In _ItemRow ───────────────────────────────────────────────────────────────
   void _confirmRemoveItem(BuildContext context) {
-    showModalBottomSheet(
+    DeleteConfirmDialog.show(
       context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.fromLTRB(24, 12, 24, 36),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2)),
-            ),
-            const SizedBox(height: 24),
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.08),
-                  shape: BoxShape.circle),
-              child: const Icon(Icons.fastfood_rounded,
-                  color: Colors.red, size: 34),
-            ),
-            const SizedBox(height: 16),
-            const Text('Remove Item?',
-                style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87)),
-            const SizedBox(height: 8),
-            Text(
-              '"${item.itemName}" will be removed from your cart.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-            ),
-            const SizedBox(height: 28),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Get.back(),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
-                      side: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    child: const Text('Cancel',
-                        style: TextStyle(
-                            color: Colors.black87,
-                            fontWeight: FontWeight.w600)),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Get.back();
-                      _controller.removeCartItem(
-                        restaurantId: restaurantId,
-                        bookingId: bookingId,
-                        cartId: item.cartId,
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
-                      elevation: 0,
-                    ),
-                    child: const Text('Remove',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold)),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+      title: 'Remove Item?',
+      message: '"${item.itemName}" will be removed from your cart.',
+      onConfirm: () => _controller.removeCartItem(
+        restaurantId: restaurantId,
+        bookingId: bookingId,
+        cartId: item.cartId,
       ),
     );
-  }
-}
+  }}
 
 // ── STEPPER BUTTON ────────────────────────────────────────────────────────────
 class _StepperButton extends StatelessWidget {

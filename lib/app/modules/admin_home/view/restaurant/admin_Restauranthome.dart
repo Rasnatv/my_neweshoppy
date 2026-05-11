@@ -428,6 +428,7 @@ class AdminRestauranthome extends StatelessWidget {
                 ),
               ),
             ),
+            const SizedBox(height: 22),
           ],
         ),
       ),

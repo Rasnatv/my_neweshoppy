@@ -25,6 +25,40 @@ IconData _mealIcon(MealType m) {
   }
 }
 
+// ─── Capacity Range Formatter — allows digits, hyphen, en-dash ───────────────
+class _CapacityRangeFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    final text = newValue.text;
+    if (text.isEmpty) return newValue;
+    // Allow: digits, single hyphen or en-dash between numbers
+    // Valid: "7"  "1-7"  "2–6"  "10-20"
+    final regex = RegExp(r'^\d{1,3}([–\-]\d{0,3})?$');
+    return regex.hasMatch(text) ? newValue : oldValue;
+  }
+}
+
+// ─── Price Input Formatter — max 8 integer digits + 2 decimal ────────────────
+class _PriceInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    final text = newValue.text;
+    if (text.isEmpty) return newValue;
+
+    // Allow only digits and a single dot
+    final regex = RegExp(r'^\d*\.?\d{0,2}$');
+    if (!regex.hasMatch(text)) return oldValue;
+
+    // Integer part must not exceed 8 digits
+    final parts = text.split('.');
+    if (parts[0].length > 8) return oldValue;
+
+    return newValue;
+  }
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 class MenuManagementPage extends StatelessWidget {
   const MenuManagementPage({super.key});
@@ -37,26 +71,29 @@ class MenuManagementPage extends StatelessWidget {
 
     return DefaultTabController(
       length: 3,
-      child: NetworkAwareWrapper(
-        child: Scaffold(
-          backgroundColor: Colors.grey.shade50,
-          appBar: _buildAppBar(),
-          body: TabBarView(
-            // Disable swipe so locked tabs cannot be swiped into
-            physics: const NeverScrollableScrollPhysics(),
-            children: [
-              _buildTablesTab(context),
-              _buildTimingsTab(context),
-              _buildMenuTab(context),
-            ],
-          ),
-        ),
-      ),
-    );
+      child:
+      Builder(  // ✅ Builder gives a context that is a child of DefaultTabController
+          builder: (tabContext) {
+            return NetworkAwareWrapper(
+              child: Scaffold(
+                backgroundColor: Colors.grey.shade50,
+                appBar: _buildAppBar(tabContext),
+                body: TabBarView(
+                  physics: const NeverScrollableScrollPhysics(),
+                  children: [
+                    _buildTablesTab(tabContext),
+                    _buildTimingsTab(tabContext),
+                    _buildMenuTab(tabContext),
+                  ],
+                ),
+              ),
+            );
+          },
+      ));
   }
 
   // ── AppBar ──────────────────────────────────────────────────────────────────
-  PreferredSizeWidget _buildAppBar() => AppBar(
+  PreferredSizeWidget _buildAppBar(BuildContext context) => AppBar(
     automaticallyImplyLeading: true,
     iconTheme: const IconThemeData(color: Colors.white),
     backgroundColor: AppColors.kPrimary,
@@ -110,18 +147,16 @@ class MenuManagementPage extends StatelessWidget {
                 fontSize: 13, fontWeight: FontWeight.w700, letterSpacing: 0.8),
             unselectedLabelStyle:
             const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-            // Tap on locked tabs shows a snackbar instead of navigating
             onTap: (index) {
-              if (index == 1 && !hasTable) {
-                AppSnackbar.warning('Please add at least one table first');
-                // Jump back to tab 0
-                DefaultTabController.of(Get.context!)?.animateTo(0);
-              } else if (index == 2 && !hasTiming) {
-                AppSnackbar.warning('Please add meal timings first');
-                DefaultTabController.of(Get.context!)
-                    ?.animateTo(hasTable ? 1 : 0);
-              }
-            },
+                if (index == 1 && !hasTable) {
+                  AppSnackbar.warning('Please add at least one table first');
+                  DefaultTabController.of(context)?.animateTo(0); // ✅ use passed context
+                } else if (index == 2 && !hasTiming) {
+                  AppSnackbar.warning('Please add meal timings first');
+                  DefaultTabController.of(context)?.animateTo(hasTable ? 1 : 0); // ✅
+                }
+              },
+
             tabs: [
               const Tab(
                 icon: Icon(Icons.table_restaurant_outlined, size: 18),
@@ -134,11 +169,9 @@ class MenuManagementPage extends StatelessWidget {
                     const Icon(Icons.schedule_outlined, size: 18),
                     if (!hasTable)
                       Positioned(
-                        right: -4,
-                        top: -4,
+                        right: -4, top: -4,
                         child: Container(
-                          width: 8,
-                          height: 8,
+                          width: 8, height: 8,
                           decoration: const BoxDecoration(
                             color: Colors.orange,
                             shape: BoxShape.circle,
@@ -156,11 +189,9 @@ class MenuManagementPage extends StatelessWidget {
                     const Icon(Icons.menu_book_outlined, size: 18),
                     if (!hasTiming)
                       Positioned(
-                        right: -4,
-                        top: -4,
+                        right: -4, top: -4,
                         child: Container(
-                          width: 8,
-                          height: 8,
+                          width: 8, height: 8,
                           decoration: const BoxDecoration(
                             color: Colors.orange,
                             shape: BoxShape.circle,
@@ -204,12 +235,25 @@ class MenuManagementPage extends StatelessWidget {
                 icon: Icons.table_restaurant_outlined,
               ),
               const SizedBox(height: 16),
+
+              // ── Capacity Range — accepts "7" or "1-7" or "2–6" ──
               _modernTextField(
                 controller: c.capacityRangeCtrl,
                 label: 'Capacity Range',
-                hint: 'e.g. 2–6 or 4',
+                hint: 'e.g. 7  or  1–7',
                 icon: Icons.people_outline,
+                type: TextInputType.text,
+                inputFormatters: [_CapacityRangeFormatter()],
               ),
+              // Helper text below the field
+              Padding(
+                padding: const EdgeInsets.only(left: 12, top: 4),
+                child: Text(
+                  'Enter a single number (e.g. 7) or a range (e.g. 1-7)',
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                ),
+              ),
+
               const SizedBox(height: 16),
               _modernTextField(
                 controller: c.tableIdsCtrl,
@@ -312,7 +356,7 @@ class MenuManagementPage extends StatelessWidget {
   );
 
   // ══════════════════════════════════════════════════════════════════════════
-  // TAB 2 — TIMINGS  (locked until at least 1 table exists)
+  // TAB 2 — TIMINGS
   // ══════════════════════════════════════════════════════════════════════════
   Widget _buildTimingsTab(BuildContext context) {
     Future<void> pickTime(TextEditingController ctrl) async {
@@ -427,7 +471,7 @@ class MenuManagementPage extends StatelessWidget {
                   ]),
                   const SizedBox(height: 16),
 
-                  // ── BREAK DURATION — max 2 digits ──
+                  // Break duration — max 2 digits
                   _modernTextField(
                     controller: c.breakDurationCtrl,
                     label: 'Break Duration (mins)',
@@ -436,7 +480,7 @@ class MenuManagementPage extends StatelessWidget {
                     type: TextInputType.number,
                     inputFormatters: [
                       FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(2), // max 2 digits
+                      LengthLimitingTextInputFormatter(2),
                     ],
                   ),
 
@@ -474,8 +518,7 @@ class MenuManagementPage extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: Colors.orange.shade50,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                            color: Colors.orange.shade200),
+                        border: Border.all(color: Colors.orange.shade200),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -632,8 +675,7 @@ class MenuManagementPage extends StatelessWidget {
                                   ),
                                   child: Row(mainAxisSize: MainAxisSize.min, children: [
                                     Column(
-                                      crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Text(s.displayTime,
@@ -681,7 +723,7 @@ class MenuManagementPage extends StatelessWidget {
   }
 
   // ══════════════════════════════════════════════════════════════════════════
-  // TAB 3 — MENU  (locked until at least 1 timing exists)
+  // TAB 3 — MENU
   // ══════════════════════════════════════════════════════════════════════════
   Widget _buildMenuTab(BuildContext context) {
     return Obx(() {
@@ -694,8 +736,7 @@ class MenuManagementPage extends StatelessWidget {
           title: 'Tables Required',
           subtitle: 'Please add at least one table type\nbefore building the menu.',
           actionLabel: 'Go to Tables',
-          onAction: () =>
-              DefaultTabController.of(context)?.animateTo(0),
+          onAction: () => DefaultTabController.of(context)?.animateTo(0),
         );
       }
 
@@ -705,8 +746,7 @@ class MenuManagementPage extends StatelessWidget {
           title: 'Meal Timings Required',
           subtitle: 'Please set up meal timings\nbefore adding menu items.',
           actionLabel: 'Go to Timings',
-          onAction: () =>
-              DefaultTabController.of(context)?.animateTo(1),
+          onAction: () => DefaultTabController.of(context)?.animateTo(1),
         );
       }
 
@@ -803,8 +843,7 @@ class MenuManagementPage extends StatelessWidget {
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Column(
-                                    crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Text(s.displayTime,
@@ -868,16 +907,14 @@ class MenuManagementPage extends StatelessWidget {
                                         width: 44, height: 44,
                                         decoration: BoxDecoration(
                                           color: color.withOpacity(0.10),
-                                          borderRadius:
-                                          BorderRadius.circular(8),
+                                          borderRadius: BorderRadius.circular(8),
                                         ),
                                         child: Icon(Icons.fastfood_rounded,
                                             color: color, size: 20),
                                       );
                                       if (food.imageFile != null) {
                                         return ClipRRect(
-                                          borderRadius:
-                                          BorderRadius.circular(8),
+                                          borderRadius: BorderRadius.circular(8),
                                           child: Image.file(food.imageFile!,
                                               width: 44,
                                               height: 44,
@@ -887,8 +924,7 @@ class MenuManagementPage extends StatelessWidget {
                                       if (food.imageUrl != null &&
                                           food.imageUrl!.isNotEmpty) {
                                         return ClipRRect(
-                                          borderRadius:
-                                          BorderRadius.circular(8),
+                                          borderRadius: BorderRadius.circular(8),
                                           child: Image.network(
                                             food.imageUrl!,
                                             width: 44,
@@ -904,8 +940,7 @@ class MenuManagementPage extends StatelessWidget {
                                     const SizedBox(width: 10),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Text(food.name,
                                               style: const TextStyle(
@@ -914,12 +949,10 @@ class MenuManagementPage extends StatelessWidget {
                                           if (food.description.isNotEmpty)
                                             Text(food.description,
                                                 maxLines: 1,
-                                                overflow:
-                                                TextOverflow.ellipsis,
+                                                overflow: TextOverflow.ellipsis,
                                                 style: TextStyle(
                                                     fontSize: 11,
-                                                    color: Colors
-                                                        .grey.shade400)),
+                                                    color: Colors.grey.shade400)),
                                         ],
                                       ),
                                     ),
@@ -959,6 +992,8 @@ class MenuManagementPage extends StatelessWidget {
 }
 
 // ─── Locked Tab Placeholder ───────────────────────────────────────────────────
+// FIX: Removed fixed `height: 80` from icon container — it was clipping the
+//      40px icon inside 24px padding (80 < 24*2+40 = 88). Now sized by padding.
 Widget _lockedTab({
   required IconData icon,
   required String title,
@@ -973,6 +1008,7 @@ Widget _lockedTab({
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
+              // ✅ No fixed height — padding sizes the circle naturally
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 color: Colors.grey.shade100,
@@ -1327,26 +1363,6 @@ Widget _previewSection({
       ]),
     );
 
-// ─── Price Input Formatter — max 8 integer digits + 2 decimal ────────────────
-class _PriceInputFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-      TextEditingValue oldValue, TextEditingValue newValue) {
-    final text = newValue.text;
-    if (text.isEmpty) return newValue;
-
-    // Allow only digits and a single dot
-    final regex = RegExp(r'^\d*\.?\d{0,2}$');
-    if (!regex.hasMatch(text)) return oldValue;
-
-    // Integer part must not exceed 8 digits
-    final parts = text.split('.');
-    if (parts[0].length > 8) return oldValue;
-
-    return newValue;
-  }
-}
-
 // ─── Meal Type Card ───────────────────────────────────────────────────────────
 class _MealTypeCard extends StatelessWidget {
   final MealType mealType;
@@ -1476,7 +1492,7 @@ class _MealTypeCard extends StatelessWidget {
                   ]),
                   const SizedBox(height: 14),
 
-                  // ── Food Name (full width) ──────────────────────────
+                  // Food Name
                   _modernTextField(
                     controller: c.foodNameCtrls[mealType]!,
                     label: 'Food Name',
@@ -1485,7 +1501,7 @@ class _MealTypeCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
 
-                  // ── Price (full width, 8-digit limit) ──────────────
+                  // Price
                   _modernTextField(
                     controller: c.foodPriceCtrls[mealType]!,
                     label: 'Price ₹',
@@ -1616,8 +1632,7 @@ class _MealTypeCard extends StatelessWidget {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Column(
-                                  crossAxisAlignment:
-                                  CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(food.name,
                                         style: const TextStyle(

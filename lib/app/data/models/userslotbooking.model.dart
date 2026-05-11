@@ -1,4 +1,4 @@
-
+// ── userslotbooking.model.dart ────────────────────────────────────────────────
 
 Map<String, dynamic> _asMap(dynamic v) {
   if (v is Map<String, dynamic>) return v;
@@ -8,22 +8,54 @@ Map<String, dynamic> _asMap(dynamic v) {
 
 List<dynamic> _asList(dynamic v) => v is List ? v : [];
 
+// ── TimeSlot ──────────────────────────────────────────────────────────────────
+
+class TimeSlot {
+  final String time;
+  final bool isActive;
+
+  TimeSlot({
+    required this.time,
+    required this.isActive,
+  });
+
+  bool get isSelectable => isActive;
+  bool get isPast       => !isActive;
+  bool get isAvailable  => isActive;
+
+  factory TimeSlot.fromJson(dynamic raw) {
+    final j         = _asMap(raw);
+    final activeRaw = j["is_active"];
+    final bool active = activeRaw is bool
+        ? activeRaw
+        : (activeRaw is num ? activeRaw.toInt() == 1 : false);
+    return TimeSlot(
+      time:     (j["time"] ?? "") as String,
+      isActive: active,
+    );
+  }
+}
+
 // ── 1. /restaurant/bookings ───────────────────────────────────────────────────
 
 class MealSlot {
   final String mealType;
-  final List<String> timeSlots;
+  final List<TimeSlot> timeSlots;
 
   MealSlot({required this.mealType, required this.timeSlots});
 
   String get displayLabel =>
-      mealType.isNotEmpty ? mealType[0].toUpperCase() + mealType.substring(1) : "";
+      mealType.isNotEmpty
+          ? mealType[0].toUpperCase() + mealType.substring(1)
+          : "";
 
   factory MealSlot.fromJson(dynamic raw) {
     final j = _asMap(raw);
     return MealSlot(
       mealType:  ((j["meal_type"] ?? "") as String).toLowerCase(),
-      timeSlots: _asList(j["time_slots"]).map((e) => e.toString()).toList(),
+      timeSlots: _asList(j["time_slots"])
+          .map((e) => TimeSlot.fromJson(e))
+          .toList(),
     );
   }
 }
@@ -52,7 +84,9 @@ class TimeSlotsResponse {
     return TimeSlotsResponse(
       status:  (j["status"] as num?)?.toInt() ?? 0,
       message: (j["message"] ?? "") as String,
-      data:    j["data"] != null ? TimeSlotsResponseData.fromJson(j["data"]) : null,
+      data:    j["data"] != null
+          ? TimeSlotsResponseData.fromJson(j["data"])
+          : null,
     );
   }
 }
@@ -66,7 +100,9 @@ class SeatingTableGroup {
   SeatingTableGroup({required this.seatingType, required this.tables});
 
   String get displayLabel =>
-      seatingType.isNotEmpty ? seatingType[0].toUpperCase() + seatingType.substring(1) : "";
+      seatingType.isNotEmpty
+          ? seatingType[0].toUpperCase() + seatingType.substring(1)
+          : "";
 
   factory SeatingTableGroup.fromJson(dynamic raw) {
     final j = _asMap(raw);
@@ -86,14 +122,20 @@ class GetTablesByGuestsResponse {
   final String message;
   final List<SeatingTableGroup> data;
 
-  GetTablesByGuestsResponse({required this.status, required this.message, required this.data});
+  GetTablesByGuestsResponse({
+    required this.status,
+    required this.message,
+    required this.data,
+  });
 
   factory GetTablesByGuestsResponse.fromJson(dynamic raw) {
     final j = _asMap(raw);
     return GetTablesByGuestsResponse(
       status:  (j["status"] as num?)?.toInt() ?? 0,
       message: (j["message"] ?? "") as String,
-      data:    _asList(j["data"]).map((e) => SeatingTableGroup.fromJson(e)).toList(),
+      data:    _asList(j["data"])
+          .map((e) => SeatingTableGroup.fromJson(e))
+          .toList(),
     );
   }
 }
@@ -197,14 +239,20 @@ class ConfirmBookingResponse {
   final String message;
   final ConfirmBookingResponseData? data;
 
-  ConfirmBookingResponse({required this.status, required this.message, this.data});
+  ConfirmBookingResponse({
+    required this.status,
+    required this.message,
+    this.data,
+  });
 
   factory ConfirmBookingResponse.fromJson(dynamic raw) {
     final j = _asMap(raw);
     return ConfirmBookingResponse(
       status:  (j["status"] as num?)?.toInt() ?? 0,
       message: (j["message"] ?? "") as String,
-      data:    j["data"] != null ? ConfirmBookingResponseData.fromJson(j["data"]) : null,
+      data:    j["data"] != null
+          ? ConfirmBookingResponseData.fromJson(j["data"])
+          : null,
     );
   }
 }
