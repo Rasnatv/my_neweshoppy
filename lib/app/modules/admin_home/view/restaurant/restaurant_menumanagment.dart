@@ -1272,18 +1272,27 @@ class _MealTypeCard extends StatelessWidget {
                         icon: Icons.fastfood_outlined,
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _modernTextField(
-                        controller: c.foodPriceCtrls[mealType]!,
-                        label: 'Price ₹',
-                        hint: '0.00',
-                        icon: Icons.currency_rupee_outlined,
-                        type: const TextInputType.numberWithOptions(
-                            decimal: true),
-                      ),
-                    ),
-                  ]),
+                    const SizedBox(height: 12),
+                  //   Expanded(
+                  //     child: _modernTextField(
+                  //       controller: c.foodPriceCtrls[mealType]!,
+                  //       label: 'Price ₹',
+                  //       hint: '0.00',
+                  //       icon: Icons.currency_rupee_outlined,
+                  //       type: const TextInputType.numberWithOptions(
+                  //           decimal: true),
+                  //     ),
+                  //   ),
+                   ]),
+      _modernTextField(
+            controller: c.foodPriceCtrls[mealType]!,
+            label: 'Price ₹',
+            hint: '0.00',
+            icon: Icons.currency_rupee_outlined,
+            type: const TextInputType.numberWithOptions(
+                decimal: true),
+          ),
+
                   const SizedBox(height: 12),
                   _modernTextField(
                     controller: c.descriptionCtrls[mealType]!,

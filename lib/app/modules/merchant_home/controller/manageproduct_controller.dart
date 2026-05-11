@@ -167,9 +167,6 @@ class ManageproductController extends GetxController {
   Future<void> refreshProducts() async => fetchProducts();
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MODELS
-// ─────────────────────────────────────────────────────────────────────────────
 
 class Product {
   final int? id;

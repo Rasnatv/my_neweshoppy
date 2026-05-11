@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import '../../../common/utils/validators.dart';
 import '../../../data/errors/api_error.dart';
 import '../../merchantlogin/widget/successwidget.dart';
+import '../views/merchant_home.dart';
 
 class MerchantChangePasswordController extends GetxController {
   final formKey = GlobalKey<FormState>(); // ← add form key
@@ -86,19 +87,20 @@ class MerchantChangePasswordController extends GetxController {
         confirmPasswordCtrl.clear();
 
         currentPasswordVisible.value = true;
-        newPasswordVisible.value     = true;
+        newPasswordVisible.value = true;
         confirmPasswordVisible.value = true;
 
         AppSnackbar.success(
-          data['message']?.toString().isNotEmpty == true
+          data['message']
+              ?.toString()
+              .isNotEmpty == true
               ? data['message']
               : 'Password changed successfully.',
         );
 
         await Future.delayed(const Duration(seconds: 2));
-        Get.back();
-      }
-    } catch (e) {
+        Get.offAll(MerchantDashboardPage());
+      }} catch (e) {
       AppSnackbar.error(ApiErrorHandler.handleException(e));
     } finally {
       isLoading.value = false;

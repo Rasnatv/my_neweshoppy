@@ -32,7 +32,6 @@ class OrderConfirmationController extends GetxController {
   }
 
   Future<void> fetchOrderPreview(int addressId) async {
-    /// ✅ TOKEN CHECK
 
     try {
       isLoading.value = true;
@@ -104,8 +103,8 @@ class OrderConfirmationController extends GetxController {
         final body = jsonDecode(response.body);
 
         if (body['status'] == true) {
-          // ✅ FIX: API returns no 'data' field — use preview values instead
-          final orderId = body['data']?['order_id']?.toString() ?? 'N/A';
+          // ✅ Read order_id from root, not from body['data']
+          final orderId = body['order_id']?.toString() ?? 'N/A';
           final totalAmount = orderPreview.value?.totalAmount ?? 0.0;
 
           if (Get.isRegistered<CartController>()) {
@@ -116,7 +115,8 @@ class OrderConfirmationController extends GetxController {
             orderId: orderId,
             totalAmount: totalAmount,
           ));
-        } else {
+        }
+        else {
           AppSnackbar.error(body['message'] ?? 'Could not place order');
         }
       } else {

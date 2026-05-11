@@ -16,6 +16,7 @@ import '../modules/forgotpassowrd/binding/checkemailotp_binding.dart';
 import '../modules/forgotpassowrd/binding/forgotpswd_binding.dart';
 import '../modules/forgotpassowrd/binding/newpswd_bindings.dart';
 
+import '../modules/forgotpassowrd/view/checkemail.dart';
 import '../modules/forgotpassowrd/view/forgotpassword.dart';
 import '../modules/forgotpassowrd/view/newpasswordscreen.dart';
 import '../modules/merchant_home/views/manageproducts.dart';
@@ -79,10 +80,10 @@ class AppPages {
       page: () => UserSignup(),
       binding: UsersignupBindings(),
     ),
-    // GetPage(
-    //   name: Routes.CHECKEMAIL,
-    //   page: () => const CheckemailScreen(),
-    // ),
+    GetPage(
+      name: Routes.CHECKEMAIL,
+      page: () => const CheckemailScreen(),
+    ),
 
     //
     GetPage(

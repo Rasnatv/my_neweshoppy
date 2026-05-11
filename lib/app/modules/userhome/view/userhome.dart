@@ -467,7 +467,7 @@ class _UserhomeState extends State<Userhome> with TickerProviderStateMixin {
         const SliverToBoxAdapter(child: SizedBox(height: 12)),
         UserOfferSection(),
 
-        const SliverToBoxAdapter(child: SizedBox(height: 80)),
+        const SliverToBoxAdapter(child: SizedBox(height: 130)),
       ],
     );
   }
