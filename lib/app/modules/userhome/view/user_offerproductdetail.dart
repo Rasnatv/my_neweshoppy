@@ -12,13 +12,14 @@ import '../../../data/models/user_offerdetailmodel.dart';
 import '../../merchantlogin/widget/successwidget.dart';
 import '../../product/controller/cartcontroller.dart';
 import '../controller/user_offerproductdetail_controller.dart';
+
 class UserOfferProductDetailScreen extends StatefulWidget {
   final int offerProductId;
-  final int? preSelectedVariantId; // ✅ ADD
+  final int? preSelectedVariantId;
 
   const UserOfferProductDetailScreen({
     required this.offerProductId,
-    this.preSelectedVariantId, // ✅ ADD
+    this.preSelectedVariantId,
     super.key,
   });
 
@@ -37,7 +38,7 @@ class _UserOfferProductDetailScreenState
 
   final String _token = GetStorage().read('auth_token') ?? '';
 
-  // ── Design Tokens (matches ProductDetailPage) ───────────────
+  // ── Design tokens ────────────────────────────────────────────
   static const _primary      = Color(0xFF3D5A99);
   static const _primaryLight = Color(0xFFEEF1F9);
   static const _accent       = Color(0xFFE8A020);
@@ -55,142 +56,153 @@ class _UserOfferProductDetailScreenState
   @override
   void initState() {
     super.initState();
+
     controller = Get.put(
       UserOfferProductDetailController(),
       tag: widget.offerProductId.toString(),
     );
     cartController = Get.find<CartController>();
 
-    // if (controller.productData.value == null && !controller.isLoading.value) {
-    //   controller.fetchProductDetails(widget.offerProductId);
-    // }
+    // ✅ Register carousel jump callback — no ever() listener needed
+    controller.onCarouselJumpRequested = (index) {
+      if (!mounted) return;
+      _carouselController
+          .animateToPage(
+        index,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeInOut,
+      )
+          .whenComplete(controller.onCarouselJumpDone);
+    };
+
+    // Fetch and optionally pre-select variant
     if (controller.productData.value == null && !controller.isLoading.value) {
       controller.fetchProductDetails(widget.offerProductId).then((_) {
-        // ✅ Pre-select the variant that was in cart
         if (widget.preSelectedVariantId != null) {
           controller.selectVariantById(widget.preSelectedVariantId!);
         }
       });
     }
+  }
 
-    ever(controller.currentImageIndex, (index) {
-      _carouselController.animateToPage(
-        index,
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOut,
-      );
-    });
+  @override
+  void dispose() {
+    // Remove callback reference so the controller doesn't call into a dead widget
+    controller.onCarouselJumpRequested = null;
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return NetworkAwareWrapper(child:Scaffold(
-      backgroundColor: _bg,
-      appBar: AppBar(
-        backgroundColor: AppColors.kPrimary,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          'Product Details',
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-            letterSpacing: 0.2,
+    return NetworkAwareWrapper(
+      child: Scaffold(
+        backgroundColor: _bg,
+        appBar: AppBar(
+          backgroundColor: AppColors.kPrimary,
+          elevation: 0,
+          iconTheme: const IconThemeData(color: Colors.white),
+          title: const Text(
+            'Product Details',
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+              letterSpacing: 0.2,
+            ),
           ),
         ),
-      ),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(
-            child: CircularProgressIndicator(
-                color: _primary, strokeWidth: 2.5),
-          );
-        }
+        body: Obx(() {
+          if (controller.isLoading.value) {
+            return const Center(
+              child: CircularProgressIndicator(
+                  color: _primary, strokeWidth: 2.5),
+            );
+          }
 
-        if (controller.productData.value == null) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: const BoxDecoration(
-                    color: _primaryLight,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.error_outline_rounded,
-                      size: 44, color: _primary),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Failed to load product',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: _textDark,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton.icon(
-                  onPressed: () =>
-                      controller.fetchProductDetails(widget.offerProductId),
-                  icon: const Icon(Icons.refresh_rounded, size: 18),
-                  label: const Text('Retry'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 28, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    elevation: 0,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-
-        final product = controller.productData.value!;
-
-        return Stack(
-          children: [
-            SingleChildScrollView(
-              padding: const EdgeInsets.only(bottom: 110),
+          if (controller.productData.value == null) {
+            return Center(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 5),
-                  _buildImageCarousel(product),
-                  const SizedBox(height: 8),
-                  _buildProductInfo(product),
-                  const SizedBox(height: 8),
-                  _buildPriceSection(product),
-                  const SizedBox(height: 8),
-                  _buildVariantSelector(product),
-                  const SizedBox(height: 8),
-                  _buildCommonAttributes(product),
-                  const SizedBox(height: 8),
-                  _buildDescription(product),
-                  const SizedBox(height: 24),
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: const BoxDecoration(
+                      color: _primaryLight,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.error_outline_rounded,
+                        size: 44, color: _primary),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Failed to load product',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: _textDark,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton.icon(
+                    onPressed: () =>
+                        controller.fetchProductDetails(widget.offerProductId),
+                    icon: const Icon(Icons.refresh_rounded, size: 18),
+                    label: const Text('Retry'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 28, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      elevation: 0,
+                    ),
+                  ),
                 ],
               ),
-            ),
-            _buildBottomBar(product),
-          ],
-        );
-      }),
-    ));
+            );
+          }
+
+          final product = controller.productData.value!;
+
+          return Stack(
+            children: [
+              SingleChildScrollView(
+                padding: const EdgeInsets.only(bottom: 110),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 5),
+                    _buildImageCarousel(product),
+                    const SizedBox(height: 8),
+                    _buildProductInfo(product),
+                    const SizedBox(height: 8),
+                    _buildPriceSection(product),
+                    const SizedBox(height: 8),
+                    _buildVariantSelector(product),
+                    const SizedBox(height: 8),
+                    _buildCommonAttributes(product),
+                    const SizedBox(height: 8),
+                    _buildDescription(product),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+              _buildBottomBar(product),
+            ],
+          );
+        }),
+      ),
+    );
   }
 
   // ── Image Carousel ──────────────────────────────────────────
+
   Widget _buildImageCarousel(UserOfferProductDetail product) {
     return Container(
       color: _surface,
       child: Column(
         children: [
-          // Offer Badge Strip
           if (product.discountPercentage > 0)
             Container(
               width: double.infinity,
@@ -246,7 +258,6 @@ class _UserOfferProductDetailScreenState
               ),
             ),
 
-          // Carousel / Placeholder
           if (product.productImages.isEmpty)
             Container(
               height: 350,
@@ -266,8 +277,9 @@ class _UserOfferProductDetailScreenState
                   viewportFraction: 1.0,
                   enlargeCenterPage: false,
                   initialPage: controller.currentImageIndex.value,
-                  onPageChanged: (index, _) {
-                    controller.currentImageIndex.value = index;
+                  // ✅ Use onUserSwiped — respects _isProgrammaticJump guard
+                  onPageChanged: (index, reason) {
+                    controller.onUserSwiped(index);
                   },
                 ),
                 items: product.productImages.map((imageUrl) {
@@ -298,7 +310,6 @@ class _UserOfferProductDetailScreenState
               ),
             ),
 
-          // Dot Indicators
           if (product.productImages.length > 1)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 14),
@@ -320,6 +331,7 @@ class _UserOfferProductDetailScreenState
   }
 
   // ── Product Info ────────────────────────────────────────────
+
   Widget _buildProductInfo(UserOfferProductDetail product) {
     return Container(
       padding: const EdgeInsets.all(18),
@@ -341,11 +353,11 @@ class _UserOfferProductDetailScreenState
           ),
           const SizedBox(width: 10),
           Obx(() {
-            final qty        = controller.selectedVariant.value?.stock ?? 0;
-            final isLow      = qty > 0 && qty <= 5;
-            final isOut      = qty <= 0;
-            final color      = isOut ? _red : isLow ? _amber : _green;
-            final label      = isOut
+            final qty   = controller.selectedVariant.value?.stock ?? 0;
+            final isLow = qty > 0 && qty <= 5;
+            final isOut = qty <= 0;
+            final color = isOut ? _red : isLow ? _amber : _green;
+            final label = isOut
                 ? 'Out of Stock'
                 : isLow
                 ? 'Only $qty left'
@@ -375,6 +387,7 @@ class _UserOfferProductDetailScreenState
   }
 
   // ── Price Section ───────────────────────────────────────────
+
   Widget _buildPriceSection(UserOfferProductDetail product) {
     return Obx(() {
       final variant      = controller.selectedVariant.value;
@@ -473,11 +486,11 @@ class _UserOfferProductDetailScreenState
   }
 
   // ── Variant Selector ────────────────────────────────────────
+
   Widget _buildVariantSelector(UserOfferProductDetail product) {
     if (product.variants.isEmpty) return const SizedBox.shrink();
 
-    final attributeNames =
-    product.variants.first.attributes.keys.toList();
+    final attributeNames = product.variants.first.attributes.keys.toList();
 
     return Container(
       color: _surface,
@@ -503,8 +516,7 @@ class _UserOfferProductDetailScreenState
                 ),
                 const SizedBox(height: 10),
                 Obx(() {
-                  final selected =
-                  controller.selectedAttributes[attr];
+                  final selected = controller.selectedAttributes[attr];
                   final values =
                   controller.getAvailableValuesForAttribute(attr);
 
@@ -513,9 +525,19 @@ class _UserOfferProductDetailScreenState
                     runSpacing: 8,
                     children: values.map((value) {
                       final isSelected = selected == value;
+
+                      // ✅ Check if this combo is selectable
+                      final testAttrs =
+                      Map<String, String>.from(controller.selectedAttributes);
+                      testAttrs[attr] = value;
+                      final canSelect = product.variants.any((v) =>
+                          testAttrs.entries.every((e) =>
+                          v.attributes[e.key] == e.value));
+
                       return GestureDetector(
-                        onTap: () =>
-                            controller.selectAttribute(attr, value),
+                        onTap: canSelect
+                            ? () => controller.selectAttribute(attr, value)
+                            : null,
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 180),
                           padding: const EdgeInsets.symmetric(
@@ -523,19 +545,22 @@ class _UserOfferProductDetailScreenState
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? AppColors.kPrimary
-                                : _surface,
+                                : canSelect
+                                ? _surface
+                                : _divider,
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
                               color: isSelected
                                   ? AppColors.kPrimary
-                                  : _divider,
+                                  : canSelect
+                                  ? _divider
+                                  : _divider.withOpacity(0.5),
                               width: isSelected ? 2 : 1.5,
                             ),
                             boxShadow: isSelected
                                 ? [
                               BoxShadow(
-                                color:
-                                _primary.withOpacity(0.25),
+                                color: _primary.withOpacity(0.25),
                                 blurRadius: 8,
                                 offset: const Offset(0, 3),
                               ),
@@ -549,7 +574,12 @@ class _UserOfferProductDetailScreenState
                               fontWeight: FontWeight.w700,
                               color: isSelected
                                   ? Colors.white
-                                  : _textDark,
+                                  : canSelect
+                                  ? _textDark
+                                  : _textLight,
+                              decoration: canSelect
+                                  ? null
+                                  : TextDecoration.lineThrough,
                             ),
                           ),
                         ),
@@ -563,13 +593,12 @@ class _UserOfferProductDetailScreenState
 
           // Low-stock warning
           Obx(() {
-            final stock =
-                controller.selectedVariant.value?.stock ?? 0;
+            final stock = controller.selectedVariant.value?.stock ?? 0;
             if (stock <= 0 || stock > 5) return const SizedBox.shrink();
             return Container(
               margin: const EdgeInsets.only(top: 4),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 10, vertical: 6),
+              padding:
+              const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: _amber.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
@@ -599,9 +628,9 @@ class _UserOfferProductDetailScreenState
   }
 
   // ── Common Attributes ───────────────────────────────────────
+
   Widget _buildCommonAttributes(UserOfferProductDetail product) {
     if (product.commonAttributes.isEmpty) return const SizedBox.shrink();
-
     final entries = product.commonAttributes.entries.toList();
 
     return Container(
@@ -616,12 +645,10 @@ class _UserOfferProductDetailScreenState
             final isEven = e.key.isEven;
             final entry  = e.value;
             return Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 10),
+              padding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: isEven
-                    ? _primaryLight.withOpacity(0.55)
-                    : _surface,
+                color: isEven ? _primaryLight.withOpacity(0.55) : _surface,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -659,6 +686,7 @@ class _UserOfferProductDetailScreenState
   }
 
   // ── Description ─────────────────────────────────────────────
+
   Widget _buildDescription(UserOfferProductDetail product) {
     if (product.description.trim().isEmpty) return const SizedBox.shrink();
 
@@ -684,6 +712,7 @@ class _UserOfferProductDetailScreenState
     );
   }
 
+  // ── Bottom Bar ──────────────────────────────────────────────
 
   Widget _buildBottomBar(UserOfferProductDetail product) {
     return Positioned(
@@ -694,7 +723,6 @@ class _UserOfferProductDetailScreenState
         final variant      = controller.selectedVariant.value;
         final isOutOfStock = variant == null || variant.stock <= 0;
 
-        // ✅ FIX: match by productId AND variantId
         final cartItem = variant == null
             ? null
             : cartController.cartItems.firstWhereOrNull(
@@ -708,9 +736,7 @@ class _UserOfferProductDetailScreenState
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
           decoration: const BoxDecoration(
             color: _surface,
-            border: Border(
-              top: BorderSide(color: _divider, width: 0.5),
-            ),
+            border: Border(top: BorderSide(color: _divider, width: 0.5)),
           ),
           child: SafeArea(
             top: false,
@@ -732,7 +758,8 @@ class _UserOfferProductDetailScreenState
         onTap: isOutOfStock
             ? null
             : () async {
-          final variantId = controller.selectedVariant.value?.variantId;
+          final variantId =
+              controller.selectedVariant.value?.variantId;
           if (variantId == null) {
             AppSnackbar.warning("Please select a variant");
             return;
@@ -775,7 +802,9 @@ class _UserOfferProductDetailScreenState
       ),
     );
   }
-  Widget _buildCartStepper(CartItem cartItem, UserOfferProductDetail product) {
+
+  Widget _buildCartStepper(
+      CartItem cartItem, UserOfferProductDetail product) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
       child: Row(
@@ -793,7 +822,8 @@ class _UserOfferProductDetailScreenState
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.shopping_cart_rounded, size: 17, color: _accent),
+                    Icon(Icons.shopping_cart_rounded,
+                        size: 17, color: _accent),
                     const SizedBox(width: 6),
                     Text(
                       'Go to Cart',
@@ -829,7 +859,7 @@ class _UserOfferProductDetailScreenState
                   onTap: () => cartController.updateQuantity(
                     product.productId,
                     "decrement",
-                    variantId: cartItem.variantId, // ✅ fix
+                    variantId: cartItem.variantId,
                   ),
                   child: Container(
                     width: 48,
@@ -867,7 +897,7 @@ class _UserOfferProductDetailScreenState
                   onTap: () => cartController.updateQuantity(
                     product.productId,
                     "increment",
-                    variantId: cartItem.variantId, // ✅ fix
+                    variantId: cartItem.variantId,
                   ),
                   child: Container(
                     width: 48,
@@ -891,6 +921,7 @@ class _UserOfferProductDetailScreenState
   }
 
   // ── Section Title Helper ────────────────────────────────────
+
   Widget _sectionTitle(String title, IconData icon) {
     return Row(
       children: [

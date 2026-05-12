@@ -36,8 +36,6 @@ class ProductDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ FIX: always delete stale controller so preSelectedVariantId
-    // from the new navigation is never ignored
     if (Get.isRegistered<ProductDetailController>(tag: productId.toString())) {
       Get.delete<ProductDetailController>(
           tag: productId.toString(), force: true);
@@ -52,8 +50,6 @@ class ProductDetailPage extends StatelessWidget {
     );
 
     final cartController = Get.find<CartController>();
-
-    // ... rest of build unchanged
 
     return NetworkAwareWrapper(
       child: Scaffold(
@@ -81,8 +77,9 @@ class ProductDetailPage extends StatelessWidget {
           }
           final product = controller.product.value;
           final variant = controller.selectedVariant.value;
-          if (product == null || variant == null)
+          if (product == null || variant == null) {
             return _buildError(controller);
+          }
 
           return Stack(
             children: [
@@ -92,7 +89,11 @@ class ProductDetailPage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildImagePanel(controller, product),
-                    _buildInfoBlock(product, variant),
+                    // Wrap info block in Obx so price/stock update on variant change
+                    Obx(() {
+                      final v = controller.selectedVariant.value ?? variant;
+                      return _buildInfoBlock(product, v);
+                    }),
                     _buildVariantSection(controller, product),
                     _buildSpecifications(product),
                     _buildDescription(product),
@@ -108,6 +109,10 @@ class ProductDetailPage extends StatelessWidget {
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Error
+  // ---------------------------------------------------------------------------
+
   Widget _buildError(ProductDetailController controller) {
     return Center(
       child: Padding(
@@ -118,8 +123,8 @@ class ProductDetailPage extends StatelessWidget {
             Container(
               width: 70,
               height: 70,
-              decoration:
-              const BoxDecoration(color: _tealLight, shape: BoxShape.circle),
+              decoration: const BoxDecoration(
+                  color: _tealLight, shape: BoxShape.circle),
               child: const Icon(Icons.error_outline_rounded,
                   size: 30, color: Colors.teal),
             ),
@@ -165,6 +170,10 @@ class ProductDetailPage extends StatelessWidget {
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Image panel
+  // ---------------------------------------------------------------------------
+
   Widget _buildImagePanel(
       ProductDetailController controller, ProductDetailModel product) {
     final variants = product.variants;
@@ -174,14 +183,12 @@ class ProductDetailPage extends StatelessWidget {
       children: [
         SizedBox(
           height: 380,
-          // ✅ Removed Obx wrapper — PageController is not observable
           child: PageView.builder(
             controller: controller.pageController,
             itemCount: count,
-            onPageChanged: (index) {
-              controller.currentImageIndex.value = index;
-              controller.selectVariant(variants[index]);
-            },
+            // ✅ KEY FIX: use onUserSwiped — it respects the _isProgrammaticJump
+            // guard so chip taps never get overwritten by the page-change callback
+            onPageChanged: controller.onUserSwiped,
             itemBuilder: (context, index) {
               final v = variants[index];
               return Container(
@@ -198,8 +205,8 @@ class ProductDetailPage extends StatelessWidget {
                           size: 56, color: Colors.grey[300]),
                       const SizedBox(height: 8),
                       Text('No image available',
-                          style:
-                          TextStyle(fontSize: 12, color: Colors.grey[400])),
+                          style: TextStyle(
+                              fontSize: 12, color: Colors.grey[400])),
                     ],
                   ),
                   loadingBuilder: (context, child, progress) {
@@ -241,7 +248,7 @@ class ProductDetailPage extends StatelessWidget {
           ),
         ),
 
-        // Dot indicators — keep their own Obx, they DO read currentImageIndex
+        // Dot indicators
         if (count > 1)
           Positioned(
             bottom: 12,
@@ -270,6 +277,10 @@ class ProductDetailPage extends StatelessWidget {
       ],
     );
   }
+
+  // ---------------------------------------------------------------------------
+  // Info block
+  // ---------------------------------------------------------------------------
 
   Widget _buildInfoBlock(
       ProductDetailModel product, ProductVariantModel variant) {
@@ -339,29 +350,28 @@ class ProductDetailPage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                '₹${variant.price}',
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.teal,
-                  letterSpacing: -0.7,
-                ),
-              ),
-            ],
+          Text(
+            '₹${variant.price}',
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              color: Colors.teal,
+              letterSpacing: -0.7,
+            ),
           ),
         ],
       ),
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Variant section
+  // ---------------------------------------------------------------------------
+
   Widget _buildVariantSection(
       ProductDetailController controller, ProductDetailModel product) {
-    final attributeMap = controller.getVariantAttributes();
-    if (attributeMap.isEmpty) return const SizedBox.shrink();
+    final attributeKeys = controller.getAttributeKeys();
+    if (attributeKeys.isEmpty) return const SizedBox.shrink();
 
     return Container(
       margin: const EdgeInsets.only(top: 5),
@@ -372,16 +382,17 @@ class ProductDetailPage extends StatelessWidget {
         children: [
           _sectionHeader('Select Variant', Icons.tune_rounded),
           const SizedBox(height: 17),
-          ...attributeMap.entries.map((entry) {
-            final attribute = entry.key;
-            final values = entry.value.toList();
+
+          ...attributeKeys.map((attributeKey) {
+            final allValues = controller.getValuesForAttribute(attributeKey);
+
             return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.only(bottom: 14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    attribute[0].toUpperCase() + attribute.substring(1),
+                    attributeKey[0].toUpperCase() + attributeKey.substring(1),
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -389,35 +400,43 @@ class ProductDetailPage extends StatelessWidget {
                       letterSpacing: 0.3,
                     ),
                   ),
-                  const SizedBox(height: 7),
+                  const SizedBox(height: 8),
+
                   Obx(() {
-                    final selected = controller
-                        .selectedVariant.value?.attributes[attribute];
+                    // ✅ Read from selectedAttributes map (RxMap) — reacts to changes
+                    final currentValue =
+                    controller.selectedAttributes[attributeKey];
+
                     return Wrap(
                       spacing: 6,
                       runSpacing: 6,
-                      children: values.map((value) {
-                        final isSelected = selected == value;
-                        ProductVariantModel? matched;
-                        try {
-                          matched = product.variants.firstWhere(
-                                  (v) => v.attributes[attribute] == value);
-                        } catch (_) {}
+                      children: allValues.map((value) {
+                        final isSelected = currentValue == value;
+                        final canSelect = controller.isValueSelectable(
+                            attributeKey, value);
+
                         return GestureDetector(
-                          onTap: matched != null
-                              ? () => controller.selectVariant(matched!)
+                          onTap: canSelect
+                              ? () =>
+                              controller.tapAttribute(attributeKey, value)
                               : null,
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 160),
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 17, vertical: 13),
                             decoration: BoxDecoration(
-                              color:
-                              isSelected ? Colors.teal : _tealSurface,
+                              color: isSelected
+                                  ? Colors.teal
+                                  : canSelect
+                                  ? _tealSurface
+                                  : _divider,
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                color:
-                                isSelected ? Colors.teal : _divider,
+                                color: isSelected
+                                    ? Colors.teal
+                                    : canSelect
+                                    ? _divider
+                                    : _divider.withOpacity(0.5),
                                 width: 1.2,
                               ),
                             ),
@@ -428,7 +447,12 @@ class ProductDetailPage extends StatelessWidget {
                                 fontWeight: FontWeight.w700,
                                 color: isSelected
                                     ? Colors.white
-                                    : _textMid,
+                                    : canSelect
+                                    ? _textMid
+                                    : _textLight,
+                                decoration: canSelect
+                                    ? null
+                                    : TextDecoration.lineThrough,
                               ),
                             ),
                           ),
@@ -444,6 +468,10 @@ class ProductDetailPage extends StatelessWidget {
       ),
     );
   }
+
+  // ---------------------------------------------------------------------------
+  // Specifications
+  // ---------------------------------------------------------------------------
 
   Widget _buildSpecifications(ProductDetailModel product) {
     if (product.commonAttributes.isEmpty) return const SizedBox.shrink();
@@ -470,8 +498,7 @@ class ProductDetailPage extends StatelessWidget {
                       Expanded(
                         flex: 4,
                         child: Text(
-                          entry.key[0].toUpperCase() +
-                              entry.key.substring(1),
+                          entry.key[0].toUpperCase() + entry.key.substring(1),
                           style: const TextStyle(
                             fontSize: 12,
                             color: _textLight,
@@ -503,6 +530,10 @@ class ProductDetailPage extends StatelessWidget {
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Description
+  // ---------------------------------------------------------------------------
+
   Widget _buildDescription(ProductDetailModel product) {
     return Container(
       margin: const EdgeInsets.only(top: 5),
@@ -527,6 +558,10 @@ class ProductDetailPage extends StatelessWidget {
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Bottom bar
+  // ---------------------------------------------------------------------------
+
   Widget _buildBottomBar(
       ProductDetailController controller,
       CartController cartController,
@@ -541,7 +576,6 @@ class ProductDetailPage extends StatelessWidget {
         final current = controller.selectedVariant.value ?? variant;
         final isOut = current.stock <= 0;
 
-        // ✅ Check cart by both productId AND variantId
         final cartItem = cartController.cartItems.firstWhereOrNull(
               (i) =>
           i.productId == productId.toString() &&
@@ -736,6 +770,10 @@ class ProductDetailPage extends StatelessWidget {
       ],
     );
   }
+
+  // ---------------------------------------------------------------------------
+  // Shared helpers
+  // ---------------------------------------------------------------------------
 
   Widget _sectionHeader(String title, IconData icon) {
     return Row(
