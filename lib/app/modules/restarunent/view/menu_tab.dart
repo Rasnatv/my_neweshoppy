@@ -7,17 +7,17 @@ import '../controller/restaurantcartcontroller.dart';
 
 // ── THEME CONSTANTS ──────────────────────────────────────────────────────────
 class _AppTheme {
-  static const primary = Color(0xFF0F5151);
+  static const primary      = Color(0xFF0F5151);
   static const primaryLight = Color(0xFFE8F5F0);
-  static const primarySoft = Color(0xFFB2DDD2);
-  static const bg = Color(0xFFF8F9FA);
-
-  static const textDark = Color(0xFF1C1C1E);
-  static const textMid = Color(0xFF6B6B6B);
-  static const textLight = Color(0xFFAAAAAA);
-  static const divider = Color(0xFFF0F0F0);
+  static const primarySoft  = Color(0xFFB2DDD2);
+  static const bg           = Color(0xFFF8F9FA);
+  static const textDark     = Color(0xFF1C1C1E);
+  static const textMid      = Color(0xFF6B6B6B);
+  static const textLight    = Color(0xFFAAAAAA);
+  static const divider      = Color(0xFFF0F0F0);
 }
 
+// ── MAIN TAB WIDGET ──────────────────────────────────────────────────────────
 class RestaurantMenuTab extends StatelessWidget {
   final String restaurantId;
 
@@ -42,18 +42,19 @@ class RestaurantMenuTab extends StatelessWidget {
     cartController.setRestaurant(_rid);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (menuController.availableMealTypes.isEmpty &&
-          !menuController.isLoading.value) {
+      // ✅ Only init once — isInitialized flag prevents duplicate calls
+      if (!menuController.isInitialized.value) {
         menuController.init(restaurantId);
       }
     });
 
     return Obx(() {
-      final hasItems = cartController.hasItemsForRestaurant(_rid);
+      final hasItems   = cartController.hasItemsForRestaurant(_rid);
       final totalItems = cartController.totalItemsForRestaurant(_rid);
-      final totalAmount = cartController.totalAmountForRestaurant(_rid);
+      final totalAmt   = cartController.totalAmountForRestaurant(_rid);
 
-      final visibleTypes = menuController.availableMealTypes;
+      // ✅ Only meal types that returned real data from API
+      final availableTypes = menuController.availableMealTypes;
 
       return Scaffold(
         backgroundColor: _AppTheme.bg,
@@ -61,9 +62,11 @@ class RestaurantMenuTab extends StatelessWidget {
           children: [
             Column(
               children: [
-                // ── MEAL TYPE CHIPS ────────────────────────────────────────
+
+                // ── MEAL TYPE CHIPS ──────────────────────────────────────
+                // Shown for every meal type that has actual data (1, 2 or 3)
                 if (!menuController.isLoading.value &&
-                    visibleTypes.length > 1) ...[
+                    availableTypes.isNotEmpty) ...[
                   Container(
                     color: Colors.white,
                     child: Column(
@@ -72,21 +75,23 @@ class RestaurantMenuTab extends StatelessWidget {
                         SizedBox(
                           height: 46,
                           child: ListView.builder(
-                            padding:
-                            const EdgeInsets.symmetric(horizontal: 16),
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
                             scrollDirection: Axis.horizontal,
-                            itemCount: visibleTypes.length,
+                            itemCount: availableTypes.length,
                             itemBuilder: (context, index) {
-                              final type = visibleTypes[index];
+                              final type = availableTypes[index];
                               final isSelected =
                                   menuController.selectedMealType.value ==
                                       type['value'];
                               return GestureDetector(
-                                onTap: () => menuController.changeMealType(
-                                    restaurantId, type['value']!),
+                                onTap: () {
+                                  if (!menuController.isLoading.value) {
+                                    menuController.changeMealType(
+                                        restaurantId, type['value']!);
+                                  }
+                                },
                                 child: AnimatedContainer(
-                                  duration:
-                                  const Duration(milliseconds: 220),
+                                  duration: const Duration(milliseconds: 220),
                                   curve: Curves.easeInOut,
                                   margin: const EdgeInsets.only(right: 10),
                                   padding: const EdgeInsets.symmetric(
@@ -141,9 +146,11 @@ class RestaurantMenuTab extends StatelessWidget {
                   ),
                 ],
 
-                // ── MENU LIST ──────────────────────────────────────────────
+                // ── MENU CONTENT AREA ────────────────────────────────────
                 Expanded(
                   child: menuController.isLoading.value
+
+                  // ── LOADING STATE ──────────────────────────────────
                       ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -163,43 +170,58 @@ class RestaurantMenuTab extends StatelessWidget {
                       ],
                     ),
                   )
+
                       : menuController.menuItems.isEmpty
+
+                  // ── EMPTY / UNAVAILABLE STATE ──────────────────
                       ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            color: _AppTheme.primaryLight,
-                            shape: BoxShape.circle,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 32),
+                      child: Column(
+                        mainAxisAlignment:
+                        MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              color: _AppTheme.primaryLight,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.no_meals_rounded,
+                              size: 48,
+                              color: _AppTheme.primary,
+                            ),
                           ),
-                          child: Icon(
-                            Icons.restaurant_menu_rounded,
-                            size: 48,
-                            color: _AppTheme.primary,
+                          const SizedBox(height: 20),
+                          Text(
+                            // ✅ e.g. "Breakfast not available"
+                            menuController.emptyMessage.value,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: _AppTheme.textDark,
+                            ),
+                            textAlign: TextAlign.center,
                           ),
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          'No items available',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: _AppTheme.textDark,
+                          const SizedBox(height: 6),
+                          Text(
+                            availableTypes.length > 1
+                                ? 'Try another meal type above'
+                                : 'Check back later for updates',
+                            // ✅ shows correct hint based on chip count
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: _AppTheme.textLight,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Check back later for updates',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: _AppTheme.textLight,
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   )
+
+                  // ── MENU ITEMS LIST ────────────────────────────
                       : ListView.builder(
                     padding: EdgeInsets.only(
                       left: 16,
@@ -209,7 +231,8 @@ class RestaurantMenuTab extends StatelessWidget {
                     ),
                     itemCount: menuController.menuItems.length,
                     itemBuilder: (context, index) {
-                      final item = menuController.menuItems[index];
+                      final item =
+                      menuController.menuItems[index];
                       return _MenuItemCard(
                         item: item,
                         cartController: cartController,
@@ -220,8 +243,9 @@ class RestaurantMenuTab extends StatelessWidget {
                 ),
               ],
             ),
-          ],
-        ),
+
+           ],
+      )
       );
     });
   }
@@ -251,7 +275,8 @@ class _MenuItemCard extends StatelessWidget {
     return Obx(() {
       final inCart =
       cartController.isInCartForRestaurant(_menuId, restaurantId);
-      final qty = cartController.itemQtyForRestaurant(_menuId, restaurantId);
+      final qty =
+      cartController.itemQtyForRestaurant(_menuId, restaurantId);
 
       return Container(
         margin: const EdgeInsets.only(bottom: 14),
@@ -269,6 +294,7 @@ class _MenuItemCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ── FOOD IMAGE ───────────────────────────────────────────────
             ClipRRect(
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(18),
@@ -302,6 +328,8 @@ class _MenuItemCard extends StatelessWidget {
                 },
               ),
             ),
+
+            // ── FOOD DETAILS ─────────────────────────────────────────────
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
@@ -420,7 +448,8 @@ class _AddButtonState extends State<_AddButton>
       child: ScaleTransition(
         scale: _scaleAnim,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+          padding:
+          const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
           decoration: BoxDecoration(
             color: _AppTheme.primary,
             borderRadius: BorderRadius.circular(12),
@@ -478,7 +507,10 @@ class _InCartControls extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _ControlBtn(icon: Icons.remove_rounded, onTap: onDecrement, isLeft: true),
+          _ControlBtn(
+              icon: Icons.remove_rounded,
+              onTap: onDecrement,
+              isLeft: true),
           Container(
             width: 32,
             alignment: Alignment.center,
@@ -497,7 +529,10 @@ class _InCartControls extends StatelessWidget {
               ),
             ),
           ),
-          _ControlBtn(icon: Icons.add_rounded, onTap: onIncrement, isLeft: false),
+          _ControlBtn(
+              icon: Icons.add_rounded,
+              onTap: onIncrement,
+              isLeft: false),
         ],
       ),
     );
@@ -520,7 +555,8 @@ class _ControlBtn extends StatelessWidget {
         onTap: onTap,
         borderRadius: isLeft
             ? const BorderRadius.only(
-            topLeft: Radius.circular(11), bottomLeft: Radius.circular(11))
+            topLeft: Radius.circular(11),
+            bottomLeft: Radius.circular(11))
             : const BorderRadius.only(
             topRight: Radius.circular(11),
             bottomRight: Radius.circular(11)),

@@ -506,8 +506,9 @@ class _BookingSuccessSheet extends StatelessWidget {
                       borderRadius: BorderRadius.circular(14)),
                 ),
                 onPressed: () {
-                  Navigator.of(context).pop();
-                  Get.off(() => RestaurantFinalCart());
+                  Navigator.of(context).pop(); // close the sheet (not a GetX route)
+                  Get.back();                  // remove BookingPage from stack
+                  Get.to(() => RestaurantFinalCart()); // push cart on top of DetailPage
                 },
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,

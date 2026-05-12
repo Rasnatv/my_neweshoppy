@@ -1,5 +1,6 @@
 
 import 'dart:convert';
+import 'package:eshoppy/app/modules/restarunent/controller/restaurantcartcontroller.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -191,11 +192,28 @@ class RestaurantBookingController extends GetxController {
   List<TimeSlot> timeSlotsForRow(int i) {
     if (i >= bookingRows.length) return [];
     final m = bookingRows[i]["mealType"] ?? "";
-    return meals
+    final slots = meals
         .firstWhereOrNull(
             (x) => x.mealType.toLowerCase() == m.toLowerCase())
-        ?.timeSlots ??
-        [];
+        ?.timeSlots ?? [];
+
+    // If selected date is NOT today, all slots should be enabled
+    if (!_isToday(selectedDate.value)) {
+      return slots.map((s) => TimeSlot(
+        time: s.time,
+        isActive: true,
+      )).toList();
+    }
+
+    return slots; // today → use API's is_active as-is
+  }
+
+  // ── Check if given date is today ──────────────────────────────────────
+  bool _isToday(DateTime d) {
+    final now = DateTime.now();
+    return d.year == now.year &&
+        d.month == now.month &&
+        d.day == now.day;
   }
 
   void setSeating(int i, String v) {
@@ -254,6 +272,7 @@ class RestaurantBookingController extends GetxController {
 
   Future<bool> confirmAndSave() async {
     final summary = buildSummary();
+
     if (summary == null || summary.bookings.isEmpty) {
       AppSnackbar.warning(
         "Please complete at least one meal (seating type, time slot and table).",
@@ -263,23 +282,24 @@ class RestaurantBookingController extends GetxController {
 
     try {
       isSaving.value = true;
+
       final token = _token();
 
       final body = jsonEncode({
         "restaurant_id": summary.restaurantId,
-        "guests":        summary.guests,
-        "booking_date":  summary.bookingDate,
+        "guests": summary.guests,
+        "booking_date": summary.bookingDate,
         "bookings": summary.bookings
             .map((b) => {
           "seating_type": b.seatingType,
-          "meal_type":    b.mealType,
-          "time_slot":    b.timeSlot,
-          "table_name":   b.tableName,
+          "meal_type": b.mealType,
+          "time_slot": b.timeSlot,
+          "table_name": b.tableName,
         })
             .toList(),
       });
 
-      debugPrint("── CONFIRM FULL BODY: $body");
+      debugPrint("CONFIRM BODY => $body");
 
       final res = await http.post(
         Uri.parse("$_base/restaurant-booking/confirm"),
@@ -287,13 +307,23 @@ class RestaurantBookingController extends GetxController {
         body: body,
       );
 
-      debugPrint("── CONFIRM RESPONSE ${res.statusCode} ${res.body}");
+      debugPrint("CONFIRM RESPONSE => ${res.body}");
 
       if (res.statusCode == 200) {
         final parsed = ConfirmBookingResponse.fromJson(_safe(res.body));
+
         if (parsed.status == 1) {
+
+          if (Get.isRegistered<Restaurantcartcontroller>()) {
+            final cartController = Get.find<Restaurantcartcontroller>();
+            cartController.clearCart();
+            await cartController.fetchCart();
+            debugPrint("UPDATED CART => ${cartController.cartItems.length}");
+          }
+
           currentSummary = null;
           return true;
+
         } else {
           final msg = parsed.message.isNotEmpty
               ? parsed.message
@@ -316,7 +346,8 @@ class RestaurantBookingController extends GetxController {
         errorMessage.value = msg;
         AppSnackbar.error(msg);
       }
-      debugPrintStack(stackTrace: st, label: "confirmAndSave");
+      debugPrint("confirmAndSave ERROR => $e");
+      debugPrintStack(stackTrace: st);
       return false;
     } finally {
       isSaving.value = false;

@@ -556,5 +556,4 @@ class RestaurantmenuController extends GetxController {
   }
 
   MealMenu getMealMenu(MealType mealType) =>
-      mealMenus.firstWhere((m) => m.mealType == mealType);
-}
+      mealMenus.firstWhere((m) => m.mealType == mealType);}

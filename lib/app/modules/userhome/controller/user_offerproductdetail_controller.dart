@@ -20,13 +20,8 @@ class UserOfferProductDetailController extends GetxController {
   var selectedVariant = Rx<ProductVariant?>(null);
   var currentImageIndex = 0.obs;
 
-  /// Guard — true while we are programmatically animating the carousel.
-  /// Prevents onPageChanged from overwriting the chip-driven selection.
   bool _isProgrammaticJump = false;
 
-  // ---------------------------------------------------------------------------
-  // Network
-  // ---------------------------------------------------------------------------
 
   Future<void> fetchProductDetails(int productId) async {
     try {
@@ -197,9 +192,6 @@ class UserOfferProductDetailController extends GetxController {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Helpers
-  // ---------------------------------------------------------------------------
 
   bool _attributesMatch(
       Map<String, String> variantAttrs,

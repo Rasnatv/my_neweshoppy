@@ -190,6 +190,19 @@ class UserLocationController extends GetxController {
     selectedMainLocation.value = '';
     districts.clear();
     mainLocations.clear();
+
+    // Clear storage so app restart doesn't reload old location
+    final token = box.read('auth_token');
+    if (token != null) {
+      box.remove('state_$token');
+      box.remove('district_$token');
+      box.remove('main_location_$token');
+    }
+
+    // Tell HomeDataController to hide events & banners
+    try {
+      Get.find<HomeDataController>().clearHomeData();
+    } catch (_) {}
   }
 
   String _cap(String v) =>

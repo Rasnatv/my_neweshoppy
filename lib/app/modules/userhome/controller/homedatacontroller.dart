@@ -142,14 +142,14 @@ class HomeDataController extends GetxController {
     );
   }
 
-  // ── True if user has any saved location in storage ────────────────────────
   bool _hasSavedLocation() {
     final token = box.read('auth_token');
+    if (token == null) return false;
 
-    final state = box.read('state_$token') ?? '';
+    final state    = box.read('state_$token') ?? '';
     final district = box.read('district_$token') ?? '';
-    final mainLocation = box.read('main_location_$token') ?? '';
 
-    return state.isNotEmpty || district.isNotEmpty || mainLocation.isNotEmpty;
+    // Require BOTH state and district — area alone is not enough
+    return state.isNotEmpty && district.isNotEmpty;
   }
 }
