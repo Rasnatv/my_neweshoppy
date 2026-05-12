@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../common/style/app_colors.dart';
 
@@ -104,6 +105,7 @@ Widget modernTextField({
   required IconData icon,
   TextInputType? keyboardType,
   int maxLines = 1,
+  List<TextInputFormatter>? inputFormatters,
   Color? accentColor,
 }) =>
     TextFormField(
@@ -111,6 +113,8 @@ Widget modernTextField({
       keyboardType: keyboardType,
       maxLines: maxLines,
       style: const TextStyle(fontSize: 15),
+      inputFormatters: inputFormatters,
+
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,

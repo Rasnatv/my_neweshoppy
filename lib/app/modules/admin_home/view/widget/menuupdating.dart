@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../../../data/models/admin_restarant_menuupdatemodel.dart';
@@ -164,6 +165,9 @@ class MenuItemEditForm extends StatelessWidget {
             icon: Icons.currency_rupee_outlined,
             keyboardType:
             const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'^\d{0,8}(\.\d{0,2})?')),
+            ],
           ),
           const SizedBox(height: 16),
           modernTextField(

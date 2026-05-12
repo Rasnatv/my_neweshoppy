@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../data/models/userrestaurantmodel.dart';
+import '../../landingview/view/landing_screen.dart';
 import '../controller/restaurant_controller.dart';
 import '../controller/restaurant_maincartcontroller.dart';
 import 'restaurantdetail_page.dart';
@@ -38,29 +39,25 @@ class RestaurantListPage extends StatelessWidget {
 
   final RestaurantController controller = Get.put(RestaurantController());
 
-  // final FinalCartController cartController = Get.put(FinalCartController(), permanent: true);
+  final FinalCartController cartController = Get.put(FinalCartController(), permanent: true);
   // ✅ WITH THIS
-  final FinalCartController cartController = () {
-    final c = Get.isRegistered<FinalCartController>()
-        ? Get.find<FinalCartController>()
-        : Get.put(FinalCartController(), permanent: true);
-    // ✅ delay avoids snackbar animation conflict after Get.offAll()
-    Future.delayed(const Duration(milliseconds: 300), () {
-      c.fetchFinalCart();
-    });
-    return c;
-  }();
+
 
   @override
   Widget build(BuildContext context) {
-    return
-      AnnotatedRegion<SystemUiOverlayStyle>(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark.copyWith(
         statusBarColor: Colors.transparent,
       ),
       child: Scaffold(
         backgroundColor: _P.bg,
         appBar: AppBar(
+          automaticallyImplyLeading: false,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              Get.offAll(() => LandingView()); // ← your LandingView
+            },),
           backgroundColor: Colors.white,
           elevation: 0,
           surfaceTintColor: Colors.transparent,

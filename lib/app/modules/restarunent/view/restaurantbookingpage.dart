@@ -4,12 +4,10 @@ import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_colors.dart';
-import '../../merchantlogin/widget/successwidget.dart';
+import '../controller/restaurant_controller.dart';
 import '../controller/restaurantbooking_controller.dart';
 import '../controller/restaurantcartcontroller.dart';
 import '../controller/restaurant_maincartcontroller.dart';
-import '../../../data/models/userslotbooking.model.dart';
-import 'Restaurant_mainCart.dart';
 
 class RestaurantBookingPage extends StatelessWidget {
   RestaurantBookingPage({super.key});
@@ -497,56 +495,29 @@ class _BookingSuccessSheet extends StatelessWidget {
             const SizedBox(height: 30),
             SizedBox(
               width: double.infinity,
-              height: 52,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.restaurantclr,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop(); // close the sheet (not a GetX route)
-                  Get.back();                  // remove BookingPage from stack
-                  Get.to(() => RestaurantFinalCart()); // push cart on top of DetailPage
-                },
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.shopping_cart_rounded,
-                        color: Colors.white, size: 20),
-                    SizedBox(width: 10),
-                    Text('Go to Cart',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700)),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
               height: 48,
               child: OutlinedButton(
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.restaurantclr,
                   side: BorderSide(
-                      color:
-                      AppColors.restaurantclr.withOpacity(0.5),
+                      color: AppColors.restaurantclr.withOpacity(0.5),
                       width: 1.4),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14)),
                 ),
                 onPressed: () {
-                  Navigator.of(context).pop();
-                  Get.off(() => RestaurantListPage());
+                    Navigator.of(context).pop(); // close bottom sheet
+                    Get.offAll(() =>
+                        RestaurantListPage()); // clears entire stack
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (Get.isRegistered<RestaurantController>()) {
+                        Get.find<RestaurantController>().fetchRestaurants();
+                      }
+                    });
                 },
                 child: const Text(
-                  "Continue Browsing",
-                  style: TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w600),
+                  "Continue Browsing or Go to Cart",
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                 ),
               ),
             ),

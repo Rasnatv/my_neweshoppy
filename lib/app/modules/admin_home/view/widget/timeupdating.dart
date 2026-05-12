@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../../common/style/app_colors.dart';
 import '../../../../data/models/admin_restarant_menuupdatemodel.dart';
@@ -417,6 +418,10 @@ class MealTimingCard extends StatelessWidget {
             icon: Icons.coffee_outlined,
             keyboardType: TextInputType.number,
             accentColor: color,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(2),
+            ],
           ),
         ],
       ),
