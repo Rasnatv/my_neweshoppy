@@ -77,29 +77,34 @@ class TableType {
 // ==================== MEAL TYPE ====================
 
 enum MealType { breakfast, lunch, dinner }
-
-// ==================== TIME SLOT ====================
-
 class TimeSlot {
   final int? id;
   final MealType mealType;
   final String startTime;
   final String endTime;
-  final int breakDuration; // ← ADDED
+  final int breakDuration;
+  final List<String> availableDays; // ← ADD
 
   TimeSlot({
     this.id,
     required this.mealType,
     required this.startTime,
     required this.endTime,
-    this.breakDuration = 0, // ← ADDED (defaults to 0 = no break)
+    this.breakDuration = 0,
+    this.availableDays = const [], // ← ADD
   });
 
   String get displayTime => '$startTime - $endTime';
 
   factory TimeSlot.fromJson(Map<String, dynamic> json) {
-    // API returns times like "10:00 AM" — keep as-is (no trimming to 5 chars)
     String safeTime(dynamic val) => (val ?? '').toString().trim();
+
+    // Parse available_days from JSON (array of "dd-MM-yyyy" strings)
+    List<String> parseDays(dynamic raw) {
+      if (raw == null) return [];
+      if (raw is List) return raw.map((e) => e.toString()).toList();
+      return [];
+    }
 
     return TimeSlot(
       id: json['id'] is int
@@ -111,9 +116,9 @@ class TimeSlot {
       ),
       startTime: safeTime(json['start_time']),
       endTime: safeTime(json['end_time']),
-      // ← ADDED: API returns break_duration as a string (e.g. "20"), parse safely
       breakDuration:
       int.tryParse(json['break_duration']?.toString() ?? '0') ?? 0,
+      availableDays: parseDays(json['available_days']), // ← ADD
     );
   }
 }

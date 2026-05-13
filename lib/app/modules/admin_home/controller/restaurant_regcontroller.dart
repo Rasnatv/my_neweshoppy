@@ -199,7 +199,7 @@ class RestaurantRegController extends GetxController {
         }
         AppSnackbar.success(
             data['message'] ?? "Restaurant registered successfully");
-        Get.offAll(() => MenuManagementPage());
+        Get.offAll(() => MenuManagementPagezz ());
       } else {
         AppSnackbar.error(data['message'] ?? "Request failed");
       }

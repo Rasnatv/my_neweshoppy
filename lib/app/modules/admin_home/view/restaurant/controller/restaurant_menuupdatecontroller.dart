@@ -1,844 +1,4 @@
-//
-// import 'dart:convert';
-// import 'dart:io';
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-// import 'package:get_storage/get_storage.dart';
-// import 'package:http/http.dart' as http;
-// import 'package:image_picker/image_picker.dart';
-//
-// import '../../../../../data/errors/api_error.dart';
-// import '../../../../../data/models/admin_restarant_menuupdatemodel.dart';
-// import '../../../../merchantlogin/widget/successwidget.dart';
-//
-// const _baseUrl = 'https://eshoppy.co.in/api';
-//
-// enum SeatingTypeUpdate { indoor, outdoor }
-//
-// enum TabMode { existing, addNew }
-//
-// class RestaurantMenuUpdateController extends GetxController {
-//   final int restaurantId;
-//   RestaurantMenuUpdateController({required this.restaurantId});
-//
-//   final _storage = GetStorage();
-//
-//   // ── Tab Modes ────────────────────────────────────────────────────────────────
-//   final tableTabMode  = TabMode.existing.obs;
-//   final timingTabMode = TabMode.existing.obs;
-//   final menuTabMode   = TabMode.existing.obs;
-//
-//   // ── Loading States ────────────────────────────────────────────────────────────
-//   final isLoadingTables    = false.obs;
-//   final isLoadingTimings   = false.obs;
-//   final isLoadingMenuItems = false.obs;
-//   final isUpdatingTable    = false.obs;
-//   final isUpdatingTimings  = false.obs;
-//   final isUpdatingMenuItem = false.obs;
-//   final isAddingTable      = false.obs;
-//   final isAddingTimings    = false.obs;
-//   final isAddingMenuItem   = false.obs;
-//   final isDeletingTiming   = false.obs;
-//   final isDeletingTable    = false.obs;
-//   final isDeletingMenuItem = false.obs;
-//
-//   // ── Existing Data ─────────────────────────────────────────────────────────────
-//   final tables    = <RestaurantTableModel>[].obs;
-//   final timings   = <MealTimingModel>[].obs;
-//   final menuItems = <MenuItemModel>[].obs;
-//
-//   // ── Selected items for editing ────────────────────────────────────────────────
-//   final selectedTable    = Rxn<RestaurantTableModel>();
-//   final selectedMenuItem = Rxn<MenuItemModel>();
-//
-//   // ── TABLE — edit controllers ──────────────────────────────────────────────────
-//   final tableTypeCtrl     = TextEditingController();
-//   final capacityRangeCtrl = TextEditingController();
-//   final tableNameCtrl     = TextEditingController();
-//   final seatingTypeEdit   = SeatingTypeUpdate.indoor.obs;
-//
-//   // ── TABLE — add controllers ───────────────────────────────────────────────────
-//   final addTableTypeCtrl     = TextEditingController();
-//   final addCapacityRangeCtrl = TextEditingController(text: '1-'); // ✅ default
-//   final addTableIdsCtrl      = TextEditingController();
-//   final addSeatingType       = SeatingTypeUpdate.indoor.obs;
-//
-//   // ── TIMING — existing edit controllers ───────────────────────────────────────
-//   final timingControllers = <String, Map<String, TextEditingController>>{};
-//
-//   // ── TIMING — add new controllers ─────────────────────────────────────────────
-//   final addStartCtrl    = TextEditingController();
-//   final addEndCtrl      = TextEditingController();
-//   final addBreakCtrl    = TextEditingController();
-//   final addSelectedMeal = 'breakfast'.obs;
-//   final RxMap<String, List<PendingSlot>> pendingSlots =
-//       <String, List<PendingSlot>>{}.obs;
-//
-//   // ── MENU — edit controllers ───────────────────────────────────────────────────
-//   final menuNameCtrl    = TextEditingController();
-//   final menuPriceCtrl   = TextEditingController();
-//   final menuDescCtrl    = TextEditingController();
-//   final pickedMenuImage = Rxn<File>();
-//
-//   // ── MENU — add new controllers (per meal) ────────────────────────────────────
-//   final Map<String, TextEditingController> addFoodNameCtrls  = {};
-//   final Map<String, TextEditingController> addFoodPriceCtrls = {};
-//   final Map<String, TextEditingController> addFoodDescCtrls  = {};
-//   final Map<String, Rx<File?>>             addFoodImages     = {};
-//
-//   // ── Expand/collapse for menu sections ────────────────────────────────────────
-//   final expandedMeals = <String, RxBool>{
-//     'breakfast': false.obs,
-//     'lunch':     false.obs,
-//     'dinner':    false.obs,
-//   };
-//
-//   final _picker = ImagePicker();
-//
-//   // ── Auth ──────────────────────────────────────────────────────────────────────
-//   String get authToken {
-//     final token = _storage.read('auth_token') ?? '';
-//     if (token.isEmpty) debugPrint('⚠️ auth_token is empty');
-//     return token;
-//   }
-//
-//   Map<String, String> get _jsonHeaders => {
-//     'Content-Type': 'application/json',
-//     'Authorization': 'Bearer $authToken',
-//   };
-//
-//   // ── Lifecycle ─────────────────────────────────────────────────────────────────
-//   @override
-//   void onInit() {
-//     super.onInit();
-//     for (final m in ['breakfast', 'lunch', 'dinner']) {
-//       addFoodNameCtrls[m]  = TextEditingController();
-//       addFoodPriceCtrls[m] = TextEditingController();
-//       addFoodDescCtrls[m]  = TextEditingController();
-//       addFoodImages[m]     = Rx<File?>(null);
-//     }
-//     fetchAll();
-//   }
-//
-//   @override
-//   void onClose() {
-//     tableTypeCtrl.dispose();
-//     capacityRangeCtrl.dispose();
-//     tableNameCtrl.dispose();
-//     addTableTypeCtrl.dispose();
-//     addCapacityRangeCtrl.dispose();
-//     addTableIdsCtrl.dispose();
-//     menuNameCtrl.dispose();
-//     menuPriceCtrl.dispose();
-//     menuDescCtrl.dispose();
-//     addStartCtrl.dispose();
-//     addEndCtrl.dispose();
-//     addBreakCtrl.dispose();
-//     for (final m in timingControllers.values) {
-//       m['start']?.dispose();
-//       m['end']?.dispose();
-//       m['break']?.dispose();
-//     }
-//     for (final m in ['breakfast', 'lunch', 'dinner']) {
-//       addFoodNameCtrls[m]?.dispose();
-//       addFoodPriceCtrls[m]?.dispose();
-//       addFoodDescCtrls[m]?.dispose();
-//     }
-//     super.onClose();
-//   }
-//
-//   // ══════════════════════════════════════════════════════════════════════════════
-//   // FETCH
-//   // ══════════════════════════════════════════════════════════════════════════════
-//
-//   Future<void> fetchAll() async {
-//     await Future.wait([fetchTables(), fetchTimings(), fetchMenuItems()]);
-//   }
-//
-//   Future<void> fetchTables() async {
-//     try {
-//       isLoadingTables.value = true;
-//       final res = await http.post(
-//         Uri.parse('$_baseUrl/restaurant-tables'),
-//         headers: _jsonHeaders,
-//         body: jsonEncode({'restaurant_id': restaurantId}),
-//       );
-//       if (res.statusCode == 200 && _isJson(res.body)) {
-//         final raw = (jsonDecode(res.body)['data'] ?? []) as List;
-//         tables.value = raw.map((e) => RestaurantTableModel.fromJson(e)).toList();
-//       } else {
-//         AppSnackbar.error(ApiErrorHandler.handleResponse(res));
-//       }
-//     } catch (e) {
-//       AppSnackbar.error(ApiErrorHandler.handleException(e));
-//     } finally {
-//       isLoadingTables.value = false;
-//     }
-//   }
-//
-//   Future<void> fetchTimings() async {
-//     try {
-//       isLoadingTimings.value = true;
-//       final res = await http.post(
-//         Uri.parse('$_baseUrl/meal-timings'),
-//         headers: _jsonHeaders,
-//         body: jsonEncode({'restaurant_id': restaurantId}),
-//       );
-//       if (res.statusCode == 200 && _isJson(res.body)) {
-//         final raw = (jsonDecode(res.body)['data'] ?? []) as List;
-//         timings.value = raw.map((e) => MealTimingModel.fromJson(e)).toList();
-//         _reinitTimingControllers();
-//       } else {
-//         AppSnackbar.error(ApiErrorHandler.handleResponse(res));
-//       }
-//     } catch (e) {
-//       AppSnackbar.error(ApiErrorHandler.handleException(e));
-//     } finally {
-//       isLoadingTimings.value = false;
-//     }
-//   }
-//
-//   Future<void> fetchMenuItems() async {
-//     try {
-//       isLoadingMenuItems.value = true;
-//       final res = await http.post(
-//         Uri.parse('$_baseUrl/menu-items'),
-//         headers: _jsonHeaders,
-//         body: jsonEncode({'restaurant_id': restaurantId}),
-//       );
-//       if (res.statusCode == 200 && _isJson(res.body)) {
-//         final raw = (jsonDecode(res.body)['data'] ?? []) as List;
-//         menuItems.value = raw.map((e) => MenuItemModel.fromJson(e)).toList();
-//       } else {
-//         AppSnackbar.error(ApiErrorHandler.handleResponse(res));
-//       }
-//     } catch (e) {
-//       AppSnackbar.error(ApiErrorHandler.handleException(e));
-//     } finally {
-//       isLoadingMenuItems.value = false;
-//     }
-//   }
-//
-//   // ── Timing controller sync ────────────────────────────────────────────────────
-//   void _reinitTimingControllers() {
-//     for (final t in timings) {
-//       if (!timingControllers.containsKey(t.mealType)) {
-//         timingControllers[t.mealType] = {
-//           'start': TextEditingController(text: t.startTime),
-//           'end':   TextEditingController(text: t.endTime),
-//           'break': TextEditingController(
-//               text: t.breakDuration > 0 ? t.breakDuration.toString() : ''),
-//         };
-//       } else {
-//         timingControllers[t.mealType]!['start']!.text = t.startTime;
-//         timingControllers[t.mealType]!['end']!.text   = t.endTime;
-//         timingControllers[t.mealType]!['break']!.text =
-//         t.breakDuration > 0 ? t.breakDuration.toString() : '';
-//       }
-//     }
-//   }
-//
-//   // ── Time helpers ──────────────────────────────────────────────────────────────
-//   String formatTimeTo12h(TimeOfDay time) {
-//     final hour        = time.hour;
-//     final minute      = time.minute.toString().padLeft(2, '0');
-//     final period      = hour >= 12 ? 'PM' : 'AM';
-//     final displayHour = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
-//     return '${displayHour.toString().padLeft(2, '0')}:$minute $period';
-//   }
-//
-//   TimeOfDay parseTimeToTimeOfDay(String timeStr) {
-//     try {
-//       final clean  = timeStr.trim().toUpperCase();
-//       final isPM   = clean.contains('PM');
-//       final isAM   = clean.contains('AM');
-//       final noAmPm = clean.replaceAll('AM', '').replaceAll('PM', '').trim();
-//       final parts  = noAmPm.split(':');
-//       int   hour   = int.tryParse(parts[0]) ?? 0;
-//       final minute = parts.length >= 2 ? (int.tryParse(parts[1]) ?? 0) : 0;
-//       if (isPM && hour != 12) hour += 12;
-//       if (isAM && hour == 12) hour = 0;
-//       return TimeOfDay(hour: hour, minute: minute);
-//     } catch (_) {
-//       return TimeOfDay.now();
-//     }
-//   }
-//
-//   // ══════════════════════════════════════════════════════════════════════════════
-//   // TABLE — EDIT EXISTING
-//   // ══════════════════════════════════════════════════════════════════════════════
-//
-//   void selectTableForEdit(RestaurantTableModel table) {
-//     selectedTable.value    = table;
-//     tableTypeCtrl.text     = table.tableType;
-//     capacityRangeCtrl.text = table.capacityRange;
-//     tableNameCtrl.text     = table.tableName;
-//     seatingTypeEdit.value  = SeatingTypeUpdate.values.firstWhere(
-//           (e) => e.name == table.seatingType,
-//       orElse: () => SeatingTypeUpdate.indoor,
-//     );
-//   }
-//
-//   void clearTableSelection() {
-//     selectedTable.value = null;
-//     tableTypeCtrl.clear();
-//     capacityRangeCtrl.text = '1-'; // ✅ changed from clear()
-//     tableNameCtrl.clear();
-//   }
-//
-//   Future<void> updateTable() async {
-//     final t = selectedTable.value;
-//     if (t == null) return;
-//     if (tableTypeCtrl.text.trim().isEmpty ||
-//         capacityRangeCtrl.text.trim().isEmpty ||
-//         tableNameCtrl.text.trim().isEmpty) {
-//       AppSnackbar.warning('Please fill all table fields');
-//       return;
-//     }
-//     try {
-//       isUpdatingTable.value = true;
-//       final payload = {
-//         'table_id':       t.id,
-//         'restaurant_id':  restaurantId,
-//         'table_type':     tableTypeCtrl.text.trim(),
-//         'capacity_range': capacityRangeCtrl.text.trim(),
-//         'table_name':     tableNameCtrl.text.trim(),
-//         'seating_type':   seatingTypeEdit.value.name,
-//       };
-//       final res = await http.put(
-//         Uri.parse('$_baseUrl/edit-restaurant-table'),
-//         headers: _jsonHeaders,
-//         body: jsonEncode(payload),
-//       );
-//       if (!_isJson(res.body)) {
-//         AppSnackbar.error('Unexpected response (${res.statusCode})');
-//         return;
-//       }
-//       final body = jsonDecode(res.body);
-//       if (res.statusCode == 200 && body['status'] == '1') {
-//         t.tableType     = tableTypeCtrl.text.trim();
-//         t.capacityRange = capacityRangeCtrl.text.trim();
-//         t.tableName     = tableNameCtrl.text.trim();
-//         t.seatingType   = seatingTypeEdit.value.name;
-//         final idx = tables.indexWhere((tb) => tb.id == t.id);
-//         if (idx >= 0) tables[idx] = t;
-//         tables.refresh();
-//         selectedTable.value = null;
-//         AppSnackbar.success(body['message'] ?? 'Table updated');
-//       } else {
-//         AppSnackbar.error(ApiErrorHandler.handleResponse(res));
-//       }
-//     } catch (e) {
-//       AppSnackbar.error(ApiErrorHandler.handleException(e));
-//     } finally {
-//       isUpdatingTable.value = false;
-//     }
-//   }
-//
-//   // ══════════════════════════════════════════════════════════════════════════════
-//   // TABLE — DELETE
-//   // ══════════════════════════════════════════════════════════════════════════════
-//
-//   Future<void> deleteTable(RestaurantTableModel table) async {
-//     // optimistic remove
-//     tables.remove(table);
-//     if (selectedTable.value?.id == table.id) clearTableSelection();
-//     try {
-//       isDeletingTable.value = true;
-//       final res = await http.delete(
-//         Uri.parse('$_baseUrl/delete-restaurant-table'),
-//         headers: _jsonHeaders,
-//         body: jsonEncode({'id': table.id}),
-//       );
-//       final body = _isJson(res.body) ? jsonDecode(res.body) : {};
-//       if (body['status'] == '1') {
-//         AppSnackbar.success(body['message'] ?? 'Table deleted');
-//       } else {
-//         tables.add(table); // rollback
-//         AppSnackbar.error(body['message']?.toString() ?? 'Failed to delete table');
-//       }
-//     } catch (e) {
-//       tables.add(table); // rollback
-//       AppSnackbar.error(ApiErrorHandler.handleException(e));
-//     } finally {
-//       isDeletingTable.value = false;
-//     }
-//   }
-//
-//   // ══════════════════════════════════════════════════════════════════════════════
-//   // TABLE — ADD NEW
-//   // ══════════════════════════════════════════════════════════════════════════════
-//
-//   Future<void> submitAddTable() async {
-//     if (addTableTypeCtrl.text.trim().isEmpty ||
-//         addCapacityRangeCtrl.text.trim().isEmpty ||
-//         addTableIdsCtrl.text.trim().isEmpty) {
-//       AppSnackbar.warning('Please fill all table fields');
-//       return;
-//     }
-//     final normalizedIds = addTableIdsCtrl.text
-//         .split(',')
-//         .map((e) => e.trim().toUpperCase())
-//         .where((e) => e.isNotEmpty)
-//         .join(',');
-//     try {
-//       isAddingTable.value = true;
-//       final payload = {
-//         'restaurant_id':  restaurantId,
-//         'table_type':     addTableTypeCtrl.text.trim(),
-//         'capacity_range': addCapacityRangeCtrl.text.trim(),
-//         'table_name':     normalizedIds,
-//         'seating_type':   addSeatingType.value.name,
-//       };
-//       final res = await http.post(
-//         Uri.parse('$_baseUrl/add-restaurant-table'),
-//         headers: _jsonHeaders,
-//         body: jsonEncode(payload),
-//       );
-//       if (!_isJson(res.body)) {
-//         AppSnackbar.error('Unexpected response (${res.statusCode})');
-//         return;
-//       }
-//       final body = jsonDecode(res.body);
-//       if ((res.statusCode == 200 || res.statusCode == 201) &&
-//           body['status'] == '1') {
-//         AppSnackbar.success('Table added successfully');
-//         addTableTypeCtrl.clear();
-//         addCapacityRangeCtrl.clear();
-//         addTableIdsCtrl.clear();
-//         await fetchTables();
-//       } else {
-//         AppSnackbar.warning(body['message']?.toString() ?? 'Failed to add table');
-//       }
-//     } catch (e) {
-//       AppSnackbar.error(ApiErrorHandler.handleException(e));
-//     } finally {
-//       isAddingTable.value = false;
-//     }
-//   }
-//
-//   // ══════════════════════════════════════════════════════════════════════════════
-//   // TIMING — EDIT EXISTING
-//   // ══════════════════════════════════════════════════════════════════════════════
-//
-//   Future<void> updateTimings() async {
-//     if (timings.isEmpty) {
-//       AppSnackbar.warning('No timings to update');
-//       return;
-//     }
-//     try {
-//       isUpdatingTimings.value = true;
-//       final payload = timings.map((t) {
-//         final ctrlMap  = timingControllers[t.mealType];
-//         final startVal = ctrlMap?['start']?.text.trim() ?? t.startTime;
-//         final endVal   = ctrlMap?['end']?.text.trim()   ?? t.endTime;
-//         final breakVal = int.tryParse(
-//             ctrlMap?['break']?.text.trim() ?? '') ?? t.breakDuration;
-//         return {
-//           'id':             t.id.toString(),
-//           'restaurant_id':  restaurantId.toString(),
-//           'meal_type':      t.mealType,
-//           'start_time':     startVal,
-//           'end_time':       endVal,
-//           'break_duration': breakVal,
-//         };
-//       }).toList();
-//       final bodyMap = {'restaurant_id': restaurantId, 'meal_timings': payload};
-//       final res = await http.put(
-//         Uri.parse('$_baseUrl/meal-timings/update'),
-//         headers: _jsonHeaders,
-//         body: jsonEncode(bodyMap),
-//       );
-//       if (!_isJson(res.body)) {
-//         AppSnackbar.error('Unexpected response (${res.statusCode})');
-//         return;
-//       }
-//       final resBody = jsonDecode(res.body);
-//       if (res.statusCode == 200 && resBody['status'] == '1') {
-//         final dataRaw = resBody['data'];
-//         List<MealTimingModel> updatedList;
-//         if (dataRaw is Map && dataRaw.containsKey('meal_timings')) {
-//           updatedList = (dataRaw['meal_timings'] as List).map((e) {
-//             final map = Map<String, dynamic>.from(e as Map);
-//             map.putIfAbsent('restaurant_id', () => restaurantId.toString());
-//             return MealTimingModel.fromJson(map);
-//           }).toList();
-//         } else if (dataRaw is List) {
-//           updatedList = (dataRaw).map((e) {
-//             final map = Map<String, dynamic>.from(e as Map);
-//             map.putIfAbsent('restaurant_id', () => restaurantId.toString());
-//             return MealTimingModel.fromJson(map);
-//           }).toList();
-//         } else {
-//           await fetchTimings();
-//           AppSnackbar.success(resBody['message'] ?? 'Timings updated');
-//           return;
-//         }
-//         timings.value = updatedList;
-//         _reinitTimingControllers();
-//         timings.refresh();
-//         AppSnackbar.success(resBody['message'] ?? 'Timings updated');
-//       } else {
-//         AppSnackbar.error(ApiErrorHandler.handleResponse(res));
-//       }
-//     } catch (e) {
-//       AppSnackbar.error(ApiErrorHandler.handleException(e));
-//     } finally {
-//       isUpdatingTimings.value = false;
-//     }
-//   }
-//
-//   // ══════════════════════════════════════════════════════════════════════════════
-//   // TIMING — ADD NEW
-//   // ══════════════════════════════════════════════════════════════════════════════
-//
-//   void addToPendingSlots() {
-//     if (addStartCtrl.text.isEmpty || addEndCtrl.text.isEmpty) {
-//       AppSnackbar.warning('Please select start and end time');
-//       return;
-//     }
-//     final meal = addSelectedMeal.value;
-//     final existingSaved = timings.where((t) => t.mealType == meal).toList();
-//     if (existingSaved.isNotEmpty) {
-//       AppSnackbar.warning(
-//         '${meal.capitalizeFirst} timing already saved. Update existing or delete first.',
-//       );
-//       return;
-//     }
-//     if (pendingSlots.containsKey(meal) && pendingSlots[meal]!.isNotEmpty) {
-//       AppSnackbar.warning('${meal.capitalizeFirst} already queued. Save first.');
-//       return;
-//     }
-//     final breakMins = int.tryParse(addBreakCtrl.text.trim()) ?? 0;
-//     pendingSlots.update(
-//       meal,
-//           (list) => [...list, PendingSlot(addStartCtrl.text, addEndCtrl.text, breakMins)],
-//       ifAbsent: () => [PendingSlot(addStartCtrl.text, addEndCtrl.text, breakMins)],
-//     );
-//     addStartCtrl.clear();
-//     addEndCtrl.clear();
-//     addBreakCtrl.clear();
-//     AppSnackbar.success('${meal.capitalizeFirst} slot queued. Tap Save to submit.');
-//   }
-//
-//   Future<void> submitAddTimings() async {
-//     if (pendingSlots.isEmpty || pendingSlots.values.every((v) => v.isEmpty)) {
-//       AppSnackbar.warning('No slots queued');
-//       return;
-//     }
-//     try {
-//       isAddingTimings.value = true;
-//       final timingsPayload = <Map<String, dynamic>>[];
-//       for (final entry in pendingSlots.entries) {
-//         for (final slot in entry.value) {
-//           timingsPayload.add({
-//             'meal_type':      entry.key,
-//             'start_time':     slot.start,
-//             'end_time':       slot.end,
-//             'break_duration': slot.breakMins,
-//           });
-//         }
-//       }
-//       final res = await http.post(
-//         Uri.parse('$_baseUrl/restaurant/meal-timings'),
-//         headers: _jsonHeaders,
-//         body: jsonEncode({
-//           'restaurant_id': restaurantId,
-//           'meal_timings':  timingsPayload,
-//         }),
-//       );
-//       if (!_isJson(res.body)) {
-//         AppSnackbar.error('Unexpected response (${res.statusCode})');
-//         return;
-//       }
-//       final body = jsonDecode(res.body);
-//       if (res.statusCode == 409 || body['status_code']?.toString() == '409') {
-//         AppSnackbar.warning(
-//           (body['message']?.toString() ?? 'Timing already exists') +
-//               '\n\nUpdate or delete the existing slot first.',
-//         );
-//         return;
-//       }
-//       if (body['status'] == '1') {
-//         pendingSlots.clear();
-//         AppSnackbar.success('Meal timings saved successfully');
-//         await fetchTimings();
-//       } else {
-//         AppSnackbar.warning(body['message']?.toString() ?? 'Failed to save timings');
-//       }
-//     } catch (e) {
-//       AppSnackbar.error(ApiErrorHandler.handleException(e));
-//     } finally {
-//       isAddingTimings.value = false;
-//     }
-//   }
-//
-//
-//   Future<void> deleteTimingSlot(MealTimingModel timing) async {
-//     timings.remove(timing); // optimistic
-//     try {
-//       isDeletingTiming.value = true;
-//       final res = await http.delete(
-//         Uri.parse('$_baseUrl/delete-MealTiming'),
-//         headers: _jsonHeaders,
-//         body: jsonEncode({'id': timing.id}),
-//       );
-//       final body = _isJson(res.body) ? jsonDecode(res.body) : {};
-//       if (body['status'] == '1') {
-//         AppSnackbar.success(body['message'] ?? '${timing.mealType.capitalizeFirst} timing deleted');
-//         _reinitTimingControllers();
-//       } else {
-//         timings.add(timing); // rollback
-//         AppSnackbar.error(body['message']?.toString() ?? 'Failed to delete');
-//       }
-//     } catch (e) {
-//       timings.add(timing); // rollback
-//       AppSnackbar.error(ApiErrorHandler.handleException(e));
-//     } finally {
-//       isDeletingTiming.value = false;
-//     }
-//   }
-//
-//   // ══════════════════════════════════════════════════════════════════════════════
-//   // MENU ITEM — EDIT EXISTING
-//   // ══════════════════════════════════════════════════════════════════════════════
-//
-//   void selectMenuItemForEdit(MenuItemModel item) {
-//     selectedMenuItem.value = item;
-//     menuNameCtrl.text      = item.foodName;
-//     menuPriceCtrl.text     = item.price.toStringAsFixed(2);
-//     menuDescCtrl.text      = item.shortDescription;
-//     pickedMenuImage.value  = null;
-//   }
-//
-//   void clearMenuItemSelection() {
-//     selectedMenuItem.value = null;
-//     pickedMenuImage.value  = null;
-//     menuNameCtrl.clear();
-//     menuPriceCtrl.clear();
-//     menuDescCtrl.clear();
-//   }
-//
-//   Future<void> pickMenuImage() async {
-//     final xf = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
-//     if (xf != null) pickedMenuImage.value = File(xf.path);
-//   }
-//
-//   Future<void> updateMenuItem() async {
-//     final item = selectedMenuItem.value;
-//     if (item == null) return;
-//
-//     final rawPrice = menuPriceCtrl.text.trim();
-//     final price = double.tryParse(rawPrice);
-//
-//     if (menuNameCtrl.text.trim().isEmpty || rawPrice.isEmpty) {
-//       AppSnackbar.warning('Name and price are required');
-//       return;
-//     }
-//
-//     // Validate price
-//     if (rawPrice.isEmpty || price == null) {
-//       AppSnackbar.warning('Please enter a valid price');
-//       return;
-//     }
-//
-//     if (price <= 0) {
-//       AppSnackbar.warning('Price must be greater than 0');
-//       return;
-//     }
-//
-//     // Integer part must not exceed 10 digits
-//     final intPart = rawPrice.split('.').first;
-//
-//     if (intPart.length > 10) {
-//       AppSnackbar.warning('Price cannot exceed 10 digits');
-//       return;
-//     }
-//
-//     try {
-//       isUpdatingMenuItem.value = true;
-//
-//       final payload = <String, dynamic>{
-//         'id': item.id,
-//         'restaurant_id': restaurantId,
-//         'meal_type': item.mealType,
-//         'food_name': menuNameCtrl.text.trim(),
-//         'price': price,
-//         'short_description': menuDescCtrl.text.trim(),
-//       };
-//
-//       if (pickedMenuImage.value != null) {
-//         final bytes = await pickedMenuImage.value!.readAsBytes();
-//
-//         final ext =
-//         pickedMenuImage.value!.path.split('.').last.toLowerCase();
-//
-//         final mime = ext == 'png'
-//             ? 'image/png'
-//             : 'image/jpeg';
-//
-//         payload['image'] =
-//         'data:$mime;base64,${base64Encode(bytes)}';
-//       }
-//
-//       final res = await http.put(
-//         Uri.parse('$_baseUrl/restaurant/menu-item/update'),
-//         headers: _jsonHeaders,
-//         body: jsonEncode(payload),
-//       );
-//
-//       if (!_isJson(res.body)) {
-//         AppSnackbar.error(
-//             'Unexpected response (${res.statusCode})');
-//         return;
-//       }
-//
-//       final body = jsonDecode(res.body);
-//
-//       if ((res.statusCode == 200 || res.statusCode == 201) &&
-//           body['status'] == '1') {
-//
-//         final updated = MenuItemModel.fromJson(body['data']);
-//
-//         final idx =
-//         menuItems.indexWhere((m) => m.id == item.id);
-//
-//         if (idx >= 0) {
-//           menuItems[idx] = updated;
-//         }
-//
-//         menuItems.refresh();
-//
-//         selectedMenuItem.value = null;
-//         pickedMenuImage.value = null;
-//
-//         AppSnackbar.success(
-//             body['message'] ?? 'Menu item updated');
-//       } else {
-//         AppSnackbar.error(
-//             ApiErrorHandler.handleResponse(res));
-//       }
-//     } catch (e) {
-//       AppSnackbar.error(
-//           ApiErrorHandler.handleException(e));
-//     } finally {
-//       isUpdatingMenuItem.value = false;
-//     }
-//   }
-//
-//   Future<void> deleteMenuItem(MenuItemModel item) async {
-//     menuItems.remove(item); // optimistic
-//     if (selectedMenuItem.value?.id == item.id) clearMenuItemSelection();
-//     try {
-//       isDeletingMenuItem.value = true;
-//       final res = await http.delete(
-//         Uri.parse('$_baseUrl/deleteMenu-Item'),
-//         headers: _jsonHeaders,
-//         body: jsonEncode({'id': item.id}),
-//       );
-//       final body = _isJson(res.body) ? jsonDecode(res.body) : {};
-//       if (body['status'] == '1') {
-//         AppSnackbar.success(body['message'] ?? 'Menu item deleted');
-//       } else {
-//         menuItems.add(item); // rollback
-//         AppSnackbar.error(body['message']?.toString() ?? 'Failed to delete item');
-//       }
-//     } catch (e) {
-//       menuItems.add(item); // rollback
-//       AppSnackbar.error(ApiErrorHandler.handleException(e));
-//     } finally {
-//       isDeletingMenuItem.value = false;
-//     }
-//   }
-//
-//   // ══════════════════════════════════════════════════════════════════════════════
-//   // MENU ITEM — ADD NEW
-//   // ══════════════════════════════════════════════════════════════════════════════
-//
-//   Future<void> pickAddFoodImage(String meal) async {
-//     final xf = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
-//     if (xf != null) addFoodImages[meal]!.value = File(xf.path);
-//   }
-//
-//   Future<void> submitAddFoodItem(String mealType) async {
-//     final nameCtrl  = addFoodNameCtrls[mealType]!;
-//     final priceCtrl = addFoodPriceCtrls[mealType]!;
-//     final descCtrl  = addFoodDescCtrls[mealType]!;
-//     final imgRx     = addFoodImages[mealType]!;
-//     final price     = double.tryParse(priceCtrl.text.trim());
-//     if (nameCtrl.text.trim().isEmpty || price == null) {
-//       AppSnackbar.warning('Please enter food name and valid price');
-//       return;
-//     }
-//     try {
-//       isAddingMenuItem.value = true;
-//       final body = <String, dynamic>{
-//         'restaurant_id':     restaurantId,
-//         'meal_type':         mealType,
-//         'food_name':         nameCtrl.text.trim(),
-//         'price':             price,
-//         'short_description': descCtrl.text.trim(),
-//       };
-//       if (imgRx.value != null) {
-//         final bytes = await imgRx.value!.readAsBytes();
-//         final ext   = imgRx.value!.path.split('.').last.toLowerCase();
-//         final mime  = ext == 'png' ? 'image/png' : 'image/jpeg';
-//         body['image'] = 'data:$mime;base64,${base64Encode(bytes)}';
-//       }
-//       final res = await http.post(
-//         Uri.parse('$_baseUrl/restaurant/menu-item'),
-//         headers: _jsonHeaders,
-//         body: jsonEncode(body),
-//       );
-//       if (!_isJson(res.body)) {
-//         AppSnackbar.error('Unexpected response (${res.statusCode})');
-//         return;
-//       }
-//       final resBody = jsonDecode(res.body);
-//       if ((res.statusCode == 200 || res.statusCode == 201) &&
-//           resBody['status'] == '1') {
-//         AppSnackbar.success('Food item added successfully');
-//         nameCtrl.clear();
-//         priceCtrl.clear();
-//         descCtrl.clear();
-//         imgRx.value = null;
-//         await fetchMenuItems();
-//       } else {
-//         AppSnackbar.warning(resBody['message']?.toString() ?? 'Failed to add item');
-//       }
-//     } catch (e) {
-//       AppSnackbar.error(ApiErrorHandler.handleException(e));
-//     } finally {
-//       isAddingMenuItem.value = false;
-//     }
-//   }
-//
-//   // ── Helpers ───────────────────────────────────────────────────────────────────
-//   List<MenuItemModel> getMenuItemsByMeal(String mealType) =>
-//       menuItems.where((m) => m.mealType == mealType).toList();
-//
-//   MealTimingModel? getTimingByMeal(String mealType) =>
-//       timings.firstWhereOrNull((t) => t.mealType == mealType);
-//
-//   bool _isJson(String str) {
-//     try {
-//       jsonDecode(str);
-//       return true;
-//     } catch (_) {
-//       return false;
-//     }
-//   }
-// }
-//
-// /// Public pending slot model
-// class PendingSlot {
-//   final String start;
-//   final String end;
-//   final int    breakMins;
-//   PendingSlot(this.start, this.end, this.breakMins);
-//   String get display =>
-//       '$start → $end${breakMins > 0 ? '  (${breakMins}m break)' : ''}';
-// }
+
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -863,12 +23,12 @@ class RestaurantMenuUpdateController extends GetxController {
 
   final _storage = GetStorage();
 
-  // ── Tab Modes ────────────────────────────────────────────────────────────────
+  // ── Tab Modes ─────────────────────────────────────────────────────────────
   final tableTabMode  = TabMode.existing.obs;
   final timingTabMode = TabMode.existing.obs;
   final menuTabMode   = TabMode.existing.obs;
 
-  // ── Loading States ────────────────────────────────────────────────────────────
+  // ── Loading States ────────────────────────────────────────────────────────
   final isLoadingTables    = false.obs;
   final isLoadingTimings   = false.obs;
   final isLoadingMenuItems = false.obs;
@@ -882,51 +42,67 @@ class RestaurantMenuUpdateController extends GetxController {
   final isDeletingTable    = false.obs;
   final isDeletingMenuItem = false.obs;
 
-  // ── Existing Data ─────────────────────────────────────────────────────────────
+  // ── Existing Data ─────────────────────────────────────────────────────────
   final tables    = <RestaurantTableModel>[].obs;
   final timings   = <MealTimingModel>[].obs;
   final menuItems = <MenuItemModel>[].obs;
 
-  // ── Selected items for editing ────────────────────────────────────────────────
+  // ── Selected items for editing ────────────────────────────────────────────
   final selectedTable    = Rxn<RestaurantTableModel>();
   final selectedMenuItem = Rxn<MenuItemModel>();
 
-  // ── TABLE — edit controllers ──────────────────────────────────────────────────
-  final tableTypeCtrl       = TextEditingController();
-  final capacityNumberCtrl  = TextEditingController(); // ✅ only number part for edit
-  final tableNameCtrl       = TextEditingController();
-  final seatingTypeEdit     = SeatingTypeUpdate.indoor.obs;
+  // ── TABLE — edit controllers ──────────────────────────────────────────────
+  final tableTypeCtrl      = TextEditingController();
+  final capacityNumberCtrl = TextEditingController();
+  final tableNameCtrl      = TextEditingController();
+  final seatingTypeEdit    = SeatingTypeUpdate.indoor.obs;
 
-  // ── TABLE — add controllers ───────────────────────────────────────────────────
+  // ── TABLE — add controllers ───────────────────────────────────────────────
   final addTableTypeCtrl      = TextEditingController();
-  final addCapacityNumberCtrl = TextEditingController(); // ✅ only number part e.g. "7"
+  final addCapacityNumberCtrl = TextEditingController();
   final addTableIdsCtrl       = TextEditingController();
   final addSeatingType        = SeatingTypeUpdate.indoor.obs;
 
-  // ── TIMING — existing edit controllers ───────────────────────────────────────
+  // ── TIMING — existing edit controllers ───────────────────────────────────
   final timingControllers = <String, Map<String, TextEditingController>>{};
 
-  // ── TIMING — add new controllers ─────────────────────────────────────────────
+  // ── TIMING — date selection for existing timings (edit mode) ─────────────
+  // Key = mealType string e.g. 'breakfast'
+  final Map<String, RxList<DateTime>> editSelectedDates = {
+    'breakfast': <DateTime>[].obs,
+    'lunch':     <DateTime>[].obs,
+    'dinner':    <DateTime>[].obs,
+  };
+
+  // ── TIMING — add new controllers ─────────────────────────────────────────
   final addStartCtrl    = TextEditingController();
   final addEndCtrl      = TextEditingController();
   final addBreakCtrl    = TextEditingController();
   final addSelectedMeal = 'breakfast'.obs;
+
   final RxMap<String, List<PendingSlot>> pendingSlots =
       <String, List<PendingSlot>>{}.obs;
 
-  // ── MENU — edit controllers ───────────────────────────────────────────────────
+  // ── TIMING — date selection for add-new mode ──────────────────────────────
+  final Map<String, RxList<DateTime>> addSelectedDates = {
+    'breakfast': <DateTime>[].obs,
+    'lunch':     <DateTime>[].obs,
+    'dinner':    <DateTime>[].obs,
+  };
+
+  // ── MENU — edit controllers ───────────────────────────────────────────────
   final menuNameCtrl    = TextEditingController();
   final menuPriceCtrl   = TextEditingController();
   final menuDescCtrl    = TextEditingController();
   final pickedMenuImage = Rxn<File>();
 
-  // ── MENU — add new controllers (per meal) ────────────────────────────────────
+  // ── MENU — add new controllers (per meal) ────────────────────────────────
   final Map<String, TextEditingController> addFoodNameCtrls  = {};
   final Map<String, TextEditingController> addFoodPriceCtrls = {};
   final Map<String, TextEditingController> addFoodDescCtrls  = {};
   final Map<String, Rx<File?>>             addFoodImages     = {};
 
-  // ── Expand/collapse for menu sections ────────────────────────────────────────
+  // ── Expand/collapse for menu sections ────────────────────────────────────
   final expandedMeals = <String, RxBool>{
     'breakfast': false.obs,
     'lunch':     false.obs,
@@ -935,7 +111,7 @@ class RestaurantMenuUpdateController extends GetxController {
 
   final _picker = ImagePicker();
 
-  // ── Auth ──────────────────────────────────────────────────────────────────────
+  // ── Auth ──────────────────────────────────────────────────────────────────
   String get authToken {
     final token = _storage.read('auth_token') ?? '';
     if (token.isEmpty) debugPrint('⚠️ auth_token is empty');
@@ -943,11 +119,11 @@ class RestaurantMenuUpdateController extends GetxController {
   }
 
   Map<String, String> get _jsonHeaders => {
-    'Content-Type': 'application/json',
+    'Content-Type':  'application/json',
     'Authorization': 'Bearer $authToken',
   };
 
-  // ── Lifecycle ─────────────────────────────────────────────────────────────────
+  // ── Lifecycle ─────────────────────────────────────────────────────────────
   @override
   void onInit() {
     super.onInit();
@@ -963,10 +139,10 @@ class RestaurantMenuUpdateController extends GetxController {
   @override
   void onClose() {
     tableTypeCtrl.dispose();
-    capacityNumberCtrl.dispose();        // ✅
+    capacityNumberCtrl.dispose();
     tableNameCtrl.dispose();
     addTableTypeCtrl.dispose();
-    addCapacityNumberCtrl.dispose();     // ✅
+    addCapacityNumberCtrl.dispose();
     addTableIdsCtrl.dispose();
     menuNameCtrl.dispose();
     menuPriceCtrl.dispose();
@@ -987,9 +163,9 @@ class RestaurantMenuUpdateController extends GetxController {
     super.onClose();
   }
 
-  // ══════════════════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════════════
   // FETCH
-  // ══════════════════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════════════
 
   Future<void> fetchAll() async {
     await Future.wait([fetchTables(), fetchTimings(), fetchMenuItems()]);
@@ -1005,7 +181,8 @@ class RestaurantMenuUpdateController extends GetxController {
       );
       if (res.statusCode == 200 && _isJson(res.body)) {
         final raw = (jsonDecode(res.body)['data'] ?? []) as List;
-        tables.value = raw.map((e) => RestaurantTableModel.fromJson(e)).toList();
+        tables.value =
+            raw.map((e) => RestaurantTableModel.fromJson(e)).toList();
       } else {
         AppSnackbar.error(ApiErrorHandler.handleResponse(res));
       }
@@ -1026,8 +203,10 @@ class RestaurantMenuUpdateController extends GetxController {
       );
       if (res.statusCode == 200 && _isJson(res.body)) {
         final raw = (jsonDecode(res.body)['data'] ?? []) as List;
-        timings.value = raw.map((e) => MealTimingModel.fromJson(e)).toList();
+        timings.value =
+            raw.map((e) => MealTimingModel.fromJson(e)).toList();
         _reinitTimingControllers();
+        _loadEditDatesFromTimings(); // ← load saved days into calendar
       } else {
         AppSnackbar.error(ApiErrorHandler.handleResponse(res));
       }
@@ -1048,7 +227,8 @@ class RestaurantMenuUpdateController extends GetxController {
       );
       if (res.statusCode == 200 && _isJson(res.body)) {
         final raw = (jsonDecode(res.body)['data'] ?? []) as List;
-        menuItems.value = raw.map((e) => MenuItemModel.fromJson(e)).toList();
+        menuItems.value =
+            raw.map((e) => MenuItemModel.fromJson(e)).toList();
       } else {
         AppSnackbar.error(ApiErrorHandler.handleResponse(res));
       }
@@ -1059,7 +239,7 @@ class RestaurantMenuUpdateController extends GetxController {
     }
   }
 
-  // ── Timing controller sync ────────────────────────────────────────────────────
+  // ── Timing controller sync ────────────────────────────────────────────────
   void _reinitTimingControllers() {
     for (final t in timings) {
       if (!timingControllers.containsKey(t.mealType)) {
@@ -1078,7 +258,92 @@ class RestaurantMenuUpdateController extends GetxController {
     }
   }
 
-  // ── Time helpers ──────────────────────────────────────────────────────────────
+  /// Populate editSelectedDates from the fetched timing's availableDays
+  void _loadEditDatesFromTimings() {
+    for (final t in timings) {
+      final list = editSelectedDates[t.mealType];
+      if (list == null) continue;
+      list.clear();
+      for (final dayStr in t.availableDays) {
+        final parsed = _parseDayString(dayStr);
+        if (parsed != null) list.add(parsed);
+      }
+      list.sort();
+    }
+  }
+
+  // ── Date helpers ──────────────────────────────────────────────────────────
+
+  /// Parse "dd-MM-yyyy" → DateTime (returns null on failure)
+  DateTime? _parseDayString(String s) {
+    try {
+      final parts = s.split('-');
+      if (parts.length != 3) return null;
+      return DateTime(
+        int.parse(parts[2]),
+        int.parse(parts[1]),
+        int.parse(parts[0]),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Format DateTime → "dd-MM-yyyy"
+  String formatDateForApi(DateTime d) =>
+      '${d.day.toString().padLeft(2, '0')}-'
+          '${d.month.toString().padLeft(2, '0')}-'
+          '${d.year}';
+
+  // ── Edit-mode date toggles ────────────────────────────────────────────────
+  void toggleEditDate(String mealType, DateTime date) {
+    final list       = editSelectedDates[mealType]!;
+    final normalized = DateTime(date.year, date.month, date.day);
+    final idx        = list.indexWhere((d) =>
+    d.year == normalized.year &&
+        d.month == normalized.month &&
+        d.day   == normalized.day);
+    if (idx >= 0) {
+      list.removeAt(idx);
+    } else {
+      list.add(normalized);
+      list.sort();
+    }
+  }
+
+  bool isEditDateSelected(String mealType, DateTime date) {
+    final normalized = DateTime(date.year, date.month, date.day);
+    return editSelectedDates[mealType]?.any((d) =>
+    d.year == normalized.year &&
+        d.month == normalized.month &&
+        d.day   == normalized.day) ?? false;
+  }
+
+  // ── Add-new-mode date toggles ─────────────────────────────────────────────
+  void toggleAddDate(String mealType, DateTime date) {
+    final list       = addSelectedDates[mealType]!;
+    final normalized = DateTime(date.year, date.month, date.day);
+    final idx        = list.indexWhere((d) =>
+    d.year == normalized.year &&
+        d.month == normalized.month &&
+        d.day   == normalized.day);
+    if (idx >= 0) {
+      list.removeAt(idx);
+    } else {
+      list.add(normalized);
+      list.sort();
+    }
+  }
+
+  bool isAddDateSelected(String mealType, DateTime date) {
+    final normalized = DateTime(date.year, date.month, date.day);
+    return addSelectedDates[mealType]?.any((d) =>
+    d.year == normalized.year &&
+        d.month == normalized.month &&
+        d.day   == normalized.day) ?? false;
+  }
+
+  // ── Time helpers ──────────────────────────────────────────────────────────
   String formatTimeTo12h(TimeOfDay time) {
     final hour        = time.hour;
     final minute      = time.minute.toString().padLeft(2, '0');
@@ -1097,26 +362,24 @@ class RestaurantMenuUpdateController extends GetxController {
       int   hour   = int.tryParse(parts[0]) ?? 0;
       final minute = parts.length >= 2 ? (int.tryParse(parts[1]) ?? 0) : 0;
       if (isPM && hour != 12) hour += 12;
-      if (isAM && hour == 12) hour = 0;
+      if (isAM && hour == 12) hour  = 0;
       return TimeOfDay(hour: hour, minute: minute);
     } catch (_) {
       return TimeOfDay.now();
     }
   }
 
-  // ══════════════════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════════════
   // TABLE — EDIT EXISTING
-  // ══════════════════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════════════
 
   void selectTableForEdit(RestaurantTableModel table) {
     selectedTable.value = table;
     tableTypeCtrl.text  = table.tableType;
-    // ✅ Extract only the number after "1-" if present, else load full value
     final cap = table.capacityRange;
-    capacityNumberCtrl.text = cap.startsWith('1-')
-        ? cap.substring(2)
-        : cap;
-    tableNameCtrl.text  = table.tableName;
+    capacityNumberCtrl.text =
+    cap.startsWith('1-') ? cap.substring(2) : cap;
+    tableNameCtrl.text    = table.tableName;
     seatingTypeEdit.value = SeatingTypeUpdate.values.firstWhere(
           (e) => e.name == table.seatingType,
       orElse: () => SeatingTypeUpdate.indoor,
@@ -1124,9 +387,9 @@ class RestaurantMenuUpdateController extends GetxController {
   }
 
   void clearTableSelection() {
-    selectedTable.value     = null;
+    selectedTable.value = null;
     tableTypeCtrl.clear();
-    capacityNumberCtrl.clear(); // ✅
+    capacityNumberCtrl.clear();
     tableNameCtrl.clear();
   }
 
@@ -1145,7 +408,7 @@ class RestaurantMenuUpdateController extends GetxController {
         'table_id':       t.id,
         'restaurant_id':  restaurantId,
         'table_type':     tableTypeCtrl.text.trim(),
-        'capacity_range': '1-${capacityNumberCtrl.text.trim()}', // ✅
+        'capacity_range': '1-${capacityNumberCtrl.text.trim()}',
         'table_name':     tableNameCtrl.text.trim(),
         'seating_type':   seatingTypeEdit.value.name,
       };
@@ -1161,7 +424,7 @@ class RestaurantMenuUpdateController extends GetxController {
       final body = jsonDecode(res.body);
       if (res.statusCode == 200 && body['status'] == '1') {
         t.tableType     = tableTypeCtrl.text.trim();
-        t.capacityRange = '1-${capacityNumberCtrl.text.trim()}'; // ✅
+        t.capacityRange = '1-${capacityNumberCtrl.text.trim()}';
         t.tableName     = tableNameCtrl.text.trim();
         t.seatingType   = seatingTypeEdit.value.name;
         final idx = tables.indexWhere((tb) => tb.id == t.id);
@@ -1179,9 +442,9 @@ class RestaurantMenuUpdateController extends GetxController {
     }
   }
 
-  // ══════════════════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════════════
   // TABLE — DELETE
-  // ══════════════════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════════════
 
   Future<void> deleteTable(RestaurantTableModel table) async {
     tables.remove(table);
@@ -1198,7 +461,8 @@ class RestaurantMenuUpdateController extends GetxController {
         AppSnackbar.success(body['message'] ?? 'Table deleted');
       } else {
         tables.add(table);
-        AppSnackbar.error(body['message']?.toString() ?? 'Failed to delete table');
+        AppSnackbar.error(
+            body['message']?.toString() ?? 'Failed to delete table');
       }
     } catch (e) {
       tables.add(table);
@@ -1208,13 +472,13 @@ class RestaurantMenuUpdateController extends GetxController {
     }
   }
 
-  // ══════════════════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════════════
   // TABLE — ADD NEW
-  // ══════════════════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════════════
 
   Future<void> submitAddTable() async {
     if (addTableTypeCtrl.text.trim().isEmpty ||
-        addCapacityNumberCtrl.text.trim().isEmpty ||  // ✅
+        addCapacityNumberCtrl.text.trim().isEmpty ||
         addTableIdsCtrl.text.trim().isEmpty) {
       AppSnackbar.warning('Please fill all table fields');
       return;
@@ -1229,7 +493,7 @@ class RestaurantMenuUpdateController extends GetxController {
       final payload = {
         'restaurant_id':  restaurantId,
         'table_type':     addTableTypeCtrl.text.trim(),
-        'capacity_range': '1-${addCapacityNumberCtrl.text.trim()}', // ✅
+        'capacity_range': '1-${addCapacityNumberCtrl.text.trim()}',
         'table_name':     normalizedIds,
         'seating_type':   addSeatingType.value.name,
       };
@@ -1247,11 +511,12 @@ class RestaurantMenuUpdateController extends GetxController {
           body['status'] == '1') {
         AppSnackbar.success('Table added successfully');
         addTableTypeCtrl.clear();
-        addCapacityNumberCtrl.clear(); // ✅
+        addCapacityNumberCtrl.clear();
         addTableIdsCtrl.clear();
         await fetchTables();
       } else {
-        AppSnackbar.warning(body['message']?.toString() ?? 'Failed to add table');
+        AppSnackbar.warning(
+            body['message']?.toString() ?? 'Failed to add table');
       }
     } catch (e) {
       AppSnackbar.error(ApiErrorHandler.handleException(e));
@@ -1260,9 +525,9 @@ class RestaurantMenuUpdateController extends GetxController {
     }
   }
 
-  // ══════════════════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════════════
   // TIMING — EDIT EXISTING
-  // ══════════════════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════════════
 
   Future<void> updateTimings() async {
     if (timings.isEmpty) {
@@ -1271,12 +536,20 @@ class RestaurantMenuUpdateController extends GetxController {
     }
     try {
       isUpdatingTimings.value = true;
+
       final payload = timings.map((t) {
         final ctrlMap  = timingControllers[t.mealType];
         final startVal = ctrlMap?['start']?.text.trim() ?? t.startTime;
         final endVal   = ctrlMap?['end']?.text.trim()   ?? t.endTime;
         final breakVal = int.tryParse(
             ctrlMap?['break']?.text.trim() ?? '') ?? t.breakDuration;
+
+        // Collect selected days for this meal from editSelectedDates
+        final days = editSelectedDates[t.mealType]
+            ?.map((d) => formatDateForApi(d))
+            .toList() ??
+            t.availableDays;
+
         return {
           'id':             t.id.toString(),
           'restaurant_id':  restaurantId.toString(),
@@ -1284,9 +557,15 @@ class RestaurantMenuUpdateController extends GetxController {
           'start_time':     startVal,
           'end_time':       endVal,
           'break_duration': breakVal,
+          'available_days': days, // ← included
         };
       }).toList();
-      final bodyMap = {'restaurant_id': restaurantId, 'meal_timings': payload};
+
+      final bodyMap = {
+        'restaurant_id': restaurantId,
+        'meal_timings':  payload,
+      };
+
       final res = await http.put(
         Uri.parse('$_baseUrl/meal-timings/update'),
         headers: _jsonHeaders,
@@ -1300,6 +579,7 @@ class RestaurantMenuUpdateController extends GetxController {
       if (res.statusCode == 200 && resBody['status'] == '1') {
         final dataRaw = resBody['data'];
         List<MealTimingModel> updatedList;
+
         if (dataRaw is Map && dataRaw.containsKey('meal_timings')) {
           updatedList = (dataRaw['meal_timings'] as List).map((e) {
             final map = Map<String, dynamic>.from(e as Map);
@@ -1317,8 +597,10 @@ class RestaurantMenuUpdateController extends GetxController {
           AppSnackbar.success(resBody['message'] ?? 'Timings updated');
           return;
         }
+
         timings.value = updatedList;
         _reinitTimingControllers();
+        _loadEditDatesFromTimings(); // ← reload calendar from updated data
         timings.refresh();
         AppSnackbar.success(resBody['message'] ?? 'Timings updated');
       } else {
@@ -1331,16 +613,16 @@ class RestaurantMenuUpdateController extends GetxController {
     }
   }
 
-  // ══════════════════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════════════
   // TIMING — ADD NEW
-  // ══════════════════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════════════
 
   void addToPendingSlots() {
     if (addStartCtrl.text.isEmpty || addEndCtrl.text.isEmpty) {
       AppSnackbar.warning('Please select start and end time');
       return;
     }
-    final meal = addSelectedMeal.value;
+    final meal          = addSelectedMeal.value;
     final existingSaved = timings.where((t) => t.mealType == meal).toList();
     if (existingSaved.isNotEmpty) {
       AppSnackbar.warning(
@@ -1348,24 +630,44 @@ class RestaurantMenuUpdateController extends GetxController {
       );
       return;
     }
-    if (pendingSlots.containsKey(meal) && pendingSlots[meal]!.isNotEmpty) {
-      AppSnackbar.warning('${meal.capitalizeFirst} already queued. Save first.');
+    if (pendingSlots.containsKey(meal) &&
+        pendingSlots[meal]!.isNotEmpty) {
+      AppSnackbar.warning(
+          '${meal.capitalizeFirst} already queued. Save first.');
       return;
     }
     final breakMins = int.tryParse(addBreakCtrl.text.trim()) ?? 0;
+
+    // Collect selected days for this meal from addSelectedDates
+    final days = addSelectedDates[meal]!
+        .map((d) => formatDateForApi(d))
+        .toList();
+
     pendingSlots.update(
       meal,
-          (list) => [...list, PendingSlot(addStartCtrl.text, addEndCtrl.text, breakMins)],
-      ifAbsent: () => [PendingSlot(addStartCtrl.text, addEndCtrl.text, breakMins)],
+          (list) => [
+        ...list,
+        PendingSlot(addStartCtrl.text, addEndCtrl.text, breakMins, days)
+      ],
+      ifAbsent: () =>
+      [PendingSlot(addStartCtrl.text, addEndCtrl.text, breakMins, days)],
     );
+
     addStartCtrl.clear();
     addEndCtrl.clear();
     addBreakCtrl.clear();
-    AppSnackbar.success('${meal.capitalizeFirst} slot queued. Tap Save to submit.');
+    addSelectedDates[meal]!.clear(); // ← clear after queuing
+
+    AppSnackbar.success(
+      '${meal.capitalizeFirst} slot queued'
+          '${days.isNotEmpty ? ' (${days.length} day(s))' : ''}. '
+          'Tap Save to submit.',
+    );
   }
 
   Future<void> submitAddTimings() async {
-    if (pendingSlots.isEmpty || pendingSlots.values.every((v) => v.isEmpty)) {
+    if (pendingSlots.isEmpty ||
+        pendingSlots.values.every((v) => v.isEmpty)) {
       AppSnackbar.warning('No slots queued');
       return;
     }
@@ -1379,6 +681,7 @@ class RestaurantMenuUpdateController extends GetxController {
             'start_time':     slot.start,
             'end_time':       slot.end,
             'break_duration': slot.breakMins,
+            'available_days': slot.availableDays, // ← included
           });
         }
       }
@@ -1395,7 +698,8 @@ class RestaurantMenuUpdateController extends GetxController {
         return;
       }
       final body = jsonDecode(res.body);
-      if (res.statusCode == 409 || body['status_code']?.toString() == '409') {
+      if (res.statusCode == 409 ||
+          body['status_code']?.toString() == '409') {
         AppSnackbar.warning(
           (body['message']?.toString() ?? 'Timing already exists') +
               '\n\nUpdate or delete the existing slot first.',
@@ -1407,7 +711,8 @@ class RestaurantMenuUpdateController extends GetxController {
         AppSnackbar.success('Meal timings saved successfully');
         await fetchTimings();
       } else {
-        AppSnackbar.warning(body['message']?.toString() ?? 'Failed to save timings');
+        AppSnackbar.warning(
+            body['message']?.toString() ?? 'Failed to save timings');
       }
     } catch (e) {
       AppSnackbar.error(ApiErrorHandler.handleException(e));
@@ -1427,11 +732,15 @@ class RestaurantMenuUpdateController extends GetxController {
       );
       final body = _isJson(res.body) ? jsonDecode(res.body) : {};
       if (body['status'] == '1') {
-        AppSnackbar.success(body['message'] ?? '${timing.mealType.capitalizeFirst} timing deleted');
+        AppSnackbar.success(
+            body['message'] ??
+                '${timing.mealType.capitalizeFirst} timing deleted');
         _reinitTimingControllers();
+        editSelectedDates[timing.mealType]?.clear(); // ← clear dates too
       } else {
         timings.add(timing);
-        AppSnackbar.error(body['message']?.toString() ?? 'Failed to delete');
+        AppSnackbar.error(
+            body['message']?.toString() ?? 'Failed to delete');
       }
     } catch (e) {
       timings.add(timing);
@@ -1441,9 +750,9 @@ class RestaurantMenuUpdateController extends GetxController {
     }
   }
 
-  // ══════════════════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════════════
   // MENU ITEM — EDIT EXISTING
-  // ══════════════════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════════════
 
   void selectMenuItemForEdit(MenuItemModel item) {
     selectedMenuItem.value = item;
@@ -1462,7 +771,8 @@ class RestaurantMenuUpdateController extends GetxController {
   }
 
   Future<void> pickMenuImage() async {
-    final xf = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    final xf = await _picker.pickImage(
+        source: ImageSource.gallery, imageQuality: 80);
     if (xf != null) pickedMenuImage.value = File(xf.path);
   }
 
@@ -1490,20 +800,20 @@ class RestaurantMenuUpdateController extends GetxController {
       AppSnackbar.warning('Price cannot exceed 10 digits');
       return;
     }
-
     try {
       isUpdatingMenuItem.value = true;
       final payload = <String, dynamic>{
-        'id':               item.id,
-        'restaurant_id':    restaurantId,
-        'meal_type':        item.mealType,
-        'food_name':        menuNameCtrl.text.trim(),
-        'price':            price,
+        'id':                item.id,
+        'restaurant_id':     restaurantId,
+        'meal_type':         item.mealType,
+        'food_name':         menuNameCtrl.text.trim(),
+        'price':             price,
         'short_description': menuDescCtrl.text.trim(),
       };
       if (pickedMenuImage.value != null) {
         final bytes = await pickedMenuImage.value!.readAsBytes();
-        final ext   = pickedMenuImage.value!.path.split('.').last.toLowerCase();
+        final ext   =
+        pickedMenuImage.value!.path.split('.').last.toLowerCase();
         final mime  = ext == 'png' ? 'image/png' : 'image/jpeg';
         payload['image'] = 'data:$mime;base64,${base64Encode(bytes)}';
       }
@@ -1551,7 +861,8 @@ class RestaurantMenuUpdateController extends GetxController {
         AppSnackbar.success(body['message'] ?? 'Menu item deleted');
       } else {
         menuItems.add(item);
-        AppSnackbar.error(body['message']?.toString() ?? 'Failed to delete item');
+        AppSnackbar.error(
+            body['message']?.toString() ?? 'Failed to delete item');
       }
     } catch (e) {
       menuItems.add(item);
@@ -1561,12 +872,13 @@ class RestaurantMenuUpdateController extends GetxController {
     }
   }
 
-  // ══════════════════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════════════
   // MENU ITEM — ADD NEW
-  // ══════════════════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════════════
 
   Future<void> pickAddFoodImage(String meal) async {
-    final xf = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    final xf = await _picker.pickImage(
+        source: ImageSource.gallery, imageQuality: 80);
     if (xf != null) addFoodImages[meal]!.value = File(xf.path);
   }
 
@@ -1614,7 +926,8 @@ class RestaurantMenuUpdateController extends GetxController {
         imgRx.value = null;
         await fetchMenuItems();
       } else {
-        AppSnackbar.warning(resBody['message']?.toString() ?? 'Failed to add item');
+        AppSnackbar.warning(
+            resBody['message']?.toString() ?? 'Failed to add item');
       }
     } catch (e) {
       AppSnackbar.error(ApiErrorHandler.handleException(e));
@@ -1623,7 +936,7 @@ class RestaurantMenuUpdateController extends GetxController {
     }
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────────
+  // ── Helpers ───────────────────────────────────────────────────────────────
   List<MenuItemModel> getMenuItemsByMeal(String mealType) =>
       menuItems.where((m) => m.mealType == mealType).toList();
 
@@ -1640,12 +953,18 @@ class RestaurantMenuUpdateController extends GetxController {
   }
 }
 
-/// Public pending slot model
+// ── Public pending slot model ─────────────────────────────────────────────────
 class PendingSlot {
-  final String start;
-  final String end;
-  final int    breakMins;
-  PendingSlot(this.start, this.end, this.breakMins);
+  final String       start;
+  final String       end;
+  final int          breakMins;
+  final List<String> availableDays; // ← ADD
+
+  PendingSlot(this.start, this.end, this.breakMins,
+      [this.availableDays = const []]);
+
   String get display =>
-      '$start → $end${breakMins > 0 ? '  (${breakMins}m break)' : ''}';
+      '$start → $end'
+          '${breakMins > 0 ? '  (${breakMins}m break)' : ''}'
+          '${availableDays.isNotEmpty ? '  · ${availableDays.length} day(s)' : ''}';
 }

@@ -2,6 +2,7 @@ import 'package:eshoppy/app/common/style/app_colors.dart';
 import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../core/utils/deviceutiles.dart';
 import '../../../data/models/homedatamodel.dart';
 import '../controller/homedatacontroller.dart';
 
@@ -54,7 +55,8 @@ class AllEventsPage extends StatelessWidget {
         return GridView.builder(
           padding: const EdgeInsets.all(16),
           itemCount: controller.events.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          gridDelegate:
+          const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
             mainAxisSpacing: 16,
             crossAxisSpacing: 16,
