@@ -97,8 +97,6 @@ class MerchantChangePasswordController extends GetxController {
               ? data['message']
               : 'Password changed successfully.',
         );
-
-        await Future.delayed(const Duration(seconds: 2));
         Get.offAll(MerchantDashboardPage());
       }} catch (e) {
       AppSnackbar.error(ApiErrorHandler.handleException(e));
