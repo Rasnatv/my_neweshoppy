@@ -54,45 +54,7 @@ class UpdateAdvertisementPage extends StatelessWidget {
           fontSize: 17,
           fontWeight: FontWeight.w600,
           letterSpacing: 0.1,
-        ),
-      ),
-      actions: [
-        Obx(() => Padding(
-          padding: const EdgeInsets.only(right: 16, top: 8, bottom: 30),
-          child: ctrl.isSubmitting.value
-              ? const SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(
-                color: Colors.white, strokeWidth: 2.5),
-          )
-              : TextButton.icon(
-            onPressed: ctrl.updateAdvertisement,
-            icon: const Icon(Icons.check_rounded,
-                color: Colors.white, size: 18),
-            label: const Text(
-              'Save',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-                fontSize: 14,
-              ),
-            ),
-            style: TextButton.styleFrom(
-              backgroundColor:
-              const Color(0xFF00BFA5).withOpacity(0.20),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 14, vertical: 6),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-                side: BorderSide(
-                    color: Colors.white.withOpacity(0.3), width: 1),
-              ),
-            ),
-          ),
-        )),
-      ],
-    );
+        ),));
   }
 
   // ── Loader ────────────────────────────────────────────────
@@ -226,10 +188,6 @@ class UpdateAdvertisementPage extends StatelessWidget {
       ),
     );
   }
-
-  // ── LOCKED LOCATION SECTION ───────────────────────────────
-  // District mode → State + District
-  // Area mode     → State + District + Location
   Widget _buildLockedLocation(UpdateAdvertisementController ctrl) {
     return Obx(() {
       final isArea = ctrl.showMode.value == 'area';

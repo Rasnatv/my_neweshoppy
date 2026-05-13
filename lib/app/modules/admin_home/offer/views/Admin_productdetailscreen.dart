@@ -6,6 +6,9 @@ import 'package:get_storage/get_storage.dart';
 
 import '../../../../data/models/admin_productdetailmodel.dart';
 import '../controller/admin_viewproductdetailcontrller.dart';
+import '../widget/admin_productdetail errorview.dart';
+import '../widget/loadingview.dart';
+import '../widget/section_cart.dart';
 
 class AdminSingleOfferProductScreen extends StatelessWidget {
   const AdminSingleOfferProductScreen({super.key});
@@ -16,14 +19,14 @@ class AdminSingleOfferProductScreen extends StatelessWidget {
     return NetworkAwareWrapper(child: Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       body: Obx(() {
-        if (controller.isLoading.value) return const _LoadingView();
+        if (controller.isLoading.value) return const LoadingView();
         if (controller.hasError.value) {
-          return _ErrorView(
+          return ErrorView(
             message: controller.errorMessage.value,
             onRetry: controller.refreshProduct,
           );
         }
-        if (controller.product.value == null) return const _LoadingView();
+        if (controller.product.value == null) return const LoadingView();
         return _DetailContent(controller: controller);
       }),
     ));
@@ -58,7 +61,7 @@ class _DetailContent extends StatelessWidget {
                     _InfoGrid(product: p, controller: controller),
                     if (p.description.isNotEmpty) ...[
                       const SizedBox(height: 16),
-                      _SectionCard(
+                      SectionCard(
                         title: 'Description',
                         icon: Icons.description_outlined,
                         child: Text(
@@ -695,7 +698,7 @@ class _AttributesSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (attributes.commonAttributes.isEmpty) return const SizedBox.shrink();
-    return _SectionCard(
+    return SectionCard(
       title: 'Common Attributes',
       icon: Icons.tune_rounded,
       child: Wrap(
@@ -752,7 +755,7 @@ class _VariantsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _SectionCard(
+    return SectionCard(
       title: 'Variants',
       icon: Icons.style_rounded,
       child: Obx(() {
@@ -870,161 +873,7 @@ class _VariantsSection extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-// Reusable Section Card
-// ─────────────────────────────────────────────
-class _SectionCard extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final Widget child;
 
-  const _SectionCard({
-    required this.title,
-    required this.icon,
-    required this.child,
-  });
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 16, color: const Color(0xFF6366F1)),
-              const SizedBox(width: 6),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF1A1D26),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          child,
-        ],
-      ),
-    );
-  }
-}
 
-// ─────────────────────────────────────────────
-// Loading View
-// ─────────────────────────────────────────────
-class _LoadingView extends StatelessWidget {
-  const _LoadingView();
 
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Color(0xFFF5F6FA),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(color: Color(0xFF6366F1)),
-            SizedBox(height: 16),
-            Text(
-              'Loading product...',
-              style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ErrorView extends StatelessWidget {
-  final String message;
-  final VoidCallback onRetry;
-  const _ErrorView({required this.message, required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: AppColors.kPrimary,
-        leading: IconButton(
-          icon:
-          const Icon(Icons.arrow_back, size: 20),
-          onPressed: () => Get.back(),
-        ),
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEE2E2),
-                  borderRadius: BorderRadius.circular(50),
-                ),
-                child: const Icon(
-                  Icons.error_outline_rounded,
-                  color: Color(0xFFEF4444),
-                  size: 40,
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Failed to load product',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF1A1D26),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Color(0xFF9CA3AF),
-                ),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: onRetry,
-                icon: const Icon(Icons.refresh_rounded, size: 18),
-                label: const Text('Try Again'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6366F1),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 24, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}

@@ -31,9 +31,6 @@ class MerchantOrdersController extends GetxController {
     fetchMerchantOrders();
   }
 
-  // ─────────────────────────────────────────────────────────────
-  //  FETCH ORDERS
-  // ─────────────────────────────────────────────────────────────
   Future<void> fetchMerchantOrders() async {
     try {
       isLoading.value = true;

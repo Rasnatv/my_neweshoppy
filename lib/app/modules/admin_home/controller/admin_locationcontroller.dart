@@ -143,10 +143,6 @@ class LocationController extends GetxController {
         if (body['status'] == 1) {
           final List<dynamic> data = body['data'] as List<dynamic>? ?? [];
 
-          // ── Build state list ──────────────────────
-          // Merge states that share the same normalised name
-          // (e.g. "tamil nadu" vs "tamilnadu" are kept separate as-is;
-          //  only exact case-insensitive duplicates are merged).
           final Map<String, StateItem> mergedStates = {};
 
           for (final raw in data) {
@@ -203,9 +199,6 @@ class LocationController extends GetxController {
     }
   }
 
-  // ── Local Update After Successful POST ────────────
-  /// Updates [districtList] immediately after a successful add so the UI
-  /// reflects the change without a full refresh.
   void _updateLocalDistrict({
     required String serverState,
     required String serverDistrict,

@@ -105,9 +105,7 @@ class AdminUserController extends GetxController {
     fetchUsers();
   }
 
-  // ─────────────────────────────────────────────────────────────
-  //  FETCH USERS
-  // ─────────────────────────────────────────────────────────────
+
   Future<void> fetchUsers() async {
     isLoading.value = true;
     try {
