@@ -1,4 +1,3 @@
-// ── userslotbooking.model.dart ────────────────────────────────────────────────
 
 Map<String, dynamic> _asMap(dynamic v) {
   if (v is Map<String, dynamic>) return v;
@@ -90,14 +89,20 @@ class TimeSlotsResponse {
     );
   }
 }
-
-// ── 2. /get-tables-by-guests ──────────────────────────────────────────────────
-
 class SeatingTableGroup {
   final String seatingType;
   final List<String> tables;
+  final String capacityRange; // ← NEW
+  final int minCapacity;      // ← NEW
+  final int maxCapacity;      // ← NEW
 
-  SeatingTableGroup({required this.seatingType, required this.tables});
+  SeatingTableGroup({
+    required this.seatingType,
+    required this.tables,
+    required this.capacityRange,
+    required this.minCapacity,
+    required this.maxCapacity,
+  });
 
   String get displayLabel =>
       seatingType.isNotEmpty
@@ -106,8 +111,22 @@ class SeatingTableGroup {
 
   factory SeatingTableGroup.fromJson(dynamic raw) {
     final j = _asMap(raw);
+
+    // Parse "1-7" → min=1, max=7
+    final rangeStr = (j["capacity_range"] ?? "") as String;
+    int minCap = 1;
+    int maxCap = 99;
+    if (rangeStr.contains('-')) {
+      final parts = rangeStr.split('-');
+      minCap = int.tryParse(parts[0].trim()) ?? 1;
+      maxCap = int.tryParse(parts[1].trim()) ?? 99;
+    }
+
     return SeatingTableGroup(
-      seatingType: ((j["seating_type"] ?? "") as String).toLowerCase(),
+      seatingType:   ((j["seating_type"] ?? "") as String).toLowerCase(),
+      capacityRange: rangeStr,
+      minCapacity:   minCap,
+      maxCapacity:   maxCap,
       tables: ((j["table_name"] ?? "") as String)
           .split(',')
           .map((t) => t.trim())

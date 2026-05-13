@@ -13,12 +13,12 @@ class AdminUserListPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return NetworkAwareWrapper(
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFF4F7F9),
         appBar: AppBar(
           automaticallyImplyLeading: true,
           iconTheme: const IconThemeData(color: Colors.white),
           title: const Text(
-            "Registered Users",
+            'Registered Users',
             style: TextStyle(
               color: Colors.white,
               fontSize: 17,
@@ -29,13 +29,14 @@ class AdminUserListPage extends StatelessWidget {
           backgroundColor: Colors.teal,
           elevation: 0,
           actions: [
+            // ── Export Buttons (hidden when empty / loading) ──
             Obx(() {
               if (controller.isLoading.value || controller.users.isEmpty) {
                 return const SizedBox.shrink();
               }
               return Row(
                 children: [
-                  // ── Excel Button ──────────────────────────────
+                  // ── Excel Button ──────────────────────────
                   Obx(() => controller.isExcelGenerating.value
                       ? const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 10),
@@ -57,7 +58,7 @@ class AdminUserListPage extends StatelessWidget {
                     onPressed: controller.downloadUsersExcel,
                   )),
 
-                  // ── PDF Button ────────────────────────────────
+                  // ── PDF Button ────────────────────────────
                   Obx(() => controller.isPdfGenerating.value
                       ? const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 10),
@@ -78,12 +79,17 @@ class AdminUserListPage extends StatelessWidget {
                     tooltip: 'Download PDF',
                     onPressed: controller.downloadUsersPdf,
                   )),
+
+                  const SizedBox(width: 4),
                 ],
               );
             }),
           ],
         ),
+
+        // ── Body ───────────────────────────────────────────────
         body: Obx(() {
+          // Loading state
           if (controller.isLoading.value) {
             return Center(
               child: Column(
@@ -95,7 +101,7 @@ class AdminUserListPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    "Loading users...",
+                    'Loading users...',
                     style: TextStyle(
                       color: Colors.grey.shade600,
                       fontSize: 14,
@@ -106,6 +112,7 @@ class AdminUserListPage extends StatelessWidget {
             );
           }
 
+          // Empty state
           if (controller.users.isEmpty) {
             return Center(
               child: Column(
@@ -125,7 +132,7 @@ class AdminUserListPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    "No Registered Users",
+                    'No Registered Users',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
@@ -134,7 +141,7 @@ class AdminUserListPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    "Users will appear here once they register",
+                    'Users will appear here once they register',
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey.shade500,
@@ -145,22 +152,27 @@ class AdminUserListPage extends StatelessWidget {
             );
           }
 
-          return ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-            itemCount: controller.users.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 16),
-            itemBuilder: (context, index) {
-              final user = controller.users[index];
-              return _buildModernUserCard(context, user, index);
-            },
+          // User list
+          return RefreshIndicator(
+            color: Colors.teal,
+            onRefresh: controller.fetchUsers,
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+              itemCount: controller.users.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 14),
+              itemBuilder: (context, index) {
+                final user = controller.users[index];
+                return _buildUserCard(context, user, index);
+              },
+            ),
           );
         }),
       ),
     );
   }
 
-  // ── Modern User Card ──────────────────────────────────────────
-  Widget _buildModernUserCard(
+  // ── User Card ─────────────────────────────────────────────────
+  Widget _buildUserCard(
       BuildContext context,
       Map<String, dynamic> user,
       int index,
@@ -175,42 +187,42 @@ class AdminUserListPage extends StatelessWidget {
           border: Border.all(color: Colors.grey.shade200, width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: Colors.teal.withOpacity(0.08),
-              blurRadius: 20,
+              color: Colors.teal.withOpacity(0.07),
+              blurRadius: 18,
               offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Column(
           children: [
-            // ── Top section ───────────────────────────────────
-            Container(
-              padding: const EdgeInsets.all(20),
+            // ── Top row: avatar + name + date ─────────────────
+            Padding(
+              padding: const EdgeInsets.all(18),
               child: Row(
                 children: [
                   // Avatar
                   Hero(
                     tag: 'user_${user["id"]}',
                     child: Container(
-                      width: 70,
-                      height: 70,
+                      width: 66,
+                      height: 66,
                       decoration: BoxDecoration(
                         color: Colors.teal,
-                        borderRadius: BorderRadius.circular(18),
+                        borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.teal.withOpacity(0.3),
-                            blurRadius: 12,
+                            color: Colors.teal.withOpacity(0.28),
+                            blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
                         ],
                       ),
                       child: Center(
                         child: Text(
-                          _getInitials(user["name"]),
+                          _getInitials(user['name'] ?? ''),
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 26,
+                            fontSize: 24,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 1,
                           ),
@@ -218,24 +230,24 @@ class AdminUserListPage extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 14),
 
-                  // Name
+                  // Name + badge
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          user["name"],
+                          user['name'] ?? '',
                           style: const TextStyle(
-                            fontSize: 19,
+                            fontSize: 17,
                             fontWeight: FontWeight.w700,
                             color: Colors.black87,
-                            letterSpacing: 0.3,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 4),
-                        // Serial number badge
+                        const SizedBox(height: 5),
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 3,
@@ -257,10 +269,10 @@ class AdminUserListPage extends StatelessWidget {
                     ),
                   ),
 
-                  // Reg date chip
+                  // Reg-date chip
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 8,
+                      horizontal: 10, vertical: 8,
                     ),
                     decoration: BoxDecoration(
                       color: Colors.grey.shade100,
@@ -269,10 +281,10 @@ class AdminUserListPage extends StatelessWidget {
                     child: Column(
                       children: [
                         Icon(Icons.calendar_today,
-                            size: 16, color: Colors.grey.shade600),
+                            size: 15, color: Colors.grey.shade600),
                         const SizedBox(height: 4),
                         Text(
-                          user["regDate"],
+                          user['regDate'] ?? '-',
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
@@ -289,41 +301,41 @@ class AdminUserListPage extends StatelessWidget {
             // ── Divider ───────────────────────────────────────
             Container(
               height: 1,
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              color: Colors.grey.shade200,
+              margin: const EdgeInsets.symmetric(horizontal: 18),
+              color: Colors.grey.shade100,
             ),
 
-            // ── Contact details ───────────────────────────────
+            // ── Contact info grid ─────────────────────────────
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(18),
               child: Column(
                 children: [
                   Row(
                     children: [
                       Expanded(
-                        child: _buildCompactInfo(
+                        child: _infoChip(
                           icon: Icons.email_outlined,
-                          title: "Email",
-                          value: user["email"],
+                          title: 'Email',
+                          value: user['email'] ?? '',
                           color: Colors.blue,
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       Expanded(
-                        child: _buildCompactInfo(
+                        child: _infoChip(
                           icon: Icons.phone_outlined,
-                          title: "Phone",
-                          value: user["phone"],
+                          title: 'Phone',
+                          value: user['phone'] ?? '',
                           color: Colors.green,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  _buildCompactInfo(
+                  const SizedBox(height: 10),
+                  _infoChip(
                     icon: Icons.location_on_outlined,
-                    title: "Address",
-                    value: user["address"],
+                    title: 'Address',
+                    value: user['address'] ?? '-',
                     color: Colors.orange,
                     fullWidth: true,
                   ),
@@ -331,40 +343,34 @@ class AdminUserListPage extends StatelessWidget {
               ),
             ),
 
-            // ── Action button ─────────────────────────────────
+            // ── View Purchases Button ─────────────────────────
             Container(
               width: double.infinity,
-              margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-              height: 50,
-              child: ElevatedButton(
+              margin: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+              height: 48,
+              child: ElevatedButton.icon(
                 onPressed: () {
                   Get.toNamed(
                     '/purchased-products',
-                    arguments: {'user_id': user["id"]},
+                    arguments: {'user_id': user['id']},
                   );
                 },
+                icon: const Icon(Icons.shopping_bag_outlined, size: 18),
+                label: const Text(
+                  'View Purchases',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.4,
+                  ),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.teal,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(13),
                   ),
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.shopping_bag_outlined, size: 20),
-                    SizedBox(width: 10),
-                    Text(
-                      "View Purchases",
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
                 ),
               ),
             ),
@@ -374,8 +380,8 @@ class AdminUserListPage extends StatelessWidget {
     );
   }
 
-  // ── Compact Info Widget ───────────────────────────────────────
-  Widget _buildCompactInfo({
+  // ── Info Chip ─────────────────────────────────────────────────
+  Widget _infoChip({
     required IconData icon,
     required String title,
     required String value,
@@ -383,35 +389,36 @@ class AdminUserListPage extends StatelessWidget {
     bool fullWidth = false,
   }) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      width: fullWidth ? double.infinity : null,
+      padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withOpacity(0.07),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.2), width: 1),
+        border: Border.all(color: color.withOpacity(0.18), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, size: 16, color: color),
-              const SizedBox(width: 6),
+              Icon(icon, size: 14, color: color),
+              const SizedBox(width: 5),
               Text(
                 title,
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 10,
                   fontWeight: FontWeight.w700,
                   color: color,
-                  letterSpacing: 0.5,
+                  letterSpacing: 0.4,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 5),
           Text(
             value,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: FontWeight.w600,
               color: Colors.grey.shade800,
             ),
@@ -423,9 +430,10 @@ class AdminUserListPage extends StatelessWidget {
     );
   }
 
-  // ── Get Initials ──────────────────────────────────────────────
+  // ── Helpers ───────────────────────────────────────────────────
   String _getInitials(String name) {
     final parts = name.trim().split(' ');
+    if (parts.isEmpty || parts[0].isEmpty) return '?';
     if (parts.length == 1) return parts[0][0].toUpperCase();
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   }

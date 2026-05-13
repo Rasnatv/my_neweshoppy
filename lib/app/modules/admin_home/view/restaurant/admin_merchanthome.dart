@@ -14,8 +14,7 @@ import '../../manage_merchants/view/adminaddmerchants.dart';
 class AdminMerchantHomePageUI extends StatelessWidget {
   AdminMerchantHomePageUI({super.key});
 
-  final AdminMerchantController controller =
-  Get.put(AdminMerchantController());
+  final AdminMerchantController controller = Get.put(AdminMerchantController());
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +36,32 @@ class AdminMerchantHomePageUI extends StatelessWidget {
             ),
           ),
           actions: [
+            // ── Excel Download Button ──────────────────────────────
+            Obx(() {
+              if (controller.merchants.isEmpty) return const SizedBox.shrink();
+              return controller.isExcelGenerating.value
+                  ? const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 10),
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2.2,
+                  ),
+                ),
+              )
+                  : IconButton(
+                icon: const Icon(
+                  Icons.table_chart_rounded,
+                  color: Colors.white,
+                ),
+                tooltip: 'Download Excel',
+                onPressed: controller.downloadMerchantsExcel,
+              );
+            }),
+
+            // ── Add Merchant Button ────────────────────────────────
             Padding(
               padding: const EdgeInsets.only(right: 12),
               child: TextButton.icon(
@@ -63,8 +88,7 @@ class AdminMerchantHomePageUI extends StatelessWidget {
         body: Obx(() {
           if (controller.isLoading.value) {
             return Center(
-              child:
-              CircularProgressIndicator(color: AppColors.kPrimary),
+              child: CircularProgressIndicator(color: AppColors.kPrimary),
             );
           }
 
@@ -122,11 +146,10 @@ class AdminMerchantHomePageUI extends StatelessWidget {
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
-        onTap: () =>
-            Get.to(
-                  () => AdminMerchantDetailPage(merchantId: merchant.id),
-              arguments: merchant.id,
-            ),
+        onTap: () => Get.to(
+              () => AdminMerchantDetailPage(merchantId: merchant.id),
+          arguments: merchant.id,
+        ),
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
@@ -140,102 +163,99 @@ class AdminMerchantHomePageUI extends StatelessWidget {
               ),
             ],
           ),
-          child: Row(children: [
-            // ── Icon avatar ──────────────────────────────────────
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                color: AppColors.kPrimary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
+          child: Row(
+            children: [
+              // ── Icon avatar ────────────────────────────────────
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: AppColors.kPrimary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.storefront_rounded,
+                    color: AppColors.kPrimary, size: 26),
               ),
-              child: Icon(Icons.storefront_rounded,
-                  color: AppColors.kPrimary, size: 26),
-            ),
-            const SizedBox(width: 14),
+              const SizedBox(width: 14),
 
-            // ── Shop name + email ────────────────────────────────
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    merchant.shopName,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A1A1A),
+              // ── Shop name + email ──────────────────────────────
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      merchant.shopName,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1A1A1A),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Row(children: [
-                    Icon(Icons.email_outlined,
-                        size: 13, color: Colors.grey[500]),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        merchant.email,
-                        style: TextStyle(
-                            fontSize: 12, color: Colors.grey[500]),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(Icons.email_outlined,
+                            size: 13, color: Colors.grey[500]),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            merchant.email,
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.grey[500]),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Delete + Arrow ─────────────────────────────────
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: () {
+                      DeleteConfirmDialog.show(
+                        context: Get.context!,
+                        title: "Delete Merchant",
+                        message:
+                        "Are you sure you want to delete this merchant?",
+                        onConfirm: () {
+                          controller.deleteMerchant(merchant.id);
+                        },
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.delete_outline_rounded,
+                        color: Colors.red,
+                        size: 20,
                       ),
                     ),
-                  ]),
+                  ),
+                  const SizedBox(width: 10),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 14,
+                    color: Colors.grey[400],
+                  ),
                 ],
               ),
-            ),
-            // // ── Arrow ────────────────────────────────────────────
-            // Icon(Icons.arrow_forward_ios,
-            //     size: 14, color: Colors.grey[400]),
-            // ── Arrow + Delete Button ────────────────────────────
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Delete Button
-                InkWell(
-                  borderRadius: BorderRadius.circular(8),
-                  onTap: () {
-                    DeleteConfirmDialog.show(
-                      context: Get.context!,
-                      title: "Delete Merchant",
-                      message:
-                      "Are you sure you want to delete this merchant?",
-                      onConfirm: () {
-                        controller.deleteMerchant(merchant.id);
-                      },
-                    );
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(
-                      Icons.delete_outline_rounded,
-                      color: Colors.red,
-                      size: 20,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(width: 10),
-
-                // Arrow
-                Icon(
-                  Icons.arrow_forward_ios,
-                  size: 14,
-                  color: Colors.grey[400],
-                ),
-              ],
-            ),
-          ]),
+            ],
+          ),
         ),
       ),
     );
   }
-
 }

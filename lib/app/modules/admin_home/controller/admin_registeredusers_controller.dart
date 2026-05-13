@@ -1,79 +1,4 @@
-// import 'dart:convert';
-// import 'package:get/get.dart';
-// import 'package:get_storage/get_storage.dart';
-// import 'package:http/http.dart' as http;
-//
-// import '../../../data/errors/api_error.dart';
-// import '../../merchantlogin/widget/successwidget.dart';
-//
-// class AdminUserController extends GetxController {
-//   var users = <Map<String, dynamic>>[].obs;
-//   var isLoading = false.obs;
-//
-//   final box = GetStorage();
-//
-//   String get authToken => box.read('auth_token') ?? "";
-//
-//   @override
-//   void onInit() {
-//     super.onInit();
-//     fetchUsers();
-//   }
-//
-//   Future<void> fetchUsers() async {
-//
-//
-//     isLoading.value = true;
-//
-//     try {
-//       final response = await http.get(
-//         Uri.parse(
-//           "https://eshoppy.co.in/api/admin/users",
-//         ),
-//         headers: {
-//           "Authorization": "Bearer $authToken",
-//           "Accept": "application/json",
-//         },
-//       );
-//
-//       final body = jsonDecode(response.body);
-//
-//       /// ✅ Success (same logic)
-//       if (response.statusCode == 200 &&
-//           (body["status"] == 1 || body["status"] == "1")) {
-//         users.value = List<Map<String, dynamic>>.from(
-//           body["data"].map((user) {
-//             return {
-//               "id": int.tryParse(user["user_id"].toString()) ?? 0,
-//               "name": user["full_name"] ?? "",
-//               "email": user["email"] ?? "",
-//               "phone": user["phone"] ?? "",
-//               "address": user["address"] ?? "-",
-//               "regDate": user["registered_on"] ?? "-",
-//             };
-//           }),
-//         );
-//       } else {
-//         /// ✅ API Error Handler
-//         final errorMessage = ApiErrorHandler.handleResponse(response);
-//         AppSnackbar.error(errorMessage);
-//       }
-//     } catch (e) {
-//       /// ✅ Exception Handling
-//       final errorMessage = ApiErrorHandler.handleException(e);
-//       AppSnackbar.error(errorMessage);
-//     } finally {
-//       isLoading.value = false;
-//     }
-//   }
-//
-//   void deleteUser(int index) {
-//     users.removeAt(index);
-//
-//     /// ✅ Snackbar updated
-//     AppSnackbar.success("User removed successfully");
-//   }
-// }
+
 import 'dart:convert';
 import 'dart:io';
 import 'package:get/get.dart';
@@ -90,47 +15,49 @@ import '../../../data/errors/api_error.dart';
 import '../../merchantlogin/widget/successwidget.dart';
 
 class AdminUserController extends GetxController {
-  var users           = <Map<String, dynamic>>[].obs;
-  var isLoading       = false.obs;
-  var isPdfGenerating  = false.obs;
+  var users             = <Map<String, dynamic>>[].obs;
+  var isLoading         = false.obs;
+  var isPdfGenerating   = false.obs;
   var isExcelGenerating = false.obs;
 
   final box = GetStorage();
 
-  String get authToken => box.read('auth_token') ?? "";
+  String get authToken => box.read('auth_token') ?? '';
 
+  // ── LIFECYCLE ────────────────────────────────────────────────
   @override
   void onInit() {
     super.onInit();
     fetchUsers();
   }
 
+  // ── HEADERS ─────────────────────────────────────────────────
+  Map<String, String> get _headers => {
+    'Authorization': 'Bearer $authToken',
+    'Accept': 'application/json',
+  };
 
+  // ── FETCH USERS ──────────────────────────────────────────────
   Future<void> fetchUsers() async {
     isLoading.value = true;
     try {
       final response = await http.get(
-        Uri.parse("https://eshoppy.co.in/api/admin/users"),
-        headers: {
-          "Authorization": "Bearer $authToken",
-          "Accept": "application/json",
-        },
+        Uri.parse('https://eshoppy.co.in/api/admin/users'),
+        headers: _headers,
       );
 
       final body = jsonDecode(response.body);
 
       if (response.statusCode == 200 &&
-          (body["status"] == 1 || body["status"] == "1")) {
+          (body['status'] == 1 || body['status'] == '1')) {
         users.value = List<Map<String, dynamic>>.from(
-          body["data"].map((user) {
-            return {
-              "id": int.tryParse(user["user_id"].toString()) ?? 0,
-              "name": user["full_name"] ?? "",
-              "email": user["email"] ?? "",
-              "phone": user["phone"] ?? "",
-              "address": user["address"] ?? "-",
-              "regDate": user["registered_on"] ?? "-",
-            };
+          (body['data'] as List).map((user) => {
+            'id'      : int.tryParse(user['user_id'].toString()) ?? 0,
+            'name'    : user['full_name']     ?? '',
+            'email'   : user['email']         ?? '',
+            'phone'   : user['phone']         ?? '',
+            'address' : user['address']       ?? '-',
+            'regDate' : user['registered_on'] ?? '-',
           }),
         );
       } else {
@@ -143,9 +70,10 @@ class AdminUserController extends GetxController {
     }
   }
 
+  // ── DELETE USER (local) ──────────────────────────────────────
   void deleteUser(int index) {
     users.removeAt(index);
-    AppSnackbar.success("User removed successfully");
+    AppSnackbar.success('User removed successfully');
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -159,11 +87,11 @@ class AdminUserController extends GetxController {
       final workbook = xlsio.Workbook();
 
       // ── Styles ────────────────────────────────────────────────
-      final titleStyle      = workbook.styles.add('Title');
-      titleStyle.bold       = true;
-      titleStyle.fontSize   = 14;
-      titleStyle.backColor  = '#00695C';
-      titleStyle.fontColor  = '#FFFFFF';
+      final titleStyle     = workbook.styles.add('Title');
+      titleStyle.bold      = true;
+      titleStyle.fontSize  = 14;
+      titleStyle.backColor = '#00695C';
+      titleStyle.fontColor = '#FFFFFF';
 
       final headerStyle     = workbook.styles.add('Header');
       headerStyle.bold      = true;
@@ -172,12 +100,12 @@ class AdminUserController extends GetxController {
       headerStyle.fontColor = '#FFFFFF';
       headerStyle.wrapText  = true;
 
-      final metaLabelStyle      = workbook.styles.add('MetaLabel');
-      metaLabelStyle.bold       = true;
-      metaLabelStyle.backColor  = '#E0F2F1';
+      final metaLabelStyle     = workbook.styles.add('MetaLabel');
+      metaLabelStyle.bold      = true;
+      metaLabelStyle.backColor = '#E0F2F1';
 
-      final metaValueStyle      = workbook.styles.add('MetaValue');
-      metaValueStyle.backColor  = '#E0F2F1';
+      final metaValueStyle     = workbook.styles.add('MetaValue');
+      metaValueStyle.backColor = '#E0F2F1';
 
       final evenStyle     = workbook.styles.add('Even');
       evenStyle.backColor = '#F5F5F5';
@@ -331,7 +259,8 @@ class AdminUserController extends GetxController {
               pw.Text(
                 'Registered Users Report',
                 style: pw.TextStyle(
-                  font: bold, fontSize: 17,
+                  font: bold,
+                  fontSize: 17,
                   fontWeight: pw.FontWeight.bold,
                   color: PdfColors.teal800,
                 ),
@@ -340,7 +269,8 @@ class AdminUserController extends GetxController {
               pw.Text(
                 'Eshoppy - Admin Panel',
                 style: pw.TextStyle(
-                  font: regular, fontSize: 9,
+                  font: regular,
+                  fontSize: 9,
                   color: PdfColors.blueGrey400,
                 ),
               ),
@@ -349,7 +279,8 @@ class AdminUserController extends GetxController {
           pw.Text(
             'Generated: ${_formatNow()}',
             style: pw.TextStyle(
-              font: regular, fontSize: 9,
+              font: regular,
+              fontSize: 9,
               color: PdfColors.blueGrey400,
             ),
           ),
@@ -410,7 +341,8 @@ class AdminUserController extends GetxController {
               pw.Text(
                 '${users.length}',
                 style: pw.TextStyle(
-                  font: bold, fontSize: 28,
+                  font: bold,
+                  fontSize: 28,
                   fontWeight: pw.FontWeight.bold,
                   color: PdfColors.white,
                 ),
@@ -419,8 +351,7 @@ class AdminUserController extends GetxController {
               pw.Text(
                 'Total Registered Users',
                 style: pw.TextStyle(
-                  font: regular, fontSize: 11,
-                  color: PdfColors.white,
+                  font: regular, fontSize: 11, color: PdfColors.white,
                 ),
               ),
             ],
@@ -435,47 +366,15 @@ class AdminUserController extends GetxController {
     required pw.Font bold,
     required pw.Font regular,
   }) {
-    const headerBg   = PdfColors.teal700;
-    const headerFg   = PdfColors.white;
-    const evenBg     = PdfColor(0.96, 0.96, 0.96);
-    const oddBg      = PdfColors.white;
+    const headerBg    = PdfColors.teal700;
+    const headerFg    = PdfColors.white;
+    const evenBg      = PdfColor(0.96, 0.96, 0.96);
+    const oddBg       = PdfColors.white;
     const borderColor = PdfColors.blueGrey100;
 
-    // Column flex widths (total = 20)
     final colFlex = [1, 2, 3, 4, 2, 4, 3];
     final headers  = ['No.', 'ID', 'Name', 'Email', 'Phone', 'Address', 'Reg. Date'];
 
-    pw.Widget cell(
-        String text, {
-          pw.Font? font,
-          double fontSize = 9,
-          PdfColor fg = PdfColors.black,
-          PdfColor bg = PdfColors.white,
-          bool isHeader = false,
-        }) {
-      return pw.Expanded(
-        flex: colFlex[headers.indexOf(isHeader
-            ? text
-            : text)], // placeholder — handled below
-        child: pw.Container(
-          color: bg,
-          padding: const pw.EdgeInsets.symmetric(
-            horizontal: 6, vertical: 7,
-          ),
-          child: pw.Text(
-            text,
-            style: pw.TextStyle(
-              font: font ?? regular,
-              fontSize: fontSize,
-              color: fg,
-            ),
-            maxLines: 2,
-          ),
-        ),
-      );
-    }
-
-    // Header row
     pw.Widget headerRow() {
       return pw.Row(
         children: List.generate(headers.length, (i) {
@@ -489,8 +388,7 @@ class AdminUserController extends GetxController {
               child: pw.Text(
                 headers[i],
                 style: pw.TextStyle(
-                  font: bold, fontSize: 9,
-                  color: headerFg,
+                  font: bold, fontSize: 9, color: headerFg,
                 ),
               ),
             ),
@@ -499,7 +397,6 @@ class AdminUserController extends GetxController {
       );
     }
 
-    // Data rows
     List<pw.Widget> dataRows() {
       return List.generate(users.length, (idx) {
         final user = users[idx];
@@ -532,7 +429,8 @@ class AdminUserController extends GetxController {
                   child: pw.Text(
                     vals[i],
                     style: pw.TextStyle(
-                      font: regular, fontSize: 8.5,
+                      font: regular,
+                      fontSize: 8.5,
                       color: PdfColors.blueGrey800,
                     ),
                     maxLines: 2,
@@ -583,14 +481,16 @@ class AdminUserController extends GetxController {
   }
 
   String _formatNow() {
-    final dt       = DateTime.now();
-    const months   = [
+    final dt     = DateTime.now();
+    const months = [
       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
-    final hour     = dt.hour > 12 ? dt.hour - 12 : (dt.hour == 0 ? 12 : dt.hour);
-    final minute   = dt.minute.toString().padLeft(2, '0');
-    final period   = dt.hour >= 12 ? 'PM' : 'AM';
+    final hour   = dt.hour > 12
+        ? dt.hour - 12
+        : (dt.hour == 0 ? 12 : dt.hour);
+    final minute = dt.minute.toString().padLeft(2, '0');
+    final period = dt.hour >= 12 ? 'PM' : 'AM';
     return '${dt.day.toString().padLeft(2, '0')} ${months[dt.month - 1]} '
         '${dt.year}  |  $hour:$minute $period';
   }

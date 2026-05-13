@@ -29,7 +29,8 @@ class RestaurantmenuController extends GetxController {
   var isDeletingTiming = false.obs;
 
   final tableTypeCtrl     = TextEditingController();
-  final capacityRangeCtrl = TextEditingController();
+  // final capacityRangeCtrl = TextEditingController();
+  final capacityRangeCtrl = TextEditingController(text: '1-');
   final tableIdsCtrl      = TextEditingController();
 
   final startCtrl         = TextEditingController();
@@ -169,7 +170,6 @@ class RestaurantmenuController extends GetxController {
       '${mealType.name.capitalizeFirst} slot added to queue. Tap "Save Timings" to submit.',
     );
   }
-
   void submitTableForm() {
     if (tableTypeCtrl.text.trim().isEmpty ||
         capacityRangeCtrl.text.trim().isEmpty ||
@@ -184,7 +184,7 @@ class RestaurantmenuController extends GetxController {
       seatingType.value,
     );
     tableTypeCtrl.clear();
-    capacityRangeCtrl.clear();
+    capacityRangeCtrl.text = '1-'; // ✅ changed
     tableIdsCtrl.clear();
   }
 

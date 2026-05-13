@@ -25,17 +25,30 @@ IconData _mealIcon(MealType m) {
   }
 }
 
-// ─── Capacity Range Formatter — allows digits, hyphen, en-dash ───────────────
 class _CapacityRangeFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
       TextEditingValue oldValue, TextEditingValue newValue) {
-    final text = newValue.text;
-    if (text.isEmpty) return newValue;
-    // Allow: digits, single hyphen or en-dash between numbers
-    // Valid: "7"  "1-7"  "2–6"  "10-20"
-    final regex = RegExp(r'^\d{1,3}([–\-]\d{0,3})?$');
-    return regex.hasMatch(text) ? newValue : oldValue;
+    const prefix = '1-';
+
+    // Always protect the prefix — revert if deleted
+    if (!newValue.text.startsWith(prefix)) {
+      return TextEditingValue(
+        text: oldValue.text.startsWith(prefix) ? oldValue.text : prefix,
+        selection: TextSelection.collapsed(
+          offset: oldValue.text.startsWith(prefix) ? oldValue.text.length : prefix.length,
+        ),
+      );
+    }
+
+    final afterPrefix = newValue.text.substring(prefix.length);
+
+    // Only digits after prefix, max 3 digits
+    if (afterPrefix.isNotEmpty && !RegExp(r'^\d{1,3}$').hasMatch(afterPrefix)) {
+      return oldValue;
+    }
+
+    return newValue;
   }
 }
 
@@ -209,9 +222,6 @@ class MenuManagementPage extends StatelessWidget {
     ),
   );
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // TAB 1 — TABLES
-  // ══════════════════════════════════════════════════════════════════════════
   Widget _buildTablesTab(BuildContext context) => SingleChildScrollView(
     child: Column(children: [
       _gradientStrip(),
@@ -245,14 +255,7 @@ class MenuManagementPage extends StatelessWidget {
                 type: TextInputType.text,
                 inputFormatters: [_CapacityRangeFormatter()],
               ),
-              // Helper text below the field
-              Padding(
-                padding: const EdgeInsets.only(left: 12, top: 4),
-                child: Text(
-                  'Enter a single number (e.g. 7) or a range (e.g. 1-7)',
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
-                ),
-              ),
+
 
               const SizedBox(height: 16),
               _modernTextField(
@@ -991,9 +994,6 @@ class MenuManagementPage extends StatelessWidget {
   }
 }
 
-// ─── Locked Tab Placeholder ───────────────────────────────────────────────────
-// FIX: Removed fixed `height: 80` from icon container — it was clipping the
-//      40px icon inside 24px padding (80 < 24*2+40 = 88). Now sized by padding.
 Widget _lockedTab({
   required IconData icon,
   required String title,

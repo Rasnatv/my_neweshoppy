@@ -123,9 +123,14 @@ class RestaurantBookingController extends GetxController {
         final parsed = GetTablesByGuestsResponse.fromJson(_safe(res.body));
         if (parsed.status == 1 && parsed.data.isNotEmpty) {
           seatingGroups.value = parsed.data;
-          if (guests.value > maxGuests.value) {
-            maxGuests.value = guests.value;
-          }
+
+          // ── Derive maxGuests from capacity_range ──────────────────
+          final highestMax = parsed.data
+              .map((g) => g.maxCapacity)
+              .fold<int>(1, (prev, cap) => cap > prev ? cap : prev);
+          maxGuests.value = highestMax;
+          // ─────────────────────────────────────────────────────────
+
           for (final row in bookingRows) {
             row["tableName"] = "";
           }
