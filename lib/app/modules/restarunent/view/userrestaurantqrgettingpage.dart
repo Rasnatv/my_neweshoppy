@@ -14,10 +14,10 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../common/style/app_colors.dart';
 import '../../../data/models/resaturantqrmodel.dart';
+import '../../userhome/widget/qrgettingpage/actionbutton.dart';
+import '../../userhome/widget/qrgettingpage/bottom_paybar.dart';
 import '../controller/qrgettingcontroller.dart';
 import '../controller/restaurant_maincartcontroller.dart';
-
-// ── UPI App Model ─────────────────────────────────────────────────────────────
 class _UpiApp {
   final String name;
   final String scheme;
@@ -155,7 +155,7 @@ Future<_UpiApp?> _showUpiAppPicker(BuildContext context) async {
     ),
   );
 }
-Future<void> _handlePay(
+Future<void> handlePay(
     List<PaymentDetailModel> data, BuildContext context) async {
 
   // Step 1: choose app
@@ -183,10 +183,6 @@ Future<void> _handlePay(
       'Could not open ${selectedApp.name}',
     );
   }
-
-
-
-  // Step 4: After returning, show transaction sheet
   await Future.delayed(const Duration(seconds: 2));
   if (context.mounted) {
     _showTransactionSheet(context, data);
@@ -724,7 +720,7 @@ class QRPaymentPage extends StatelessWidget {
                     _RestaurantPaymentCard(item: data[index]),
               ),
             ),
-            _BottomPayBar(total: controller.grandTotal, data: data),
+            BottomPayBar(total: controller.grandTotal, data: data),
           ],
         );
       }),
@@ -931,7 +927,7 @@ class _RestaurantPaymentCard extends StatelessWidget {
               children: [
                 if (item.hasQrCode)
                   Expanded(
-                    child: _ActionButton(
+                    child: ActionButton(
                       icon: Icons.download_rounded,
                       label: 'Save QR',
                       color: const Color(0xFF4F46E5),
@@ -943,7 +939,7 @@ class _RestaurantPaymentCard extends StatelessWidget {
                 if (item.hasQrCode && hasUpiId) const SizedBox(width: 8),
                 if (hasUpiId)
                   Expanded(
-                    child: _ActionButton(
+                    child: ActionButton(
                       icon: Icons.copy_rounded,
                       label: 'Copy UPI',
                       color: const Color(0xFF0284C7),
@@ -985,113 +981,5 @@ class _RestaurantPaymentCard extends StatelessWidget {
   }
 }
 
-// ── Action Button ─────────────────────────────────────────────────────────────
-class _ActionButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final Color bgColor;
-  final VoidCallback onTap;
 
-  const _ActionButton({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.bgColor,
-    required this.onTap,
-  });
 
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-            color: bgColor, borderRadius: BorderRadius.circular(10)),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 18, color: color),
-            const SizedBox(height: 4),
-            Text(label,
-                style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: color)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ── Bottom Pay Bar ────────────────────────────────────────────────────────────
-class _BottomPayBar extends StatelessWidget {
-  final double total;
-  final List<PaymentDetailModel> data;
-  const _BottomPayBar({required this.total, required this.data});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: const Color(0xFFF7F8FA),
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 55),
-      child: Column(
-        children: [
-          Container(
-            padding:
-           EdgeInsets.fromLTRB(20, 20, 20, 55),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                  color: const Color(0xFFE5E7EB), width: 0.5),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('GRAND TOTAL',
-                    style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF9CA3AF),
-                        letterSpacing: 1.0)),
-                Text(
-                  '₹${total.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF111111),
-                      letterSpacing: -0.5),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => _handlePay(data, context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.restaurantclr,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 15),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
-              ),
-              child: const Text(
-                'Confirm & Pay All',
-                style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.2),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
