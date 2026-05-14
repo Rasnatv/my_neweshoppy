@@ -1,5 +1,6 @@
 
 import 'dart:io';
+import 'package:eshoppy/app/modules/landingview/view/landing_screen.dart';
 import 'package:eshoppy/app/modules/userhome/view/userhome.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -191,8 +192,6 @@ Future<void> _handlePay(
     _showTransactionSheet(context, data);
   }
 }
-
-// ── Transaction ID Bottom Sheet ───────────────────────────────────────────────
 void _showTransactionSheet(
     BuildContext context, List<PaymentDetailModel> data) {
   final txnController = TextEditingController();
@@ -205,22 +204,29 @@ void _showTransactionSheet(
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
+    useSafeArea: true,
     backgroundColor: Colors.transparent,
-    builder: (_) => Padding(
-      padding:
-      EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    builder: (ctx) => DraggableScrollableSheet(
+      initialChildSize: 0.75,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (_, scrollController) => Padding(
+        // ✅ This pushes the sheet up when keyboard appears
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-        child: Form(
-          key: formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+          child: Form(
+            key: formKey,
+            child: ListView(
+              // ✅ ListView with the sheet's scrollController
+              controller: scrollController,
               children: [
                 // ── Handle bar
                 Center(
@@ -285,8 +291,7 @@ void _showTransactionSheet(
                                 style: const TextStyle(
                                     fontSize: 12,
                                     color: Color(0xFF374151))),
-                            Text(
-                                '₹${item.totalPrice.toStringAsFixed(2)}',
+                            Text('₹${item.totalPrice.toStringAsFixed(2)}',
                                 style: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
@@ -327,11 +332,21 @@ void _showTransactionSheet(
                 TextFormField(
                   controller: txnController,
                   textCapitalization: TextCapitalization.characters,
-                  keyboardType: TextInputType.number, // ← number keyboard
+                  keyboardType: TextInputType.number,
                   inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly, // ← digits only
-                    LengthLimitingTextInputFormatter(12),   // ← max 12 digits
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(12),
                   ],
+                  // ✅ Auto-scroll to this field when focused
+                  onTap: () {
+                    Future.delayed(const Duration(milliseconds: 300), () {
+                      scrollController.animateTo(
+                        scrollController.position.maxScrollExtent,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOut,
+                      );
+                    });
+                  },
                   style: const TextStyle(
                       fontSize: 14,
                       fontFamily: 'monospace',
@@ -378,7 +393,7 @@ void _showTransactionSheet(
                       return 'Please enter your transaction ID';
                     }
                     if (val.trim().length < 12) {
-                      return 'Transaction ID must be 12 digits';  // ← updated message
+                      return 'Transaction ID must be 12 digits';
                     }
                     return null;
                   },
@@ -386,8 +401,8 @@ void _showTransactionSheet(
                 const SizedBox(height: 8),
                 const Text(
                     'Find it in your UPI app under payment history',
-                    style:
-                    TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
+                    style: TextStyle(
+                        fontSize: 11, color: Color(0xFF9CA3AF))),
                 const SizedBox(height: 16),
 
                 // ── Payment Screenshot
@@ -469,14 +484,11 @@ void _showTransactionSheet(
                     onPressed: isSubmitting.value
                         ? null
                         : () async {
-                      if (!formKey.currentState!.validate()) {
-                        return;
-                      }
+                      if (!formKey.currentState!.validate()) return;
 
                       isSubmitting.value = true;
                       final txnId = txnController.text.trim();
                       final screenshot = screenshotPath.value;
-
                       bool allSuccess = true;
 
                       for (final item in data) {
@@ -507,8 +519,7 @@ void _showTransactionSheet(
                           : const Color(0xFF0F5151),
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      padding:
-                      const EdgeInsets.symmetric(vertical: 15),
+                      padding: const EdgeInsets.symmetric(vertical: 15),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14)),
                     ),
@@ -537,6 +548,9 @@ void _showTransactionSheet(
                             fontSize: 13, color: Color(0xFF9CA3AF))),
                   ),
                 ),
+
+                // ✅ Extra space so content clears the keyboard
+                const SizedBox(height: 20),
               ],
             ),
           ),
@@ -545,7 +559,6 @@ void _showTransactionSheet(
     ),
   );
 }
-
 void _onPaymentConfirmed(String txnId, List<PaymentDetailModel> data) {
   try {
     final cartController = Get.find<FinalCartController>();
@@ -562,8 +575,11 @@ void _onPaymentConfirmed(String txnId, List<PaymentDetailModel> data) {
     duration: const Duration(seconds: 4),
   );
 
-  // ← Navigate to restaurant home and clear back stack
-  Get.offAll(Userhome());
+  // ✅ No arguments passed → Get.arguments will be null → no splash trigger
+  Get.offUntil(
+    GetPageRoute(page: () => const LandingView()),
+        (route) => false,
+  );
 }
 
 // ── Download QR ───────────────────────────────────────────────────────────────

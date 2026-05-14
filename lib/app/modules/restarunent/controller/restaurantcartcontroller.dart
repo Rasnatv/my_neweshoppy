@@ -104,7 +104,6 @@ class Restaurantcartcontroller extends GetxController {
     currentRestaurantId.value = restaurantId;
   }
 
-  // ───────────────── FETCH CART ─────────────────
   Future<void> fetchCart() async {
     isLoading.value = true;
 
@@ -121,9 +120,12 @@ class Restaurantcartcontroller extends GetxController {
           final List items = data['data'] ?? [];
           _allCartItems.value =
               items.map((e) => RestaurantCartModel.fromJson(e)).toList();
-
           _grandTotal.value =
               double.tryParse(data['grand_total']?.toString() ?? '0') ?? 0.0;
+        } else {
+          // ✅ FIX: status == 0 means empty cart — clear everything
+          _allCartItems.clear();
+          _grandTotal.value = 0.0;
         }
       } else {
         final error = ApiErrorHandler.handleResponse(response);
@@ -137,14 +139,13 @@ class Restaurantcartcontroller extends GetxController {
       isLoading.value = false;
     }
   }
-
-  // ───────────────── ADD TO CART ─────────────────
   Future<bool> addToCart({
     required int restaurantId,
     required int menuId,
     required String itemName,
     required String image,
     required double price,
+    bool forceReplace = false,          // ← new flag
   }) async {
     try {
       final response = await http.post(
@@ -156,12 +157,36 @@ class Restaurantcartcontroller extends GetxController {
           'item_name': itemName,
           'image': image,
           'price': price,
+          if (forceReplace) 'force_replace': true,   // send to API if it supports it
         }),
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
+        // ── MEAL TYPE CONFLICT ──────────────────────────────────────────
+        if (data['status'] == 0 &&
+            (data['message'] as String? ?? '')
+                .toLowerCase()
+                .contains('meal type')) {
+          final confirmed = await _showMealTypeConflictDialog(data['message']);
+
+          if (confirmed == true) {
+            // Clear existing cart, then retry
+            await clearCartForRestaurant(restaurantId);
+            return addToCart(
+              restaurantId: restaurantId,
+              menuId: menuId,
+              itemName: itemName,
+              image: image,
+              price: price,
+              forceReplace: true,
+            );
+          }
+          return false;
+        }
+
+        // ── SUCCESS ─────────────────────────────────────────────────────
         if (data['status'] == 1) {
           await fetchCart();
           return true;
@@ -173,7 +198,119 @@ class Restaurantcartcontroller extends GetxController {
     return false;
   }
 
-  // ───────────────── UPDATE QUANTITY ─────────────────
+// ───────────────── MEAL TYPE CONFLICT DIALOG ─────────────────
+  Future<bool?> _showMealTypeConflictDialog(String apiMessage) {
+    return Get.dialog<bool>(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8F5F0),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.restaurant_menu_rounded,
+                  color: Color(0xFF0F5151),
+                  size: 32,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Switch meal type?',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1C1C1E),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                apiMessage,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  color: Color(0xFF6B6B6B),
+                  height: 1.5,
+                ),
+              ),
+
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Get.back(result: false),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        side: const BorderSide(color: Color(0xFFF0F0F0), width: 1.5),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Keep current or please clear cart',
+                        style: TextStyle(
+                          color: Color(0xFF6B6B6B),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+
+
+
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: false,   // user must choose
+    );
+  }
+
+
+  // ✅ UPDATED
+  Future<void> clearCartForRestaurant(
+      int restaurantId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/restaurant-cart/clear'),
+        headers: _headers,
+        body: jsonEncode({
+          'restaurant_id': restaurantId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        if (data['status'] == 1) {
+          _allCartItems.removeWhere(
+                (item) =>
+            item.restaurantId == restaurantId,
+          );
+
+          _grandTotal.value = 0.0;
+
+          _allCartItems.refresh();
+        }
+      }
+    } catch (e) {
+      debugPrint(
+        'clearCartForRestaurant error: $e',
+      );
+    }
+  }
   Future<void> updateQuantity(int menuId, String type) async {
     _updateLocalQty(menuId, type);
 
