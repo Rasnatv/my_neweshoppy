@@ -1,3 +1,4 @@
+
 import 'package:eshoppy/app/modules/userrestaurantreservationview/resatuarntbookedorderviewcontroller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -10,15 +11,11 @@ class _T {
   static const tealLight = Color(0xFFE0F2F1);
   static const tealMid = Color(0xFF4DB6AC);
   static const tealDark = Color(0xFF00796B);
-  static const white = Color(0xFFFFFFFF);
   static const bg = Color(0xFFF4F7F6);
   static const card = Color(0xFFFFFFFF);
   static const text = Color(0xFF1A2E2A);
   static const textSub = Color(0xFF607D78);
-  static const textMuted = Color(0xFF9EB3AF);
   static const divider = Color(0xFFECF0EF);
-  static const success = Color(0xFF26A69A);
-  static const gold = Color(0xFFFFB300);
   static const shadow = Color(0x0F009688);
 }
 
@@ -39,7 +36,7 @@ class BookedOrdersPage extends StatelessWidget {
       appBar: _buildAppBar(ctrl),
       body: Obx(() {
         if (ctrl.isLoading.value) return _LoadingState();
-        if (ctrl.bookings.isEmpty) return _EmptyState();
+        if (ctrl.isEmpty) return _EmptyState();
 
         return RefreshIndicator(
           color: _T.teal,
@@ -47,29 +44,18 @@ class BookedOrdersPage extends StatelessWidget {
           child: CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
-
-
-              // Booking groups
-              Builder(builder: (_) {
-                final groups = ctrl.groupedByRestaurant;
-                final restaurantIds = groups.keys.toList();
-                return SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                      final rid = restaurantIds[index];
-                      final items = groups[rid]!;
-                      return _RestaurantGroup(
-                        restaurantId: rid,
-                        restaurantName: items.first.restaurantName,
-                        items: items,
-                        isLast: index == restaurantIds.length - 1,
-                      );
-                    },
-                    childCount: restaurantIds.length,
-                  ),
-                );
-              }),
-
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                    final restaurant = ctrl.restaurants[index];
+                    return _RestaurantSection(
+                      restaurant: restaurant,
+                      isLast: index == ctrl.restaurants.length - 1,
+                    );
+                  },
+                  childCount: ctrl.restaurants.length,
+                ),
+              ),
               const SliverPadding(padding: EdgeInsets.only(bottom: 32)),
             ],
           ),
@@ -82,8 +68,8 @@ class BookedOrdersPage extends StatelessWidget {
     return AppBar(
       backgroundColor: _T.teal,
       elevation: 0,
-     automaticallyImplyLeading: true,
-      iconTheme: IconThemeData(color: Colors.white),
+      automaticallyImplyLeading: true,
+      iconTheme: const IconThemeData(color: Colors.white),
       title: const Text(
         'My Reservations',
         style: TextStyle(
@@ -105,36 +91,19 @@ class BookedOrdersPage extends StatelessWidget {
   }
 }
 
-class _RestaurantGroup extends StatelessWidget {
-  final int restaurantId;
-  final String restaurantName;
-  final List<BookingItem> items;
+// ── Level 1: Restaurant Section ────────────────────────────────────────────
+
+class _RestaurantSection extends StatelessWidget {
+  final BookingRestaurant restaurant;
   final bool isLast;
 
-  const _RestaurantGroup({
-    required this.restaurantId,
-    required this.restaurantName,
-    required this.items,
+  const _RestaurantSection({
+    required this.restaurant,
     required this.isLast,
   });
 
-  /// Sub-group items by timeSlot so each slot gets its own strip
-  Map<String, List<BookingItem>> get _groupedBySlot {
-    final map = <String, List<BookingItem>>{};
-    for (final item in items) {
-      map.putIfAbsent(item.timeSlot, () => []).add(item);
-    }
-    return map;
-  }
-
-  double get _groupTotal =>
-      items.fold(0.0, (s, i) => s + i.price * i.guests);
-
   @override
   Widget build(BuildContext context) {
-    final slotGroups = _groupedBySlot;
-    final slotKeys = slotGroups.keys.toList();
-
     return Container(
       margin: EdgeInsets.fromLTRB(16, 8, 16, isLast ? 8 : 0),
       decoration: BoxDecoration(
@@ -151,13 +120,12 @@ class _RestaurantGroup extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-         SizedBox(height: 15),
+          // ── Restaurant Header ──────────────────────────────────────────
           Container(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: _T.tealLight,
-              borderRadius:
-              const BorderRadius.vertical(top: Radius.circular(18)),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
             ),
             child: Row(
               children: [
@@ -173,31 +141,21 @@ class _RestaurantGroup extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        restaurantName,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          color: _T.tealDark,
-                          letterSpacing: 0.1,
-                        ),
-                      ),
-                      Text(
-                        'Restaurant #$restaurantId',
-                        style: const TextStyle(
-                            fontSize: 11, color: _T.textSub),
-                      ),
-                    ],
+                  child: Text(
+                    restaurant.restaurantName,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: _T.tealDark,
+                      letterSpacing: 0.1,
+                    ),
                   ),
                 ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      '₹${_groupTotal.toStringAsFixed(0)}',
+                      '₹${restaurant.restaurantTotal.toStringAsFixed(0)}',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
@@ -205,9 +163,8 @@ class _RestaurantGroup extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '${items.length} item${items.length > 1 ? 's' : ''}',
-                      style: const TextStyle(
-                          fontSize: 11, color: _T.textSub),
+                      '${restaurant.totalOrders} item${restaurant.totalOrders > 1 ? 's' : ''}',
+                      style: const TextStyle(fontSize: 11, color: _T.textSub),
                     ),
                   ],
                 ),
@@ -215,35 +172,53 @@ class _RestaurantGroup extends StatelessWidget {
             ),
           ),
 
-          // ── Slot Sections ──────────────────────────────────────────────
-          ...slotKeys.asMap().entries.map((entry) {
-            final idx = entry.key;
-            final slotKey = entry.value;
-            final slotItems = slotGroups[slotKey]!;
+          // ── Level 2: Dates ─────────────────────────────────────────────
+          ...restaurant.dates.asMap().entries.map((dateEntry) {
+            final dateIdx = dateEntry.key;
+            final bookingDate = dateEntry.value;
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (idx > 0)
+                if (dateIdx > 0)
                   const Divider(
                       color: _T.divider, height: 1, indent: 16, endIndent: 16),
 
-                // Slot strip
-                _SlotStrip(item: slotItems.first),
+                _DateHeader(bookingDate: bookingDate),
 
-                // Items within this slot
-                ...slotItems.asMap().entries.map((e) {
-                  final i = e.key;
-                  final item = e.value;
+                // ── Level 3: Time Slots ────────────────────────────────
+                ...bookingDate.timeSlots.asMap().entries.map((slotEntry) {
+                  final slotIdx = slotEntry.key;
+                  final slot = slotEntry.value;
+
                   return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (i > 0)
+                      if (slotIdx > 0)
                         const Divider(
                             color: _T.divider,
                             height: 1,
-                            indent: 78,
+                            indent: 16,
                             endIndent: 16),
-                      _BookingCard(item: item),
+
+                      _TimeSlotStrip(slot: slot),
+
+                      // ── Level 4: Orders ──────────────────────────────
+                      ...slot.orders.asMap().entries.map((orderEntry) {
+                        final orderIdx = orderEntry.key;
+                        final order = orderEntry.value;
+                        return Column(
+                          children: [
+                            if (orderIdx > 0)
+                              const Divider(
+                                  color: _T.divider,
+                                  height: 1,
+                                  indent: 78,
+                                  endIndent: 16),
+                            _OrderCard(order: order),
+                          ],
+                        );
+                      }),
                     ],
                   );
                 }),
@@ -258,18 +233,76 @@ class _RestaurantGroup extends StatelessWidget {
   }
 }
 
-// ── Slot Strip ─────────────────────────────────────────────────────────────
+// ── Level 2: Date Header ───────────────────────────────────────────────────
 
-class _SlotStrip extends StatelessWidget {
-  final BookingItem item;
-  const _SlotStrip({required this.item});
+class _DateHeader extends StatelessWidget {
+  final BookingDate bookingDate;
+  const _DateHeader({required this.bookingDate});
+
+  String get _label {
+    try {
+      final dt = DateTime.parse(bookingDate.bookingDate);
+      final today = DateTime.now();
+      final todayOnly = DateTime(today.year, today.month, today.day);
+      final tomorrowOnly = todayOnly.add(const Duration(days: 1));
+      final dateOnly = DateTime(dt.year, dt.month, dt.day);
+
+      if (dateOnly == todayOnly) return 'Today';
+      if (dateOnly == tomorrowOnly) return 'Tomorrow';
+      return DateFormat('EEE, dd MMM yyyy').format(dt);
+    } catch (_) {
+      return bookingDate.bookingDate;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final dateFormatted = _fmtDate(item.bookingDate);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 2),
+      child: Row(
+        children: [
+          const Icon(Icons.calendar_today_rounded,
+              size: 13, color: _T.tealDark),
+          const SizedBox(width: 6),
+          Text(
+            _label,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: _T.tealDark,
+            ),
+          ),
+          const Spacer(),
+          Text(
+            '₹${bookingDate.dateTotal.toStringAsFixed(0)}',
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: _T.textSub,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Level 3: Time Slot Strip ───────────────────────────────────────────────
+
+class _TimeSlotStrip extends StatelessWidget {
+  final BookingTimeSlot slot;
+  const _TimeSlotStrip({required this.slot});
+
+  @override
+  Widget build(BuildContext context) {
+    final mealType =
+    slot.orders.isNotEmpty ? slot.orders.first.mealType : '';
+    final tableNo =
+    slot.orders.isNotEmpty ? slot.orders.first.tableNo : '';
+
     return Container(
-      margin: const EdgeInsets.fromLTRB(12, 12, 12, 4),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      margin: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
       decoration: BoxDecoration(
         color: _T.tealLight,
         borderRadius: BorderRadius.circular(12),
@@ -278,60 +311,86 @@ class _SlotStrip extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Row 1 — Date · Time
+          // ── Row 1: Time · Meal badge ───────────────────────────────────
           Row(
             children: [
-              _SlotPill(
-                  icon: Icons.calendar_today_rounded, text: dateFormatted),
-              const SizedBox(width: 12),
+              const Icon(Icons.access_time_rounded,
+                  size: 13, color: _T.tealDark),
+              const SizedBox(width: 5),
               Expanded(
-                child: _SlotPill(
-                    icon: Icons.access_time_rounded, text: item.timeSlot),
+                child: Text(
+                  slot.timeSlot,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: _T.tealDark,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
+              if (mealType.isNotEmpty) _MealBadge(mealType: mealType),
             ],
           ),
-          const SizedBox(height: 6),
-          // Row 2 — Table · Meal badge
+
+          const SizedBox(height: 8),
+
+          // ── Row 2: Table · Guests · Total ─────────────────────────────
           Row(
             children: [
-              _SlotPill(
-                  icon: Icons.table_restaurant_rounded, text: item.tableNo),
+              if (tableNo.isNotEmpty) ...[
+                _SlotChip(
+                  icon: Icons.table_restaurant_rounded,
+                  label: tableNo,
+                ),
+                const SizedBox(width: 10),
+              ],
+              _SlotChip(
+                icon: Icons.people_rounded,
+                label: '${slot.guests} guest${slot.guests > 1 ? 's' : ''}',
+              ),
               const Spacer(),
-              _MealBadge(mealType: item.mealType),
+              // Total price — prominently on its own at the end
+              Container(
+                padding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _T.teal,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '₹${slot.total.toStringAsFixed(0)}',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
             ],
           ),
         ],
       ),
     );
   }
-
-  String _fmtDate(String raw) {
-    try {
-      return DateFormat('dd MMM yy').format(DateTime.parse(raw));
-    } catch (_) {
-      return raw;
-    }
-  }
 }
 
-class _SlotPill extends StatelessWidget {
+class _SlotChip extends StatelessWidget {
   final IconData icon;
-  final String text;
-  const _SlotPill({required this.icon, required this.text});
+  final String label;
+  const _SlotChip({required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 12, color: _T.tealDark),
-        const SizedBox(width: 4),
+        Icon(icon, size: 11, color: _T.tealDark),
+        const SizedBox(width: 3),
         Text(
-          text,
+          label,
           style: const TextStyle(
             fontSize: 11,
             color: _T.tealDark,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],
@@ -349,7 +408,7 @@ class _MealBadge extends StatelessWidget {
     final emoji =
     lower == 'breakfast' ? '🌅' : lower == 'lunch' ? '☀️' : '🌙';
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: _T.teal,
         borderRadius: BorderRadius.circular(8),
@@ -366,16 +425,14 @@ class _MealBadge extends StatelessWidget {
   }
 }
 
-// ── Individual Booking Card ─────────────────────────────────────────────────
+// ── Level 4: Order Card ────────────────────────────────────────────────────
 
-class _BookingCard extends StatelessWidget {
-  final BookingItem item;
-  const _BookingCard({required this.item});
+class _OrderCard extends StatelessWidget {
+  final BookingOrder order;
+  const _OrderCard({required this.order});
 
   @override
   Widget build(BuildContext context) {
-    final total = item.price * item.guests;
-
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
       child: Row(
@@ -385,7 +442,7 @@ class _BookingCard extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: Image.network(
-              item.image,
+              order.image,
               width: 64,
               height: 64,
               fit: BoxFit.cover,
@@ -428,11 +485,12 @@ class _BookingCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Name + total
                 Row(
                   children: [
                     Expanded(
                       child: Text(
-                        item.itemName,
+                        order.foodName,
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
@@ -441,7 +499,7 @@ class _BookingCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '₹${total.toStringAsFixed(0)}',
+                      '₹${order.totalPrice.toStringAsFixed(0)}',
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
@@ -451,28 +509,20 @@ class _BookingCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 6),
-                Row(
+                // Pills — no booking ID shown to user
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
                   children: [
                     _InfoPill(
-                      label: '₹${item.price.toStringAsFixed(0)} each',
+                      label: '₹${order.price.toStringAsFixed(0)} each',
                       icon: Icons.currency_rupee_rounded,
                     ),
-                    const SizedBox(width: 6),
                     _InfoPill(
-                      label:
-                      '${item.guests} guest${item.guests > 1 ? 's' : ''}',
-                      icon: Icons.person_rounded,
+                      label: 'Qty: ${order.quantity}',
+                      icon: Icons.shopping_bag_outlined,
                     ),
                   ],
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  'Booking #${item.bookingId}',
-                  style: const TextStyle(
-                    fontSize: 10.5,
-                    color: _T.textMuted,
-                    letterSpacing: 0.2,
-                  ),
                 ),
               ],
             ),
@@ -547,7 +597,7 @@ class _EmptyState extends StatelessWidget {
           Container(
             width: 90,
             height: 90,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: _T.tealLight,
               shape: BoxShape.circle,
             ),

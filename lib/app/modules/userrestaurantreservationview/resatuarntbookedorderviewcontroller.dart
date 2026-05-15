@@ -1,3 +1,4 @@
+
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -6,55 +7,122 @@ import 'package:http/http.dart' as http;
 import '../../data/errors/api_error.dart';
 import '../merchantlogin/widget/successwidget.dart';
 
-// ── Model ──────────────────────────────────────────────────────────────────
+// ── Models ─────────────────────────────────────────────────────────────────
 
-class BookingItem {
+class BookingOrder {
   final int bookingId;
-  final int restaurantId;
-  final String restaurantName;
   final int menuItemId;
-  final String itemName;
-  final String image;
+  final String foodName;
   final double price;
-  final int guests;
-  final String bookingDate;
+  final int quantity;
+  final double totalPrice;
+  final String image;
   final String mealType;
-  final String timeSlot;
   final String tableNo;
   final DateTime createdAt;
 
-  BookingItem({
+  BookingOrder({
     required this.bookingId,
-    required this.restaurantId,
-    required this.restaurantName,
     required this.menuItemId,
-    required this.itemName,
-    required this.image,
+    required this.foodName,
     required this.price,
-    required this.guests,
-    required this.bookingDate,
+    required this.quantity,
+    required this.totalPrice,
+    required this.image,
     required this.mealType,
-    required this.timeSlot,
     required this.tableNo,
     required this.createdAt,
   });
 
-  factory BookingItem.fromJson(
-      Map<String, dynamic> json, int restaurantId, String restaurantName) {
-    return BookingItem(
+  factory BookingOrder.fromJson(Map<String, dynamic> json) {
+    return BookingOrder(
       bookingId: json['booking_id'] as int,
-      restaurantId: restaurantId,
-      restaurantName: restaurantName,
       menuItemId: json['menu_item_id'] as int,
-      itemName: json['food_name'] as String,
-      image: json['image'] as String,
+      foodName: json['food_name'] as String,
       price: double.tryParse(json['price'].toString()) ?? 0.0,
-      guests: json['guests'] as int,
-      bookingDate: json['booking_date'] as String,
+      quantity: json['quantity'] as int,
+      totalPrice: double.tryParse(json['total_price'].toString()) ?? 0.0,
+      image: json['image'] as String,
       mealType: json['meal_type'] as String,
-      timeSlot: json['time_slot'] as String,
       tableNo: json['table_no'] as String,
       createdAt: DateTime.parse(json['created_at'] as String),
+    );
+  }
+}
+
+class BookingTimeSlot {
+  final String timeSlot;
+  final int guests;       // moved up from order level
+  final double total;     // slot-level total (replaces time_total)
+  final List<BookingOrder> orders;
+
+  BookingTimeSlot({
+    required this.timeSlot,
+    required this.guests,
+    required this.total,
+    required this.orders,
+  });
+
+  factory BookingTimeSlot.fromJson(Map<String, dynamic> json) {
+    return BookingTimeSlot(
+      timeSlot: json['time_slot'] as String,
+      guests: json['guests'] as int,
+      total: double.tryParse(json['total'].toString()) ?? 0.0,
+      orders: (json['orders'] as List)
+          .map((o) => BookingOrder.fromJson(o as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+
+class BookingDate {
+  final String bookingDate;
+  final List<BookingTimeSlot> timeSlots;
+
+  BookingDate({
+    required this.bookingDate,
+    required this.timeSlots,
+  });
+
+  double get dateTotal =>
+      timeSlots.fold(0.0, (s, t) => s + t.total);
+
+  factory BookingDate.fromJson(Map<String, dynamic> json) {
+    return BookingDate(
+      bookingDate: json['booking_date'] as String,
+      timeSlots: (json['time_slots'] as List)
+          .map((t) => BookingTimeSlot.fromJson(t as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+
+class BookingRestaurant {
+  final int restaurantId;
+  final String restaurantName;
+  final List<BookingDate> dates;
+
+  BookingRestaurant({
+    required this.restaurantId,
+    required this.restaurantName,
+    required this.dates,
+  });
+
+  double get restaurantTotal =>
+      dates.fold(0.0, (s, d) => s + d.dateTotal);
+
+  int get totalOrders => dates.fold(
+      0,
+          (s, d) =>
+      s + d.timeSlots.fold(0, (s2, t) => s2 + t.orders.length));
+
+  factory BookingRestaurant.fromJson(Map<String, dynamic> json) {
+    return BookingRestaurant(
+      restaurantId: json['restaurant_id'] as int,
+      restaurantName: json['restaurant_name'] as String,
+      dates: (json['dates'] as List)
+          .map((d) => BookingDate.fromJson(d as Map<String, dynamic>))
+          .toList(),
     );
   }
 }
@@ -64,20 +132,13 @@ class BookingItem {
 class BookingController extends GetxController {
   final _box = GetStorage();
 
-  final RxList<BookingItem> bookings = <BookingItem>[].obs;
+  final RxList<BookingRestaurant> restaurants = <BookingRestaurant>[].obs;
   final RxBool isLoading = false.obs;
 
-  /// Groups bookings by restaurantId preserving API order
-  Map<int, List<BookingItem>> get groupedByRestaurant {
-    final map = <int, List<BookingItem>>{};
-    for (final item in bookings) {
-      map.putIfAbsent(item.restaurantId, () => []).add(item);
-    }
-    return map;
-  }
+  bool get isEmpty => restaurants.isEmpty;
 
   double get grandTotal =>
-      bookings.fold(0.0, (sum, b) => sum + b.price * b.guests);
+      restaurants.fold(0.0, (s, r) => s + r.restaurantTotal);
 
   @override
   void onInit() {
@@ -104,22 +165,11 @@ class BookingController extends GetxController {
         final decoded = jsonDecode(response.body) as Map<String, dynamic>;
 
         if (decoded['status'] == 1) {
-          final List<dynamic> restaurants = decoded['data'] as List;
-          final List<BookingItem> allItems = [];
-
-          for (final restaurant in restaurants) {
-            final int restaurantId = restaurant['restaurant_id'] as int;
-            final String restaurantName =
-            restaurant['restaurant_name'] as String;
-            final List<dynamic> orders = restaurant['orders'] as List;
-
-            for (final order in orders) {
-              allItems.add(BookingItem.fromJson(
-                  order as Map<String, dynamic>, restaurantId, restaurantName));
-            }
-          }
-
-          bookings.assignAll(allItems);
+          final List<dynamic> data = decoded['data'] as List;
+          restaurants.assignAll(
+            data.map((r) =>
+                BookingRestaurant.fromJson(r as Map<String, dynamic>)),
+          );
         } else {
           final msg = decoded['message']?.toString() ?? '';
           AppSnackbar.error(msg);
