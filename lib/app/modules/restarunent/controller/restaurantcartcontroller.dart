@@ -46,6 +46,10 @@ class Restaurantcartcontroller extends GetxController {
   double get grandTotal =>
       cartItems.fold(0.0, (sum, i) => sum + i.totalPrice);
 
+  ////
+  int totalProductsForRestaurant(int restaurantId) =>
+      itemsForRestaurant(restaurantId).length;
+
   double grandTotalForRestaurant(int restaurantId) =>
       itemsForRestaurant(restaurantId)
           .fold(0.0, (sum, i) => sum + i.totalPrice);

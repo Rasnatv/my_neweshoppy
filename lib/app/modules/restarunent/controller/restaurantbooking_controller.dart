@@ -9,26 +9,21 @@ import '../../../data/errors/api_error.dart';
 import '../../merchantlogin/widget/successwidget.dart';
 import '../controller/restaurantcartcontroller.dart';
 
+
 class TimeSlotModel {
   final String time;
-
-  /// is_active == 1  → active / selectable
-  /// is_active == 0  → past   / disabled  (cannot be tapped)
-  final bool isActive;
+  final bool isActive; // 1 = selectable, 0 = past/disabled
 
   TimeSlotModel({required this.time, required this.isActive});
 
   factory TimeSlotModel.fromJson(Map<String, dynamic> json) {
-    final raw = json['is_active'];
+    final raw    = json['is_active'];
     final active = raw == 1 || raw == true || raw.toString() == '1';
-    return TimeSlotModel(
-      time: json['time']?.toString() ?? '',
-      isActive: active,
-    );
+    return TimeSlotModel(time: json['time']?.toString() ?? '', isActive: active);
   }
 
-  bool get isSelectable => isActive;  // tap is allowed only when active
-  bool get isPast       => !isActive; // drives strikethrough in the UI
+  bool get isSelectable => isActive;
+  bool get isPast       => !isActive;
 }
 
 class MealModel {
@@ -42,18 +37,20 @@ class MealModel {
         .map((e) => TimeSlotModel.fromJson(e as Map<String, dynamic>))
         .toList();
     return MealModel(
-      mealType: json['meal_type']?.toString() ?? '',
+      mealType:  json['meal_type']?.toString() ?? '',
       timeSlots: slots,
     );
   }
 }
 
-/// One seating group as returned by /get-tables-by-guests
-class SeatingGroup {
-  final String seatingType; // "indoor" | "outdoor"
-  final List<String> tables;
+/// Holds the auto-allocated result from /get-tables-by-guests.
+/// seatingType : e.g. "indoor" — taken from API, sent as-is to confirm.
+/// tableNames  : comma-separated string, e.g. "T1,T2,T3" — sent as table_name.
+class AllocatedTable {
+  final String seatingType;
+  final String tableNames;
 
-  SeatingGroup({required this.seatingType, required this.tables});
+  AllocatedTable({required this.seatingType, required this.tableNames});
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -64,31 +61,32 @@ class RestaurantBookingController extends GetxController {
   static const String _baseUrl = 'https://eshoppy.co.in/api';
 
   final _box = GetStorage();
-
   String get _authToken => _box.read('auth_token') ?? '';
 
   Map<String, String> get _headers => {
     'Content-Type': 'application/json',
-    'Accept': 'application/json',
+    'Accept':       'application/json',
     if (_authToken.isNotEmpty) 'Authorization': 'Bearer $_authToken',
   };
 
-  // ── Observables ─────────────────────────────────────────────────────────────
+  // ── Observables ──────────────────────────────────────────────────────────────
 
-  final RxList<MealModel>              meals         = <MealModel>[].obs;
-  final RxList<Map<String, dynamic>>   bookingRows   = <Map<String, dynamic>>[].obs;
-  final RxList<SeatingGroup>           seatingGroups = <SeatingGroup>[].obs;
+  final RxList<MealModel>            meals       = <MealModel>[].obs;
+  final RxList<Map<String, dynamic>> bookingRows = <Map<String, dynamic>>[].obs;
+
+  /// ✅ Auto-allocated table result — no user selection ever needed.
+  final Rx<AllocatedTable?> allocatedTable = Rx<AllocatedTable?>(null);
 
   final RxBool isLoadingSlots  = false.obs;
   final RxBool isLoadingTables = false.obs;
   final RxBool isSaving        = false.obs;
 
-  final RxInt  guests    = RxInt(1);
-  final RxInt  maxGuests = RxInt(99);
-  final RxInt  totalSeats = RxInt(0);
+  final RxInt guests     = RxInt(1);
+  final RxInt maxGuests  = RxInt(99);
+  final RxInt totalSeats = RxInt(0);
 
-  final Rx<DateTime> selectedDate  = DateTime.now().obs;
-  final RxString     errorMessage  = ''.obs;
+  final Rx<DateTime> selectedDate = DateTime.now().obs;
+  final RxString     errorMessage = ''.obs;
 
   // ── Derived ──────────────────────────────────────────────────────────────────
 
@@ -107,52 +105,21 @@ class RestaurantBookingController extends GetxController {
     return items.map((e) => e.menuId.toString()).join(',');
   }
 
-  List<String> get availableSeatingTypes =>
-      seatingGroups.map((g) => g.seatingType).toList();
-
   List<TimeSlotModel> timeSlotsForRow(int index) {
     if (index >= meals.length) return [];
     return meals[index].timeSlots;
   }
 
-  List<String> tablesForRow(int index) {
-    if (index >= bookingRows.length) return [];
-    final chosen = bookingRows[index]['seatingType']?.toString() ?? '';
-    if (chosen.isEmpty) return [];
-    try {
-      return seatingGroups
-          .firstWhere(
-            (g) => g.seatingType.toLowerCase() == chosen.toLowerCase(),
-      )
-          .tables;
-    } catch (_) {
-      return [];
-    }
-  }
-
-  // ── Lifecycle ────────────────────────────────────────────────────────────────
+  // ── Lifecycle ─────────────────────────────────────────────────────────────────
 
   @override
   void onInit() {
     super.onInit();
     fetchSlots();
-
-    // Re-fetch slots whenever date changes
     ever(selectedDate, (_) => fetchSlots());
-
-    // Re-fetch table allocation (debounced) whenever guests changes
-    debounce(
-      guests,
-          (_) => fetchTableAllocation(),
-      time: const Duration(milliseconds: 600),
-    );
+    debounce(guests, (_) => fetchTableAllocation(),
+        time: const Duration(milliseconds: 600));
   }
-
-  // ── FETCH SLOTS ───────────────────────────────────────────────────────────────
-  // POST /restaurant/bookings
-  // Body : { restaurant_id, booking_date (DD-MM-YYYY), menu_ids }
-  // is_active: 0 = past/disabled, 1 = active/selectable
-
   Future<void> fetchSlots() async {
     isLoadingSlots.value = true;
     errorMessage.value   = '';
@@ -162,8 +129,8 @@ class RestaurantBookingController extends GetxController {
     try {
       final body = jsonEncode({
         'restaurant_id': restaurantId,
-        'booking_date' : _ddmmyyyy(selectedDate.value),
-        'menu_ids'     : _menuIds,
+        'booking_date':  _ddmmyyyy(selectedDate.value),
+        'menu_ids':      _menuIds,
       });
 
       debugPrint('▶ fetchSlots → $body');
@@ -186,15 +153,12 @@ class RestaurantBookingController extends GetxController {
               .toList();
 
           meals.value = parsed;
+          // bookingRows only tracks timeSlot per meal — seating/table are auto
           bookingRows.value = parsed
-              .map(
-                (m) => <String, dynamic>{
-              'mealType'   : m.mealType,
-              'timeSlot'   : '',
-              'seatingType': '',
-              'tableName'  : '',
-            },
-          )
+              .map((m) => <String, dynamic>{
+            'mealType': m.mealType,
+            'timeSlot': '',
+          })
               .toList();
         } else {
           errorMessage.value =
@@ -216,32 +180,33 @@ class RestaurantBookingController extends GetxController {
     }
   }
 
-  // ── FETCH TABLE ALLOCATION ───────────────────────────────────────────────────
+  // ── FETCH TABLE ALLOCATION ────────────────────────────────────────────────────
   // POST /get-tables-by-guests
-  // Body    : { restaurant_id, guests }
-  // Success : { status:1, data:{ total_seats, guests,
-  //               allocation:[ { seating_type:"indoor", tables_used:["T1","T2"] } ] } }
-  // Fail    : { status:0, message:"Not enough seats available",
-  //               data:{ total_seats, guests, allocation:[] } }
+  // Response example:
+  // {
+  //   "status": 1,
+  //   "data": {
+  //     "total_seats": 42,
+  //     "guests": 21,
+  //     "allocation": [
+  //       { "seating_type": "indoor", "tables_used": ["T1","T2","T3"] }
+  //     ]
+  //   }
+  // }
+  //
+  // ✅ All tables from all allocation entries are joined as "T1,T2,T3".
+  //    seating_type from first entry (default "indoor") is stored.
+  //    Result is saved to allocatedTable — no user selection ever shown.
 
   Future<void> fetchTableAllocation() async {
     if (restaurantId == 0) return;
     isLoadingTables.value = true;
-    seatingGroups.clear();
-
-    // Reset seating + table selections in every row
-    for (int i = 0; i < bookingRows.length; i++) {
-      final row = Map<String, dynamic>.from(bookingRows[i]);
-      row['seatingType'] = '';
-      row['tableName']   = '';
-      bookingRows[i]     = row;
-    }
-    bookingRows.refresh();
+    allocatedTable.value  = null;
 
     try {
       final body = jsonEncode({
         'restaurant_id': restaurantId,
-        'guests'       : guests.value,
+        'guests':        guests.value,
       });
 
       debugPrint('▶ fetchTableAllocation → $body');
@@ -263,36 +228,40 @@ class RestaurantBookingController extends GetxController {
             int.tryParse(dataBody['total_seats']?.toString() ?? '0') ?? 0;
 
         if (data['status'] == 1) {
-          maxGuests.value =
-          totalSeats.value > 0 ? totalSeats.value : 99;
+          maxGuests.value = totalSeats.value > 0 ? totalSeats.value : 99;
 
-          final allocationList =
-              (dataBody['allocation'] as List?) ?? [];
+          final allocationList = (dataBody['allocation'] as List?) ?? [];
 
-          final List<SeatingGroup> groups = [];
+          // Collect ALL tables across ALL allocation entries
+          final List<String> allTables   = [];
+          String             seatingType = 'indoor'; // safe default
 
           for (final entry in allocationList) {
-            final map      = entry as Map<String, dynamic>;
-            final rawType  = map['seating_type']?.toString().toLowerCase() ?? '';
-            final rawTables = (map['tables_used'] as List? ?? [])
-                .map((t) => t.toString())
-            // Deduplicate within a group
-                .fold<List<String>>([], (acc, t) {
-              if (!acc.contains(t)) acc.add(t);
-              return acc;
-            });
+            final map = entry as Map<String, dynamic>;
 
-            if (rawTables.isNotEmpty) {
-              groups.add(SeatingGroup(
-                seatingType: rawType.isNotEmpty ? rawType : 'indoor',
-                tables: rawTables,
-              ));
+            // Use seating_type from the first non-empty entry
+            final rawType = map['seating_type']?.toString().trim() ?? '';
+            if (rawType.isNotEmpty) seatingType = rawType.toLowerCase();
+
+            final rawTables = (map['tables_used'] as List? ?? [])
+                .map((t) => t.toString().trim())
+                .where((t) => t.isNotEmpty)
+                .toList();
+
+            for (final t in rawTables) {
+              if (!allTables.contains(t)) allTables.add(t);
             }
           }
 
-          seatingGroups.value = groups;
+          if (allTables.isNotEmpty) {
+            // ✅ e.g. seatingType="indoor", tableNames="T1,T2,T3"
+            allocatedTable.value = AllocatedTable(
+              seatingType: seatingType,
+              tableNames:  allTables.join(','),
+            );
+          }
         } else {
-          // Not enough seats — cap guests at total_seats
+          // Not enough seats — cap guests
           final cap = totalSeats.value;
           if (cap > 0 && guests.value > cap) guests.value = cap;
           maxGuests.value = cap > 0 ? cap : 1;
@@ -307,52 +276,22 @@ class RestaurantBookingController extends GetxController {
     }
   }
 
-  // ── Row setters ──────────────────────────────────────────────────────────────
+  // ── Time slot setter ──────────────────────────────────────────────────────────
 
   void setTimeSlot(int index, String slot) {
     if (index >= bookingRows.length) return;
-    final row    = Map<String, dynamic>.from(bookingRows[index]);
+    final row       = Map<String, dynamic>.from(bookingRows[index]);
     row['timeSlot'] = slot;
     bookingRows[index] = row;
     bookingRows.refresh();
   }
 
-  void setSeating(int index, String seatingType) {
-    if (index >= bookingRows.length) return;
-    final row           = Map<String, dynamic>.from(bookingRows[index]);
-    row['seatingType']  = seatingType;
-    row['tableName']    = ''; // reset table when seating type changes
-    bookingRows[index]  = row;
-    bookingRows.refresh();
-  }
-
-  void setTable(int index, String tableName) {
-    if (index >= bookingRows.length) return;
-    final row          = Map<String, dynamic>.from(bookingRows[index]);
-    row['tableName']   = tableName;
-    bookingRows[index] = row;
-    bookingRows.refresh();
-  }
-
-  // ── CONFIRM BOOKING ──────────────────────────────────────────────────────────
-  // POST /restaurant-booking/confirm
-  // Body:
-  // {
-  //   "restaurant_id": 21,
-  //   "guests"       : 6,
-  //   "booking_date" : "2026-05-13",          ← YYYY-MM-DD
-  //   "bookings": [
-  //     {
-  //       "seating_type": "indoor",
-  //       "meal_type"   : "breakfast",
-  //       "time_slot"   : "09:16 AM - 09:36 AM",
-  //       "table_name"  : "T2"
-  //     }
-  //   ]
-  // }
-
   Future<bool> confirmAndSave() async {
-    // Only rows that have a time slot selected are included
+    if (allocatedTable.value == null) {
+      AppSnackbar.error('Table allocation not ready. Please wait.');
+      return false;
+    }
+
     final filledRows = bookingRows
         .where((r) => (r['timeSlot'] ?? '').toString().isNotEmpty)
         .toList();
@@ -362,35 +301,21 @@ class RestaurantBookingController extends GetxController {
       return false;
     }
 
-    // Each filled row must also have seating type + table
-    for (final row in filledRows) {
-      final meal = _capitalize(row['mealType']?.toString() ?? '');
-      if ((row['seatingType'] ?? '').toString().isEmpty) {
-        AppSnackbar.error('Select a seating type for $meal.');
-        return false;
-      }
-      if ((row['tableName'] ?? '').toString().isEmpty) {
-        AppSnackbar.error('Select a table for $meal.');
-        return false;
-      }
-    }
-
     isSaving.value = true;
 
     try {
       final payload = jsonEncode({
         'restaurant_id': restaurantId,
-        'guests'       : guests.value,
-        'booking_date' : _yyyymmdd(selectedDate.value), // YYYY-MM-DD
-        'bookings'     : filledRows
-            .map(
-              (r) => {
-            'seating_type': r['seatingType'],
-            'meal_type'   : r['mealType'],
-            'time_slot'   : r['timeSlot'],
-            'table_name'  : r['tableName'],
-          },
-        )
+        'guests':        guests.value,
+        'booking_date':  _yyyymmdd(selectedDate.value),
+        'bookings': filledRows
+            .map((r) => {
+          // ✅ Always use auto-allocated values — no user input
+          'seating_type': allocatedTable.value!.seatingType,
+          'meal_type':    r['mealType'],
+          'time_slot':    r['timeSlot'],
+          'table_name':   allocatedTable.value!.tableNames,
+        })
             .toList(),
       });
 
@@ -423,18 +348,9 @@ class RestaurantBookingController extends GetxController {
     return false;
   }
 
-  // ── Date helpers ─────────────────────────────────────────────────────────────
+  // ── Date helpers ──────────────────────────────────────────────────────────────
 
-  /// DD-MM-YYYY  — for /restaurant/bookings
-  String _ddmmyyyy(DateTime d) =>
-      '${_p(d.day)}-${_p(d.month)}-${d.year}';
-
-  /// YYYY-MM-DD  — for /restaurant-booking/confirm
-  String _yyyymmdd(DateTime d) =>
-      '${d.year}-${_p(d.month)}-${_p(d.day)}';
-
+  String _ddmmyyyy(DateTime d) => '${_p(d.day)}-${_p(d.month)}-${d.year}';
+  String _yyyymmdd(DateTime d) => '${d.year}-${_p(d.month)}-${_p(d.day)}';
   String _p(int n) => n.toString().padLeft(2, '0');
-
-  String _capitalize(String s) =>
-      s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
 }

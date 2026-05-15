@@ -97,7 +97,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage>
               Padding(
                 padding: const EdgeInsets.only(right: 14, top: 10, bottom: 10),
                 child: Obx(() {
-                  final count = cartController.totalItemsForRestaurant(rid);
+                  final count = cartController.totalProductsForRestaurant(rid);
                   return _CircleButton(
                     icon: Icons.shopping_bag_outlined,
                     onTap: () => Get.to(() => RestaurantCartPage(restaurantId: rid)),

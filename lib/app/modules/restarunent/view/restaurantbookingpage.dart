@@ -51,9 +51,8 @@ class RestaurantBookingPage extends StatelessWidget {
           automaticallyImplyLeading: true,
         ),
 
-        // ── Body ────────────────────────────────────────────────────────────
+        // ── Body ──────────────────────────────────────────────────────────────
         body: Obx(() {
-          // Full-page loader only on very first load (meals empty + loading)
           if (controller.isLoadingSlots.value && controller.meals.isEmpty) {
             return Center(
               child: CircularProgressIndicator(
@@ -61,13 +60,13 @@ class RestaurantBookingPage extends StatelessWidget {
             );
           }
 
-          // Always show the full page — date/guests never disappear
           return SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Guests ────────────────────────────────────────────
+
+                // ── Guests ──────────────────────────────────────────
                 _SectionCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,8 +77,7 @@ class RestaurantBookingPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 14),
                       Obx(() {
-                        final atMin =
-                            controller.guests.value <= 1;
+                        final atMin = controller.guests.value <= 1;
                         final atMax = controller.guests.value >=
                             controller.maxGuests.value;
                         return Column(
@@ -91,8 +89,7 @@ class RestaurantBookingPage extends StatelessWidget {
                                   icon: Icons.remove,
                                   enabled: !atMin,
                                   onTap: () {
-                                    if (!atMin)
-                                      controller.guests.value--;
+                                    if (!atMin) controller.guests.value--;
                                   },
                                 ),
                                 const SizedBox(width: 16),
@@ -125,11 +122,11 @@ class RestaurantBookingPage extends StatelessWidget {
                                   icon: Icons.add,
                                   enabled: !atMax,
                                   onTap: () {
-                                    if (!atMax)
-                                      controller.guests.value++;
+                                    if (!atMax) controller.guests.value++;
                                   },
                                 ),
                                 const SizedBox(width: 12),
+                                // Loading spinner while fetching tables
                                 Obx(() =>
                                 controller.isLoadingTables.value
                                     ? SizedBox(
@@ -138,8 +135,8 @@ class RestaurantBookingPage extends StatelessWidget {
                                   child:
                                   CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    color: AppColors
-                                        .restaurantclr,
+                                    color:
+                                    AppColors.restaurantclr,
                                   ),
                                 )
                                     : const SizedBox.shrink()),
@@ -150,8 +147,8 @@ class RestaurantBookingPage extends StatelessWidget {
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 8, vertical: 4),
                                     decoration: BoxDecoration(
-                                      color:
-                                      Colors.orange.withOpacity(0.12),
+                                      color: Colors.orange
+                                          .withOpacity(0.12),
                                       borderRadius:
                                       BorderRadius.circular(6),
                                     ),
@@ -185,7 +182,147 @@ class RestaurantBookingPage extends StatelessWidget {
 
                 const SizedBox(height: 14),
 
-                // ── Date ──────────────────────────────────────────────
+                // ── Auto-allocated table info card ───────────────────
+                Obx(() {
+                  final alloc = controller.allocatedTable.value;
+                  final loading = controller.isLoadingTables.value;
+
+                  if (loading) {
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 14),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: const [
+                          BoxShadow(
+                              color: Color(0x0A000000),
+                              blurRadius: 10,
+                              offset: Offset(0, 3))
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.restaurantclr,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Finding best tables for your group…',
+                            style: TextStyle(
+                                fontSize: 13, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  if (alloc == null) return const SizedBox.shrink();
+
+                  // ✅ Show the auto-allocated table info — read-only
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 14),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Colors.teal.withOpacity(0.35),
+                        width: 1.4,
+                      ),
+                      boxShadow: const [
+                        BoxShadow(
+                            color: Color(0x0A000000),
+                            blurRadius: 10,
+                            offset: Offset(0, 3))
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.teal.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.event_seat_rounded,
+                              color: Colors.teal, size: 22),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Tables Reserved for You',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.teal,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              // Display each table as a small chip row
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 4,
+                                children: alloc.tableNames
+                                    .split(',')
+                                    .map((t) => t.trim())
+                                    .where((t) => t.isNotEmpty)
+                                    .map(
+                                      (t) => Container(
+                                    padding:
+                                    const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.teal
+                                          .withOpacity(0.1),
+                                      borderRadius:
+                                      BorderRadius.circular(6),
+                                      border: Border.all(
+                                        color: Colors.teal
+                                            .withOpacity(0.3),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      t,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.teal,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                                    .toList(),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Seating: ${alloc.seatingType[0].toUpperCase()}${alloc.seatingType.substring(1)}',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey.shade500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.check_circle_rounded,
+                            color: Colors.teal, size: 20),
+                      ],
+                    ),
+                  );
+                }),
+
+                // ── Date ────────────────────────────────────────────
                 _SectionCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -234,7 +371,8 @@ class RestaurantBookingPage extends StatelessWidget {
                               vertical: 13, horizontal: 14),
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius:
+                            BorderRadius.circular(12),
                             border: Border.all(
                               color: AppColors.restaurantclr
                                   .withOpacity(0.35),
@@ -291,7 +429,7 @@ class RestaurantBookingPage extends StatelessWidget {
 
                 const SizedBox(height: 14),
 
-                // ── Meal section heading ───────────────────────────────
+                // ── Meal section heading ─────────────────────────────
                 Row(
                   children: [
                     Icon(Icons.restaurant_menu_outlined,
@@ -310,19 +448,19 @@ class RestaurantBookingPage extends StatelessWidget {
                 const Padding(
                   padding: EdgeInsets.only(left: 28),
                   child: Text(
-                    'Fill in the meals you want. Leave others blank to skip.',
+                    'Choose a time slot for each meal you want.',
                     style: TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                 ),
                 const SizedBox(height: 14),
 
-                // ── Meal cards OR unavailable banner ───────────────────
+                // ── Meal cards OR unavailable banner ─────────────────
                 Obx(() {
-                  // Show a small inline loader while refreshing for a new date
                   if (controller.isLoadingSlots.value) {
                     return Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 32),
+                      padding:
+                      const EdgeInsets.symmetric(vertical: 32),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
@@ -340,7 +478,6 @@ class RestaurantBookingPage extends StatelessWidget {
                     );
                   }
 
-                  // No meals for selected date — inline banner, page stays
                   if (controller.meals.isEmpty) {
                     return Container(
                       width: double.infinity,
@@ -387,7 +524,7 @@ class RestaurantBookingPage extends StatelessWidget {
                           Text(
                             controller.errorMessage.value.isNotEmpty
                                 ? controller.errorMessage.value
-                                : 'No time slots are available for the selected date. Please try another date.',
+                                : 'No time slots available for this date. Please try another date.',
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                                 color: Colors.grey,
@@ -399,7 +536,7 @@ class RestaurantBookingPage extends StatelessWidget {
                     );
                   }
 
-                  // Meals available — render cards normally
+                  // ✅ Meal cards — only time slot picker, no seating/table UI
                   return Column(
                     children: List.generate(
                       controller.bookingRows.length,
@@ -415,179 +552,92 @@ class RestaurantBookingPage extends StatelessWidget {
           );
         }),
 
-  //       // ── Bottom button ────────────────────────────────────────────────────
-  //       bottomNavigationBar: Obx(() => Container(
-  //         padding: const EdgeInsets.fromLTRB(20, 14, 20, 55),
-  //         decoration: const BoxDecoration(
-  //           color: Colors.white,
-  //           boxShadow: [
-  //             BoxShadow(
-  //               color: Color(0x14000000),
-  //               blurRadius: 12,
-  //               offset: Offset(0, -4),
-  //             )
-  //           ],
-  //         ),
-  //         child: SizedBox(
-  //           width: double.infinity,
-  //           height: 52,
-  //           child: ElevatedButton(
-  //             style: ElevatedButton.styleFrom(
-  //               backgroundColor: AppColors.restaurantclr,
-  //               elevation: 0,
-  //               shape: RoundedRectangleBorder(
-  //                   borderRadius: BorderRadius.circular(14)),
-  //             ),
-  //             onPressed: controller.isSaving.value ||
-  //                 controller.meals.isEmpty
-  //                 ? null
-  //                 : () async {
-  //               final saved = await controller.confirmAndSave();
-  //               if (!saved) return;
-  //
-  //               // ✅ FIX: Clear cart for this restaurant after successful booking
-  //               if (Get.isRegistered<Restaurantcartcontroller>()) {
-  //                 await Get.find<Restaurantcartcontroller>()
-  //                     .clearCartOnServer(controller.restaurantId);
-  //               }
-  //
-  //               if (Get.isRegistered<FinalCartController>()) {
-  //                 Get.delete<FinalCartController>(force: true);
-  //               }
-  //
-  //               await _showSuccessSheet(
-  //                   context, controller.restaurantId);
-  //             },
-  //             child: controller.isSaving.value
-  //                 ? const SizedBox(
-  //               height: 22,
-  //               width: 22,
-  //               child: CircularProgressIndicator(
-  //                   color: Colors.white, strokeWidth: 2.5),
-  //             )
-  //                 : const Row(
-  //               mainAxisAlignment: MainAxisAlignment.center,
-  //               children: [
-  //                 Icon(
-  //                     Icons.shopping_cart_checkout_rounded,
-  //                     color: Colors.white,
-  //                     size: 20),
-  //                 SizedBox(width: 10),
-  //                 Text(
-  //                   'Confirm Booking',
-  //                   style: TextStyle(
-  //                       color: Colors.white,
-  //                       fontSize: 16,
-  //                       fontWeight: FontWeight.w700,
-  //                       letterSpacing: 0.3),
-  //                 ),
-  //               ],
-  //             ),
-  //           ),
-  //         ),
-  //       )),
-  //     ),
-  //   );
-  // }
-          bottomNavigationBar: Obx(
-                () => Container(
-              padding: const EdgeInsets.fromLTRB(20, 14, 20, 55),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Color(0x14000000),
-                    blurRadius: 12,
-                    offset: Offset(0, -4),
-                  )
-                ],
-              ),
-              child: SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.restaurantclr,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
+        // ── Bottom confirm button ────────────────────────────────────────────
+        bottomNavigationBar: Obx(
+              () => Container(
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 55),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Color(0x14000000),
+                  blurRadius: 12,
+                  offset: Offset(0, -4),
+                )
+              ],
+            ),
+            child: SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.restaurantclr,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
                   ),
+                ),
+                onPressed: controller.isSaving.value ||
+                    controller.meals.isEmpty ||
+                    controller.allocatedTable.value == null
+                    ? null
+                    : () async {
+                  final saved = await controller.confirmAndSave();
+                  if (!saved) return;
 
-                  // ✅ UPDATED CODE
-                  onPressed: controller.isSaving.value ||
-                      controller.meals.isEmpty
-                      ? null
-                      : () async {
-                    final saved =
-                    await controller.confirmAndSave();
+                  // Clear restaurant cart
+                  if (Get.isRegistered<Restaurantcartcontroller>()) {
+                    final cartCtrl =
+                    Get.find<Restaurantcartcontroller>();
+                    await cartCtrl.clearCartForRestaurant(
+                        controller.restaurantId);
+                    await cartCtrl.fetchCart();
+                  }
 
-                    if (!saved) return;
+                  // Remove final cart controller
+                  if (Get.isRegistered<FinalCartController>()) {
+                    Get.delete<FinalCartController>(force: true);
+                  }
 
-                    // ✅ Clear restaurant cart instantly
-                    if (Get.isRegistered<
-                        Restaurantcartcontroller>()) {
-                      final cartCtrl =
-                      Get.find<Restaurantcartcontroller>();
-
-                      // ✅ Step 1: Clear local + server cart
-                      await cartCtrl.clearCartForRestaurant(
-                        controller.restaurantId,
-                      );
-
-                      // ✅ Step 2: Refresh latest cart
-                      await cartCtrl.fetchCart();
-                    }
-
-                    // ✅ Remove final cart controller
-                    if (Get.isRegistered<
-                        FinalCartController>()) {
-                      Get.delete<FinalCartController>(
-                        force: true,
-                      );
-                    }
-
-                    // ✅ Show success sheet
-                    await _showSuccessSheet(
-                      context,
-                      controller.restaurantId,
-                    );
-                  },
-
-                  child: controller.isSaving.value
-                      ? const SizedBox(
-                    height: 22,
-                    width: 22,
-                    child: CircularProgressIndicator(
+                  await _showSuccessSheet(
+                      context, controller.restaurantId);
+                },
+                child: controller.isSaving.value
+                    ? const SizedBox(
+                  height: 22,
+                  width: 22,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2.5,
+                  ),
+                )
+                    : const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.shopping_cart_checkout_rounded,
                       color: Colors.white,
-                      strokeWidth: 2.5,
+                      size: 20,
                     ),
-                  )
-                      : const Row(
-                    mainAxisAlignment:
-                    MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.shopping_cart_checkout_rounded,
+                    SizedBox(width: 10),
+                    Text(
+                      'Confirm Booking',
+                      style: TextStyle(
                         color: Colors.white,
-                        size: 20,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.3,
                       ),
-                      SizedBox(width: 10),
-                      Text(
-                        'Confirm Booking',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
-          )));}
+          ),
+        ),
+      ),
+    );
+  }
 
   String _formatDate(DateTime d) {
     const months = [
@@ -684,7 +734,8 @@ class _BookingSuccessSheet extends StatelessWidget {
                   Get.offAll(() => RestaurantListPage());
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     if (Get.isRegistered<RestaurantController>()) {
-                      Get.find<RestaurantController>().fetchRestaurants();
+                      Get.find<RestaurantController>()
+                          .fetchRestaurants();
                     }
                   });
                 },
@@ -703,7 +754,7 @@ class _BookingSuccessSheet extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Shared section widgets
+// Shared widgets
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _SectionCard extends StatelessWidget {
@@ -794,7 +845,7 @@ class _CounterButton extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Meal card  (seating type → table → time slot)
+// Meal card — ONLY time slot picker, no seating/table selection
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _MealCard extends StatelessWidget {
@@ -811,10 +862,9 @@ class _MealCard extends StatelessWidget {
           ? mealType[0].toUpperCase() + mealType.substring(1)
           : '';
 
+      // ✅ Complete = time slot chosen (seating/table are auto)
       final isComplete =
-          (row['seatingType'] ?? '').toString().isNotEmpty &&
-              (row['timeSlot']    ?? '').toString().isNotEmpty &&
-              (row['tableName']   ?? '').toString().isNotEmpty;
+          (row['timeSlot'] ?? '').toString().isNotEmpty;
 
       return Container(
         margin: const EdgeInsets.only(bottom: 14),
@@ -837,7 +887,7 @@ class _MealCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Card header ──────────────────────────────────────────
+            // ── Card header ────────────────────────────────────────
             Container(
               padding: const EdgeInsets.symmetric(
                   horizontal: 16, vertical: 13),
@@ -904,83 +954,15 @@ class _MealCard extends StatelessWidget {
               ),
             ),
 
-            // ── Card body ────────────────────────────────────────────
+            // ── Card body — time slot only ─────────────────────────
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 1) Seating type ─────────────────────────────────
-                  _FieldLabel('Seating Type'),
-                  const SizedBox(height: 8),
-                  controller.seatingGroups.isEmpty
-                      ? _infoChip(
-                    controller.isLoadingTables.value
-                        ? 'Loading tables…'
-                        : 'No tables available for this guest count',
-                    isWarning:
-                    !controller.isLoadingTables.value,
-                  )
-                      : Row(
-                    children: controller.availableSeatingTypes
-                        .map((type) {
-                      final sel =
-                          row['seatingType'] == type;
-                      return Expanded(
-                        child: GestureDetector(
-                          onTap: () =>
-                              controller.setSeating(
-                                  index, type),
-                          child: Container(
-                            margin: const EdgeInsets.symmetric(
-                                horizontal: 4),
-                            padding:
-                            const EdgeInsets.symmetric(
-                                vertical: 10),
-                            decoration: BoxDecoration(
-                              color: sel
-                                  ? AppColors.restaurantclr
-                                  : const Color(0xFFF5F5F5),
-                              borderRadius:
-                              BorderRadius.circular(10),
-                              border: Border.all(
-                                color: sel
-                                    ? AppColors.restaurantclr
-                                    : Colors.transparent,
-                              ),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              type[0].toUpperCase() +
-                                  type.substring(1),
-                              style: TextStyle(
-                                color: sel
-                                    ? Colors.white
-                                    : const Color(0xFF555555),
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // 2) Time slot ─────────────────────────────────────
                   _FieldLabel('Time Slot'),
                   const SizedBox(height: 8),
                   _TimeSlotsWidget(
-                      index: index, controller: controller),
-
-                  const SizedBox(height: 16),
-
-                  // 3) Table ─────────────────────────────────────────
-                  _FieldLabel('Table'),
-                  const SizedBox(height: 8),
-                  _TablesWidget(
                       index: index, controller: controller),
                 ],
               ),
@@ -1003,40 +985,6 @@ class _MealCard extends StatelessWidget {
         return Icons.restaurant_outlined;
     }
   }
-
-  Widget _infoChip(String msg, {bool isWarning = false}) {
-    return Container(
-      padding:
-      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: (isWarning ? Colors.orange : Colors.grey)
-            .withOpacity(0.08),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-            color: (isWarning ? Colors.orange : Colors.grey)
-                .withOpacity(0.3)),
-      ),
-      child: Row(
-        children: [
-          Icon(
-              isWarning
-                  ? Icons.warning_amber_rounded
-                  : Icons.info_outline,
-              color: isWarning ? Colors.orange : Colors.grey,
-              size: 14),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(msg,
-                style: TextStyle(
-                    fontSize: 12,
-                    color:
-                    isWarning ? Colors.orange : Colors.grey,
-                    fontWeight: FontWeight.w500)),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 Widget _FieldLabel(String t) => Text(
@@ -1048,9 +996,6 @@ Widget _FieldLabel(String t) => Text(
       letterSpacing: 0.4),
 );
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Time-slot picker
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _TimeSlotsWidget extends StatelessWidget {
   final int index;
@@ -1103,7 +1048,6 @@ class _TimeSlotsWidget extends StatelessWidget {
                 ],
               ),
             ),
-
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -1114,7 +1058,8 @@ class _TimeSlotsWidget extends StatelessWidget {
               return GestureDetector(
                 onTap: isDisabled
                     ? null
-                    : () => controller.setTimeSlot(index, slot.time),
+                    : () => controller.setTimeSlot(
+                    index, slot.time),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 180),
                   padding: const EdgeInsets.symmetric(
@@ -1165,103 +1110,6 @@ class _TimeSlotsWidget extends StatelessWidget {
             }).toList(),
           ),
         ],
-      );
-    });
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Table picker
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _TablesWidget extends StatelessWidget {
-  final int index;
-  final RestaurantBookingController controller;
-  const _TablesWidget(
-      {required this.index, required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    return Obx(() {
-      final seatingChosen =
-          (controller.bookingRows[index]['seatingType'] ?? '')
-              .toString()
-              .isNotEmpty;
-
-      if (!seatingChosen) {
-        return Container(
-          padding: const EdgeInsets.symmetric(
-              vertical: 10, horizontal: 14),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF5F5F5),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: const Row(
-            children: [
-              Icon(Icons.info_outline, color: Colors.grey, size: 14),
-              SizedBox(width: 6),
-              Text('Select seating type first',
-                  style:
-                  TextStyle(color: Colors.grey, fontSize: 12)),
-            ],
-          ),
-        );
-      }
-
-      final tables   = controller.tablesForRow(index);
-      final selected =
-          controller.bookingRows[index]['tableName']?.toString() ??
-              '';
-
-      if (tables.isEmpty) {
-        return const Text(
-          'No tables for selected seating',
-          style: TextStyle(color: Colors.grey, fontSize: 13),
-        );
-      }
-
-      return SizedBox(
-        height: 40,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          itemCount: tables.length,
-          separatorBuilder: (_, __) => const SizedBox(width: 8),
-          itemBuilder: (context, i) {
-            final table = tables[i];
-            final isSel = selected == table;
-            return GestureDetector(
-              onTap: () => controller.setTable(index, table),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                padding:
-                const EdgeInsets.symmetric(horizontal: 14),
-                decoration: BoxDecoration(
-                  color: isSel
-                      ? AppColors.restaurantclr
-                      : const Color(0xFFF5F5F5),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: isSel
-                        ? AppColors.restaurantclr
-                        : const Color(0xFFDDDDDD),
-                    width: 1.2,
-                  ),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  table,
-                  style: TextStyle(
-                    color: isSel
-                        ? Colors.white
-                        : const Color(0xFF444444),
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
       );
     });
   }
