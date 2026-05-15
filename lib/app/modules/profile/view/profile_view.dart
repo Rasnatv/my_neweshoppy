@@ -7,6 +7,7 @@ import '../../../common/style/app_colors.dart';
 import '../../../widgets/networkconnection_checkpage.dart';
 import '../../myoders/myoders/myodersview.dart';
 import '../../userlogin/view/useredit_profile.dart';
+import '../../userrestaurantreservationview/userview_restaurantreservations.dart';
 import '../../whishlist/view/whishlist_view.dart';
 import '../controller/editprofile_controller.dart';
 import 'user_changepswd.dart';
@@ -90,7 +91,7 @@ class ProfileView extends StatelessWidget {
                 _Tile(
                   icon: Icons.shopping_bag_outlined,
                   label: 'My Orders',
-                  sub: 'Track & manage orders',
+                  sub: 'View orders',
                   color: _blue,
                   onTap: () => Get.to(() => MyOrdersView()),
                 ),
@@ -100,6 +101,13 @@ class ProfileView extends StatelessWidget {
                   sub: 'Items you saved',
                   color: _rose,
                   onTap: () =>Get.to(()=>WishlistScreen()),
+                ),
+                _Tile(
+                  icon: Icons.shopping_bag_outlined,
+                  label:  'Restaurant Bookings',
+                  sub: 'View & manage restaurant reservations',
+                  color: _blue,
+                  onTap: () => Get.to(() => BookedOrdersPage ()),
                 ),
               ]),
 
