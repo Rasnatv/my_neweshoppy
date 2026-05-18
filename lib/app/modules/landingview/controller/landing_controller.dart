@@ -38,8 +38,6 @@ class LandingController extends GetxController {
         return Userhome();
       case LandingItem.Wishlist:
         return WishlistScreen();
-    // case LandingItem.filter:
-    //   return FilterView();
       case LandingItem.MyOrders:
         return MyOrdersView();
       case LandingItem.Profile:

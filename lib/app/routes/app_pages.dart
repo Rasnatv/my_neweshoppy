@@ -37,11 +37,6 @@ class AppPages {
   static const INITIAL = Routes.SPLASH;
 
   static final routes = [
-    // GetPage(
-    //   name: _Paths.ADMINLOGIN,
-    //   page: () => AdminLoginPage()
-    //   //binding: AdminloginBindings(),
-    // ),
     GetPage(
       name: _Paths.SPLASH,
       page: () => SplashScreen(),
