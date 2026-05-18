@@ -47,8 +47,6 @@ class DistrictAdminAddEventPage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-
-                      // ══════════════ EVENT DETAILS CARD ══════════════
                       _buildCard(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
