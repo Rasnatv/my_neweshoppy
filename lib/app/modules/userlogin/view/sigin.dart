@@ -136,11 +136,11 @@ class _LoginScreenState extends State<LoginScreen>
                   _reveal(2, _buildRoleSelector()),
                   const SizedBox(height: 24),
                   _reveal(3, _buildLoginCard()),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 3),
                   _reveal(4, Column(
                     children: [
                       _buildForgotPassword(),
-                      const SizedBox(height: 28),
+                      const SizedBox(height:15 ),
                       _buildSignUpSection(),
                     ],
                   )),
@@ -289,15 +289,26 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  // ─── Login card ───────────────────────────────────────────────────────────
   Widget _buildLoginCard() {
     return Container(
       decoration: BoxDecoration(
         color: _T.surface,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: _T.cardShadow,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+            spreadRadius: -4,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      padding: const EdgeInsets.fromLTRB(24, 28, 24, 28),
+      padding: const EdgeInsets.fromLTRB(20, 22, 20, 22),
       child: UsersigninForm(),
     );
   }
