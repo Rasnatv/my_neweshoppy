@@ -264,12 +264,9 @@ class MerchantAdvertisementController extends GetxController {
       final status = data['status'].toString();
 
       if (status == "1" || status == "true") {
-        if (Get.isRegistered<MerchantAdvertisementGetController>()) {
-          Get.find<MerchantAdvertisementGetController>().fetchAdvertisements();
-        }
         _clearForm();
         AppSnackbar.success(data["message"] ?? "Advertisement posted");
-        await Future.delayed(const Duration(milliseconds: 800));
+         Get.close(1);
         Get.off(MyAdvertisements());
       } else {
         AppSnackbar.error(data["message"] ?? "Something went wrong");

@@ -308,7 +308,7 @@ class _LoginScreenState extends State<LoginScreen>
           ),
         ],
       ),
-      padding: const EdgeInsets.fromLTRB(20, 22, 20, 22),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
       child: UsersigninForm(),
     );
   }

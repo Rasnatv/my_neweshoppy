@@ -387,6 +387,7 @@ class AddEventController extends GetxController {
       if (status == "1" || status == "true") {
         AppSnackbar.success(message);
         clearForm();
+        Get.close(1);
         Get.off(() => MerchantEventsPage());
       } else {
         AppSnackbar.error(message);
