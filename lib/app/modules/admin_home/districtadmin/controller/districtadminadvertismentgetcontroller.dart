@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import '../../../../data/errors/api_error.dart';
 import '../../../../data/models/districtadmin_advertismnetgetmodel.dart';
 import '../../../merchantlogin/widget/successwidget.dart';
+import 'districtadmin_dashboardcontroller.dart';
 
 
 class DistrictAdminAdvertisementGetController extends GetxController {
@@ -114,6 +115,9 @@ class DistrictAdminAdvertisementGetController extends GetxController {
 
         // ✅ Refresh list (optional but safe)
         await fetchAdvertisements();
+        if (Get.isRegistered<DistrictAdminDashboardController>()) {
+          Get.find<DistrictAdminDashboardController>().fetchDashboardCount();
+        }
       } else {
         final errorMessage =
         ApiErrorHandler.handleResponse(response);

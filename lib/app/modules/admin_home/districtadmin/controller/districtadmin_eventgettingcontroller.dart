@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import '../../../../data/errors/api_error.dart';
 import '../../../../data/models/districtadmineventmodel.dart';
 import '../../../merchantlogin/widget/successwidget.dart';
+import 'districtadmin_dashboardcontroller.dart';
 
 
 class DistrictAdminGettingEventController extends GetxController {
@@ -109,6 +110,9 @@ class DistrictAdminGettingEventController extends GetxController {
             body['message'] ?? 'Event deleted successfully');
 
         await fetchEvents();
+        if (Get.isRegistered<DistrictAdminDashboardController>()) {
+          Get.find<DistrictAdminDashboardController>().fetchDashboardCount();
+        }
 
       } else {
         AppSnackbar.error(ApiErrorHandler.handleResponse(res));
