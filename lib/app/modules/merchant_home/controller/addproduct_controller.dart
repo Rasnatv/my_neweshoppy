@@ -16,9 +16,9 @@ class ProductController extends GetxController {
   final box = GetStorage();
 
   final String categoriesUrl =
-      "https://eshoppy.co.in/api/merchant/categories";
+      "https://entenaadu.co.in/api/merchant/categories";
   final String addProductUrl =
-      "https://eshoppy.co.in/api/merchant/add-product";
+      "https://entenaadu.co.in/api/merchant/add-product";
 
   // ---------------- BASIC FIELDS ----------------
   var productName = ''.obs;

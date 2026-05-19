@@ -12,7 +12,7 @@ class UserCategoryController extends GetxController {
   final box = GetStorage();
 
   final String api =
-      "https://eshoppy.co.in/api/usercategoriesget";
+      "https://entenaadu.co.in/api/usercategoriesget";
 
   var isLoading = false.obs;
   var categories = <UserCategoryModel>[].obs;

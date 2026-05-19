@@ -16,7 +16,7 @@ class AreaAdminDashboardController extends GetxController {
   var totalAdvertisements = 0.obs;
 
   final String url =
-      "https://eshoppy.co.in/api/area-admin/dashboard-count";
+      "https://entenaadu.co.in/api/area-admin/dashboard-count";
 
   @override
   void onInit() {

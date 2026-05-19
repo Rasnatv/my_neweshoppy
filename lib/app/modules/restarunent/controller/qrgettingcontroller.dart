@@ -54,7 +54,7 @@ class PaymentgettController extends GetxController {
       errorMessage.value = '';
 
       final response = await http.post(
-        Uri.parse('https://eshoppy.co.in/api/getPayment-Details'),
+        Uri.parse('https://entenaadu.co.in/api/getPayment-Details'),
         headers: _headers,
         body: jsonEncode({'restaurant_ids': restaurantIds}),
       );
@@ -102,7 +102,7 @@ class PaymentgettController extends GetxController {
       }
 
       final response = await http.post(
-        Uri.parse('https://eshoppy.co.in/api/store-Transaction'),
+        Uri.parse('https://entenaadu.co.in/api/store-Transaction'),
         headers: _headers,
         body: jsonEncode(body),
       );

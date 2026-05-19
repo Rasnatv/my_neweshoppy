@@ -64,7 +64,7 @@ class NewPasswordController extends GetxController {
       isLoading.value = true;
 
       final response = await http.post(
-        Uri.parse("https://eshoppy.co.in/api/reset-password"),
+        Uri.parse("https://entenaadu.co.in/api/reset-password"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "email": email,

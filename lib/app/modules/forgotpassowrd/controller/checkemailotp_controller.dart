@@ -70,7 +70,7 @@ class CheckEmailOtpController extends GetxController {
       isLoading.value = true;
 
       final response = await http.post(
-        Uri.parse("https://eshoppy.co.in/api/verify-otp"),
+        Uri.parse("https://entenaadu.co.in/api/verify-otp"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "email": email,
@@ -127,7 +127,7 @@ class CheckEmailOtpController extends GetxController {
 
       final response = await http.post(
         Uri.parse(
-          "https://eshoppy.co.in/api/forgot-password",
+          "https://entenaadu.co.in/api/forgot-password",
         ),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({

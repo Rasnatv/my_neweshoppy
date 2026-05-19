@@ -1,6 +1,6 @@
 
-import 'package:eshoppy/app/modules/admin_home/view/restaurant/admin_Restauranthome.dart';
-import 'package:eshoppy/app/modules/admin_home/view/restaurant/admin_merchanthome.dart';
+import 'package:entenaadu/app/modules/admin_home/view/restaurant/admin_Restauranthome.dart';
+import 'package:entenaadu/app/modules/admin_home/view/restaurant/admin_merchanthome.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_colors.dart';

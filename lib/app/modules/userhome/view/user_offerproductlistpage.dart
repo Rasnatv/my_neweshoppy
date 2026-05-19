@@ -1,5 +1,5 @@
 
-import 'package:eshoppy/app/modules/userhome/view/user_offerproductdetail.dart';
+import 'package:entenaadu/app/modules/userhome/view/user_offerproductdetail.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';

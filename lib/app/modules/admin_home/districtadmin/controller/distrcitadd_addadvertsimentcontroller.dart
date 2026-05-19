@@ -33,8 +33,8 @@ class DistrictAdminAdvertisementController extends GetxController {
 
   final _box = GetStorage();
 
-  static const String _baseUrl       = 'https://eshoppy.co.in/api/district-admin';
-  static const String _publicBaseUrl = 'https://eshoppy.co.in/api';
+  static const String _baseUrl       = 'https://entenaadu.co.in/api/district-admin';
+  static const String _publicBaseUrl = 'https://entenaadu.co.in/api';
 
   String get token => _box.read('auth_token') ?? '';
 

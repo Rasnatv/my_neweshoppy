@@ -24,7 +24,7 @@ class MerchantGalleryController extends GetxController {
   String get token => box.read("auth_token") ?? "";
 
   final String baseUrl =
-      "https://eshoppy.co.in/api/merchant";
+      "https://entenaadu.co.in/api/merchant";
 
   @override
   void onInit() {

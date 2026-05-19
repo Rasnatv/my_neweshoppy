@@ -1,4 +1,4 @@
-import 'package:eshoppy/app/modules/admin_home/view/restaurant/restaurantmenumanagementwidget/shared_uihelpers.dart';
+import 'package:entenaadu/app/modules/admin_home/view/restaurant/restaurantmenumanagementwidget/shared_uihelpers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';

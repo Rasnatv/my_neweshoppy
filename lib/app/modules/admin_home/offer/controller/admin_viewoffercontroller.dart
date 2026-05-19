@@ -17,7 +17,7 @@ class AdminViewOfferController extends GetxController {
   final GetStorage box = GetStorage();
 
   static const String _baseUrl =
-      'https://eshoppy.co.in/api/offers';
+      'https://entenaadu.co.in/api/offers';
 
 
   String? get _authToken => box.read('auth_token');

@@ -39,8 +39,8 @@ class AreaAdminAdvertisementController extends GetxController {
   final _box = GetStorage();
   final _picker = ImagePicker();
 
-  static const String baseUrl    = 'https://eshoppy.co.in/api/area-admin';
-  static const String publicBaseUrl = 'https://eshoppy.co.in/api';
+  static const String baseUrl    = 'https://entenaadu.co.in/api/area-admin';
+  static const String publicBaseUrl = 'https://entenaadu.co.in/api';
 
   // ─── Token ──────────────────────────────────
   String get token => _box.read('auth_token') ?? '';

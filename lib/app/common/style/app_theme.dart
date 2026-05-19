@@ -1,7 +1,7 @@
 
-import 'package:eshoppy/app/common/style/themes/elevatedbutton_theme.dart';
-import 'package:eshoppy/app/common/style/themes/textform_theme.dart';
-import 'package:eshoppy/app/common/style/themes/texttheme.dart';
+import 'package:entenaadu/app/common/style/themes/elevatedbutton_theme.dart';
+import 'package:entenaadu/app/common/style/themes/textform_theme.dart';
+import 'package:entenaadu/app/common/style/themes/texttheme.dart';
 import 'package:flutter/material.dart';
 
 

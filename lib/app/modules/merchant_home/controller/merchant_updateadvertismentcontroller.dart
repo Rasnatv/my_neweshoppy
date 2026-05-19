@@ -2,7 +2,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:eshoppy/app/modules/merchant_home/views/myadvetisment.dart';
+import 'package:entenaadu/app/modules/merchant_home/views/myadvetisment.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -16,7 +16,7 @@ import '../../merchantlogin/widget/successwidget.dart';
 class UpdateAdvertisementController extends GetxController {
   // ── API endpoints ─────────────────────────────────────────
   static const String _baseUrl =
-      'https://eshoppy.co.in/api';
+      'https://entenaadu.co.in/api';
   static const String _getSingleAdUrl = '$_baseUrl/get-single-advertisement';
   static const String _updateAdUrl    = '$_baseUrl/update-advertisement';
 

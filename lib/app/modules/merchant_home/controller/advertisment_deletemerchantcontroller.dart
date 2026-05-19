@@ -20,7 +20,7 @@ class DeleteAdvertisementController extends GetxController {
     try {
       final response = await http.delete(
         Uri.parse(
-            'https://eshoppy.co.in/api/delete-advertisement'),
+            'https://entenaadu.co.in/api/delete-advertisement'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',

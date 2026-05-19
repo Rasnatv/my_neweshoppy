@@ -37,7 +37,7 @@ class AdvertisementUpdateController extends GetxController {
 
   final picker = ImagePicker();
 
-  static const String baseUrl = 'https://eshoppy.co.in/api';
+  static const String baseUrl = 'https://entenaadu.co.in/api';
 
   String get authToken => box.read('auth_token') ?? '';
 

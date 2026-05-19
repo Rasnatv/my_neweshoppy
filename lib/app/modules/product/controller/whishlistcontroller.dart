@@ -16,9 +16,9 @@ class WishlistController extends GetxController {
   var wishlist = <WishlistItem>[].obs;
   var isLoading = false.obs;
 
-  final String addUrl    = "https://eshoppy.co.in/api/wishlist/add";
-  final String getUrl    = "https://eshoppy.co.in/api/wishlist/get";
-  final String removeUrl = "https://eshoppy.co.in/api/wishlist/remove";
+  final String addUrl    = "https://entenaadu.co.in/api/wishlist/add";
+  final String getUrl    = "https://entenaadu.co.in/api/wishlist/get";
+  final String removeUrl = "https://entenaadu.co.in/api/wishlist/remove";
 
   String get token => (box.read<String>("auth_token") ?? "").trim();
 

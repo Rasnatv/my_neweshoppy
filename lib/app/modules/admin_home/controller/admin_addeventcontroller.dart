@@ -45,7 +45,7 @@ class AdminEventAddController extends GetxController {
 
   final showMode = 'district'.obs;
 
-  static const _baseUrl = 'https://eshoppy.co.in/api';
+  static const _baseUrl = 'https://entenaadu.co.in/api';
   static const _statesUrl = '$_baseUrl/get-states';
   static const _districtsUrl = '$_baseUrl/districts';
   static const _areasUrl = '$_baseUrl/areas';

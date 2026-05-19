@@ -64,7 +64,7 @@ class ManageproductController extends GetxController {
       errorMessage.value = '';
 
       final uri = Uri.parse(
-        'https://eshoppy.co.in/api/products?per_page=10&page=1',
+        'https://entenaadu.co.in/api/products?per_page=10&page=1',
       );
 
       final response = await http
@@ -133,7 +133,7 @@ class ManageproductController extends GetxController {
 
       final response = await http.delete(
         Uri.parse(
-            'https://eshoppy.co.in/api/delete-product'),
+            'https://entenaadu.co.in/api/delete-product'),
         headers: headers,
         body: {
           "product_id": productId.toString(),

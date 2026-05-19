@@ -59,7 +59,7 @@ class AdminOfferProductController extends GetxController {
 
       final response = await http.post(
         Uri.parse(
-          'https://eshoppy.co.in/api/offer-products',
+          'https://entenaadu.co.in/api/offer-products',
         ),
         headers: _headers(),
         body: jsonEncode({'offer_id': offerId}),

@@ -1,5 +1,5 @@
 
-import 'package:eshoppy/app/common/style/app_colors.dart';
+import 'package:entenaadu/app/common/style/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_text_style.dart';

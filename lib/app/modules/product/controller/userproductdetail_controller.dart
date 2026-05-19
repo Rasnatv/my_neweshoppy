@@ -35,7 +35,7 @@ class ProductDetailController extends GetxController {
   /// Prevents onPageChanged from overwriting the chip-driven selection.
   bool _isProgrammaticJump = false;
 
-  final String _baseUrl = "https://eshoppy.co.in/api";
+  final String _baseUrl = "https://entenaadu.co.in/api";
 
   @override
   void onInit() {

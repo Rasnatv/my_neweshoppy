@@ -1,7 +1,7 @@
 
 import 'dart:io';
-import 'package:eshoppy/app/modules/landingview/view/landing_screen.dart';
-import 'package:eshoppy/app/modules/userhome/view/userhome.dart';
+import 'package:entenaadu/app/modules/landingview/view/landing_screen.dart';
+import 'package:entenaadu/app/modules/userhome/view/userhome.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gal/gal.dart';
@@ -595,7 +595,7 @@ Future<void> _downloadQr(String url, String restaurantName) async {
     final filePath =
         '${dir.path}/qr_${restaurantName.replaceAll(' ', '_')}.png';
     await Dio().download(url, filePath);
-    await Gal.putImage(filePath, album: 'eShoppy QR Codes');
+    await Gal.putImage(filePath, album: 'entenaadu QR Codes');
     _snack('QR Saved!', 'QR code saved to your gallery', isSuccess: true);
   } catch (e) {
     _snack('Download failed', 'Could not save QR code. Try again.');

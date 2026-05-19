@@ -35,7 +35,7 @@ class MerchantOrdersController extends GetxController {
     try {
       isLoading.value = true;
       final response = await http.get(
-        Uri.parse('https://eshoppy.co.in/api/merchant/orders'),
+        Uri.parse('https://entenaadu.co.in/api/merchant/orders'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -375,7 +375,7 @@ class MerchantOrdersController extends GetxController {
               ),
               pw.SizedBox(height: 3),
               pw.Text(
-                'Eshoppy - Merchant Panel',
+                'entenaadu - Merchant Panel',
                 style: pw.TextStyle(
                   font: regular, fontSize: 9,
                   color: PdfColors.blueGrey400,

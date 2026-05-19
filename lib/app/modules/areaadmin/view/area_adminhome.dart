@@ -1,6 +1,6 @@
 
 
-import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
+import 'package:entenaadu/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_instance/src/extension_instance.dart';

@@ -20,7 +20,7 @@ class mAdminProductDetailController extends GetxController {
   final RxInt selectedVariantIndex = 0.obs;
 
   static const String _baseUrl =
-      'https://eshoppy.co.in/api/product/detailss';
+      'https://entenaadu.co.in/api/product/detailss';
 
   static const String _authTokenKey = 'auth_token';
   static const String authTokenKey = _authTokenKey;

@@ -15,7 +15,7 @@ class AddressUpdateController extends GetxController {
   final box = GetStorage();
 
   static const String baseUrl =
-      'https://eshoppy.co.in/api';
+      'https://entenaadu.co.in/api';
 
   final RxBool isLoading = false.obs;
   final RxBool isFetching = false.obs;

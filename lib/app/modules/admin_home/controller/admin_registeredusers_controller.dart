@@ -42,7 +42,7 @@ class AdminUserController extends GetxController {
     isLoading.value = true;
     try {
       final response = await http.get(
-        Uri.parse('https://eshoppy.co.in/api/admin/users'),
+        Uri.parse('https://entenaadu.co.in/api/admin/users'),
         headers: _headers,
       );
 
@@ -267,7 +267,7 @@ class AdminUserController extends GetxController {
               ),
               pw.SizedBox(height: 3),
               pw.Text(
-                'Eshoppy - Admin Panel',
+                'entenaadu - Admin Panel',
                 style: pw.TextStyle(
                   font: regular,
                   fontSize: 9,

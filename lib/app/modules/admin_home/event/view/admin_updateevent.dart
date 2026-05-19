@@ -1,7 +1,7 @@
 
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:eshoppy/app/common/style/app_colors.dart';
-import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
+import 'package:entenaadu/app/common/style/app_colors.dart';
+import 'package:entenaadu/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

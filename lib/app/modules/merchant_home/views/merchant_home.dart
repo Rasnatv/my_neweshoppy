@@ -188,7 +188,7 @@ class MerchantDashboardPage extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "eshoppy",
+                        "entenaadu",
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.w900,

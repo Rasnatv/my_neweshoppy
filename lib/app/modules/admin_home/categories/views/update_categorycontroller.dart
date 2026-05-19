@@ -32,7 +32,7 @@ class AdminEditCategoryController extends GetxController {
 
   int categoryId = 0;
 
-  static const _base = 'https://eshoppy.co.in/api';
+  static const _base = 'https://entenaadu.co.in/api';
 
   @override
   void onClose() {

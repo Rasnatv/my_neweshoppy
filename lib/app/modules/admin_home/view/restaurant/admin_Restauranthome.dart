@@ -1,7 +1,7 @@
 
-import 'package:eshoppy/app/modules/admin_home/view/restaurant/resaturant_menu_updatepage.dart';
-import 'package:eshoppy/app/modules/admin_home/view/restaurant/restaurant_menumanagment.dart';
-import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
+import 'package:entenaadu/app/modules/admin_home/view/restaurant/resaturant_menu_updatepage.dart';
+import 'package:entenaadu/app/modules/admin_home/view/restaurant/restaurant_menumanagment.dart';
+import 'package:entenaadu/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -452,6 +452,6 @@ class AdminRestauranthome extends StatelessWidget {
     // Relative path → prepend base URL with single slash
     final cleanPath =
     imagePath.startsWith('/') ? imagePath : '/$imagePath';
-    return "https://eshoppy.co.in$cleanPath";
+    return "https://entenaadu.co.in$cleanPath";
   }
 }

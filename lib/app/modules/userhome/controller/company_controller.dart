@@ -12,7 +12,7 @@ class CompanyController extends GetxController {
   final box = GetStorage();
 
   final String api =
-      "https://eshoppy.co.in/api/user/shops-by-category";
+      "https://entenaadu.co.in/api/user/shops-by-category";
 
   var isLoading = false.obs;
   var shops = <ShoplistModel>[].obs;

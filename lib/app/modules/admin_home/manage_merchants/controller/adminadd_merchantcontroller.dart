@@ -51,13 +51,13 @@ class AdminAddMerchantController extends GetxController {
 
   // ─── API URLs ─────────────────────────────────────────────────────────────
   static const String _adminAddMerchantUrl =
-      'https://eshoppy.co.in/api/admin/register-merchant';
+      'https://entenaadu.co.in/api/admin/register-merchant';
   static const String _statesUrl =
-      'https://eshoppy.co.in/api/merchant/states';
+      'https://entenaadu.co.in/api/merchant/states';
   static const String _districtsUrl =
-      'https://eshoppy.co.in/api/merchant/districts';
+      'https://entenaadu.co.in/api/merchant/districts';
   static const String _locationsUrl =
-      'https://eshoppy.co.in/api/merchant/locations';
+      'https://entenaadu.co.in/api/merchant/locations';
 
   // ─── Auth ─────────────────────────────────────────────────────────────────
   String get _authToken => box.read('auth_token') ?? '';

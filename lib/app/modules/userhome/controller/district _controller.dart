@@ -15,7 +15,7 @@ class UserLocationController extends GetxController {
   final box = GetStorage();
 
   final String locationApi =
-      "https://eshoppy.co.in/api/merchants/location-wise";
+      "https://entenaadu.co.in/api/merchants/location-wise";
 
   var isLoading = false.obs;
 

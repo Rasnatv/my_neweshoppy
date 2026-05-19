@@ -40,7 +40,7 @@ class OrderConfirmationController extends GetxController {
 
       final response = await http.post(
         Uri.parse(
-          'https://eshoppy.co.in/api/create-order-preview',
+          'https://entenaadu.co.in/api/create-order-preview',
         ),
         headers: {
           'Content-Type': 'application/json',
@@ -90,7 +90,7 @@ class OrderConfirmationController extends GetxController {
       isConfirming.value = true;
 
       final response = await http.post(
-        Uri.parse('https://eshoppy.co.in/api/confirm-order'),
+        Uri.parse('https://entenaadu.co.in/api/confirm-order'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',

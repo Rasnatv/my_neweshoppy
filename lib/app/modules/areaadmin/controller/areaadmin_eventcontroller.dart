@@ -50,8 +50,8 @@ class AreaAdminEventAddController extends GetxController {
   final _box = GetStorage();
 
   // ─── API Base ─────────────────────────────────────
-  static const String _baseUrl      = 'https://eshoppy.co.in/api';
-  static const String _adminBaseUrl = 'https://eshoppy.co.in/api/area-admin';
+  static const String _baseUrl      = 'https://entenaadu.co.in/api';
+  static const String _adminBaseUrl = 'https://entenaadu.co.in/api/area-admin';
 
   // ─── Lifecycle ────────────────────────────────────
   @override

@@ -43,10 +43,10 @@ class MerchantAdvertisementController extends GetxController {
 
   final showMode = "district".obs;
 
-  final String statesUrl    = "https://eshoppy.co.in/api/get-states";
-  final String districtsUrl = "https://eshoppy.co.in/api/districts";
-  final String areasUrl     = "https://eshoppy.co.in/api/areas";
-  final String apiUrl       = "https://eshoppy.co.in/api/advertisement";
+  final String statesUrl    = "https://entenaadu.co.in/api/get-states";
+  final String districtsUrl = "https://entenaadu.co.in/api/districts";
+  final String areasUrl     = "https://entenaadu.co.in/api/areas";
+  final String apiUrl       = "https://entenaadu.co.in/api/advertisement";
 
   @override
   void onInit() {

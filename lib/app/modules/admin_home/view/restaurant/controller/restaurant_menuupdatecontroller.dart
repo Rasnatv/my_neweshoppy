@@ -11,7 +11,7 @@ import '../../../../../data/errors/api_error.dart';
 import '../../../../../data/models/admin_restarant_menuupdatemodel.dart';
 import '../../../../merchantlogin/widget/successwidget.dart';
 
-const _baseUrl = 'https://eshoppy.co.in/api';
+const _baseUrl = 'https://entenaadu.co.in/api';
 
 enum SeatingTypeUpdate { indoor, outdoor }
 

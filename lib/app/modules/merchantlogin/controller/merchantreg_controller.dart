@@ -59,13 +59,13 @@ class MerchantRegController extends GetxController {
   final box = GetStorage();
 
   static const String signupApiUrl =
-      "https://eshoppy.co.in/api/merchant/signup";
+      "https://entenaadu.co.in/api/merchant/signup";
   static const String statesApi =
-      "https://eshoppy.co.in/api/merchant/states";
+      "https://entenaadu.co.in/api/merchant/states";
   static const String districtsApi =
-      "https://eshoppy.co.in/api/merchant/districts";
+      "https://entenaadu.co.in/api/merchant/districts";
   static const String locationsApi =
-      "https://eshoppy.co.in/api/merchant/locations";
+      "https://entenaadu.co.in/api/merchant/locations";
 
   @override
   void onInit() {

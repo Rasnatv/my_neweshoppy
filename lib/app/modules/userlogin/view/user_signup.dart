@@ -1,7 +1,7 @@
 
 import 'dart:ui';
-import 'package:eshoppy/app/common/style/app_colors.dart';
-import 'package:eshoppy/app/widgets/iconbox.dart';
+import 'package:entenaadu/app/common/style/app_colors.dart';
+import 'package:entenaadu/app/widgets/iconbox.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';

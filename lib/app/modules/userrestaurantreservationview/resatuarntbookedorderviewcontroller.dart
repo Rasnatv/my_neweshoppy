@@ -153,7 +153,7 @@ class BookingController extends GetxController {
       final token = _box.read<String>('auth_token') ?? '';
 
       final response = await http.get(
-        Uri.parse('https://eshoppy.co.in/api/user/orders'),
+        Uri.parse('https://entenaadu.co.in/api/user/orders'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',

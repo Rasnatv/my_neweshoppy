@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
+import 'package:entenaadu/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 

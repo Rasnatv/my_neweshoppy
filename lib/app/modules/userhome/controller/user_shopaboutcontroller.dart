@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:eshoppy/app/modules/userhome/controller/userwithshopaboutmodel.dart';
+import 'package:entenaadu/app/modules/userhome/controller/userwithshopaboutmodel.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:get_storage/get_storage.dart';
@@ -20,7 +20,7 @@ class MerchantAboutController extends GetxController {
 
       final response = await http.post(
         Uri.parse(
-          "https://eshoppy.co.in/api/aboutusers",
+          "https://entenaadu.co.in/api/aboutusers",
         ),
         headers: {
           "Authorization": "Bearer $token",

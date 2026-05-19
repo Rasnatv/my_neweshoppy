@@ -52,10 +52,10 @@ class AddEventController extends GetxController {
   final ImagePicker picker = ImagePicker();
   final box = GetStorage();
 
-  final String apiUrl       = "https://eshoppy.co.in/api/create-event";
-  final String statesUrl    = "https://eshoppy.co.in/api/get-states";
-  final String districtsUrl = "https://eshoppy.co.in/api/districts";
-  final String areasUrl     = "https://eshoppy.co.in/api/areas";
+  final String apiUrl       = "https://entenaadu.co.in/api/create-event";
+  final String statesUrl    = "https://entenaadu.co.in/api/get-states";
+  final String districtsUrl = "https://entenaadu.co.in/api/districts";
+  final String areasUrl     = "https://entenaadu.co.in/api/areas";
 
   @override
   void onInit() {

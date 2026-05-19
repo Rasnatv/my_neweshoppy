@@ -26,9 +26,9 @@ class AddOfferProductController extends GetxController {
 
   // ── API URLs ───────────────────────────────────────────────
   static const String _categoriesUrl =
-      "https://eshoppy.co.in/api/merchant/categories";
+      "https://entenaadu.co.in/api/merchant/categories";
   static const String _addOfferProductUrl =
-      "https://eshoppy.co.in/api/offers/add-products";
+      "https://entenaadu.co.in/api/offers/add-products";
 
   String get _token => box.read("auth_token") ?? "";
 

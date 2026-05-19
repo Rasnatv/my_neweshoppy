@@ -11,7 +11,7 @@ import '../../merchantlogin/widget/successwidget.dart';
 
 class Restaurantcartcontroller extends GetxController {
   static const String _baseUrl =
-      'https://eshoppy.co.in/api';
+      'https://entenaadu.co.in/api';
 
   final RxList<RestaurantCartModel> _allCartItems =
       <RestaurantCartModel>[].obs;

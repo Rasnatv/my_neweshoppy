@@ -44,7 +44,7 @@ class UsersignupController extends GetxController {
     try {
       final response = await http.post(
         Uri.parse(
-          "https://eshoppy.co.in/api/user/signup",
+          "https://entenaadu.co.in/api/user/signup",
         ),
         headers: {
           "Accept": "application/json",

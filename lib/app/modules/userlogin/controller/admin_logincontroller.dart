@@ -21,7 +21,7 @@ class AdminLoginController extends GetxController {
   final GetStorage box = GetStorage();
 
   final String loginUrl =
-      "https://eshoppy.co.in/api/login";
+      "https://entenaadu.co.in/api/login";
 
   @override
   void onClose() {

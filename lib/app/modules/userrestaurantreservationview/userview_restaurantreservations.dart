@@ -1,5 +1,5 @@
 
-import 'package:eshoppy/app/modules/userrestaurantreservationview/resatuarntbookedorderviewcontroller.dart';
+import 'package:entenaadu/app/modules/userrestaurantreservationview/resatuarntbookedorderviewcontroller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';

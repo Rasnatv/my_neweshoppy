@@ -16,7 +16,7 @@ class RestaurantCartModel {
   // ── Base URL for relative image paths ─────────────────────────────────────
   static const String _baseImageUrl =
       // 'https://rasma.astradevelops.in/e_shoppyy/public/';
-  'https://eshoppy.co.in';
+  'https://entenaadu.co.in';
 
   RestaurantCartModel({
     required this.id,

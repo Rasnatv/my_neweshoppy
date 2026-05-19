@@ -1,10 +1,10 @@
 
-import 'package:eshoppy/app/modules/admin_home/offer/views/AdminView_offerpage.dart';
-import 'package:eshoppy/app/modules/merchant_home/views/myadvetisment.dart';
-import 'package:eshoppy/app/modules/product/view/cartscreen.dart';
-import 'package:eshoppy/app/modules/profile/view/profile_view.dart';
-import 'package:eshoppy/app/modules/restarunent/view/userrestaurantqrgettingpage.dart';
-import 'package:eshoppy/app/modules/userhome/view/all_events.dart';
+import 'package:entenaadu/app/modules/admin_home/offer/views/AdminView_offerpage.dart';
+import 'package:entenaadu/app/modules/merchant_home/views/myadvetisment.dart';
+import 'package:entenaadu/app/modules/product/view/cartscreen.dart';
+import 'package:entenaadu/app/modules/profile/view/profile_view.dart';
+import 'package:entenaadu/app/modules/restarunent/view/userrestaurantqrgettingpage.dart';
+import 'package:entenaadu/app/modules/userhome/view/all_events.dart';
 import 'package:get/get.dart';
 import '../modules/admin_home/banners/views/adminadvertisment.dart';
 import '../modules/admin_home/districtadmin/view/districtadmin_advertismentupdatepage.dart';

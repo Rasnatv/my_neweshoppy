@@ -1,6 +1,6 @@
 
 import 'dart:ui';
-import 'package:eshoppy/app/modules/userhome/view/searchpage.dart';
+import 'package:entenaadu/app/modules/userhome/view/searchpage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -588,7 +588,7 @@ class _PurpleHeader extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                "eShoppy",
+                                "entenaadu",
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 23,

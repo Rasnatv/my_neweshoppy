@@ -1,7 +1,7 @@
 
-import 'package:eshoppy/app/modules/admin_home/shops/views/admin_shopproducts.dart';
-import 'package:eshoppy/app/modules/admin_home/shops/controller/registeredshoplist_controller.dart';
-import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
+import 'package:entenaadu/app/modules/admin_home/shops/views/admin_shopproducts.dart';
+import 'package:entenaadu/app/modules/admin_home/shops/controller/registeredshoplist_controller.dart';
+import 'package:entenaadu/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../common/constants/app_images.dart';

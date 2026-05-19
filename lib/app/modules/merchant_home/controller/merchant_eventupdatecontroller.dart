@@ -38,7 +38,7 @@ class EventUpdateController extends GetxController {
   final pickedImageBase64 = RxnString();
 
   static const _baseUrl =
-      'https://eshoppy.co.in/api';
+      'https://entenaadu.co.in/api';
 
   final _box = GetStorage();
 

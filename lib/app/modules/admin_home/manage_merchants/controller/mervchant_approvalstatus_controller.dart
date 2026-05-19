@@ -38,7 +38,7 @@ class AdminMerchantController extends GetxController {
     isLoading.value = true;
     try {
       final response = await http.get(
-        Uri.parse("https://eshoppy.co.in/api/admin/merchants"),
+        Uri.parse("https://entenaadu.co.in/api/admin/merchants"),
         headers: _headers(),
       );
 
@@ -67,7 +67,7 @@ class AdminMerchantController extends GetxController {
       isLoading.value = true;
 
       final response = await http.delete(
-        Uri.parse("https://eshoppy.co.in/api/admin/delete-merchant"),
+        Uri.parse("https://entenaadu.co.in/api/admin/delete-merchant"),
         headers: {
           ..._headers(),
           "Content-Type": "application/json",

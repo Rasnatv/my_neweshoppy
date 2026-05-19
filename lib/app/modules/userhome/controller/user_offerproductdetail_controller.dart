@@ -11,7 +11,7 @@ import '../../merchantlogin/widget/successwidget.dart';
 class UserOfferProductDetailController extends GetxController {
   final box = GetStorage();
 
-  final String apiUrl = "https://eshoppy.co.in/api/offer-product/details";
+  final String apiUrl = "https://entenaadu.co.in/api/offer-product/details";
 
   var isLoading = false.obs;
   var productData = Rx<UserOfferProductDetail?>(null);

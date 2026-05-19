@@ -16,7 +16,7 @@ class AdminCategoryListController extends GetxController {
   final box = GetStorage();
 
   final String apiUrl =
-      "https://eshoppy.co.in/api/categories";
+      "https://entenaadu.co.in/api/categories";
 
   @override
   void onInit() {
@@ -77,7 +77,7 @@ class AdminCategoryListController extends GetxController {
 
       final response = await http.delete(
         Uri.parse(
-            'https://eshoppy.co.in/api/delete-category'),
+            'https://entenaadu.co.in/api/delete-category'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',

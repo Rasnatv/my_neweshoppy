@@ -154,7 +154,7 @@ class AdminRestaurantUpdateController extends GetxController {
             if (url.startsWith('http')) {
               parsed.add(url);
             } else {
-              parsed.add("https://eshoppy.co.in/$url");
+              parsed.add("https://entenaadu.co.in/$url");
             }
           }
         }
@@ -204,7 +204,7 @@ class AdminRestaurantUpdateController extends GetxController {
 
       final token = box.read("auth_token");
       final url = Uri.parse(
-          "https://eshoppy.co.in/api/admin/restaurant/update");
+          "https://entenaadu.co.in/api/admin/restaurant/update");
 
       final Map<String, dynamic> body = {};
 

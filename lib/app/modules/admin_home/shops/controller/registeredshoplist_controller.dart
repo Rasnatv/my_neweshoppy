@@ -15,7 +15,7 @@ class AdminShopController extends GetxController {
   var shopList = <Shop>[].obs;
 
   final String apiUrl =
-      'https://eshoppy.co.in/api/merc/reg/shop';
+      'https://entenaadu.co.in/api/merc/reg/shop';
 
   Map<String, String> _headers() {
     final token = box.read('auth_token') ?? '';

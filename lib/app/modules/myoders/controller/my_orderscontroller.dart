@@ -32,7 +32,7 @@ class MyOrdersController extends GetxController {
       errorMessage.value = '';
 
       final response = await http.get(
-        Uri.parse('https://eshoppy.co.in/api/my-orders'),
+        Uri.parse('https://entenaadu.co.in/api/my-orders'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',

@@ -1,5 +1,5 @@
 
-import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
+import 'package:entenaadu/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -50,7 +50,7 @@ class LandingView extends StatelessWidget {
       builder: (controller) {
         return NetworkAwareWrapper(
           child: Scaffold(
-            extendBody: true,
+            // extendBody: true,
             body: controller.getPage(),
             bottomNavigationBar: const AppNavBar(),
           ),

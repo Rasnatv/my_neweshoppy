@@ -165,7 +165,7 @@ class RestaurantRegController extends GetxController {
 
       final response = await http.post(
         Uri.parse(
-          "https://eshoppy.co.in/api/restaurant/register",
+          "https://entenaadu.co.in/api/restaurant/register",
         ),
         headers: {
           "Accept": "application/json",

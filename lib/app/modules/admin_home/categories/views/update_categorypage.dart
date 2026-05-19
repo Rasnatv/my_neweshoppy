@@ -1,5 +1,5 @@
-import 'package:eshoppy/app/modules/admin_home/categories/views/update_categorycontroller.dart';
-import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
+import 'package:entenaadu/app/modules/admin_home/categories/views/update_categorycontroller.dart';
+import 'package:entenaadu/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

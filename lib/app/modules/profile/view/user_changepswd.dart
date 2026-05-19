@@ -1,6 +1,6 @@
 
-import 'package:eshoppy/app/modules/profile/controller/user_chnagepassword_controller.dart';
-import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
+import 'package:entenaadu/app/modules/profile/controller/user_chnagepassword_controller.dart';
+import 'package:entenaadu/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';

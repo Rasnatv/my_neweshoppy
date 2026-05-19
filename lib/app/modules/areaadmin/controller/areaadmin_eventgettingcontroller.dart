@@ -35,7 +35,7 @@ class AreaadminGettingEventController extends GetxController {
       errorMessage('');
 
       final response = await http.get(
-        Uri.parse("https://eshoppy.co.in/api/events"),
+        Uri.parse("https://entenaadu.co.in/api/events"),
         headers: {
           "Accept": "application/json",
           "Authorization": "Bearer $_token",
@@ -104,7 +104,7 @@ class AreaadminGettingEventController extends GetxController {
 
       final response = await http.delete(
         Uri.parse(
-            "https://eshoppy.co.in/api/event/delete"),
+            "https://entenaadu.co.in/api/event/delete"),
         headers: {
           "Accept": "application/json",
           "Authorization": "Bearer $_token",

@@ -1,6 +1,6 @@
 
-import 'package:eshoppy/app/modules/restarunent/view/user_resaturantgallery.dart';
-import 'package:eshoppy/app/modules/restarunent/view/user_restaurantabouttab.dart';
+import 'package:entenaadu/app/modules/restarunent/view/user_resaturantgallery.dart';
+import 'package:entenaadu/app/modules/restarunent/view/user_restaurantabouttab.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';

@@ -58,7 +58,7 @@ class AllocatedTable {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class RestaurantBookingController extends GetxController {
-  static const String _baseUrl = 'https://eshoppy.co.in/api';
+  static const String _baseUrl = 'https://entenaadu.co.in/api';
 
   final _box = GetStorage();
   String get _authToken => _box.read('auth_token') ?? '';

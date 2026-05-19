@@ -121,7 +121,7 @@ class NewRestaurantModel {
             parsedAdditionalImages.add(url);
           } else {
             // Convert relative path → full URL
-            parsedAdditionalImages.add("https://eshoppy.co.in/$url");
+            parsedAdditionalImages.add("https://entenaadu.co.in/$url");
           }
         }
       }
