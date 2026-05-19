@@ -263,10 +263,15 @@ class OfferProductDetailController extends GetxController {
           AppSnackbar.success(
               body['message'] ?? 'Product updated successfully');
           _patchParentController();
-          await Future.delayed(const Duration(milliseconds: 800));
-          Get.off(MerchantOfferViewPage());
-          Get.close(1);
-          // Get.back();
+          final args = Get.arguments;
+          final offerIdTag = args?['offer_id']?.toString();
+          if (offerIdTag != null &&
+              Get.isRegistered<MerchantOfferProductController>(tag: offerIdTag)) {
+            await Get.find<MerchantOfferProductController>(tag: offerIdTag)
+                .fetchOfferProduct() ;
+            Get.close(1);
+          }
+
         } else {
           AppSnackbar.warning(body['message'] ?? 'Update failed');
         }
