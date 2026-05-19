@@ -1,5 +1,4 @@
 
-
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -35,12 +34,11 @@ class OfferProductDetailController extends GetxController {
   var variants = <MOfferVariant>[].obs;
   var discountPercentage = 0.obs;
 
-  // ── Lightweight tick so ONLY the offer-price badge Obx rebuilds
-  // when a price changes — does NOT trigger a full card rebuild.
-  // final _priceTick = 0.obs;
+  // Lightweight per-variant tick so ONLY the offer-price badge Obx
+  // rebuilds when a price changes — does NOT trigger a full card rebuild.
   final _priceTickMap = <int, int>{}.obs;
 
-  // ── Display variant tracking ───────────────────────────────────
+  // Display variant tracking
   int? _displayVariantId;
   double _originalDisplayPrice = 0.0;
   String _originalDisplayImage = '';
@@ -104,7 +102,7 @@ class OfferProductDetailController extends GetxController {
             )),
           );
 
-          // Snapshot the DISPLAY variant (variant[0] matches the card).
+          // Snapshot the DISPLAY variant (variant[0] matches the list card).
           if (variants.isNotEmpty) {
             _displayVariantId = variants[0].variantId;
             _originalDisplayPrice = variants[0].price;
@@ -143,7 +141,7 @@ class OfferProductDetailController extends GetxController {
     if (picked != null) {
       variants[index].imagePath = picked.path;
       variants[index].imageUpdated = true;
-      // ✅ variants.refresh() is safe here — image picker is a one-off
+      // variants.refresh() is safe here — image picker is a one-off
       // action, not called on every keystroke, so no cascade problem.
       variants.refresh();
     }
@@ -154,11 +152,10 @@ class OfferProductDetailController extends GetxController {
     commonAttributes[key] = value;
   }
 
-
   void updateVariantPrice(int index, double price) {
     if (index < 0 || index >= variants.length) return;
     variants[index].price = price;
-    // _priceTick.value++; // ✅ Only badge Obx widgets re-render
+    // Only the badge Obx for THIS variant re-renders
     _priceTickMap[index] = (_priceTickMap[index] ?? 0) + 1;
   }
 
@@ -167,11 +164,10 @@ class OfferProductDetailController extends GetxController {
     variants[index].stock = stock;
   }
 
-  // ── Expose tick for the badge Obx in the page ─────────────────
-  // int get priceTick => _priceTick.value;
+  // Expose per-variant tick for the badge Obx in the page
   int priceTickForVariant(int index) => _priceTickMap[index] ?? 0;
 
-
+  // ================= VALIDATION =================
   bool _validate() {
     if (productName.value.trim().isEmpty) {
       AppSnackbar.warning('Product name is required');
@@ -192,7 +188,7 @@ class OfferProductDetailController extends GetxController {
         return false;
       }
 
-      // ✅ Price digit count guard (max 10 digits)
+      // Price digit count guard (max 10 digits)
       final priceStr = variant.price.toStringAsFixed(0);
       if (priceStr.length > 10) {
         AppSnackbar.warning('$label: Price cannot exceed 10 digits');
@@ -204,7 +200,7 @@ class OfferProductDetailController extends GetxController {
         return false;
       }
 
-      // ✅ Stock digit count guard (max 3 digits → 999)
+      // Stock digit count guard (max 3 digits → 999)
       if (variant.stock > 999) {
         AppSnackbar.warning('$label: Stock cannot exceed 999 (3 digits)');
         return false;
@@ -259,19 +255,33 @@ class OfferProductDetailController extends GetxController {
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
+
         if (body['status'] == 1 || body['status'] == true) {
           AppSnackbar.success(
               body['message'] ?? 'Product updated successfully');
-          _patchParentController();
+
+          // Patch the list card locally and find out if the display
+          // variant (variant[0]) actually changed price or image.
+          final bool displayChanged = _patchParentController();
+
           final args = Get.arguments;
           final offerIdTag = args?['offer_id']?.toString();
+
           if (offerIdTag != null &&
-              Get.isRegistered<MerchantOfferProductController>(tag: offerIdTag)) {
-            await Get.find<MerchantOfferProductController>(tag: offerIdTag)
-                .fetchOfferProduct() ;
+              Get.isRegistered<MerchantOfferProductController>(
+                  tag: offerIdTag)) {
+            if (displayChanged) {
+              // Display variant price/image changed → full refresh so the
+              // list card shows the confirmed server offer_price and the
+              // real CDN image URL (replaces the local file path).
+              await Get.find<MerchantOfferProductController>(tag: offerIdTag)
+                  .fetchOfferProduct();
+            }
+            // If only variant 2+ changed, the local patch (if any) is
+            // already applied and the fetch would overwrite nothing useful,
+            // so we skip it and just close.
             Get.close(1);
           }
-
         } else {
           AppSnackbar.warning(body['message'] ?? 'Update failed');
         }
@@ -287,24 +297,29 @@ class OfferProductDetailController extends GetxController {
     }
   }
 
-  void _patchParentController() {
+  // ================= PATCH PARENT CONTROLLER =================
+  // Returns true  → display variant (variant[0]) price or image changed,
+  //                 caller should fetchOfferProduct() to sync server values.
+  // Returns false → only non-display variants changed (or nothing changed),
+  //                 caller should skip the fetch.
+  bool _patchParentController() {
     try {
       final args = Get.arguments;
       final offerIdTag = args?['offer_id']?.toString();
-      if (offerIdTag == null) return;
+      if (offerIdTag == null) return false;
 
       final parent =
       Get.find<MerchantOfferProductController>(tag: offerIdTag);
 
-      // ✅ Find EXACT display variant only
+      // Find the exact display variant only
       final displayVariant = variants.firstWhereOrNull(
             (v) => v.variantId == _displayVariantId,
       );
 
-      // ❌ Display variant not found — stop
-      if (displayVariant == null) return;
+      // Display variant not found — nothing to patch
+      if (displayVariant == null) return false;
 
-      // ✅ Check what changed in display variant only
+      // Check what changed in display variant only
       final bool priceChanged =
           (displayVariant.price - _originalDisplayPrice).abs() > 0.01;
 
@@ -313,29 +328,34 @@ class OfferProductDetailController extends GetxController {
               displayVariant.imagePath.isNotEmpty &&
               displayVariant.imagePath != _originalDisplayImage;
 
-      // ❌ Nothing changed in display variant — do nothing at all
-      if (!priceChanged && !imageChanged) return;
+      // Nothing changed in display variant — do nothing, tell caller
+      // not to fetch either (avoids overwriting other local state).
+      if (!priceChanged && !imageChanged) return false;
 
       final Map<String, dynamic> patchData = {};
 
-      // ✅ Only patch price if display variant price changed
+      // Only patch price if display variant price changed
       if (priceChanged) {
         patchData['real_price'] = displayVariant.price;
         patchData['offer_price'] =
             computeOfferPrice(displayVariant.price) ?? displayVariant.price;
       }
 
-      // ✅ Only patch image if display variant image changed
+      // Only patch image if display variant image changed
       if (imageChanged) {
         patchData['product_image'] = displayVariant.imagePath;
       }
 
-      // ✅ Patch locally — NO silentRefresh() at all
-      // silentRefresh() overwrites local path with old server URL
+      // Apply local patch — caller will follow up with fetchOfferProduct()
+      // which will replace the local file path with the real CDN URL.
       if (patchData.isNotEmpty) {
         parent.patchProductLocally(offerProductId.value, patchData);
       }
 
-    } catch (_) {}
+      // Tell the caller: yes, display variant changed → fetch needed
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 }
