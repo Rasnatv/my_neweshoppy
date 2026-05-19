@@ -248,8 +248,6 @@ class UpdateAdvertisementController extends GetxController {
               : 'Advertisement updated successfully.',
         );
 
-        // ✅ Wait for snackbar to appear, then go back
-        await Future.delayed(const Duration(seconds: 2));
         Get.close(1);
         // Get.back();
       } else {

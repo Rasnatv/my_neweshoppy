@@ -1,3 +1,4 @@
+
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -6,6 +7,7 @@ import 'package:http/http.dart' as http;
 
 import '../../../data/errors/api_error.dart';
 import '../../merchantlogin/widget/successwidget.dart';
+import 'merchant_advertismentlistcontroller.dart'; // 👈 import this
 
 class DeleteAdvertisementController extends GetxController {
   final RxSet<dynamic> deletingIds = <dynamic>{}.obs;
@@ -19,8 +21,7 @@ class DeleteAdvertisementController extends GetxController {
 
     try {
       final response = await http.delete(
-        Uri.parse(
-            'https://eshoppy.co.in/api/delete-advertisement'),
+        Uri.parse('https://eshoppy.co.in/api/delete-advertisement'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -33,20 +34,26 @@ class DeleteAdvertisementController extends GetxController {
 
       final decoded = jsonDecode(response.body);
 
-      /// ✅ SUCCESS (HTTP 200 + API status = 1)
       if (response.statusCode == 200 && decoded['status'] == '1') {
+
+        // ✅ Step 1: Remove instantly from observable list
+        final listCtrl = Get.find<MerchantAdvertisementGetController>();
+        listCtrl.ads.removeWhere(
+              (ad) => ad['id'].toString() == advertisementId.toString(),
+        );
+
+        // ✅ Step 2: Then sync with server in background
         onSuccess();
 
         AppSnackbar.success(
           decoded['message'] ?? "Advertisement deleted successfully",
         );
+
       } else {
-        /// ❌ API or HTTP ERROR
         final errorMessage = ApiErrorHandler.handleResponse(response);
         AppSnackbar.error(errorMessage);
       }
     } catch (e) {
-      /// ❌ NETWORK / UNKNOWN ERROR
       final errorMessage = ApiErrorHandler.handleException(e);
       AppSnackbar.error(errorMessage);
     } finally {

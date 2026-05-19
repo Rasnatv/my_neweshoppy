@@ -266,8 +266,11 @@ class MerchantAdvertisementController extends GetxController {
       if (status == "1" || status == "true") {
         _clearForm();
         AppSnackbar.success(data["message"] ?? "Advertisement posted");
-         Get.close(1);
+        //  Get.close(1);
+        // Get.off(MyAdvertisements());
+        Get.close(1);
         Get.off(MyAdvertisements());
+        Get.find<MerchantAdvertisementGetController>().fetchAdvertisements();
       } else {
         AppSnackbar.error(data["message"] ?? "Something went wrong");
       }
