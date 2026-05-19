@@ -12,6 +12,9 @@ import '../../../data/models/areaadmin_updateadvertismentmodel.dart';
 import '../../merchantlogin/widget/successwidget.dart';
 import '../view/area_adminhome.dart';
 import '../../../data/errors/api_error.dart';
+import 'areaadmin_dashboardcountcnroller.dart';
+import 'areaadmin_eventgettingcontroller.dart';
+import 'areaadmin_getting_advertismentcontroller.dart';
 
 class AreaAdminUpdateAdvertisementController extends GetxController {
   final int adId;
@@ -377,8 +380,16 @@ class AreaAdminUpdateAdvertisementController extends GetxController {
 
         AppSnackbar.success(data['message'] ?? "Advertisement updated!");
 
-        await Future.delayed(const Duration(milliseconds: 500));
+        // await Future.delayed(const Duration(milliseconds: 500));
+        // Get.offAll(() => AreaAdminhomepage());
         Get.offAll(() => AreaAdminhomepage());
+        await Future.delayed(const Duration(milliseconds: 300));
+        if (Get.isRegistered<AreaAdminAdvertisementgetController>()) {
+          Get.find<AreaAdminAdvertisementgetController>().fetchAdvertisements();
+        }
+        if (Get.isRegistered<AreaAdminDashboardController>()) {
+          Get.find<AreaAdminDashboardController>().fetchDashboardCount();
+        }
       } else {
         AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }

@@ -9,7 +9,8 @@ import '../view/areaadmin_updateeventpage.dart';
 class RecentEventsWidget extends StatelessWidget {
   RecentEventsWidget({super.key});
 
-  final controller = Get.put(AreaadminGettingEventController());
+  // ✅ Fix — uses same instance registered in AreaAdminhomepage
+  final controller = Get.find<AreaadminGettingEventController>();
 
   String _formatDate(String raw) {
     if (raw.isEmpty) return '—';

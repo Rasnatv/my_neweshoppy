@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import '../../../data/models/areaadmin_eventsgetmodel.dart';
 import '../../../data/errors/api_error.dart';
 import '../../merchantlogin/widget/successwidget.dart';
+import 'areaadmin_dashboardcountcnroller.dart';
 
 class AreaadminGettingEventController extends GetxController {
   var isLoading = false.obs;
@@ -90,21 +91,17 @@ class AreaadminGettingEventController extends GetxController {
     }
   }
 
-  // ─── DELETE EVENT ─────────────────────────────────
   Future<void> deleteEvent(String eventId) async {
-    /// ✅ Backup for rollback
     final backupAll = List<AreaAdmingshowEventModel>.from(allEvents);
     final backupRecent = List<AreaAdmingshowEventModel>.from(recentEvents);
 
-    /// ✅ Optimistic UI update
+    // Optimistic remove
     allEvents.removeWhere((e) => e.id == eventId);
     recentEvents.removeWhere((e) => e.id == eventId);
 
     try {
-
       final response = await http.delete(
-        Uri.parse(
-            "https://eshoppy.co.in/api/event/delete"),
+        Uri.parse("https://eshoppy.co.in/api/event/delete"),
         headers: {
           "Accept": "application/json",
           "Authorization": "Bearer $_token",
@@ -116,11 +113,15 @@ class AreaadminGettingEventController extends GetxController {
 
       final data = jsonDecode(response.body);
 
-      if (response.statusCode == 200 && data['status'] == true) {
-        AppSnackbar.success(
-            data['message'] ?? 'Event deleted successfully');
+      // ✅ Fix: match same status check as fetchEvents
+      final isSuccess = response.statusCode == 200 &&
+          (data['status'] == true || data['status'] == 1);
+
+      if (isSuccess) {
+        AppSnackbar.success(data['message'] ?? 'Event deleted successfully');
+        await fetchEvents(); // ✅ re-fetch to sync server state
       } else {
-        /// ❌ Rollback
+        // Rollback optimistic update
         allEvents.value = backupAll;
         recentEvents.value = backupRecent;
 
@@ -128,6 +129,9 @@ class AreaadminGettingEventController extends GetxController {
         if (error.isNotEmpty) AppSnackbar.error(error);
       }
     } catch (e) {
+      // Rollback on network error too
+      allEvents.value = backupAll;
+      recentEvents.value = backupRecent;
       AppSnackbar.error(ApiErrorHandler.handleException(e));
     }
   }}

@@ -11,6 +11,8 @@ import 'package:image_picker/image_picker.dart';
 import '../../../data/errors/api_error.dart';
 import '../../merchantlogin/widget/successwidget.dart';
 import '../view/area_adminhome.dart';
+import 'areaadmin_dashboardcountcnroller.dart';
+import 'areaadmin_eventgettingcontroller.dart';
 
 class AreaAdminUpdateEventController extends GetxController {
   final _box = GetStorage();
@@ -505,8 +507,14 @@ class AreaAdminUpdateEventController extends GetxController {
         final body = jsonDecode(response.body);
         if (body['status'] == true || body['status'] == 1) {
           AppSnackbar.success(body['message'] ?? 'Event updated successfully');
-          await Future.delayed(const Duration(milliseconds: 300));
           Get.offAll(() => AreaAdminhomepage());
+          await Future.delayed(const Duration(milliseconds: 300));
+          if (Get.isRegistered<AreaadminGettingEventController>()) {
+            Get.find<AreaadminGettingEventController>().fetchEvents();
+          }
+          if (Get.isRegistered<AreaAdminDashboardController>()) {
+            Get.find<AreaAdminDashboardController>().fetchDashboardCount();
+          }
         } else {
           AppSnackbar.error(body['message'] ?? 'Update failed');
         }

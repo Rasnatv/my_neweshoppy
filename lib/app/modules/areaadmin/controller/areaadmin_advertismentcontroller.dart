@@ -10,6 +10,8 @@ import '../../merchantlogin/widget/successwidget.dart';
 import '../../userlogin/view/login.dart';
 import '../view/area_adminhome.dart';
 import '../../../data/errors/api_error.dart';
+import 'areaadmin_eventgettingcontroller.dart';
+import 'areaadmin_getting_advertismentcontroller.dart';
 
 
 class AreaAdminAdvertisementController extends GetxController {
@@ -299,8 +301,13 @@ class AreaAdminAdvertisementController extends GetxController {
             resData['status'] == '1') {
           AppSnackbar.success(resData['message'] ?? "Advertisement created");
           resetForm();
-          await Future.delayed(const Duration(milliseconds: 800));
-          Get.offAll(() => AreaAdminhomepage());
+          // await Future.delayed(const Duration(milliseconds: 800));
+          // Get.offAll(() => AreaAdminhomepage());
+          resetForm();   Get.offAll(() => AreaAdminhomepage());
+          await Future.delayed(const Duration(milliseconds: 300));
+          if (Get.isRegistered<AreaAdminAdvertisementgetController>()) {
+            Get.find<AreaAdminAdvertisementgetController>().fetchAdvertisements();
+          }
         } else {
           AppSnackbar.error(resData['message'] ?? "Failed to create advertisement");
         }
