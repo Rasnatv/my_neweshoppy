@@ -33,16 +33,7 @@ class MyOrdersView extends StatelessWidget {
               letterSpacing: 0.1,
             ),
           ),
-          actions: [
-            Obx(
-                  () => !controller.isLoading.value
-                  ? IconButton(
-                icon: const Icon(Icons.refresh_rounded, color: Colors.white),
-                onPressed: controller.fetchMyOrders,
-              )
-                  : const SizedBox.shrink(),
-            ),
-          ],
+
         ),
         body: Obx(() {
           if (controller.isLoading.value) {
