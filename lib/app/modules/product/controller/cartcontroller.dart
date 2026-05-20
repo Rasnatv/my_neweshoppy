@@ -52,7 +52,7 @@ class CartController extends GetxController {
 
     try {
       final response = await http.get(
-        Uri.parse("https://entenaadu.co.in/api/cart"),
+        Uri.parse("https://eshoppy.co.in/api/cart"),
         headers: {
           "Accept": "application/json",
           "Authorization": "Bearer $token",
@@ -101,7 +101,7 @@ class CartController extends GetxController {
 
     try {
       final response = await http.post(
-        Uri.parse("https://entenaadu.co.in/api/cart/add"),
+        Uri.parse("https://eshoppy.co.in/api/cart/add"),
         headers: {
           "Accept": "application/json",
           "Authorization": "Bearer $authToken",
@@ -171,7 +171,7 @@ class CartController extends GetxController {
 
     try {
       final response = await http.post(
-        Uri.parse("https://entenaadu.co.in/api/cart/update-quantity"),
+        Uri.parse("https://eshoppy.co.in/api/cart/update-quantity"),
         headers: {
           "Accept": "application/json",
           "Authorization": "Bearer $authToken",
@@ -211,7 +211,7 @@ class CartController extends GetxController {
 
     try {
       final response = await http.delete(
-        Uri.parse("https://entenaadu.co.in/api/cart/remove"),
+        Uri.parse("https://eshoppy.co.in/api/cart/remove"),
         headers: {
           "Accept": "application/json",
           "Authorization": "Bearer $authToken",

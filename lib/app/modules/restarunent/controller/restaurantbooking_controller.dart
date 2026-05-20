@@ -58,7 +58,7 @@ class AllocatedTable {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class RestaurantBookingController extends GetxController {
-  static const String _baseUrl = 'https://entenaadu.co.in/api';
+  static const String _baseUrl = 'https://eshoppy.co.in/api';
 
   final _box = GetStorage();
   String get _authToken => _box.read('auth_token') ?? '';
@@ -180,23 +180,7 @@ class RestaurantBookingController extends GetxController {
     }
   }
 
-  // ── FETCH TABLE ALLOCATION ────────────────────────────────────────────────────
-  // POST /get-tables-by-guests
-  // Response example:
-  // {
-  //   "status": 1,
-  //   "data": {
-  //     "total_seats": 42,
-  //     "guests": 21,
-  //     "allocation": [
-  //       { "seating_type": "indoor", "tables_used": ["T1","T2","T3"] }
-  //     ]
-  //   }
-  // }
-  //
-  // ✅ All tables from all allocation entries are joined as "T1,T2,T3".
-  //    seating_type from first entry (default "indoor") is stored.
-  //    Result is saved to allocatedTable — no user selection ever shown.
+
 
   Future<void> fetchTableAllocation() async {
     if (restaurantId == 0) return;

@@ -19,7 +19,7 @@ class RestaurantMenuController extends GetxController {
   var availableMealTypes = <Map<String, String>>[].obs;
 
   final box    = GetStorage();
-  final String apiUrl = 'https://entenaadu.co.in/api/user/menu-by-meal';
+  final String apiUrl = 'https://eshoppy.co.in/api/user/menu-by-meal';
 
   final List<Map<String, String>> mealTypes = [
     {'label': 'Breakfast', 'value': 'breakfast'},

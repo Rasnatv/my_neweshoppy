@@ -28,7 +28,7 @@ class MerchantAdvertisementGetController extends GetxController {
 
       final response = await http.get(
         Uri.parse(
-          "https://entenaadu.co.in/api/getadvertisement",
+          "https://eshoppy.co.in/api/getadvertisement",
         ),
         headers: {
           "Authorization": "Bearer $authToken",

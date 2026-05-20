@@ -12,7 +12,7 @@ class AddressListController extends GetxController {
   final box = GetStorage();
 
   static const String baseUrl =
-      'https://entenaadu.co.in/api';
+      'https://eshoppy.co.in/api';
 
   final RxList<AddressListModel> addressList = <AddressListModel>[].obs;
   final RxBool isLoading                     = false.obs;

@@ -30,7 +30,7 @@ class AreaAdminAdvertisementgetController extends GetxController {
 
       final response = await http.get(
         Uri.parse(
-          'https://entenaadu.co.in/api/area-admin/advertisements',
+          'https://eshoppy.co.in/api/area-admin/advertisements',
         ),
         headers: {
           "Authorization": "Bearer $token",
@@ -83,7 +83,7 @@ class AreaAdminAdvertisementgetController extends GetxController {
 
       final response = await http.delete(
         Uri.parse(
-          'https://entenaadu.co.in/api/area-admin/advertisement/delete',
+          'https://eshoppy.co.in/api/area-admin/advertisement/delete',
         ),
         headers: {
           "Authorization": "Bearer $token",

@@ -17,8 +17,8 @@ class DistrictAdminUpdateEventController extends GetxController {
   final _box = GetStorage();
 
   // ─── API URLs ─────────────────────────────────────
-  static const String _baseUrl       = 'https://entenaadu.co.in/api/district-admin';
-  static const String _publicBaseUrl = 'https://entenaadu.co.in/api';
+  static const String _baseUrl       = 'https://eshoppy.co.in/api/district-admin';
+  static const String _publicBaseUrl = 'https://eshoppy.co.in/api';
 
   // ─── Observables ──────────────────────────────────
   final isLoading          = false.obs;

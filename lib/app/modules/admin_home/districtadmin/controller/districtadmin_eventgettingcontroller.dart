@@ -37,7 +37,7 @@ class DistrictAdminGettingEventController extends GetxController {
   };
 
   static const String _baseUrl =
-      'https://entenaadu.co.in/api/district-admin';
+      'https://eshoppy.co.in/api/district-admin';
 
   @override
   void onInit() {

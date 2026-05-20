@@ -49,10 +49,10 @@ class MerchantUpdateController extends GetxController {
 
   String get authToken => box.read<String?>('auth_token') ?? "";
 
-  static const String statesApi    = "https://entenaadu.co.in/api/merchant/states";
-  static const String districtsApi = "https://entenaadu.co.in/api/merchant/districts";
-  static const String locationsApi = "https://entenaadu.co.in/api/merchant/locations";
-  static const String updateApi    = "https://entenaadu.co.in/api/merchant/updatereg";
+  static const String statesApi    = "https://eshoppy.co.in/api/merchant/states";
+  static const String districtsApi = "https://eshoppy.co.in/api/merchant/districts";
+  static const String locationsApi = "https://eshoppy.co.in/api/merchant/locations";
+  static const String updateApi    = "https://eshoppy.co.in/api/merchant/updatereg";
 
   @override
   void onInit() {
@@ -233,7 +233,7 @@ class MerchantUpdateController extends GetxController {
     isLoading.value = true;
     try {
       final response = await http.get(
-        Uri.parse("https://entenaadu.co.in/api/merchantgetreg"),
+        Uri.parse("https://eshoppy.co.in/api/merchantgetreg"),
         headers: {
           "Authorization": "Bearer $authToken",
           "Accept"       : "application/json",

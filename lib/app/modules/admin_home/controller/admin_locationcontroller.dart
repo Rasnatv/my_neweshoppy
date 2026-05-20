@@ -13,8 +13,8 @@ import '../../merchantlogin/widget/successwidget.dart';
 class LocationController extends GetxController {
   final box = GetStorage();
 
-  final String addApiUrl  = "https://entenaadu.co.in/api/admin/location/add";
-  final String listApiUrl = "https://entenaadu.co.in/api/admin/location/list";
+  final String addApiUrl  = "https://eshoppy.co.in/api/admin/location/add";
+  final String listApiUrl = "https://eshoppy.co.in/api/admin/location/list";
 
   // ── Data ──────────────────────────────────────────
   /// Flat list of all districts across all states (used by the list page).

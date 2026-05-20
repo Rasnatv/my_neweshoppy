@@ -42,7 +42,7 @@ class EditProfileController extends GetxController {
 
       final response = await http.get(
         Uri.parse(
-            'https://entenaadu.co.in/api/get-profile'),
+            'https://eshoppy.co.in/api/get-profile'),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
@@ -106,7 +106,7 @@ class EditProfileController extends GetxController {
 
       final response = await http.post(
         Uri.parse(
-            'https://entenaadu.co.in/api/edit-profile'),
+            'https://eshoppy.co.in/api/edit-profile'),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',

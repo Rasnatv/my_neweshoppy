@@ -104,7 +104,7 @@ class AreaAdminUpdateAdvertisementController extends GetxController {
       errorMessage('');
 
       final response = await http.post(
-        Uri.parse('https://entenaadu.co.in/api/area-admin/advertisement'),
+        Uri.parse('https://eshoppy.co.in/api/area-admin/advertisement'),
         headers: {
           ...headers,
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -160,7 +160,7 @@ class AreaAdminUpdateAdvertisementController extends GetxController {
       isLoadingStates(true);
 
       final response = await http.get(
-        Uri.parse('https://entenaadu.co.in/api/get-MerchantStates'),
+        Uri.parse('https://eshoppy.co.in/api/get-MerchantStates'),
         headers: headers,
       );
 
@@ -206,7 +206,7 @@ class AreaAdminUpdateAdvertisementController extends GetxController {
       isLoadingDistricts(true);
 
       final response = await http.post(
-        Uri.parse('https://entenaadu.co.in/api/getMerchant-Districts'),
+        Uri.parse('https://eshoppy.co.in/api/getMerchant-Districts'),
         headers: {...headers, 'Content-Type': 'application/json'},
         body: jsonEncode({"state": state}),   // ✅ POST body
       );
@@ -251,7 +251,7 @@ class AreaAdminUpdateAdvertisementController extends GetxController {
       isLoadingLocations(true);
 
       final response = await http.post(
-        Uri.parse('https://entenaadu.co.in/api/area-admin/main-locations'),
+        Uri.parse('https://eshoppy.co.in/api/area-admin/main-locations'),
         headers: {...headers, 'Content-Type': 'application/json'},
         body: jsonEncode({"district": district}),   // ✅ POST body
       );
@@ -360,7 +360,7 @@ class AreaAdminUpdateAdvertisementController extends GetxController {
 
       final response = await http.put(
         Uri.parse(
-          'https://entenaadu.co.in/api/area-admin/advertisement/update',
+          'https://eshoppy.co.in/api/area-admin/advertisement/update',
         ),
         headers: {
           ...headers,

@@ -42,7 +42,7 @@ class AdminUserController extends GetxController {
     isLoading.value = true;
     try {
       final response = await http.get(
-        Uri.parse('https://entenaadu.co.in/api/admin/users'),
+        Uri.parse('https://eshoppy.co.in/api/admin/users'),
         headers: _headers,
       );
 

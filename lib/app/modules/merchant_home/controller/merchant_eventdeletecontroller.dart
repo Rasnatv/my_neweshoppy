@@ -22,7 +22,7 @@ class DeleteEventController extends GetxController {
     try {
       final response = await http.delete(
         Uri.parse(
-          'https://entenaadu.co.in/api/delete-event',
+          'https://eshoppy.co.in/api/delete-event',
         ),
         headers: {
           'Content-Type': 'application/json',

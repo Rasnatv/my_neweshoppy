@@ -50,7 +50,7 @@ class AdminEventUpdateController extends GetxController {
   final pickedImageBase64 = RxnString();
 
   // ─── API ──────────────────────────────────────────────────────────────────
-  static const _baseUrl = 'https://entenaadu.co.in/api';
+  static const _baseUrl = 'https://eshoppy.co.in/api';
 
   final _box = GetStorage();
 

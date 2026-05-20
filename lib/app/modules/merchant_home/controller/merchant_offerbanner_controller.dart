@@ -13,9 +13,9 @@ class MerchantOfferBannerController extends GetxController {
   final box       = GetStorage();
 
   static const String _offerUrl =
-      "https://entenaadu.co.in/api/mercgetoffer";
+      "https://eshoppy.co.in/api/mercgetoffer";
   static const String _deleteUrl =
-      "https://entenaadu.co.in/api/delete-Offerbanner";
+      "https://eshoppy.co.in/api/delete-Offerbanner";
 
   String get _token => box.read("auth_token") ?? "";
 

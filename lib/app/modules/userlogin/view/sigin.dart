@@ -179,7 +179,7 @@ class _LoginScreenState extends State<LoginScreen>
     return Column(
       children: const [
         Text(
-          "entenaadu",
+          "eShoppy",
           style: TextStyle(
             fontSize: 34,
             fontWeight: FontWeight.w800,

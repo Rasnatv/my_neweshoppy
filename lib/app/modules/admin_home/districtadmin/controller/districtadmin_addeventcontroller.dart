@@ -37,8 +37,8 @@ class DistrictAdminEventAddController extends GetxController {
   var errorBanner = Rx<String?>(null);
   final ImagePicker picker = ImagePicker();
 
-  static const String _baseUrl = 'https://entenaadu.co.in/api/district-admin';
-  static const String _publicBaseUrl = 'https://entenaadu.co.in/api';
+  static const String _baseUrl = 'https://eshoppy.co.in/api/district-admin';
+  static const String _publicBaseUrl = 'https://eshoppy.co.in/api';
 
   @override
   void onInit() {

@@ -20,11 +20,11 @@ class AreaAdminUpdateEventController extends GetxController {
   final Rx<File?> bannerImage = Rx<File?>(null);
 
   // ─── API URLs ─────────────────────────────────────
-  static const String _eventFetchUrl  = 'https://entenaadu.co.in/api/event';
-  static const String _eventUpdateUrl = 'https://entenaadu.co.in/api/event/update';
-  static const String _statesUrl      = 'https://entenaadu.co.in/api/get-MerchantStates';
-  static const String _districtsUrl   = 'https://entenaadu.co.in/api/getMerchant-Districts';
-  static const String _locationsUrl   = 'https://entenaadu.co.in/api/area-admin/main-locations';
+  static const String _eventFetchUrl  = 'https://eshoppy.co.in/api/event';
+  static const String _eventUpdateUrl = 'https://eshoppy.co.in/api/event/update';
+  static const String _statesUrl      = 'https://eshoppy.co.in/api/get-MerchantStates';
+  static const String _districtsUrl   = 'https://eshoppy.co.in/api/getMerchant-Districts';
+  static const String _locationsUrl   = 'https://eshoppy.co.in/api/area-admin/main-locations';
 
   final ImagePicker picker = ImagePicker();
 

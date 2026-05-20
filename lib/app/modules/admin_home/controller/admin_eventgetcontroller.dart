@@ -17,7 +17,7 @@ class AdminEventGetController extends GetxController {
   final box = GetStorage();
 
   final String apiUrl =
-      "https://entenaadu.co.in/api/get-all-events-admin-district";
+      "https://eshoppy.co.in/api/get-all-events-admin-district";
 
   String get _token => box.read('auth_token')?.toString().trim() ?? '';
   @override

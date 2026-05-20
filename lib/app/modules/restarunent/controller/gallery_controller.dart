@@ -18,7 +18,7 @@ class GalleryController extends GetxController {
   final GetStorage box = GetStorage();
 
   final String apiUrl =
-      "https://entenaadu.co.in/api/user/restaurant/images";
+      "https://eshoppy.co.in/api/user/restaurant/images";
 
   @override
   void onInit() {

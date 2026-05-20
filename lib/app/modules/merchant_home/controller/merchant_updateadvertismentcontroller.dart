@@ -16,7 +16,7 @@ import '../../merchantlogin/widget/successwidget.dart';
 class UpdateAdvertisementController extends GetxController {
   // ── API endpoints ─────────────────────────────────────────
   static const String _baseUrl =
-      'https://entenaadu.co.in/api';
+      'https://eshoppy.co.in/api';
   static const String _getSingleAdUrl = '$_baseUrl/get-single-advertisement';
   static const String _updateAdUrl    = '$_baseUrl/update-advertisement';
 

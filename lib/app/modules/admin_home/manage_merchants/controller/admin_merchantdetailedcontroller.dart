@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 import 'dart:io';
 
@@ -55,16 +54,16 @@ class AdminMerchantDetailController extends GetxController {
   final isLoadingLocations = false.obs;
 
   static const _detailUrl =
-      'https://entenaadu.co.in/api/admin/merchant/details';
+      'https://eshoppy.co.in/api/admin/merchant/details';
   static const _updateUrl =
-      'https://entenaadu.co.in/api/admin/update-merchant';
+      'https://eshoppy.co.in/api/admin/update-merchant';
   static const _deleteUrl =
-      'https://entenaadu.co.in/api/admin/delete-merchant';
+      'https://eshoppy.co.in/api/admin/delete-merchant';
   static const _statesUrl = 'https://entenaadu.co.in/api/merchant/states';
   static const _districtsUrl =
-      'https://entenaadu.co.in/api/merchant/districts';
+      'https://eshoppy.co.in/api/merchant/districts';
   static const _locationsUrl =
-      'https://entenaadu.co.in/api/merchant/locations';
+      'https://eshoppy.co.in/api/merchant/locations';
 
   String get _token => box.read('auth_token') ?? '';
   Map<String, String> get _headers => {

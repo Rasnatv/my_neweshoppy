@@ -53,7 +53,7 @@ class FinalCartController extends GetxController {
 
   // ── API base ───────────────────────────────────────────────────────────────
   static const String _baseUrl =
-      'https://entenaadu.co.in/api';
+      'https://eshoppy.co.in/api';
 
   Map<String, String> get _headers => {
     'Content-Type': 'application/json',

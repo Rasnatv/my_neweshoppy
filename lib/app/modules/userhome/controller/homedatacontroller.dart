@@ -38,7 +38,7 @@ class HomeDataController extends GetxController {
   final box = GetStorage();
 
   final String _apiUrl =
-      "https://entenaadu.co.in/api/get-home-data";
+      "https://eshoppy.co.in/api/get-home-data";
 
   final RxList<HomeEventModel> events = <HomeEventModel>[].obs;
   final RxList<HomeAdModel> advertisements = <HomeAdModel>[].obs;

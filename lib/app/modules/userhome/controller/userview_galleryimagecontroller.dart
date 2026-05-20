@@ -18,7 +18,7 @@ class MerchantGalleryViewController extends GetxController {
   RxBool isLoading = false.obs;
 
   final String baseUrl =
-      "https://entenaadu.co.in/api/user/merchant";
+      "https://eshoppy.co.in/api/user/merchant";
 
   @override
   void onInit() {

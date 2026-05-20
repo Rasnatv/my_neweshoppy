@@ -16,7 +16,7 @@ class UserOfferController extends GetxController {
   final box = GetStorage();
 
   final String apiUrl =
-      'https://entenaadu.co.in/api/getofferuser';
+      'https://eshoppy.co.in/api/getofferuser';
 
   @override
   void onInit() {

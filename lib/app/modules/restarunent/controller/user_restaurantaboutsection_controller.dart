@@ -26,7 +26,7 @@ class RestaurantDetailsController extends GetxController {
   final GetStorage box = GetStorage();
 
   final String apiUrl =
-      "https://entenaadu.co.in/api/user/restaurant/details";
+      "https://eshoppy.co.in/api/user/restaurant/details";
 
   @override
   void onInit() {

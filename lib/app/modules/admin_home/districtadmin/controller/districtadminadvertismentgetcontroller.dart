@@ -26,7 +26,7 @@ class DistrictAdminAdvertisementGetController extends GetxController {
   String get token => _box.read('auth_token') ?? '';
 
   static const String _baseUrl =
-      'https://entenaadu.co.in/api/district-admin';
+      'https://eshoppy.co.in/api/district-admin';
 
   Map<String, String> get _headers => {
     'Authorization': 'Bearer $token',

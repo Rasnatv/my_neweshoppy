@@ -26,7 +26,7 @@ class ChangePasswordController extends GetxController {
 
       final response = await http.post(
         Uri.parse(
-          'https://entenaadu.co.in/api/change-password',
+          'https://eshoppy.co.in/api/change-password',
         ),
         headers: {
           'Authorization': 'Bearer $_token',

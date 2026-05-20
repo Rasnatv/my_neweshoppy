@@ -12,7 +12,7 @@ class PurchasedProductController extends GetxController {
   final box = GetStorage();
 
   static const String _url =
-      'https://entenaadu.co.in/api/getUser-PurchasedProducts';
+      'https://eshoppy.co.in/api/getUser-PurchasedProducts';
 
   // ── State ─────────────────────────────────────
   var isLoading = false.obs;

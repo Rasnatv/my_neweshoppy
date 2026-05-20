@@ -17,9 +17,9 @@ class OfferProductDetailController extends GetxController {
   final box = GetStorage();
 
   static const String _detailUrl =
-      'https://entenaadu.co.in/api/offer-product-details';
+      'https://eshoppy.co.in/api/offer-product-details';
   static const String _updateUrl =
-      'https://entenaadu.co.in/api/update-offer-product';
+      'https://eshoppy.co.in/api/update-offer-product';
 
   var isLoading = false.obs;
   var isSubmitting = false.obs;

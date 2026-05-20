@@ -17,7 +17,7 @@ class DistrictAdminDashboardController extends GetxController {
   var totalAdvertisements = 0.obs;
 
   final String url =
-      "https://entenaadu.co.in/api/district-admin/dashboard-count";
+      "https://eshoppy.co.in/api/district-admin/dashboard-count";
 
   String get token => box.read('auth_token') ?? '';
 

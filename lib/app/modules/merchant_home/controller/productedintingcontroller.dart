@@ -33,7 +33,7 @@ class merchantProductDetailController extends GetxController {
   final RxList<VariantForm> variantForms = <VariantForm>[].obs;
 
   // ── API base ──────────────────────────────────────────────────────────────────
-  static const _base = 'https://entenaadu.co.in/api';
+  static const _base = 'https://eshoppy.co.in/api';
 
   // ─────────────────────────────────────────────────────────────────────────────
   @override

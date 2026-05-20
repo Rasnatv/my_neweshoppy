@@ -22,7 +22,7 @@ class MerchantOfferProductController extends GetxController {
   final box = GetStorage();
 
   static const String _base =
-      "https://entenaadu.co.in/api";
+      "https://eshoppy.co.in/api";
 
   String get _token => box.read("auth_token") ?? "";
 

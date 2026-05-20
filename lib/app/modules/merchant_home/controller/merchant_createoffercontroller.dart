@@ -19,7 +19,7 @@ class CreateOfferController extends GetxController {
   final ImagePicker _picker = ImagePicker();
 
   static const String _baseUrl =
-      'https://entenaadu.co.in/api';
+      'https://eshoppy.co.in/api';
 
   String get _authToken => _box.read<String>('auth_token') ?? '';
 

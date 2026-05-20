@@ -588,7 +588,7 @@ class _PurpleHeader extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                "entenaadu",
+                                "eShoppy",
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 23,

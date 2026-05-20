@@ -23,7 +23,7 @@ class AdminAdvertisementController extends GetxController {
     'Content-Type': 'application/json',
   };
 
-  static const _base = 'https://entenaadu.co.in/api';
+  static const _base = 'https://eshoppy.co.in/api';
 
   final ImagePicker picker = ImagePicker();
 

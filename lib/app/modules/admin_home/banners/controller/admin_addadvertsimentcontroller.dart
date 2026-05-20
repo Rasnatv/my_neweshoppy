@@ -34,7 +34,7 @@ class AdminaddAdvertisementController extends GetxController {
 
   final showMode = "district".obs;
 
-  static const _base = "https://entenaadu.co.in/api";
+  static const _base = "https://eshoppy.co.in/api";
 
   @override
   void onInit() {
