@@ -12,6 +12,7 @@ import 'package:http/http.dart' as http;
 import '../../../data/errors/api_error.dart';
 import '../../merchantlogin/widget/successwidget.dart';
 import '../view/area_adminhome.dart';
+import 'areaadmin_eventgettingcontroller.dart';
 
 class AreaAdminEventAddController extends GetxController {
 
@@ -384,7 +385,13 @@ class AreaAdminEventAddController extends GetxController {
           AppSnackbar.success(
               responseData['message'] ?? 'Event created successfully');
           _resetForm();
+          // Get.offAll(() => AreaAdminhomepage());
+          _resetForm();
           Get.offAll(() => AreaAdminhomepage());
+          await Future.delayed(const Duration(milliseconds: 300));  // add
+          if (Get.isRegistered<AreaadminGettingEventController>()) { // add
+            Get.find<AreaadminGettingEventController>().fetchEvents(); // add
+          }
         } else {
           AppSnackbar.error(
               responseData['message'] ?? 'Failed to create event');

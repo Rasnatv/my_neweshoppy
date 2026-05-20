@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../data/errors/api_error.dart';
 import '../../../merchantlogin/widget/successwidget.dart';
+import '../views/adminadvertisment.dart';
 
 class AdminupdateAdvertisementController extends GetxController {
   final _box = GetStorage();
@@ -248,7 +249,8 @@ class AdminupdateAdvertisementController extends GetxController {
       final body = jsonDecode(res.body);
       if (res.statusCode == 200 && body['status'] == '1') {
         AppSnackbar.success(body['message'] ?? "Updated successfully");
-        Get.back();
+       Get.off(AdminAdvertisementPage());
+       Get.close(1);
       } else {
         AppSnackbar.error(body['message'] ?? ApiErrorHandler.handleResponse(res));
       }

@@ -1,16 +1,94 @@
-
-
-import 'package:entenaadu/app/widgets/networkconnection_checkpage.dart';
+//
+// import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
+// import 'package:flutter/material.dart';
+// import 'package:get/get.dart';
+//
+// import '../../../common/style/app_colors.dart';
+// import '../../../core/utils/auth_service.dart';
+// import '../controller/areaadmin_dashboardcountcnroller.dart';
+// import '../controller/areaadmin_eventgettingcontroller.dart';
+// import '../widget/areaadmin_getting_advertismentsection.dart';
+// import '../widget/eventwidget.dart';
+// import 'alladvertismentpage.dart';
+// import 'alleeventspage.dart';
+// import 'areawise_advertisment.dart';
+// import 'areawiseeventpage.dart';
+//
+// class AreaAdminhomepage extends StatelessWidget {
+//   AreaAdminhomepage({super.key});
+//
+//   // ✅ permanent: true — controller survives navigation, optimistic state never lost
+//   final ctrl = Get.put(AreaAdminDashboardController(), permanent: true);
+//   final eventCtrl = Get.put(AreaadminGettingEventController(), permanent: true);
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return NetworkAwareWrapper(
+//       child: Scaffold(
+//         backgroundColor: Colors.grey[50],
+//         appBar: AppBar(
+//           elevation: 0,
+//           iconTheme: const IconThemeData(color: Colors.white),
+//           backgroundColor: AppColors.welcomecardclr,
+//           title: const Text(
+//             "Area Admin",
+//             style: TextStyle(
+//               color: Colors.white,
+//               fontSize: 17,
+//               fontWeight: FontWeight.w600,
+//               letterSpacing: 0.1,
+//             ),
+//           ),
+//           actions: [
+//             IconButton(
+//               icon: const Icon(Icons.exit_to_app_rounded, color: Colors.white),
+//               onPressed: () => AuthService.showLogoutDialog(),
+//             ),
+//             const SizedBox(width: 8),
+//           ],
+//         ),
+//         body: SingleChildScrollView(
+//           padding: const EdgeInsets.all(16),
+//           child: Column(
+//             crossAxisAlignment: CrossAxisAlignment.start,
+//             children: [
+//               _buildWelcomeCard(),
+//               const SizedBox(height: 24),
+//               _buildQuickStats(),
+//               const SizedBox(height: 24),
+//               _buildActionButtons(),
+//               const SizedBox(height: 24),
+//               _buildSectionHeader(
+//                 title: 'Recent Events',
+//                 actionLabel: 'See all',
+//                 onAction: () => Get.to(() => AreaAdminAllEventsPage()),
+//               ),
+//               const SizedBox(height: 12),
+//               RecentEventsWidget(),
+//               const SizedBox(height: 24),
+//               _buildSectionHeader(
+//                 title: 'Recent Advertisements',
+//                 actionLabel: 'See all',
+//                 onAction: () => Get.to(() => AreaAdminAllAdvertismentViewPage()),
+//               ),
+//               const SizedBox(height: 24),
+//               HomeAdvertisementWidget(),
+//               const SizedBox(height: 80),
+//             ],
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_instance/src/extension_instance.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart';
-import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
+import 'package:get/get.dart';
 
 import '../../../common/style/app_colors.dart';
 import '../../../core/utils/auth_service.dart';
 import '../controller/areaadmin_dashboardcountcnroller.dart';
-
+import '../controller/areaadmin_eventgettingcontroller.dart';
+import '../controller/areaadmin_getting_advertismentcontroller.dart'; // ✅ add this import
 import '../widget/areaadmin_getting_advertismentsection.dart';
 import '../widget/eventwidget.dart';
 import 'alladvertismentpage.dart';
@@ -20,68 +98,94 @@ import 'areawiseeventpage.dart';
 
 class AreaAdminhomepage extends StatelessWidget {
   AreaAdminhomepage({super.key});
-  final AreaAdminDashboardController ctrl=Get.put(AreaAdminDashboardController());
+
+  final ctrl = Get.put(AreaAdminDashboardController(), permanent: true);
+  final eventCtrl = Get.put(AreaadminGettingEventController(), permanent: true);
+  final adCtrl = Get.put(AreaAdminAdvertisementgetController(), permanent: true); // ✅ add
+
+  // ✅ Single refresh method — refreshes everything at once
+  Future<void> _refreshAll() async {
+    await Future.wait([
+      ctrl.fetchDashboardCount(),
+      eventCtrl.fetchEvents(),
+      adCtrl.fetchAdvertisements(),
+    ]);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return NetworkAwareWrapper(child:Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        elevation: 0,
-        iconTheme: IconThemeData(color: Colors.white),
-        backgroundColor: AppColors.welcomecardclr,
-        title: const Text(
-          "Area Admin",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.1,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.exit_to_app_rounded, color: Colors.white),
-            onPressed: () => AuthService.showLogoutDialog(),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildWelcomeCard(),
-            const SizedBox(height: 24),
-            _buildQuickStats(),
-            const SizedBox(height: 24),
-            _buildActionButtons(),
-            const SizedBox(height: 24),
-            _buildSectionHeader(
-              title: 'Recent Events',
-              actionLabel: 'See all',
-              onAction: ()=>Get.to(()=>AreaAdminAllEventsPage()),
+    return NetworkAwareWrapper(
+      child: Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: AppBar(
+          elevation: 0,
+          iconTheme: const IconThemeData(color: Colors.white),
+          backgroundColor: AppColors.welcomecardclr,
+          title: const Text(
+            "Area Admin",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.1,
             ),
-            const SizedBox(height: 12),
-            RecentEventsWidget(),
-            const SizedBox(height: 24),
-            _buildSectionHeader(
-              title: 'Recent Advertisements',
-              actionLabel: 'See all',
-              onAction: ()=>Get.to(()=>AreaAdminAllAdvertismentViewPage()),
+          ),
+          actions: [
+            // ✅ Refresh button
+            IconButton(
+              icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+              onPressed: _refreshAll,
+              tooltip: 'Refresh',
             ),
-            const SizedBox(height: 24),
-            HomeAdvertisementWidget(),
-
-            const SizedBox(height: 80),
+            IconButton(
+              icon: const Icon(Icons.exit_to_app_rounded, color: Colors.white),
+              onPressed: () => AuthService.showLogoutDialog(),
+            ),
+            const SizedBox(width: 8),
           ],
         ),
+        // ✅ Wrap body in RefreshIndicator for pull-to-refresh
+        body: RefreshIndicator(
+          onRefresh: _refreshAll,
+          color: AppColors.welcomecardclr,
+          child: SingleChildScrollView(
+            // ✅ Required: physics must be set for RefreshIndicator to trigger
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildWelcomeCard(),
+                const SizedBox(height: 24),
+                _buildQuickStats(),
+                const SizedBox(height: 24),
+                _buildActionButtons(),
+                const SizedBox(height: 24),
+                _buildSectionHeader(
+                  title: 'Recent Events',
+                  actionLabel: 'See all',
+                  onAction: () => Get.to(() => AreaAdminAllEventsPage()),
+                ),
+                const SizedBox(height: 12),
+                RecentEventsWidget(),
+                const SizedBox(height: 24),
+                _buildSectionHeader(
+                  title: 'Recent Advertisements',
+                  actionLabel: 'See all',
+                  onAction: () => Get.to(() => AreaAdminAllAdvertismentViewPage()),
+                ),
+                const SizedBox(height: 24),
+                HomeAdvertisementWidget(),
+                const SizedBox(height: 80),
+              ],
+            ),
+          ),
+        ),
       ),
-    ));
+    );
   }
 
-  // ─── Welcome Card ─────────────────────────────────────────────────────────
+
 
   Widget _buildWelcomeCard() {
     return Container(
@@ -144,6 +248,7 @@ class AreaAdminhomepage extends StatelessWidget {
       ),
     );
   }
+
   Widget _buildQuickStats() {
     return Obx(() => Row(
       children: [
@@ -162,8 +267,8 @@ class AreaAdminhomepage extends StatelessWidget {
             value: '${ctrl.totalAdvertisements.value}',
             label: 'Active Ads',
             color: const Color(0xFFEC4899),
-          ),),
-
+          ),
+        ),
         const SizedBox(width: 12),
         Expanded(
           child: _buildStatCard(
@@ -228,30 +333,29 @@ class AreaAdminhomepage extends StatelessWidget {
     );
   }
 
-  // ─── Action Buttons ───────────────────────────────────────────────────────
-
   Widget _buildActionButtons() {
     return Row(
-        children: [
-          Expanded(
-            child: _buildActionButton(
-              icon: Icons.add_circle_outline_rounded,
-              iconColor: const Color(0xFF6366F1),
-              title: 'Post Event',
-              subtitle: 'Area wise',
-              onTap: () => Get.to(() => AreaAdminAddEventPage()),
-            ),
+      children: [
+        Expanded(
+          child: _buildActionButton(
+            icon: Icons.add_circle_outline_rounded,
+            iconColor: const Color(0xFF6366F1),
+            title: 'Post Event',
+            subtitle: 'Area wise',
+            onTap: () => Get.to(() => AreaAdminAddEventPage()),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _buildActionButton(
-              icon: Icons.campaign_rounded,
-              iconColor: const Color(0xFFEC4899),
-              title: 'Post Ad',
-              subtitle: 'Business promo',
-              onTap: () => Get.to(() => AreaAdminAddAdvertisementPage()),
-            ),),
-        ]
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildActionButton(
+            icon: Icons.campaign_rounded,
+            iconColor: const Color(0xFFEC4899),
+            title: 'Post Ad',
+            subtitle: 'Business promo',
+            onTap: () => Get.to(() => AreaAdminAddAdvertisementPage()),
+          ),
+        ),
+      ],
     );
   }
 
@@ -320,8 +424,6 @@ class AreaAdminhomepage extends StatelessWidget {
     );
   }
 
-  // ─── Section Header ───────────────────────────────────────────────────────
-
   Widget _buildSectionHeader({
     required String title,
     String? actionLabel,
@@ -360,5 +462,4 @@ class AreaAdminhomepage extends StatelessWidget {
       ],
     );
   }
-
 }

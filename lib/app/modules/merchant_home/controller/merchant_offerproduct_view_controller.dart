@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import '../../../data/errors/api_error.dart';
 import '../../../data/models/merchant_offerproductviewmodel.dart';
 import '../../merchantlogin/widget/successwidget.dart';
+import '../views/merchant_home.dart';
 
 class MerchantOfferProductController extends GetxController {
   final int offerId;
@@ -180,6 +181,7 @@ class MerchantOfferProductController extends GetxController {
           offerProducts.removeWhere((p) => p.productId == productId);
           AppSnackbar.success(
               data['message'] ?? "Product removed successfully");
+           Get.offAll(() =>  MerchantDashboardPage());
         } else {
           AppSnackbar.error(data['message'] ?? "Failed to delete product");
         }

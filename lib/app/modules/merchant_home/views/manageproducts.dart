@@ -24,6 +24,7 @@ class _ManageProductsPageState extends State<ManageProductsPage> {
   @override
   void initState() {
     super.initState();
+
     _scrollController.addListener(() {
       if (_scrollController.position.pixels >=
           _scrollController.position.maxScrollExtent - 200) {
@@ -434,23 +435,7 @@ class _ProductCard extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
-        Wrap(
-          spacing: 6,
-          runSpacing: 4,
-          children: [
-            _buildChip(
-              label: 'In Stock',
-              bgColor: const Color(0xFFE8F5E9),
-              textColor: const Color(0xFF2E7D32),
-            ),
-            if (product.variants.length > 1)
-              _buildChip(
-                label: '${product.variants.length} variants',
-                bgColor: const Color(0xFFE3F2FD),
-                textColor: const Color(0xFF1565C0),
-              ),
-          ],
-        ),
+
       ],
     );
   }

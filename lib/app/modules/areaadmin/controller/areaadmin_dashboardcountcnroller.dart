@@ -49,6 +49,9 @@ class AreaAdminDashboardController extends GetxController {
         totalEvents.value = data['data']['total_events'] ?? 0;
         totalAdvertisements.value =
             data['data']['total_advertisements'] ?? 0;
+        if (Get.isRegistered<AreaAdminDashboardController>()) {
+          Get.find<AreaAdminDashboardController>().fetchDashboardCount();
+        }
 
       } else {
         final errorMessage = ApiErrorHandler.handleResponse(response);

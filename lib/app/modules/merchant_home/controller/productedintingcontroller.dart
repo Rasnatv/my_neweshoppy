@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../data/errors/api_error.dart';
 import '../../../data/models/merchnatupdateproductmodel.dart'; // adjust path
 import '../../merchantlogin/widget/successwidget.dart';
+import '../views/manageproducts.dart';
 import 'manageproduct_controller.dart';
 
 class merchantProductDetailController extends GetxController {
@@ -243,10 +244,12 @@ class merchantProductDetailController extends GetxController {
         product(updated);
         _populateForms(updated);
         AppSnackbar.success(json['message'] ?? 'Product updated successfully');
-        Get.back(result: true);
-        Get.delete<ManageproductController>();
+        if (Get.isRegistered<ManageproductController>()) {
+          await Get.find<ManageproductController>().fetchProducts(); // your fetch method name
+        }
+
+        Get.off(ManageProductsPage());
         Get.close(1);
-        Get.offNamed('/manageproduct');
       } else {
         AppSnackbar.error(json['message'] ?? 'Update failed');
       }

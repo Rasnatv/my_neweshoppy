@@ -80,14 +80,14 @@ class BookedOrdersPage extends StatelessWidget {
         letterSpacing: 0.1,
       ),
     ),
-    actions: [
-      Obx(() => !ctrl.isLoading.value
-          ? IconButton(
-        icon: const Icon(Icons.refresh_rounded, color: Colors.white),
-        onPressed: ctrl.fetchOrders,
-      )
-          : const SizedBox.shrink()),
-    ],
+    // actions: [
+    //   Obx(() => !ctrl.isLoading.value
+    //       ? IconButton(
+    //     icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+    //     onPressed: ctrl.fetchOrders,
+    //   )
+    //       : const SizedBox.shrink()),
+    // ],
   );
 }
 

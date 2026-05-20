@@ -123,9 +123,6 @@ class AddressUpdateController extends GetxController {
           data['status'] == true) {
         isLoading.value = false;
 
-
-        await Future.delayed(const Duration(seconds: 1));
-
         await Get.delete<AddressListController>(force: true);
         Get.off(() => AddressListPage());
       } else {
