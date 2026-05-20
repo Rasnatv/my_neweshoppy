@@ -18,6 +18,7 @@ import '../../userhome/widget/qrgettingpage/actionbutton.dart';
 import '../../userhome/widget/qrgettingpage/bottom_paybar.dart';
 import '../controller/qrgettingcontroller.dart';
 import '../controller/restaurant_maincartcontroller.dart';
+
 class _UpiApp {
   final String name;
   final String scheme;
@@ -114,13 +115,11 @@ Future<_UpiApp?> _showUpiAppPicker(BuildContext context) async {
               onTap: () => Navigator.of(context).pop(app),
               child: Container(
                 margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 14),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF9FAFB),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                      color: const Color(0xFFE5E7EB), width: 0.5),
+                  border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
                 ),
                 child: Row(
                   children: [
@@ -155,9 +154,9 @@ Future<_UpiApp?> _showUpiAppPicker(BuildContext context) async {
     ),
   );
 }
+
 Future<void> handlePay(
     List<PaymentDetailModel> data, BuildContext context) async {
-
   // Step 1: choose app
   final selectedApp = await _showUpiAppPicker(context);
   if (selectedApp == null) return;
@@ -165,7 +164,6 @@ Future<void> handlePay(
   try {
     // Step 2: open ONLY the app (no params)
     final uri = Uri.parse(selectedApp.scheme);
-
     final launched = await launchUrl(
       uri,
       mode: LaunchMode.externalApplication,
@@ -183,11 +181,13 @@ Future<void> handlePay(
       'Could not open ${selectedApp.name}',
     );
   }
+
   await Future.delayed(const Duration(seconds: 2));
   if (context.mounted) {
     _showTransactionSheet(context, data);
   }
 }
+
 void _showTransactionSheet(
     BuildContext context, List<PaymentDetailModel> data) {
   final txnController = TextEditingController();
@@ -200,19 +200,20 @@ void _showTransactionSheet(
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    useSafeArea: true,
+    useSafeArea: false,                    // ✅ AnimatedPadding handles insets
     backgroundColor: Colors.transparent,
-    builder: (ctx) => DraggableScrollableSheet(
-      initialChildSize: 0.75,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      expand: false,
-      builder: (_, scrollController) => Padding(
-        // ✅ This pushes the sheet up when keyboard appears
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: Container(
+    builder: (ctx) => AnimatedPadding(     // ✅ wraps the entire sheet
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.easeOut,
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(ctx).viewInsets.bottom, // ✅ uses ctx, not context
+      ),
+      child: DraggableScrollableSheet(
+        initialChildSize: 0.75,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (_, scrollController) => Container(
           decoration: const BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -221,7 +222,6 @@ void _showTransactionSheet(
           child: Form(
             key: formKey,
             child: ListView(
-              // ✅ ListView with the sheet's scrollController
               controller: scrollController,
               children: [
                 // ── Handle bar
@@ -253,14 +253,21 @@ void _showTransactionSheet(
                     const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Payment Done?',
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF111111))),
-                        Text('Enter your UPI transaction ID to confirm',
-                            style: TextStyle(
-                                fontSize: 12, color: Color(0xFF9CA3AF))),
+                        Text(
+                          'Payment Done?',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF111111),
+                          ),
+                        ),
+                        Text(
+                          'Enter your UPI transaction ID to confirm',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF9CA3AF),
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -278,38 +285,50 @@ void _showTransactionSheet(
                   ),
                   child: Column(
                     children: [
-                      ...data.map((item) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(item.restaurantName,
+                      ...data.map(
+                            (item) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                item.restaurantName,
                                 style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Color(0xFF374151))),
-                            Text('₹${item.totalPrice.toStringAsFixed(2)}',
+                                  fontSize: 12,
+                                  color: Color(0xFF374151),
+                                ),
+                              ),
+                              Text(
+                                '₹${item.totalPrice.toStringAsFixed(2)}',
                                 style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF111111))),
-                          ],
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF111111),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      )),
+                      ),
                       const Divider(height: 12, color: Color(0xFFE5E7EB)),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Total paid',
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF111111))),
+                          const Text(
+                            'Total paid',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF111111),
+                            ),
+                          ),
                           Text(
                             '₹${data.fold(0.0, (s, i) => s + i.totalPrice).toStringAsFixed(2)}',
                             style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF059669)),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF059669),
+                            ),
                           ),
                         ],
                       ),
@@ -319,11 +338,14 @@ void _showTransactionSheet(
                 const SizedBox(height: 16),
 
                 // ── Transaction ID field
-                const Text('Transaction ID',
-                    style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF374151))),
+                const Text(
+                  'Transaction ID',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF374151),
+                  ),
+                ),
                 const SizedBox(height: 6),
                 TextFormField(
                   controller: txnController,
@@ -333,21 +355,13 @@ void _showTransactionSheet(
                     FilteringTextInputFormatter.digitsOnly,
                     LengthLimitingTextInputFormatter(12),
                   ],
-                  // ✅ Auto-scroll to this field when focused
-                  onTap: () {
-                    Future.delayed(const Duration(milliseconds: 300), () {
-                      scrollController.animateTo(
-                        scrollController.position.maxScrollExtent,
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeOut,
-                      );
-                    });
-                  },
+                  // ✅ onTap scroll hack removed — AnimatedPadding handles it
                   style: const TextStyle(
-                      fontSize: 14,
-                      fontFamily: 'monospace',
-                      color: Color(0xFF111111),
-                      letterSpacing: 0.5),
+                    fontSize: 14,
+                    fontFamily: 'monospace',
+                    color: Color(0xFF111111),
+                    letterSpacing: 0.5,
+                  ),
                   decoration: InputDecoration(
                     hintText: 'e.g. 407312345678',
                     hintStyle: const TextStyle(
@@ -357,21 +371,25 @@ void _showTransactionSheet(
                     contentPadding: const EdgeInsets.symmetric(
                         horizontal: 14, vertical: 14),
                     border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                            color: Color(0xFFE5E7EB), width: 0.5)),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                          color: Color(0xFFE5E7EB), width: 0.5),
+                    ),
                     enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                            color: Color(0xFFE5E7EB), width: 0.5)),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                          color: Color(0xFFE5E7EB), width: 0.5),
+                    ),
                     focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                            color: Color(0xFF4F46E5), width: 1.5)),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                          color: Color(0xFF4F46E5), width: 1.5),
+                    ),
                     errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                            color: Color(0xFFDC2626), width: 1)),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                          color: Color(0xFFDC2626), width: 1),
+                    ),
                     suffixIcon: IconButton(
                       icon: const Icon(Icons.paste_rounded,
                           size: 18, color: Color(0xFF9CA3AF)),
@@ -396,142 +414,154 @@ void _showTransactionSheet(
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                    'Find it in your UPI app under payment history',
-                    style: TextStyle(
-                        fontSize: 11, color: Color(0xFF9CA3AF))),
+                  'Find it in your UPI app under payment history',
+                  style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+                ),
                 const SizedBox(height: 16),
 
                 // ── Payment Screenshot
-                const Text('Payment Screenshot',
-                    style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF374151))),
+                const Text(
+                  'Payment Screenshot',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF374151),
+                  ),
+                ),
                 const SizedBox(height: 8),
-                Obx(() => screenshotPath.value.isEmpty
-                    ? GestureDetector(
-                  onTap: () async {
-                    final picker = ImagePicker();
-                    final picked = await picker.pickImage(
-                        source: ImageSource.gallery,
-                        imageQuality: 70);
-                    if (picked != null) {
-                      screenshotPath.value = picked.path;
-                    }
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    padding:
-                    const EdgeInsets.symmetric(vertical: 16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF9FAFB),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                          color: const Color(0xFFE5E7EB), width: 1),
-                    ),
-                    child: const Column(
-                      children: [
-                        Icon(Icons.upload_rounded,
-                            size: 24, color: Color(0xFF9CA3AF)),
-                        SizedBox(height: 6),
-                        Text('Tap to upload screenshot',
+                Obx(
+                      () => screenshotPath.value.isEmpty
+                      ? GestureDetector(
+                    onTap: () async {
+                      final picker = ImagePicker();
+                      final picked = await picker.pickImage(
+                          source: ImageSource.gallery,
+                          imageQuality: 70);
+                      if (picked != null) {
+                        screenshotPath.value = picked.path;
+                      }
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding:
+                      const EdgeInsets.symmetric(vertical: 16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF9FAFB),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                            color: const Color(0xFFE5E7EB), width: 1),
+                      ),
+                      child: const Column(
+                        children: [
+                          Icon(Icons.upload_rounded,
+                              size: 24, color: Color(0xFF9CA3AF)),
+                          SizedBox(height: 6),
+                          Text(
+                            'Tap to upload screenshot',
                             style: TextStyle(
                                 fontSize: 12,
-                                color: Color(0xFF9CA3AF))),
-                      ],
-                    ),
-                  ),
-                )
-                    : Stack(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.file(
-                        File(screenshotPath.value),
-                        width: double.infinity,
-                        height: 140,
-                        fit: BoxFit.cover,
+                                color: Color(0xFF9CA3AF)),
+                          ),
+                        ],
                       ),
                     ),
-                    Positioned(
-                      top: 6,
-                      right: 6,
-                      child: GestureDetector(
-                        onTap: () => screenshotPath.value = '',
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: Colors.black54,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Icon(Icons.close,
-                              size: 14, color: Colors.white),
+                  )
+                      : Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.file(
+                          File(screenshotPath.value),
+                          width: double.infinity,
+                          height: 140,
+                          fit: BoxFit.cover,
                         ),
                       ),
-                    ),
-                  ],
-                )),
+                      Positioned(
+                        top: 6,
+                        right: 6,
+                        child: GestureDetector(
+                          onTap: () => screenshotPath.value = '',
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: Colors.black54,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Icon(Icons.close,
+                                size: 14, color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: 20),
 
                 // ── Confirm button
-                Obx(() => SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: isSubmitting.value
-                        ? null
-                        : () async {
-                      if (!formKey.currentState!.validate()) return;
+                Obx(
+                      () => SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: isSubmitting.value
+                          ? null
+                          : () async {
+                        if (!formKey.currentState!.validate()) return;
 
-                      isSubmitting.value = true;
-                      final txnId = txnController.text.trim();
-                      final screenshot = screenshotPath.value;
-                      bool allSuccess = true;
+                        isSubmitting.value = true;
+                        final txnId = txnController.text.trim();
+                        final screenshot = screenshotPath.value;
+                        bool allSuccess = true;
 
-                      for (final item in data) {
-                        final success =
-                        await payController.storeTransaction(
-                          restaurantId: item.restaurantId,
-                          transactionId: txnId,
-                          screenshotPath: screenshot.isNotEmpty
-                              ? screenshot
-                              : null,
-                        );
-                        if (!success) {
-                          allSuccess = false;
-                          break;
+                        for (final item in data) {
+                          final success =
+                          await payController.storeTransaction(
+                            restaurantId: item.restaurantId,
+                            transactionId: txnId,
+                            screenshotPath: screenshot.isNotEmpty
+                                ? screenshot
+                                : null,
+                          );
+                          if (!success) {
+                            allSuccess = false;
+                            break;
+                          }
                         }
-                      }
 
-                      isSubmitting.value = false;
+                        isSubmitting.value = false;
 
-                      if (allSuccess) {
-                        Get.back();
-                        _onPaymentConfirmed(txnId, data);
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isSubmitting.value
-                          ? const Color(0xFF9CA3AF)
-                          : const Color(0xFF0F5151),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
-                    ),
-                    child: isSubmitting.value
-                        ? const SizedBox(
-                      height: 18,
-                      width: 18,
-                      child: CircularProgressIndicator(
-                          color: Colors.white, strokeWidth: 2),
-                    )
-                        : const Text('Confirm Payment',
+                        if (allSuccess) {
+                          Get.back();
+                          _onPaymentConfirmed(txnId, data);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isSubmitting.value
+                            ? const Color(0xFF9CA3AF)
+                            : const Color(0xFF0F5151),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding:
+                        const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14)),
+                      ),
+                      child: isSubmitting.value
+                          ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2),
+                      )
+                          : const Text(
+                        'Confirm Payment',
                         style: TextStyle(
                             fontSize: 14,
-                            fontWeight: FontWeight.w600)),
+                            fontWeight: FontWeight.w600),
+                      ),
+                    ),
                   ),
-                )),
+                ),
                 const SizedBox(height: 10),
 
                 // ── Pay Later
@@ -539,13 +569,14 @@ void _showTransactionSheet(
                   width: double.infinity,
                   child: TextButton(
                     onPressed: () => Get.back(),
-                    child: const Text('Pay Later',
-                        style: TextStyle(
-                            fontSize: 13, color: Color(0xFF9CA3AF))),
+                    child: const Text(
+                      'Pay Later',
+                      style: TextStyle(
+                          fontSize: 13, color: Color(0xFF9CA3AF)),
+                    ),
                   ),
                 ),
 
-                // ✅ Extra space so content clears the keyboard
                 const SizedBox(height: 20),
               ],
             ),
@@ -555,6 +586,7 @@ void _showTransactionSheet(
     ),
   );
 }
+
 void _onPaymentConfirmed(String txnId, List<PaymentDetailModel> data) {
   try {
     final cartController = Get.find<FinalCartController>();
@@ -571,7 +603,6 @@ void _onPaymentConfirmed(String txnId, List<PaymentDetailModel> data) {
     duration: const Duration(seconds: 4),
   );
 
-  // ✅ No arguments passed → Get.arguments will be null → no splash trigger
   Get.offUntil(
     GetPageRoute(page: () => const LandingView()),
         (route) => false,
@@ -638,10 +669,11 @@ class QRPaymentPage extends StatelessWidget {
         title: const Text(
           'Payment',
           style: TextStyle(
-              color: Colors.white,
-              fontSize: 17,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.1),
+            color: Colors.white,
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.1,
+          ),
         ),
         backgroundColor: AppColors.restaurantclr,
         elevation: 0,
@@ -671,16 +703,21 @@ class QRPaymentPage extends StatelessWidget {
                         size: 36, color: Color(0xFFDC2626)),
                   ),
                   const SizedBox(height: 16),
-                  const Text('Something went wrong',
-                      style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF111111))),
+                  const Text(
+                    'Something went wrong',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF111111),
+                    ),
+                  ),
                   const SizedBox(height: 6),
-                  Text(controller.errorMessage.value,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                          fontSize: 13, color: Color(0xFF9CA3AF))),
+                  Text(
+                    controller.errorMessage.value,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        fontSize: 13, color: Color(0xFF9CA3AF)),
+                  ),
                   const SizedBox(height: 24),
                   TextButton(
                     onPressed: controller.fetchPaymentDetails,
@@ -705,8 +742,10 @@ class QRPaymentPage extends StatelessWidget {
 
         if (data.isEmpty) {
           return const Center(
-            child: Text('No payment details available.',
-                style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14)),
+            child: Text(
+              'No payment details available.',
+              style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+            ),
           );
         }
 
@@ -776,34 +815,43 @@ class _RestaurantPaymentCard extends StatelessWidget {
                   height: 42,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                        colors: colors,
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight),
+                      colors: colors,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Center(
-                    child: Text(_initials(item.restaurantName),
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.5)),
+                    child: Text(
+                      _initials(item.restaurantName),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(item.restaurantName,
-                        style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF111111),
-                            letterSpacing: -0.2)),
+                    Text(
+                      item.restaurantName,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF111111),
+                        letterSpacing: -0.2,
+                      ),
+                    ),
                     const SizedBox(height: 2),
-                    Text('${item.ownerName} · Owner',
-                        style: const TextStyle(
-                            fontSize: 11, color: Color(0xFF9CA3AF))),
+                    Text(
+                      '${item.ownerName} · Owner',
+                      style: const TextStyle(
+                          fontSize: 11, color: Color(0xFF9CA3AF)),
+                    ),
                   ],
                 ),
               ],
@@ -863,27 +911,34 @@ class _RestaurantPaymentCard extends StatelessWidget {
                 padding:
                 const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                    color: const Color(0xFFF9FAFB),
-                    borderRadius: BorderRadius.circular(8)),
+                  color: const Color(0xFFF9FAFB),
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.qr_code_rounded,
                         size: 14, color: Color(0xFFD1D5DB)),
                     SizedBox(width: 6),
-                    Text('QR code not available',
-                        style: TextStyle(
-                            fontSize: 11, color: Color(0xFF9CA3AF))),
+                    Text(
+                      'QR code not available',
+                      style:
+                      TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+                    ),
                   ],
                 ),
               ),
+
             const SizedBox(height: 10),
+
+            // How to pay tip
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: const Color(0xFFFFFBEB),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFFCD34D), width: 0.8),
+                border: Border.all(
+                    color: const Color(0xFFFCD34D), width: 0.8),
               ),
               child: const Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -918,7 +973,6 @@ class _RestaurantPaymentCard extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 4),
 
             const SizedBox(height: 12),
 
@@ -947,7 +1001,6 @@ class _RestaurantPaymentCard extends StatelessWidget {
                       onTap: () => _copyUpi(item.upiId.trim()),
                     ),
                   ),
-
               ],
             ),
 
@@ -959,18 +1012,22 @@ class _RestaurantPaymentCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Amount due',
-                    style: TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF9CA3AF),
-                        letterSpacing: 0.3)),
+                const Text(
+                  'Amount due',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF9CA3AF),
+                    letterSpacing: 0.3,
+                  ),
+                ),
                 Text(
                   '₹${item.totalPrice.toStringAsFixed(2)}',
                   style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF111111),
-                      letterSpacing: -0.3),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF111111),
+                    letterSpacing: -0.3,
+                  ),
                 ),
               ],
             ),
@@ -980,6 +1037,3 @@ class _RestaurantPaymentCard extends StatelessWidget {
     );
   }
 }
-
-
-
