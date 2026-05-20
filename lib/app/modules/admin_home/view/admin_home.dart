@@ -51,10 +51,7 @@ class AdminDashboard extends StatelessWidget {
             icon: const Icon(Icons.refresh, color: Colors.white),
             onPressed: controller.fetchDashboardCounts,
           )),
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-            onPressed: () {},
-          ),
+
           const SizedBox(width: 8),
         ],
       ),
