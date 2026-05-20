@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart' hide SearchController;
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../product/widgtet/productcard.dart';
 import '../controller/search_controller.dart';
@@ -34,14 +35,21 @@ class _SearchPageState extends State<SearchPage> {
           // 🔍 Search Box
           Padding(
             padding: const EdgeInsets.all(12),
-            child: Obx(() => TextField(
+            child: Obx(() =>
+            TextField(
               controller: searchCtrl,
+              maxLength: 25, // ✅ Limits to 25 characters
+              maxLengthEnforcement: MaxLengthEnforcement.enforced, // ✅ Hard limit
+              inputFormatters: [
+                LengthLimitingTextInputFormatter(25), // ✅ Extra safety
+              ],
               onChanged: (value) {
-                searchText.value = value; // ✅ Update reactive variable
+                searchText.value = value;
                 controller.onSearchChanged(value);
               },
               decoration: InputDecoration(
                 hintText: "Search products...",
+                counterText: "", // ✅ Hides the "0/25" counter shown by maxLength
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: searchText.value.isNotEmpty
                     ? IconButton(
@@ -57,8 +65,7 @@ class _SearchPageState extends State<SearchPage> {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-            )),
-          ),
+            ),),),
 
           // 📦 Results
           Expanded(

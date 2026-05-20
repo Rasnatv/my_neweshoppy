@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_colors.dart';
 import '../../../widgets/networkconnection_checkpage.dart';
+import '../../product/view/prodductdetailscreen.dart';
+import '../../userhome/view/user_offerproductdetail.dart';
 
 class MyOrdersView extends StatelessWidget {
   MyOrdersView({super.key});
@@ -33,7 +35,6 @@ class MyOrdersView extends StatelessWidget {
               letterSpacing: 0.1,
             ),
           ),
-
         ),
         body: Obx(() {
           if (controller.isLoading.value) {
@@ -49,7 +50,7 @@ class MyOrdersView extends StatelessWidget {
             color: primary,
             onRefresh: controller.fetchMyOrders,
             child: ListView.builder(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
               itemCount: controller.orders.length,
               itemBuilder: (context, index) {
                 return _buildOrderCard(controller.orders[index], controller);
@@ -201,7 +202,6 @@ class MyOrdersView extends StatelessWidget {
             ),
           ),
         ],
-
       ),
     );
   }
@@ -210,140 +210,159 @@ class MyOrdersView extends StatelessWidget {
   Widget _buildItemRow(OrderProduct item, MyOrdersController controller) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Product image
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: Image.network(
-              item.displayImage,
-              width: 56,
-              height: 56,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: () {
+          // ── Same pattern as CartScreen ──
+          // type == 1  →  offer product detail
+          // type == 0  →  normal product detail
+          if (item.type == 1) {
+            Get.to(() => UserOfferProductDetailScreen(
+              offerProductId: item.productId,
+              preSelectedVariantId: item.variant?.variantId,
+            ));
+          } else {
+            Get.to(() => ProductDetailPage(
+              productId: item.productId,
+              preSelectedVariantId: item.variant?.variantId,
+            ));
+          }
+        },
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Product image
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.network(
+                item.displayImage,
                 width: 56,
                 height: 56,
-                decoration: BoxDecoration(
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF0F0F0),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.image_not_supported_outlined,
+                    color: Colors.grey,
+                    size: 22,
+                  ),
+                ),
+                loadingBuilder: (_, child, progress) => progress == null
+                    ? child
+                    : Container(
+                  width: 56,
+                  height: 56,
                   color: const Color(0xFFF0F0F0),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.image_not_supported_outlined,
-                  color: Colors.grey,
-                  size: 22,
-                ),
-              ),
-              loadingBuilder: (_, child, progress) => progress == null
-                  ? child
-                  : Container(
-                width: 56,
-                height: 56,
-                color: const Color(0xFFF0F0F0),
-                child: Center(
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: primary,
-                    value: progress.expectedTotalBytes != null
-                        ? progress.cumulativeBytesLoaded /
-                        progress.expectedTotalBytes!
-                        : null,
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: primary,
+                      value: progress.expectedTotalBytes != null
+                          ? progress.cumulativeBytesLoaded /
+                          progress.expectedTotalBytes!
+                          : null,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 12),
+            const SizedBox(width: 12),
 
-          // Product details
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Product name
-                Text(
-                  item.productName,
-                  style: const TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1A1A1A),
+            // Product details
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Product name
+                  Text(
+                    item.productName,
+                    style: const TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1A1A1A),
+                    ),
                   ),
-                ),
 
-                // ✅ Variant attributes as badge chips
-                if (item.variant != null &&
-                    item.variant!.attributes.isNotEmpty) ...[
-                  const SizedBox(height: 5),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 4,
-                    children: item.variant!.attributes.entries.map((e) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: primary.withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            color: primary.withOpacity(0.2),
-                            width: 0.8,
+                  // Variant attributes as badge chips
+                  if (item.variant != null &&
+                      item.variant!.attributes.isNotEmpty) ...[
+                    const SizedBox(height: 5),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: item.variant!.attributes.entries.map((e) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
                           ),
-                        ),
-                        child: Text(
-                          '${_cap(e.key)}: ${_cap(e.value)}',
-                          style: TextStyle(
-                            fontSize: 10.5,
-                            color: primary,
-                            fontWeight: FontWeight.w600,
+                          decoration: BoxDecoration(
+                            color: primary.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: primary.withOpacity(0.2),
+                              width: 0.8,
+                            ),
                           ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ],
-
-                const SizedBox(height: 5),
-
-                // Price line: final_price (strikethrough original if discounted)
-                Row(
-                  children: [
-                    if (item.variant != null &&
-                        item.variant!.finalPrice < item.variant!.price) ...[
-                      Text(
-                        '₹${controller.formatPrice(item.variant!.price)}',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: Color(0xFFAAAAAA),
-                          decoration: TextDecoration.lineThrough,
-                        ),
-                      ),
-                      const SizedBox(width: 5),
-                    ],
-                    Text(
-                      '₹${controller.formatPrice(item.price)}  ×  ${item.quantity}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF888888),
-                      ),
+                          child: Text(
+                            '${_cap(e.key)}: ${_cap(e.value)}',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              color: primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        );
+                      }).toList(),
                     ),
                   ],
-                ),
-              ],
-            ),
-          ),
 
-          // Item total
-          Text(
-            '₹${controller.formatPrice(item.total)}',
-            style: TextStyle(
-              fontSize: 13.5,
-              fontWeight: FontWeight.w700,
-              color: primary,
+                  const SizedBox(height: 5),
+
+                  // Price line
+                  Row(
+                    children: [
+                      if (item.variant != null &&
+                          item.variant!.finalPrice < item.variant!.price) ...[
+                        Text(
+                          '₹${controller.formatPrice(item.variant!.price)}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFFAAAAAA),
+                            decoration: TextDecoration.lineThrough,
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                      ],
+                      Text(
+                        '₹${controller.formatPrice(item.price)}  ×  ${item.quantity}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF888888),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+
+            // Item total
+            Text(
+              '₹${controller.formatPrice(item.total)}',
+              style: TextStyle(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w700,
+                color: primary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
