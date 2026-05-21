@@ -515,7 +515,7 @@ class _AdminRestaurantUpdatePageState
     if (imagePath.isEmpty) return '';
     if (imagePath.startsWith('http://') ||
         imagePath.startsWith('https://')) return imagePath;
-    return "https://entenaadu.co.in//$imagePath";
+    return "https://eshoppy.co.in//$imagePath";
   }
 
   Widget _buildSectionTitle(String title) {

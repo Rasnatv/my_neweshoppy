@@ -135,7 +135,7 @@ class AdminEventGetController extends GetxController {
     try {
       final response = await http.delete(
         Uri.parse(
-            "https://entenaadu.co.in/api/delete-Event-admindistrict"),
+            "https://eshoppy.co.in/api/delete-Event-admindistrict"),
         headers: {
           "Accept": "application/json",
           "Authorization": "Bearer $_token",

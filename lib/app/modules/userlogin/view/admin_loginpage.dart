@@ -320,7 +320,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen>
     return Column(
       children: [
         Text(
-          "entenaadu Admin",
+          "eShoppy Admin",
           style: TextStyle(
             fontSize: titleSize,
             fontWeight: FontWeight.w800,

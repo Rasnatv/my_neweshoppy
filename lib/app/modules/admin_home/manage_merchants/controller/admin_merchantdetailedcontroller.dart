@@ -59,7 +59,7 @@ class AdminMerchantDetailController extends GetxController {
       'https://eshoppy.co.in/api/admin/update-merchant';
   static const _deleteUrl =
       'https://eshoppy.co.in/api/admin/delete-merchant';
-  static const _statesUrl = 'https://entenaadu.co.in/api/merchant/states';
+  static const _statesUrl = 'https://eshoppy.co.in/api/merchant/states';
   static const _districtsUrl =
       'https://eshoppy.co.in/api/merchant/districts';
   static const _locationsUrl =

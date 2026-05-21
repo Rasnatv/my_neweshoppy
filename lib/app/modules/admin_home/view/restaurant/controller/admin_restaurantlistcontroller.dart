@@ -28,7 +28,7 @@ class AdminRestaurantController extends GetxController {
       restaurants.clear();
 
       final token = box.read("auth_token");
-      final url = Uri.parse("https://entenaadu.co.in/api/admin/restaurants");
+      final url = Uri.parse("https://eshoppy.co.in/api/admin/restaurants");
 
       final response = await http.get(
         url,
@@ -77,7 +77,7 @@ class AdminRestaurantController extends GetxController {
     try {
       final token = box.read("auth_token");
       final url =
-      Uri.parse("https://entenaadu.co.in/api/delete-Restaurant");
+      Uri.parse("https://eshoppy.co.in/api/delete-Restaurant");
 
       final response = await http.delete(
         url,

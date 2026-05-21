@@ -1,6 +1,6 @@
 
-import 'package:eshoppy/app/modules/restarunent/view/restarnent_list.dart';
-import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
+import 'package:entenaadu/app/modules/restarunent/view/restarnent_list.dart';
+import 'package:entenaadu/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';

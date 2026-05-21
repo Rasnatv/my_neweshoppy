@@ -11,7 +11,7 @@ import '../../../../../data/errors/api_error.dart';
 import '../../../../../data/models/adminretaurant_menumodel.dart';
 import '../../../../merchantlogin/widget/successwidget.dart';
 
-const String _baseUrl = 'https://entenaadu.co.in/api';
+const String _baseUrl = 'https://eshoppy.co.in/api';
 
 class RestaurantmenuController extends GetxController {
   final _storage = GetStorage();

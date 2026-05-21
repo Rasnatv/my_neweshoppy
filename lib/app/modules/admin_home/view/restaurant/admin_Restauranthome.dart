@@ -452,6 +452,6 @@ class AdminRestauranthome extends StatelessWidget {
     // Relative path → prepend base URL with single slash
     final cleanPath =
     imagePath.startsWith('/') ? imagePath : '/$imagePath';
-    return "https://entenaadu.co.in$cleanPath";
+    return "https://eshoppy.co.in$cleanPath";
   }
 }

@@ -267,7 +267,7 @@ class AdminUserController extends GetxController {
               ),
               pw.SizedBox(height: 3),
               pw.Text(
-                'entenaadu - Admin Panel',
+                'eShoppy - Admin Panel',
                 style: pw.TextStyle(
                   font: regular,
                   fontSize: 9,

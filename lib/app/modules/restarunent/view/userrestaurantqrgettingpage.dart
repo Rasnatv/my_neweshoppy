@@ -626,7 +626,7 @@ Future<void> _downloadQr(String url, String restaurantName) async {
     final filePath =
         '${dir.path}/qr_${restaurantName.replaceAll(' ', '_')}.png';
     await Dio().download(url, filePath);
-    await Gal.putImage(filePath, album: 'entenaadu QR Codes');
+    await Gal.putImage(filePath, album: 'eShoppy QR Codes');
     _snack('QR Saved!', 'QR code saved to your gallery', isSuccess: true);
   } catch (e) {
     _snack('Download failed', 'Could not save QR code. Try again.');

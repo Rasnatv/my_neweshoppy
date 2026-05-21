@@ -22,7 +22,7 @@ class AdminupdateAdvertisementController extends GetxController {
     'Accept': 'application/json',
   };
 
-  static const _base = "https://entenaadu.co.in/api";
+  static const _base = "https://eshoppy.co.in/api";
 
   // ── STATE ─────────────────────────────────────────────────
   final isFetchingAd    = false.obs;
