@@ -297,11 +297,7 @@ class OfferProductDetailController extends GetxController {
     }
   }
 
-  // ================= PATCH PARENT CONTROLLER =================
-  // Returns true  → display variant (variant[0]) price or image changed,
-  //                 caller should fetchOfferProduct() to sync server values.
-  // Returns false → only non-display variants changed (or nothing changed),
-  //                 caller should skip the fetch.
+
   bool _patchParentController() {
     try {
       final args = Get.arguments;
@@ -328,8 +324,6 @@ class OfferProductDetailController extends GetxController {
               displayVariant.imagePath.isNotEmpty &&
               displayVariant.imagePath != _originalDisplayImage;
 
-      // Nothing changed in display variant — do nothing, tell caller
-      // not to fetch either (avoids overwriting other local state).
       if (!priceChanged && !imageChanged) return false;
 
       final Map<String, dynamic> patchData = {};
@@ -346,8 +340,6 @@ class OfferProductDetailController extends GetxController {
         patchData['product_image'] = displayVariant.imagePath;
       }
 
-      // Apply local patch — caller will follow up with fetchOfferProduct()
-      // which will replace the local file path with the real CDN URL.
       if (patchData.isNotEmpty) {
         parent.patchProductLocally(offerProductId.value, patchData);
       }

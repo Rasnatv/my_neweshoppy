@@ -1,4 +1,6 @@
 
+import 'package:eshoppy/app/modules/admin_home/view/restaurant/admin_merchanthome.dart';
+
 import '../../../../data/errors/api_error.dart';
 import '../../../merchantlogin/widget/successwidget.dart';  // ← adjust path
 import 'dart:convert';
@@ -409,8 +411,7 @@ class AdminAddMerchantController extends GetxController {
                   height: 50,
                   child: ElevatedButton(
                     onPressed: () {
-                      Get.back(); // close dialog
-                      Get.back(); // go back to previous screen
+                   Get.offAll(AdminMerchantHomePageUI());
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF089385),
