@@ -1,5 +1,4 @@
 
-
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -78,7 +77,9 @@ class MyOrdersController extends GetxController {
       return rawDate;
     }
   }
+
   String formatPrice(double amount) {
-    return amount.round().toString(); // 299.50 → "300", 750.00 → "750"
+    return amount.round().toString();
   }
 }
+

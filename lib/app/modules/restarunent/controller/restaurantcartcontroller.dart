@@ -176,8 +176,7 @@ class Restaurantcartcontroller extends GetxController {
           final confirmed = await _showMealTypeConflictDialog(data['message']);
 
           if (confirmed == true) {
-            // Clear existing cart, then retry
-            await clearCartForRestaurant(restaurantId);
+
             return addToCart(
               restaurantId: restaurantId,
               menuId: menuId,
@@ -282,39 +281,6 @@ class Restaurantcartcontroller extends GetxController {
     );
   }
 
-
-  // ✅ UPDATED
-  Future<void> clearCartForRestaurant(
-      int restaurantId) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$_baseUrl/restaurant-cart/clear'),
-        headers: _headers,
-        body: jsonEncode({
-          'restaurant_id': restaurantId,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        if (data['status'] == 1) {
-          _allCartItems.removeWhere(
-                (item) =>
-            item.restaurantId == restaurantId,
-          );
-
-          _grandTotal.value = 0.0;
-
-          _allCartItems.refresh();
-        }
-      }
-    } catch (e) {
-      debugPrint(
-        'clearCartForRestaurant error: $e',
-      );
-    }
-  }
   Future<void> updateQuantity(int menuId, String type) async {
     _updateLocalQty(menuId, type);
 

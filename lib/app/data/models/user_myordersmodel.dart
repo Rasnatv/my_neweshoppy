@@ -1,5 +1,4 @@
 
-
 class MyOrdersModel {
   final String orderId;
   final String orderDate;
@@ -25,11 +24,12 @@ class MyOrdersModel {
   }
 }
 
+// ── Variant ──────────────────────────────────────────────────────────────────
 class OrderVariant {
   final int variantId;
   final Map<String, String> attributes;
-  final double price;      // original price
-  final double finalPrice; // discounted price
+  final double price;
+  final double finalPrice;
   final String image;
 
   OrderVariant({
@@ -47,17 +47,19 @@ class OrderVariant {
         attrs[k.toString()] = v.toString();
       });
     }
+
+    final price = double.tryParse(json['price'].toString()) ?? 0.0;
+
     return OrderVariant(
       variantId: int.tryParse(json['variant_id'].toString()) ?? 0,
       attributes: attrs,
-      price: double.tryParse(json['price'].toString()) ?? 0.0,
-      finalPrice: double.tryParse(json['final_price']?.toString() ?? '') ??
-          double.tryParse(json['price'].toString()) ?? 0.0,
+      price: price,
+      // API doesn't return final_price — fall back to price
+      finalPrice: double.tryParse(json['final_price']?.toString() ?? '') ?? price,
       image: json['image']?.toString() ?? '',
     );
   }
 
-  // "Size: XXL  ·  Color: Lavender"
   String get displayAttributes => attributes.entries
       .map((e) => '${_cap(e.key)}: ${_cap(e.value)}')
       .join('  ·  ');
@@ -66,12 +68,14 @@ class OrderVariant {
       s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
 }
 
+// ── Product ───────────────────────────────────────────────────────────────────
 class OrderProduct {
   final int productId;
   final String productName;
   final String productImage;
   final int quantity;
   final double total;
+  final int type;           // ✅ NEW — 0 = normal, 1 = offer
   final OrderVariant? variant;
 
   OrderProduct({
@@ -80,16 +84,21 @@ class OrderProduct {
     required this.productImage,
     required this.quantity,
     required this.total,
+    required this.type,
     this.variant,
   });
 
-  // Use final_price from variant if available
-  double get price => variant?.finalPrice ??
-      (quantity > 0 ? total / quantity : 0.0);
+  /// Unit price — prefer variant.finalPrice, else derive from total
+  double get price =>
+      variant?.finalPrice ?? (quantity > 0 ? total / quantity : 0.0);
 
-  // Prefer variant image if non-empty
+  /// Prefer variant image over product image
   String get displayImage =>
       (variant?.image.isNotEmpty == true) ? variant!.image : productImage;
+
+  /// Whether a discount exists on this item
+  bool get hasDiscount =>
+      variant != null && variant!.finalPrice < variant!.price;
 
   factory OrderProduct.fromJson(Map<String, dynamic> json) {
     final variantJson = json['variant'] as Map<String, dynamic>?;
@@ -99,6 +108,7 @@ class OrderProduct {
       productImage: json['product_image'] ?? '',
       quantity: int.tryParse(json['quantity'].toString()) ?? 1,
       total: double.tryParse(json['total'].toString()) ?? 0.0,
+      type: int.tryParse(json['type'].toString()) ?? 0, // ✅
       variant: variantJson != null ? OrderVariant.fromJson(variantJson) : null,
     );
   }

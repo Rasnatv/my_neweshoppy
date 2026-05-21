@@ -53,10 +53,6 @@ class AllocatedTable {
   AllocatedTable({required this.seatingType, required this.tableNames});
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Controller
-// ─────────────────────────────────────────────────────────────────────────────
-
 class RestaurantBookingController extends GetxController {
   static const String _baseUrl = 'https://eshoppy.co.in/api';
 
@@ -179,7 +175,6 @@ class RestaurantBookingController extends GetxController {
       if (meals.isNotEmpty) fetchTableAllocation();
     }
   }
-
 
 
   Future<void> fetchTableAllocation() async {
