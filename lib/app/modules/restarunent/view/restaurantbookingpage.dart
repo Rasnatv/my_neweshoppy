@@ -8,6 +8,7 @@ import '../controller/restaurant_controller.dart';
 import '../controller/restaurantbooking_controller.dart';
 import '../controller/restaurantcartcontroller.dart';
 import '../controller/restaurant_maincartcontroller.dart';
+import 'Restaurant_mainCart.dart';
 
 class RestaurantBookingPage extends StatelessWidget {
   RestaurantBookingPage({super.key});
@@ -566,7 +567,8 @@ class RestaurantBookingPage extends StatelessWidget {
                 )
               ],
             ),
-            child: SizedBox(
+            child:
+            SizedBox(
               width: double.infinity,
               height: 52,
               child: ElevatedButton(
@@ -652,10 +654,6 @@ class RestaurantBookingPage extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Success bottom sheet
-// ─────────────────────────────────────────────────────────────────────────────
-
 class _BookingSuccessSheet extends StatelessWidget {
   final int restaurantId;
   const _BookingSuccessSheet({required this.restaurantId});
@@ -669,12 +667,12 @@ class _BookingSuccessSheet extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(24, 28, 24, 55),
         decoration: const BoxDecoration(
           color: Colors.white,
-          borderRadius:
-          BorderRadius.vertical(top: Radius.circular(28)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // ── Handle bar ─────────────────────────────────────────
             Container(
               width: 40,
               height: 4,
@@ -684,6 +682,8 @@ class _BookingSuccessSheet extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
+
+            // ── Success icon ───────────────────────────────────────
             Container(
               width: 88,
               height: 88,
@@ -698,25 +698,88 @@ class _BookingSuccessSheet extends StatelessWidget {
                   ),
                 ],
               ),
-              child: const Icon(Icons.check_circle_rounded,
-                  color: Colors.green, size: 52),
+              child: const Icon(
+                Icons.check_circle_rounded,
+                color: Colors.green,
+                size: 52,
+              ),
             ),
+
             const SizedBox(height: 16),
+
+            // ── Title ──────────────────────────────────────────────
             const Text(
               'Table Reserved! 🎉',
               style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2D2D2D)),
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF2D2D2D),
+              ),
             ),
+
             const SizedBox(height: 8),
+
+            // ── Subtitle ───────────────────────────────────────────
             const Text(
               'Your table is reserved.\nGo to cart → complete payment to confirm your booking.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                  fontSize: 13, color: Colors.grey, height: 1.6),
+                fontSize: 13,
+                color: Colors.grey,
+                height: 1.6,
+              ),
             ),
+
             const SizedBox(height: 30),
+
+            // ── Go to Cart button ──────────────────────────────────
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.restaurantclr,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.of(context).pop();
+
+                  // Ensure FinalCartController is registered
+                  if (!Get.isRegistered<FinalCartController>()) {
+                    final cartCtrl = Get.put(FinalCartController());
+                    cartCtrl.fetchFinalCart();
+                  }
+
+                  Get.offAll(() =>  RestaurantFinalCart());
+                },
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.shopping_cart_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'Go to Cart',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            // ── Continue Browsing button ───────────────────────────
             SizedBox(
               width: double.infinity,
               height: 48,
@@ -724,25 +787,28 @@ class _BookingSuccessSheet extends StatelessWidget {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.restaurantclr,
                   side: BorderSide(
-                      color: AppColors.restaurantclr.withOpacity(0.5),
-                      width: 1.4),
+                    color: AppColors.restaurantclr.withOpacity(0.5),
+                    width: 1.4,
+                  ),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
                 onPressed: () {
                   Navigator.of(context).pop();
                   Get.offAll(() => RestaurantListPage());
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     if (Get.isRegistered<RestaurantController>()) {
-                      Get.find<RestaurantController>()
-                          .fetchRestaurants();
+                      Get.find<RestaurantController>().fetchRestaurants();
                     }
                   });
                 },
                 child: const Text(
-                  'Continue Browsing or Go to Cart',
+                  'Continue Browsing',
                   style: TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w600),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
@@ -752,10 +818,6 @@ class _BookingSuccessSheet extends StatelessWidget {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Shared widgets
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _SectionCard extends StatelessWidget {
   final Widget child;

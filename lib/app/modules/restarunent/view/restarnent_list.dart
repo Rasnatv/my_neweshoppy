@@ -12,36 +12,41 @@ import 'restaurantdetail_page.dart';
 // ── Exact color extracted from reference UI ───────────────────────────────────
 class _P {
   // Backgrounds
-  static const bg         = Color(0xFFF8F8F8);
-  static const cardBg     = Color(0xFFFFFFFF);
-  static const inputBg    = Color(0xFFF2F3F5);
+  static const bg        = Color(0xFFF8F8F8);
+  static const cardBg    = Color(0xFFFFFFFF);
+  static const inputBg   = Color(0xFFF2F3F5);
 
-  // Brand — exact amber from reference image
-  static const amber      = Color(0xFF0F5151);
-  static const amberDeep  = Color(0xFFCB6405);   // darker press state
-  static const amberLight = Color(0xFFFDF3E7);   // tinted bg
-  static const amberGlow  = Color(0x25DF7110);   // shadow/glow
+  // Brand
+  static const amber     = Color(0xFF0F5151);
+  static const amberDeep = Color(0xFFCB6405);
+  static const amberLight= Color(0xFFFDF3E7);
+  static const amberGlow = Color(0x25DF7110);
 
   // Text
-  static const textDark   = Color(0xFF1A1A1A);
-  static const textMid    = Color(0xFF5A5E72);
-  static const textLight  = Color(0xFFADB1C4);
+  static const textDark  = Color(0xFF1A1A1A);
+  static const textMid   = Color(0xFF5A5E72);
+  static const textLight = Color(0xFFADB1C4);
 
   // Structural
-  static const border     = Color(0xFFECEDF0);
-  static const divider    = Color(0xFFF0F1F4);
-  static const shadow     = Color(0x10000000);
+  static const border    = Color(0xFFECEDF0);
+  static const divider   = Color(0xFFF0F1F4);
+  static const shadow    = Color(0x10000000);
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 class RestaurantListPage extends StatelessWidget {
   RestaurantListPage({super.key});
 
-  final RestaurantController controller = Get.put(RestaurantController());
+  final RestaurantController controller =
+  Get.isRegistered<RestaurantController>()
+      ? Get.find<RestaurantController>()
+      : Get.put(RestaurantController());
 
-  final FinalCartController cartController = Get.put(FinalCartController(), permanent: true);
-  // ✅ WITH THIS
-
+  // ✅ Safe lookup — never creates a duplicate
+  final FinalCartController cartController =
+  Get.isRegistered<FinalCartController>()
+      ? Get.find<FinalCartController>()
+      : Get.put(FinalCartController(), permanent: true);
 
   @override
   Widget build(BuildContext context) {
@@ -56,8 +61,9 @@ class RestaurantListPage extends StatelessWidget {
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () {
-              Get.offAll(() => LandingView()); // ← your LandingView
-            },),
+              Get.offAll(() => LandingView());
+            },
+          ),
           backgroundColor: Colors.white,
           elevation: 0,
           surfaceTintColor: Colors.transparent,
@@ -66,7 +72,7 @@ class RestaurantListPage extends StatelessWidget {
           title: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
-              mainAxisSize: MainAxisSize.min,   // ✅ CRITICAL fix — was unconstrained
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
                   width: 3.5,
@@ -108,9 +114,11 @@ class RestaurantListPage extends StatelessWidget {
           ),
           actions: [
             Obx(() {
+              // ✅ Read RxList directly so Obx tracks changes reactively
+              final count = cartController.restaurants
+                  .fold(0, (int sum, r) => sum + r.totalItemCount);
 
-              final count = cartController.totalItemCount;
-              return SizedBox(          // ✅ Constrain the Stack
+              return SizedBox(
                 width: 48,
                 height: 56,
                 child: Stack(
@@ -121,7 +129,11 @@ class RestaurantListPage extends StatelessWidget {
                         color: _P.textDark,
                         size: 24,
                       ),
-                      onPressed: () => Get.to(() => RestaurantFinalCart()),
+                      onPressed: () async {
+                        await Get.to(() => RestaurantFinalCart());
+                        // ✅ Refresh count when returning from cart page
+                        cartController.fetchCart();
+                      },
                     ),
                     if (count > 0)
                       Positioned(
@@ -153,6 +165,7 @@ class RestaurantListPage extends StatelessWidget {
           ],
         ),
 
+        // ── Body ──────────────────────────────────────────────────────────────
         body: Obx(() {
           if (controller.isLoading.value) {
             return const Center(
@@ -239,7 +252,7 @@ class RestaurantListPage extends StatelessWidget {
                     child: child,
                   ),
                 ),
-                child: RestaurantCard(restaurant: list[index]),
+                child: _RestaurantCard(restaurant: list[index]),
               );
             },
           );
@@ -250,9 +263,9 @@ class RestaurantListPage extends StatelessWidget {
 }
 
 // ── Restaurant Card ───────────────────────────────────────────────────────────
-class RestaurantCard extends StatelessWidget {
+class _RestaurantCard extends StatelessWidget {
   final Restaurant restaurant;
-  const RestaurantCard({super.key, required this.restaurant});
+  const _RestaurantCard({required this.restaurant});
 
   @override
   Widget build(BuildContext context) {
@@ -262,18 +275,18 @@ class RestaurantCard extends StatelessWidget {
         color: _P.cardBg,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: _P.border, width: 1),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: _P.shadow,
             blurRadius: 16,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
             spreadRadius: -1,
           ),
         ],
       ),
       child: Row(
         children: [
-          // ── Image ──────────────────────────────────────────────────────
+          // ── Image ────────────────────────────────────────────────────
           ClipRRect(
             borderRadius: const BorderRadius.horizontal(
               left: Radius.circular(17),
@@ -314,8 +327,7 @@ class RestaurantCard extends StatelessWidget {
                     );
                   },
                 ),
-
-                // Subtle dark overlay on image
+                // Subtle dark overlay
                 Positioned.fill(
                   child: Container(
                     decoration: BoxDecoration(
@@ -331,128 +343,123 @@ class RestaurantCard extends StatelessWidget {
                     ),
                   ),
                 ),
-
-                // Amber left-edge accent bar
-
-
               ],
             ),
           ),
 
-          // ── Content ────────────────────────────────────────────────────
+          // ── Content ──────────────────────────────────────────────────
           Expanded(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
               child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Open badge
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 7),
 
-                    const SizedBox(height: 7),
+                  // Restaurant name
+                  Text(
+                    restaurant.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 15.5,
+                      fontWeight: FontWeight.w800,
+                      color: _P.textDark,
+                      letterSpacing: -0.3,
+                      height: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
 
-                    // Restaurant name
-                    Text(
-                      restaurant.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 15.5,
-                        fontWeight: FontWeight.w800,
-                        color: _P.textDark,
-                        letterSpacing: -0.3,
-                        height: 1.2,
+                  // Accent underline
+                  Container(
+                    width: 26,
+                    height: 2,
+                    margin: const EdgeInsets.only(bottom: 6),
+                    decoration: BoxDecoration(
+                      color: _P.amber,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+
+                  // Address
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(top: 1.5),
+                        child: Icon(
+                          Icons.location_on_outlined,
+                          size: 12,
+                          color: _P.textLight,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-
-                    // Amber underline accent
-                    Container(
-                      width: 26,
-                      height: 2,
-                      margin: const EdgeInsets.only(bottom: 6),
-                      decoration: BoxDecoration(
-                        color: _P.amber,
-                        borderRadius: BorderRadius.circular(2),
+                      const SizedBox(width: 3),
+                      Expanded(
+                        child: Text(
+                          restaurant.address,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            color: _P.textMid,
+                            height: 1.5,
+                            letterSpacing: 0.1,
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
+                  ),
 
-                    // Address
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Padding(
-                          padding: EdgeInsets.only(top: 1.5),
-                          child: Icon(
-                            Icons.location_on_outlined,
-                            size: 12,
-                            color: _P.textLight,
-                          ),
-                        ),
-                        const SizedBox(width: 3),
-                        Expanded(
-                          child: Text(
-                            restaurant.address,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 11.5,
-                              color: _P.textMid,
-                              height: 1.5,
-                              letterSpacing: 0.1,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                  const SizedBox(height: 12),
 
-                    const SizedBox(height: 12),
-
-                    // Book a Table button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 38,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          HapticFeedback.mediumImpact();
-                          Get.to(() =>
-                              RestaurantDetailPage(restaurant: restaurant));
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _P.amber,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shadowColor: _P.amberGlow,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          padding: EdgeInsets.zero,
+                  // Book a Table button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 38,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        HapticFeedback.mediumImpact();
+                        Get.to(() =>
+                            RestaurantDetailPage(restaurant: restaurant));
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _P.amber,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shadowColor: _P.amberGlow,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(
-                              Icons.table_restaurant_rounded,
-                              size: 14,
+                        padding: EdgeInsets.zero,
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.table_restaurant_rounded,
+                            size: 14,
+                            color: Colors.white,
+                          ),
+                          SizedBox(width: 6),
+                          Text(
+                            'Book a Table',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
                               color: Colors.white,
+                              letterSpacing: 0.2,
                             ),
-                            SizedBox(width: 6),
-                            Text(
-                              'Book a Table',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                                letterSpacing: 0.2,
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
-
-                  ]),
+                  ),
+                ],
+              ),
             ),
-          ) ],
+          ),
+        ],
       ),
     );
   }

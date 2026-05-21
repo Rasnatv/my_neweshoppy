@@ -7,10 +7,11 @@ import 'package:http/http.dart' as http;
 
 import '../../../data/errors/api_error.dart';
 import '../../../data/models/restaurantmaincartmodel.dart';
-import '../../merchantlogin/widget/successwidget.dart'; // ← adjust path
+import '../../merchantlogin/widget/successwidget.dart';
 
 class FinalCartController extends GetxController {
   static const int maxQty = 10;
+
   // ── Storage ────────────────────────────────────────────────────────────────
   final _box = GetStorage();
   final RxInt cartItemCount = 0.obs;
@@ -30,7 +31,6 @@ class FinalCartController extends GetxController {
 
   // ── Computed ───────────────────────────────────────────────────────────────
   bool get isEmpty => restaurants.isEmpty;
-
 
   double get grandTotal =>
       restaurants.fold(0.0, (sum, r) => sum + r.restaurantTotal);
@@ -52,8 +52,7 @@ class FinalCartController extends GetxController {
   String get _authToken => _box.read('auth_token') ?? '';
 
   // ── API base ───────────────────────────────────────────────────────────────
-  static const String _baseUrl =
-      'https://eshoppy.co.in/api';
+  static const String _baseUrl = 'https://eshoppy.co.in/api';
 
   Map<String, String> get _headers => {
     'Content-Type': 'application/json',
@@ -63,7 +62,6 @@ class FinalCartController extends GetxController {
 
   // ── Fetch Final Cart ───────────────────────────────────────────────────────
   Future<void> fetchFinalCart() async {
-
     try {
       isLoading.value = true;
       errorMessage.value = '';
@@ -100,14 +98,17 @@ class FinalCartController extends GetxController {
       isLoading.value = false;
     }
   }
+
+  /// Alias so other pages can call fetchCart() without knowing the internal name.
+  Future<void> fetchCart() => fetchFinalCart();
+
+  // ── Update Quantity ────────────────────────────────────────────────────────
   Future<void> updateQuantity({
     required int restaurantId,
     required int bookingId,
     required String cartId,
     required String action,
   }) async {
-
-    // ✅ FIND CURRENT ITEM
     final rIndex =
     restaurants.indexWhere((r) => r.restaurantId == restaurantId);
     if (rIndex == -1) return;
@@ -123,12 +124,11 @@ class FinalCartController extends GetxController {
         .indexWhere((i) => i.cartId == cartId);
     if (iIndex == -1) return;
 
-    final currentItem =
-    restaurants[rIndex].bookings[bIndex].items[iIndex];
+    final currentItem = restaurants[rIndex].bookings[bIndex].items[iIndex];
 
-    // ✅ MAX LIMIT CHECK (100)
     if (action == 'increase' && currentItem.quantity >= maxQty) {
-      AppSnackbar.warning( "Limit Reached Maximum 10 items can be purchased at a time",);
+      AppSnackbar.warning(
+          'Limit Reached. Maximum $maxQty items can be purchased at a time.');
       return;
     }
 
@@ -150,7 +150,6 @@ class FinalCartController extends GetxController {
 
         if (jsonData['status'] == 1) {
           final data = jsonData['data'] as Map<String, dynamic>;
-
           final newQuantity = (data['quantity'] as num).toInt();
           final newTotalPrice = (data['total_price'] as num).toDouble();
           final newPrice = (data['price'] as num).toDouble();
@@ -172,8 +171,8 @@ class FinalCartController extends GetxController {
             );
           }
         } else {
-          final msg = jsonData['message'] ??
-              'Could not update quantity. Try again.';
+          final msg =
+              jsonData['message'] ?? 'Could not update quantity. Try again.';
           AppSnackbar.error(msg);
         }
       } else {
@@ -186,7 +185,7 @@ class FinalCartController extends GetxController {
     }
   }
 
-  // ── Internal: update item quantity/price in local list ────────────────────
+  // ── Internal: update item locally ─────────────────────────────────────────
   void _updateItemLocally({
     required int restaurantId,
     required int bookingId,
@@ -246,7 +245,6 @@ class FinalCartController extends GetxController {
 
   // ── Delete Entire Restaurant ───────────────────────────────────────────────
   Future<void> removeRestaurant(int restaurantId) async {
-
     deletingRestaurants.add(restaurantId);
 
     try {
@@ -258,11 +256,9 @@ class FinalCartController extends GetxController {
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
-
         if (jsonData['status'] == 1) {
           restaurants.removeWhere((r) => r.restaurantId == restaurantId);
           restaurants.refresh();
-
         }
       } else {
         AppSnackbar.error(ApiErrorHandler.handleResponse(response));
@@ -279,8 +275,7 @@ class FinalCartController extends GetxController {
     required int restaurantId,
     required int bookingId,
     required String cartId,
-  }) async{
-
+  }) async {
     deletingCartItems.add(cartId);
 
     try {
@@ -292,14 +287,14 @@ class FinalCartController extends GetxController {
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
-
         if (jsonData['status'] == 1) {
           _removeItemLocally(
             restaurantId: restaurantId,
             bookingId: bookingId,
             cartId: cartId,
           );
-        }}else {
+        }
+      } else {
         AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }
     } catch (e) {
@@ -310,7 +305,7 @@ class FinalCartController extends GetxController {
     }
   }
 
-  // ── Internal: remove item from local list ─────────────────────────────────
+  // ── Internal: remove item locally ─────────────────────────────────────────
   void _removeItemLocally({
     required int restaurantId,
     required int bookingId,
@@ -384,7 +379,7 @@ class FinalCartController extends GetxController {
   static String formatPrice(double price) =>
       price % 1 == 0 ? price.toInt().toString() : price.toStringAsFixed(2);
 
-  // ── Helpers for UI ─────────────────────────────────────────────────────────
+  // ── UI helpers ─────────────────────────────────────────────────────────────
   bool isDeletingRestaurant(int restaurantId) =>
       deletingRestaurants.contains(restaurantId);
 
