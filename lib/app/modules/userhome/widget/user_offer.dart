@@ -25,14 +25,23 @@ class _UserOfferSectionState extends State<UserOfferSection> {
 
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+
     return SliverToBoxAdapter(
       child: GetX<UserOfferController>(
         builder: (controller) {
+          final bool isSingle = controller.offerList.length == 1;
+
+          // ✅ Single offer → full width (minus horizontal padding 20*2)
+          // ✅ Multiple offers → 82% of screen for peek effect
+          final double cardWidth =
+          isSingle ? screenWidth - 40 : screenWidth * 0.82;
+          final double cardHeight = cardWidth * 0.52;
 
           // ---------- LOADING ----------
           if (controller.isLoading.value) {
             return SizedBox(
-              height: 160, // ✅ FIXED
+              height: screenWidth * 0.82 * 0.52,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -40,8 +49,8 @@ class _UserOfferSectionState extends State<UserOfferSection> {
                 itemBuilder: (_, i) => Padding(
                   padding: const EdgeInsets.only(right: 16),
                   child: Container(
-                    width: 300,
-                    height: 160, // ✅ FIXED
+                    width: screenWidth * 0.82,
+                    height: screenWidth * 0.82 * 0.52,
                     decoration: BoxDecoration(
                       color: Colors.grey.shade200,
                       borderRadius: BorderRadius.circular(22),
@@ -78,14 +87,27 @@ class _UserOfferSectionState extends State<UserOfferSection> {
 
           // ---------- LIST ----------
           return SizedBox(
-            height: 160, // ✅ FIXED
+            height: cardHeight,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 20),
+              // ✅ Disable scrolling for single item — removes right peek space
+              physics: isSingle
+                  ? const NeverScrollableScrollPhysics()
+                  : const BouncingScrollPhysics(),
               itemCount: controller.offerList.length,
               itemBuilder: (context, index) {
                 final offer = controller.offerList[index];
-                return _OfferCard(offer: offer, index: index);
+                final bool isLast = index == controller.offerList.length - 1;
+
+                return _OfferCard(
+                  offer: offer,
+                  index: index,
+                  cardWidth: cardWidth,
+                  cardHeight: cardHeight,
+                  // ✅ Remove right margin on last card (or single card)
+                  isLast: isLast,
+                );
               },
             ),
           );
@@ -95,14 +117,21 @@ class _UserOfferSectionState extends State<UserOfferSection> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// Offer Card
-// ─────────────────────────────────────────────────────────────
+
 class _OfferCard extends StatefulWidget {
   final dynamic offer;
   final int index;
+  final double cardWidth;
+  final double cardHeight;
+  final bool isLast;
 
-  const _OfferCard({required this.offer, required this.index});
+  const _OfferCard({
+    required this.offer,
+    required this.index,
+    required this.cardWidth,
+    required this.cardHeight,
+    this.isLast = false,
+  });
 
   @override
   State<_OfferCard> createState() => _OfferCardState();
@@ -161,7 +190,8 @@ class _OfferCardState extends State<_OfferCard>
       child: SlideTransition(
         position: _slide,
         child: Padding(
-          padding: const EdgeInsets.only(right: 16),
+          // ✅ No right padding on last card to avoid empty space on the right
+          padding: EdgeInsets.only(right: widget.isLast ? 0 : 16),
           child: GestureDetector(
             onTap: () => Get.to(
                   () => UserOfferProductPage(
@@ -176,8 +206,8 @@ class _OfferCardState extends State<_OfferCard>
               scale: _pressed ? 0.97 : 1.0,
               duration: const Duration(milliseconds: 130),
               child: Container(
-                width: 300,
-                height: 160, // ✅ FIXED
+                width: widget.cardWidth,
+                height: widget.cardHeight,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(22),
                   boxShadow: [
@@ -198,14 +228,26 @@ class _OfferCardState extends State<_OfferCard>
                   borderRadius: BorderRadius.circular(22),
                   child: Stack(
                     children: [
+                      // Background image — fills entire card
                       Positioned.fill(
                         child: Image.network(
                           widget.offer.image,
                           fit: BoxFit.cover,
+                          loadingBuilder: (_, child, progress) {
+                            if (progress == null) return child;
+                            return Container(color: Colors.grey.shade200);
+                          },
+                          errorBuilder: (_, __, ___) => Container(
+                            color: Colors.grey.shade200,
+                            child: Center(
+                              child: Icon(Icons.store_rounded,
+                                  size: 36, color: Colors.grey[400]),
+                            ),
+                          ),
                         ),
                       ),
 
-                      // Gradient
+                      // Gradient overlay
                       Positioned.fill(
                         child: DecoratedBox(
                           decoration: BoxDecoration(
@@ -244,7 +286,7 @@ class _OfferCardState extends State<_OfferCard>
                         ),
                       ),
 
-                      // Bottom Content (FIXED)
+                      // Bottom content
                       Positioned(
                         left: 14,
                         right: 14,
@@ -281,7 +323,7 @@ class _OfferCardState extends State<_OfferCard>
 
                             const SizedBox(width: 8),
 
-                            // ✅ FIXED BUTTON
+                            // Shop Now button
                             Container(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 12, vertical: 7),
