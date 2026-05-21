@@ -591,8 +591,6 @@ class RestaurantBookingPage extends StatelessWidget {
                   if (Get.isRegistered<Restaurantcartcontroller>()) {
                     final cartCtrl =
                     Get.find<Restaurantcartcontroller>();
-                    await cartCtrl.clearCartForRestaurant(
-                        controller.restaurantId);
                     await cartCtrl.fetchCart();
                   }
 
@@ -906,9 +904,6 @@ class _CounterButton extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Meal card — ONLY time slot picker, no seating/table selection
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _MealCard extends StatelessWidget {
   final int index;
