@@ -1,4 +1,6 @@
 
+import 'package:eshoppy/app/modules/admin_home/view/restaurant/admin_merchanthome.dart';
+
 import '../../../../data/errors/api_error.dart';
 import '../../../merchantlogin/widget/successwidget.dart';  // ← adjust path
 import 'dart:convert';
@@ -10,6 +12,7 @@ import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import '../../../../data/errors/api_error.dart';
+import '../../view/admin_home.dart';
 
 class AdminAddMerchantController extends GetxController {
   final box = GetStorage();
@@ -409,8 +412,7 @@ class AdminAddMerchantController extends GetxController {
                   height: 50,
                   child: ElevatedButton(
                     onPressed: () {
-                      Get.back(); // close dialog
-                      Get.back(); // go back to previous screen
+                   Get.offAll( AdminDashboard());
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF089385),

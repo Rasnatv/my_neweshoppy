@@ -327,8 +327,6 @@ class OfferProductScreen extends StatelessWidget {
         ),
       );
     }
-
-    // ✅ Local file path — used right after image update before silentRefresh
     return Image.file(
       File(imagePath),
       height: 130,
