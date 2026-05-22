@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import '../../../../data/errors/api_error.dart';
 import '../../../merchantlogin/widget/successwidget.dart';
+import '../views/adminadvertisment.dart';
 
 class AdminaddAdvertisementController extends GetxController {
   final adNameController = TextEditingController();
@@ -261,7 +262,9 @@ class AdminaddAdvertisementController extends GetxController {
         if (data["status"] == "1" || data["status"] == 1 || data["status"] == true) {
           _clearForm();
           AppSnackbar.success(data["message"] ?? "Advertisement added successfully");
-          Get.back(result: true);
+          //Get.back(result: true);
+          Get.off(AdminAdvertisementPage());
+          Get.close(1);
         } else {
           AppSnackbar.error(data["message"] ?? "Failed");
         }

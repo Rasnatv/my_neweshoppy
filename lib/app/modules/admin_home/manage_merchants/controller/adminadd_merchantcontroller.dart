@@ -12,6 +12,7 @@ import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import '../../../../data/errors/api_error.dart';
+import '../../view/admin_home.dart';
 
 class AdminAddMerchantController extends GetxController {
   final box = GetStorage();
@@ -411,7 +412,7 @@ class AdminAddMerchantController extends GetxController {
                   height: 50,
                   child: ElevatedButton(
                     onPressed: () {
-                   Get.offAll(AdminMerchantHomePageUI());
+                   Get.offAll( AdminDashboard());
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF089385),
