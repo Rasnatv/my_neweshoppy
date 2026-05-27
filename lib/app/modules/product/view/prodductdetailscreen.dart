@@ -4,8 +4,10 @@ import 'package:eshoppy/app/modules/product/view/prodductdetailscreen.dart';
 import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import '../../../common/style/app_text_style.dart';
 import '../../userhome/view/user_offerproductdetail.dart';
+import '../../userlogin/view/login.dart';
 import '../controller/cartcontroller.dart';
 import '../../../data/models/cartmodel.dart';
 import 'addresslistpage.dart';
@@ -33,6 +35,111 @@ class ProductDetailPage extends StatelessWidget {
   static const _divider     = Color(0xFFE8F0EE);
   static const _red         = Color(0xFFD03A3A);
   static const _amber       = Color(0xFFE09020);
+
+  // ── Auth Helpers ─────────────────────────────────────────────
+
+  bool _isLoggedIn() {
+    final box = GetStorage();
+    final token = box.read('auth_token') ?? '';
+    return token.toString().isNotEmpty;
+  }
+
+  void _showLoginRequiredDialog() {
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ── ICON ──────────────────────────────────────────
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFE8F5F0),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.shopping_cart_outlined,
+                  color: Color(0xFF0F5151),
+                  size: 32,
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // ── TITLE ─────────────────────────────────────────
+              const Text(
+                'Sign in to add items',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1C1C1E),
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // ── SUBTITLE ──────────────────────────────────────
+              const Text(
+                'Please sign in or create an account to start adding items to your cart.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13.5,
+                  color: Color(0xFF6B6B6B),
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // ── SIGN IN BUTTON ────────────────────────────────
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Get.back();
+                    Get.offAll(() => LoginPageView());
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0F5151),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Sign in',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // ── MAYBE LATER ───────────────────────────────────
+              TextButton(
+                onPressed: () => Get.back(),
+                child: const Text(
+                  'Maybe later',
+                  style: TextStyle(
+                    color: Color(0xFFAAAAAA),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: true,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +196,6 @@ class ProductDetailPage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildImagePanel(controller, product),
-                    // Wrap info block in Obx so price/stock update on variant change
                     Obx(() {
                       final v = controller.selectedVariant.value ?? variant;
                       return _buildInfoBlock(product, v);
@@ -186,8 +292,6 @@ class ProductDetailPage extends StatelessWidget {
           child: PageView.builder(
             controller: controller.pageController,
             itemCount: count,
-            // ✅ KEY FIX: use onUserSwiped — it respects the _isProgrammaticJump
-            // guard so chip taps never get overwritten by the page-change callback
             onPageChanged: controller.onUserSwiped,
             itemBuilder: (context, index) {
               final v = variants[index];
@@ -403,7 +507,6 @@ class ProductDetailPage extends StatelessWidget {
                   const SizedBox(height: 8),
 
                   Obx(() {
-                    // ✅ Read from selectedAttributes map (RxMap) — reacts to changes
                     final currentValue =
                     controller.selectedAttributes[attributeKey];
 
@@ -558,10 +661,6 @@ class ProductDetailPage extends StatelessWidget {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Bottom bar
-  // ---------------------------------------------------------------------------
-
   Widget _buildBottomBar(
       ProductDetailController controller,
       CartController cartController,
@@ -576,11 +675,13 @@ class ProductDetailPage extends StatelessWidget {
         final current = controller.selectedVariant.value ?? variant;
         final isOut = current.stock <= 0;
 
+        // ✅ FIXED: Match exactly how CartController identifies items
         final cartItem = cartController.cartItems.firstWhereOrNull(
-              (i) =>
-          i.productId == productId.toString() &&
-              i.variantId == current.variantId,
+              (i) => i.productId == productId.toString() &&
+              i.variantId == current.variantId &&
+              i.type == 0, // Regular products have type 0
         );
+
         final isInCart = cartItem != null;
 
         return Container(
@@ -611,11 +712,19 @@ class ProductDetailPage extends StatelessWidget {
     return GestureDetector(
       onTap: isOut
           ? null
-          : () async => await cartController.addToCart(
-        productId: productId,
-        variantId: variantId,
-        type: 0,
-      ),
+          : () async {
+        // ✅ Auth check — show login dialog if not logged in
+        if (!_isLoggedIn()) {
+          _showLoginRequiredDialog();
+          return;
+        }
+
+        await cartController.addToCart(
+          productId: productId,
+          variantId: variantId,
+          type: 0,
+        );
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         height: 50,

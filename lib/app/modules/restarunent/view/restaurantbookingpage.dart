@@ -753,6 +753,7 @@ class _BookingSuccessSheet extends StatelessWidget {
 
                   Get.offAll(() =>  RestaurantFinalCart());
                 },
+
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

@@ -213,11 +213,11 @@ class _UserSignupState extends State<UserSignup> with TickerProviderStateMixin {
 
             const SizedBox(height: 20),
 
-// Confirm Password
             Obx(
                   () => TextFormField(
                 controller: controller.confirmPasswordController,
                 style: DInputDecoration.inputTextStyle,
+                minLines: 2,
                 obscureText: !controller.isConfirmPasswordVisible.value,
                 decoration: DInputDecoration.of("Confirm Password", Icons.lock_outline_rounded).copyWith(
                   suffixIcon: IconButton(

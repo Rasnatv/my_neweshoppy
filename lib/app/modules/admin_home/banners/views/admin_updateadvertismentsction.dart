@@ -423,7 +423,7 @@ class _AdminEditAdvertisementPageState
       final hasImage = file != null || url.isNotEmpty;
 
       return GestureDetector(
-        onTap: controller.pickEditBannerImage,
+        onTap: controller.pickBanner,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           height: 190,

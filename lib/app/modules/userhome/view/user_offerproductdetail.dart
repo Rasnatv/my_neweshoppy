@@ -11,6 +11,7 @@ import '../../../data/models/cartmodel.dart';
 import '../../../data/models/user_offerdetailmodel.dart';
 import '../../merchantlogin/widget/successwidget.dart';
 import '../../product/controller/cartcontroller.dart';
+import '../../userlogin/view/login.dart';
 import '../controller/user_offerproductdetail_controller.dart';
 
 class UserOfferProductDetailScreen extends StatefulWidget {
@@ -63,7 +64,6 @@ class _UserOfferProductDetailScreenState
     );
     cartController = Get.find<CartController>();
 
-    // ✅ Register carousel jump callback — no ever() listener needed
     controller.onCarouselJumpRequested = (index) {
       if (!mounted) return;
       _carouselController
@@ -75,7 +75,6 @@ class _UserOfferProductDetailScreenState
           .whenComplete(controller.onCarouselJumpDone);
     };
 
-    // Fetch and optionally pre-select variant
     if (controller.productData.value == null && !controller.isLoading.value) {
       controller.fetchProductDetails(widget.offerProductId).then((_) {
         if (widget.preSelectedVariantId != null) {
@@ -87,9 +86,113 @@ class _UserOfferProductDetailScreenState
 
   @override
   void dispose() {
-    // Remove callback reference so the controller doesn't call into a dead widget
     controller.onCarouselJumpRequested = null;
     super.dispose();
+  }
+
+  // ── Auth Helpers ─────────────────────────────────────────────
+
+  bool _isLoggedIn() {
+    final box = GetStorage();
+    final token = box.read('auth_token') ?? '';
+    return token.toString().isNotEmpty;
+  }
+
+  void _showLoginRequiredDialog() {
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ── ICON ──────────────────────────────────────────
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFE8F5F0),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.shopping_cart_outlined,
+                  color: Color(0xFF0F5151),
+                  size: 32,
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // ── TITLE ─────────────────────────────────────────
+              const Text(
+                'Sign in to add items',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1C1C1E),
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // ── SUBTITLE ──────────────────────────────────────
+              const Text(
+                'Please sign in or create an account to start adding items to your cart.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13.5,
+                  color: Color(0xFF6B6B6B),
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // ── SIGN IN BUTTON ────────────────────────────────
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Get.back();
+                    Get.offAll(() => LoginPageView());
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0F5151),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Sign in',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // ── MAYBE LATER ───────────────────────────────────
+              TextButton(
+                onPressed: () => Get.back(),
+                child: const Text(
+                  'Maybe later',
+                  style: TextStyle(
+                    color: Color(0xFFAAAAAA),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: true,
+    );
   }
 
   @override
@@ -277,7 +380,6 @@ class _UserOfferProductDetailScreenState
                   viewportFraction: 1.0,
                   enlargeCenterPage: false,
                   initialPage: controller.currentImageIndex.value,
-                  // ✅ Use onUserSwiped — respects _isProgrammaticJump guard
                   onPageChanged: (index, reason) {
                     controller.onUserSwiped(index);
                   },
@@ -526,9 +628,8 @@ class _UserOfferProductDetailScreenState
                     children: values.map((value) {
                       final isSelected = selected == value;
 
-                      // ✅ Check if this combo is selectable
-                      final testAttrs =
-                      Map<String, String>.from(controller.selectedAttributes);
+                      final testAttrs = Map<String, String>.from(
+                          controller.selectedAttributes);
                       testAttrs[attr] = value;
                       final canSelect = product.variants.any((v) =>
                           testAttrs.entries.every((e) =>
@@ -536,7 +637,8 @@ class _UserOfferProductDetailScreenState
 
                       return GestureDetector(
                         onTap: canSelect
-                            ? () => controller.selectAttribute(attr, value)
+                            ? () =>
+                            controller.selectAttribute(attr, value)
                             : null,
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 180),
@@ -712,7 +814,6 @@ class _UserOfferProductDetailScreenState
     );
   }
 
-  // ── Bottom Bar ──────────────────────────────────────────────
 
   Widget _buildBottomBar(UserOfferProductDetail product) {
     return Positioned(
@@ -720,16 +821,19 @@ class _UserOfferProductDetailScreenState
       right: 0,
       bottom: 0,
       child: Obx(() {
-        final variant      = controller.selectedVariant.value;
+        final variant = controller.selectedVariant.value;
         final isOutOfStock = variant == null || variant.stock <= 0;
 
+        // ✅ FIXED: Include type in the check
         final cartItem = variant == null
             ? null
             : cartController.cartItems.firstWhereOrNull(
               (item) =>
           item.productId == product.productId.toString() &&
-              item.variantId == variant.variantId,
+              item.variantId == variant.variantId &&
+              item.type == product.type, // Use the product's type
         );
+
         final isInCart = cartItem != null;
 
         return Container(
@@ -758,6 +862,12 @@ class _UserOfferProductDetailScreenState
         onTap: isOutOfStock
             ? null
             : () async {
+          // ✅ Auth check — show login dialog if not logged in
+          if (!_isLoggedIn()) {
+            _showLoginRequiredDialog();
+            return;
+          }
+
           final variantId =
               controller.selectedVariant.value?.variantId;
           if (variantId == null) {

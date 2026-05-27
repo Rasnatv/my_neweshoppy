@@ -4,7 +4,9 @@ import 'package:get/get.dart';
 
 import '../../../common/style/app_colors.dart';
 import '../../../core/utils/auth_service.dart';
+import '../../../widgets/delete_widget.dart';
 import '../../../widgets/networkconnection_checkpage.dart';
+import '../controller/merchant_deleteaccountcontroller.dart';
 import 'addproductpage.dart';
 import 'merchant_changepassword.dart';
 import 'merchant_gallerypage.dart';
@@ -209,6 +211,29 @@ class MerchantDashboardPage extends StatelessWidget {
                   ),
                   Row(
                     children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: IconButton(
+                          onPressed: () {
+                            final controller = Get.put(DeleteAccountController());
+                            DeleteConfirmDialog.show(
+                              context: Get.context!,
+                              title: 'Delete Account',
+                              message:
+                              'Are you sure you want to permanently delete your merchant account? This action cannot be undone.',
+                              onConfirm: controller.deleteAccount,
+                            );
+                          },
+                          icon: const Icon(
+                            Icons.delete_outline_rounded,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                      ),
                       const SizedBox(width: 8),
                       Container(
                         decoration: BoxDecoration(
@@ -223,7 +248,10 @@ class MerchantDashboardPage extends StatelessWidget {
                             size: 24,
                           ),
                         ),
+
                       ),
+
+
                     ],
                   ),
                 ],

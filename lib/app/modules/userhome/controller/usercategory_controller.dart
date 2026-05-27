@@ -11,11 +11,13 @@ import '../../merchantlogin/widget/successwidget.dart';
 class UserCategoryController extends GetxController {
   final box = GetStorage();
 
-  final String api =
-      "https://eshoppy.co.in/api/usercategoriesget";
+  final String api = "https://eshoppy.co.in/api/usercategoriesget";
 
   var isLoading = false.obs;
   var categories = <UserCategoryModel>[].obs;
+
+  // ── Storage key — guest uses 'guest', logged-in uses token ───────────────
+  String get _storageKey => box.read('auth_token') ?? 'guest';
 
   @override
   void onInit() {
@@ -28,13 +30,10 @@ class UserCategoryController extends GetxController {
   }
 
   Future<void> _fetchFromStorageIfAvailable() async {
-    final token = box.read('auth_token');
+    final state        = box.read('state_$_storageKey') ?? '';
+    final district     = box.read('district_$_storageKey') ?? '';
+    final mainLocation = box.read('main_location_$_storageKey') ?? '';
 
-    final state        = box.read('state_$token') ?? '';
-    final district     = box.read('district_$token') ?? '';
-    final mainLocation = box.read('main_location_$token') ?? '';
-
-    // ✅ Fetch when at least state + district is selected
     if (state.isEmpty || district.isEmpty) {
       categories.clear();
       return;
@@ -43,7 +42,7 @@ class UserCategoryController extends GetxController {
     await fetchCategories(
       state: state,
       district: district,
-      mainLocation: mainLocation, // may be empty — backend filters accordingly
+      mainLocation: mainLocation,
     );
   }
 
@@ -53,15 +52,12 @@ class UserCategoryController extends GetxController {
     required String mainLocation,
   }) async {
     if (isLoading.value) return;
-
-    final token = box.read("auth_token");
-    if (token == null) return;
-
-    // ✅ Only require state + district (mainLocation is optional)
     if (state.isEmpty || district.isEmpty) {
       categories.clear();
       return;
     }
+
+    final token = box.read<String?>('auth_token');
 
     try {
       isLoading.value = true;
@@ -70,12 +66,14 @@ class UserCategoryController extends GetxController {
         Uri.parse(api),
         headers: {
           "Accept": "application/json",
-          "Authorization": "Bearer $token",
+          // Send token only when available — guests call without it
+          if (token != null && token.isNotEmpty)
+            "Authorization": "Bearer $token",
         },
         body: {
           "state": state,
           "district": district,
-          "main_location": mainLocation, // empty string when not selected
+          "main_location": mainLocation,
         },
       );
 

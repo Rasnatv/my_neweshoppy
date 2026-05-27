@@ -8,6 +8,7 @@ import '../../modules/profile/controller/editprofile_controller.dart';
 import '../../modules/userhome/controller/district _controller.dart';
 import '../../modules/userhome/controller/homedatacontroller.dart';
 import '../../modules/userhome/controller/usercategory_controller.dart';
+import '../../modules/userhome/widget/guestrole.dart';
 import '../../modules/userlogin/controller/userlogin_controller.dart';
 import '../../modules/userlogin/view/login.dart';
 
@@ -60,9 +61,18 @@ class AuthService {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
+                  // onPressed: () {
+                  //   Get.back();
+                  //   _logout();
+                  // },
+                  // AFTER
                   onPressed: () {
                     Get.back();
-                    _logout();
+                    if (GuestService.isGuest) {
+                      _logoutGuest();
+                    } else {
+                      _logout();
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF37A384),
@@ -144,6 +154,23 @@ class AuthService {
     }
     if (Get.isRegistered<EditProfileController>()) {
       Get.delete<EditProfileController>(force: true);
+    }
+
+    Get.offAll(() => const LoginPageView());
+  }
+  static void _logoutGuest() {
+    // clearGuestData() removes state_guest, district_guest,
+    // main_location_guest and clears is_guest flag
+    GuestService.clearGuestData();
+
+    if (Get.isRegistered<UserLocationController>()) {
+      Get.delete<UserLocationController>(force: true);
+    }
+    if (Get.isRegistered<HomeDataController>()) {
+      Get.delete<HomeDataController>(force: true);
+    }
+    if (Get.isRegistered<UserCategoryController>()) {
+      Get.delete<UserCategoryController>(force: true);
     }
 
     Get.offAll(() => const LoginPageView());

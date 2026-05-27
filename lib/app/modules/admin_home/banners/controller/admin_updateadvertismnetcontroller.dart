@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../data/errors/api_error.dart';
@@ -29,6 +30,7 @@ class AdminupdateAdvertisementController extends GetxController {
   final isEditLoading   = false.obs;
   final editIsTitleEmpty = false.obs;
 
+  final picker = ImagePicker();
   late final TextEditingController editAdName = TextEditingController();
 
   final editBannerImage      = Rx<File?>(null);
@@ -261,26 +263,51 @@ class AdminupdateAdvertisementController extends GetxController {
     }
   }
 
-  // ── IMAGE PICK ────────────────────────────────────────────
-  Future<void> pickEditBannerImage() async {
+
+  Future<void> pickBanner() async {
     try {
-      final picked = await ImagePicker()
-          .pickImage(source: ImageSource.gallery, imageQuality: 85);
+      final picked = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
       if (picked == null) return;
 
-      final file = File(picked.path);
-      final bytes = await file.readAsBytes();
-      final decoded = await decodeImageFromList(bytes);
-      final ratio = decoded.width / decoded.height;
+      final croppedFile = await ImageCropper().cropImage(
+        sourcePath: picked.path,
+        aspectRatio: const CropAspectRatio(ratioX: 2, ratioY: 1),
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Crop Banner',
+            toolbarColor: Colors.black,
+            toolbarWidgetColor: Colors.white,
+            lockAspectRatio: true,
+          ),
+          IOSUiSettings(
+            title: 'Crop Banner',
+            aspectRatioLockEnabled: true,
+          ),
+        ],
+      );
+      if (croppedFile == null) return;
 
-      if (ratio < 1.9 || ratio > 2.1) {
-        AppSnackbar.warning(
-            "Invalid ratio ${decoded.width}x${decoded.height}\nUse 2:1 image");
-        return;
-      }
-      editBannerImage.value = file;
+      // ✅ Write to editBannerImage — what the widget actually reads
+      editBannerImage.value = File(croppedFile.path);
+
     } catch (e) {
       AppSnackbar.error("Image error");
+    }
+  }
+  void removeBanner() => editBannerImage.value = null;
+
+// ── TO BASE64 ─────────────────────────────────────────────
+  Future<String?> _toBase64(File file) async {
+    try {
+      final bytes = await file.readAsBytes();
+      final ext      = file.path.split('.').last.toLowerCase();
+      final mimeType = ext == 'png' ? 'image/png' : 'image/jpeg';
+      return "data:$mimeType;base64,${base64Encode(bytes)}";
+    } catch (_) {
+      return null;
     }
   }
 

@@ -45,7 +45,7 @@ class DistrictAdminAddAdvertisementPage extends StatelessWidget {
                   const SizedBox(height: 10),
 
                   Obx(() => GestureDetector(
-                    onTap: controller.pickBanner,
+                    onTap: controller.pickBannerImage,
                     child: Container(
                       height: 200,
                       width: double.infinity,

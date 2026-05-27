@@ -12,10 +12,9 @@ import 'restaurantcartpage.dart';
 
 // ── Design System ─────────────────────────────────────────────────────────────
 class _D {
-  // Core palette — deep forest green + warm cream
   static const dark        = Color(0xFF0F5151);
   static const darkMid     = Color(0xFF163028);
-  static const accent      = Color(0xFFE8B86D);   // warm amber
+  static const accent      = Color(0xFFE8B86D);
   static const accentDim   = Color(0xFFF5DFA8);
   static const surface     = Color(0xFFFAF8F4);
   static const surfaceCard = Color(0xFFFFFFFF);
@@ -41,6 +40,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage>
   late TabController tabController;
   late GalleryController galleryController;
 
+  // ✅ Always find existing permanent controller — never create a new one here
   Restaurantcartcontroller get cartController {
     if (Get.isRegistered<Restaurantcartcontroller>()) {
       return Get.find<Restaurantcartcontroller>();
@@ -59,7 +59,12 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage>
       GalleryController(restaurantId: ridStr),
       tag: ridStr,
     );
+
     cartController.setRestaurant(rid);
+
+    // ✅ Always refresh cart when entering this page
+    // This ensures badge and cart screen are always in sync
+    cartController.fetchCart();
 
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -90,7 +95,11 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage>
             // ── Back button
             leading: Padding(
               padding: const EdgeInsets.all(10),
-              child:IconButton(onPressed: ()=>Get.back(), icon: Icon(Icons.arrow_back))),
+              child: IconButton(
+                onPressed: () => Get.back(),
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+              ),
+            ),
 
             // ── Cart button
             actions: [
@@ -100,7 +109,12 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage>
                   final count = cartController.totalProductsForRestaurant(rid);
                   return _CircleButton(
                     icon: Icons.shopping_bag_outlined,
-                    onTap: () => Get.to(() => RestaurantCartPage(restaurantId: rid)),
+                    onTap: () async {
+                      // ✅ Navigate to cart and refresh when coming back
+                      await Get.to(() => RestaurantCartPage(restaurantId: rid));
+                      // ✅ Refresh cart after returning from cart page
+                      cartController.fetchCart();
+                    },
                     badge: count > 0 ? (count > 99 ? '99+' : '$count') : null,
                   );
                 }),
@@ -182,14 +196,12 @@ class _HeroImage extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Photo
         Image.network(
           imageUrl,
           fit: BoxFit.cover,
           errorBuilder: (_, __, ___) => _HeroPlaceholder(),
         ),
 
-        // Gradient overlay — strong at top (for nav) & bottom (for text)
         DecoratedBox(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -207,7 +219,6 @@ class _HeroImage extends StatelessWidget {
           ),
         ),
 
-        // Bottom text block
         Positioned(
           bottom: 0,
           left: 0,
@@ -217,8 +228,6 @@ class _HeroImage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
-                // Name
                 Text(
                   name,
                   style: const TextStyle(
@@ -230,12 +239,9 @@ class _HeroImage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 10),
-
-                // Address chip
                 Row(
                   children: [
-                    const Icon(Icons.place_rounded,
-                        color: _D.accent, size: 14),
+                    const Icon(Icons.place_rounded, color: _D.accent, size: 14),
                     const SizedBox(width: 5),
                     Flexible(
                       child: Text(
@@ -286,6 +292,9 @@ class _HeroPlaceholder extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  Tab Bar
+// ─────────────────────────────────────────────────────────────────────────────
 class _TabBar extends StatelessWidget {
   final TabController controller;
   const _TabBar({required this.controller});
@@ -323,11 +332,7 @@ class _TabBar extends StatelessWidget {
               _Tab(icon: Icons.collections_outlined, label: 'Gallery'),
             ],
           ),
-          // Bottom divider line
-          Container(
-            height: 0.5,
-            color: _D.divider,
-          ),
+          Container(height: 0.5, color: _D.divider),
         ],
       ),
     );
@@ -349,14 +354,14 @@ class _Tab extends StatelessWidget {
           Icon(icon, size: 20),
           const SizedBox(height: 5),
           Text(label),
-          const SizedBox(height: 6), // space for the indicator below
+          const SizedBox(height: 6),
         ],
       ),
     );
   }
 }
 
-// ── Pill indicator that sits at the bottom of the tab ─────────────────────────
+// ── Pill indicator ─────────────────────────────────────────────────────────────
 class _PillIndicator extends Decoration {
   final Color color;
   const _PillIndicator({required this.color});
@@ -386,10 +391,7 @@ class _PillIndicatorPainter extends BoxPainter {
       const Radius.circular(3),
     );
 
-    canvas.drawRRect(
-      rect,
-      Paint()..color = color,
-    );
+    canvas.drawRRect(rect, Paint()..color = color);
   }
 }
 
@@ -424,7 +426,7 @@ class _AmberIndicatorPainter extends BoxPainter {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Circle Action Button (back / cart)
+//  Circle Action Button
 // ─────────────────────────────────────────────────────────────────────────────
 class _CircleButton extends StatelessWidget {
   final IconData icon;

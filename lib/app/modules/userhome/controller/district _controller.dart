@@ -28,18 +28,18 @@ class UserLocationController extends GetxController {
   var selectedDistrict     = ''.obs;
   var selectedMainLocation = ''.obs;
 
-  /// District is mandatory — true only when district is selected
   bool get hasAnySelection => selectedDistrict.value.isNotEmpty;
 
-  /// True if at least state + district are picked (enough for events/categories)
   bool get hasPartialSelection =>
       selectedState.value.isNotEmpty && selectedDistrict.value.isNotEmpty;
 
-  /// True only when all three are picked
   bool get hasFullSelection =>
       selectedState.value.isNotEmpty &&
           selectedDistrict.value.isNotEmpty &&
           selectedMainLocation.value.isNotEmpty;
+
+  // ── Storage key — guest uses 'guest', logged-in uses token ───────────────
+  String get _storageKey => box.read('auth_token') ?? 'guest';
 
   @override
   void onInit() {
@@ -84,25 +84,23 @@ class UserLocationController extends GetxController {
   }
 
   void restoreLocation() {
-    final token = box.read('auth_token');
-    if (token == null) {
-      clearSelected();
-      return;
-    }
-    selectedState.value        = box.read('state_$token') ?? '';
-    selectedDistrict.value     = box.read('district_$token') ?? '';
-    selectedMainLocation.value = box.read('main_location_$token') ?? '';
+    // Guests may have previously selected a location — restore it
+    selectedState.value        = box.read('state_$_storageKey') ?? '';
+    selectedDistrict.value     = box.read('district_$_storageKey') ?? '';
+    selectedMainLocation.value = box.read('main_location_$_storageKey') ?? '';
   }
 
   Future<void> fetchLocations() async {
-    final token = box.read("auth_token");
+    final token = box.read<String?>('auth_token');
 
     try {
       final res = await http.get(
         Uri.parse(locationApi),
         headers: {
           "Accept": "application/json",
-          "Authorization": "Bearer $token",
+          // Send token only when available — guests call without it
+          if (token != null && token.isNotEmpty)
+            "Authorization": "Bearer $token",
         },
       );
 
@@ -121,7 +119,6 @@ class UserLocationController extends GetxController {
     } catch (e) {
       allLocations.clear();
       states.clear();
-
       final msg = ApiErrorHandler.handleException(e);
       if (msg.isNotEmpty) AppSnackbar.error(msg);
     }
@@ -155,17 +152,13 @@ class UserLocationController extends GetxController {
   }
 
   Future<void> saveLocation() async {
-    final token = box.read('auth_token');
+    // Persist using guest key or token key
+    box.write('state_$_storageKey',         selectedState.value);
+    box.write('district_$_storageKey',      selectedDistrict.value);
+    box.write('main_location_$_storageKey', selectedMainLocation.value);
 
-    // 1. Persist whatever was selected
-    box.write('state_$token',         selectedState.value);
-    box.write('district_$token',      selectedDistrict.value);
-    box.write('main_location_$token', selectedMainLocation.value);
-
-    // 2. Need at least state + district to show anything
     if (!hasPartialSelection) return;
 
-    // 3. Refresh events & banners
     try {
       await Get.find<HomeDataController>().fetchHomeData(
         state:        selectedState.value,
@@ -174,7 +167,6 @@ class UserLocationController extends GetxController {
       );
     } catch (_) {}
 
-    // 4. Refresh categories
     try {
       await Get.find<UserCategoryController>().fetchCategories(
         state:        selectedState.value,
@@ -191,15 +183,10 @@ class UserLocationController extends GetxController {
     districts.clear();
     mainLocations.clear();
 
-    // Clear storage so app restart doesn't reload old location
-    final token = box.read('auth_token');
-    if (token != null) {
-      box.remove('state_$token');
-      box.remove('district_$token');
-      box.remove('main_location_$token');
-    }
+    box.remove('state_$_storageKey');
+    box.remove('district_$_storageKey');
+    box.remove('main_location_$_storageKey');
 
-    // Tell HomeDataController to hide events & banners
     try {
       Get.find<HomeDataController>().clearHomeData();
     } catch (_) {}

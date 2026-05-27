@@ -5,7 +5,107 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 
 import '../../../common/style/app_colors.dart';
+import '../../../common/style/app_colors.dart';
+import '../../userlogin/view/login.dart';
+import '../../userlogin/view/sigin.dart';
 import '../controller/userofferproduct_controller.dart';
+
+// ── Top-level helpers ──────────────────────────────────────────────────────────
+
+bool _isLoggedIn() {
+  final token = GetStorage().read('auth_token') ?? '';
+  return token.toString().isNotEmpty;
+}
+
+void _showLoginRequiredDialog() {
+  Get.dialog(
+    Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      backgroundColor: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.kPrimary.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.favorite_border_rounded,
+                color: AppColors.kPrimary,
+                size: 32,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Sign in to save items',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1C1C1E),
+              ),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Please sign in or create an account to add items to your wishlist.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13.5,
+                color: Color(0xFF6B6B6B),
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Get.back();
+                  Get.offAll(() =>LoginPageView());
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.kPrimary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Sign in',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextButton(
+              onPressed: () => Get.back(),
+              child: const Text(
+                'Maybe later',
+                style: TextStyle(
+                  color: Color(0xFFAAAAAA),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+    barrierDismissible: true,
+  );
+}
+
+// ── Page ───────────────────────────────────────────────────────────────────────
 
 class UserOfferProductPage extends StatelessWidget {
   final String offer_id;
@@ -19,7 +119,7 @@ class UserOfferProductPage extends StatelessWidget {
       tag: offer_id.toString(),
     );
 
-    final token = GetStorage().read('auth_token') ?? '';
+    final token = GetStorage().read<String?>('auth_token') ?? '';
 
     return Scaffold(
       appBar: AppBar(
@@ -97,7 +197,7 @@ class UserOfferProductPage extends StatelessWidget {
                     Expanded(
                       child: Stack(
                         children: [
-                          // Product Image
+                          // ── Product Image ────────────────────────────────
                           ClipRRect(
                             borderRadius: const BorderRadius.vertical(
                               top: Radius.circular(16),
@@ -108,7 +208,8 @@ class UserOfferProductPage extends StatelessWidget {
                               height: double.infinity,
                               fit: BoxFit.cover,
                               headers: {
-                                'Authorization': 'Bearer $token',
+                                if (token.isNotEmpty)
+                                  'Authorization': 'Bearer $token',
                               },
                               loadingBuilder: (context, child, progress) {
                                 if (progress == null) return child;
@@ -126,7 +227,7 @@ class UserOfferProductPage extends StatelessWidget {
                             ),
                           ),
 
-                          // 🏷️ Discount Badge — top left
+                          // ── Discount Badge — top left ─────────────────
                           Positioned(
                             top: 8,
                             left: 8,
@@ -136,20 +237,24 @@ class UserOfferProductPage extends StatelessWidget {
                             ),
                           ),
 
-                          // ❤️ Wishlist Heart — top right
+                          // ── Wishlist Heart — top right ────────────────
                           Positioned(
                             top: 8,
                             right: 8,
                             child: Obx(() {
-                              // ✅ Pass product.type (1) — won't clash with normal products
                               final isFav = controller.wishlistController
                                   .isInWishlist(product.id, type: product.type);
                               return GestureDetector(
-                                onTap: () =>
-                                    controller.wishlistController.toggleWishlist(
-                                      product.id,
-                                      type: product.type,
-                                    ),
+                                onTap: () {
+                                  if (!_isLoggedIn()) {
+                                    _showLoginRequiredDialog();
+                                    return;
+                                  }
+                                  controller.wishlistController.toggleWishlist(
+                                    product.id,
+                                    type: product.type,
+                                  );
+                                },
                                 child: Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
@@ -178,7 +283,7 @@ class UserOfferProductPage extends StatelessWidget {
                       ),
                     ),
 
-                    // Product Details
+                    // ── Product Details ────────────────────────────────────
                     Padding(
                       padding: const EdgeInsets.all(10),
                       child: Column(

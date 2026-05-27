@@ -451,7 +451,7 @@ class DistrictAdvertisementUpdatePage extends StatelessWidget{
                 child: _buildImageActionButton(
                   icon: Icons.photo_library_rounded,
                   label: 'Gallery',
-                  onTap: controller.pickBanner,
+                  onTap: controller.pickBannerImage,
                   isPrimary: true,
                 ),
               ),

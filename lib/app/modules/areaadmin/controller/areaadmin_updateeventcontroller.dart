@@ -266,7 +266,7 @@ class AreaAdminUpdateEventController extends GetxController {
   }
 
   // ─── Fetch Locations ──────────────────────────────
-  // POST /api/area-admin/main-locations
+  // POST /api/area-admin/mmain-locations
   // Body:     { "district": "Kasaragod" }
   // Response: { "status": 1, "data": ["bekal", "chattachal", "kanhangad"] }
   Future<void> fetchLocations() async {

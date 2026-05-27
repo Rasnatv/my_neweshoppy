@@ -1,5 +1,4 @@
 
-
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -9,31 +8,33 @@ import '../../../data/errors/api_error.dart';
 import '../../../data/models/user_shopimagemodel.dart';
 import '../../../data/models/user_shopproductmodel.dart';
 import '../../merchantlogin/widget/successwidget.dart';
+import '../widget/guestrole.dart';
 
 class UserShopProductController extends GetxController {
   final box = GetStorage();
 
   // ── Product pagination state ──────────────────────────────
-  var isLoading        = false.obs;   // first-page load
-  var isLoadingMore    = false.obs;   // subsequent pages
-  var hasMore          = true.obs;    // more pages available?
-  int _currentPage     = 1;
+  var isLoading = false.obs;
+  var isLoadingMore = false.obs;
+  var hasMore = true.obs;
+
+  int _currentPage = 1;
   static const int _perPage = 10;
 
   var products = <UserShopProductModel>[].obs;
 
   // ── Shop detail state ─────────────────────────────────────
-  var isShopLoading  = false.obs;
-  var shopDetail     = Rxn<UserShopDetailModel>();
+  var isShopLoading = false.obs;
+  var shopDetail = Rxn<UserShopDetailModel>();
 
   // ── API endpoints ─────────────────────────────────────────
   final String productApi =
-      //"https://rasma.astradevelops.in/e_shoppyy/public/api/shop-products";
-       "https://eshoppy.co.in/api/shop-products?page=1&per_page=10" ;
+      "https://eshoppy.co.in/api/shop-products";
+
   final String shopDetailApi =
       "https://eshoppy.co.in/api/shop-details";
 
-  // ── Entry point called by the view ────────────────────────
+  // ── Entry point ───────────────────────────────────────────
   Future<void> loadShop(int merchantId) async {
     _resetPagination();
     await fetchShopDetails(merchantId);
@@ -46,55 +47,85 @@ class UserShopProductController extends GetxController {
     products.clear();
   }
 
-  // ── Load next page (called on scroll-to-bottom) ───────────
+  // ── Load More ─────────────────────────────────────────────
   Future<void> loadMoreProducts(int merchantId) async {
     if (isLoadingMore.value || !hasMore.value) return;
-    await fetchProducts(merchantId, isFirstPage: false);
+
+    await fetchProducts(
+      merchantId,
+      isFirstPage: false,
+    );
   }
 
-  // ── Fetch shop details ────────────────────────────────────
-  Future<void> fetchShopDetails(int merchantId) async {
+  // ── Common Headers ────────────────────────────────────────
+  Map<String, String> getHeaders() {
     final token = box.read('auth_token');
-    if (token == null) return;
 
+    Map<String, String> headers = {
+      "Accept": "application/json",
+    };
+
+    // Add token only if available
+    if (token != null &&
+        token.toString().isNotEmpty &&
+        !GuestService.isGuest) {
+      headers["Authorization"] = "Bearer $token";
+    }
+
+    return headers;
+  }
+
+  // ── Fetch Shop Details ────────────────────────────────────
+  Future<void> fetchShopDetails(int merchantId) async {
     try {
       isShopLoading.value = true;
 
       final response = await http.post(
         Uri.parse(shopDetailApi),
-        headers: {
-          "Accept": "application/json",
-          "Authorization": "Bearer $token",
+        headers: getHeaders(),
+        body: {
+          "merchant_id": merchantId.toString(),
         },
-        body: {"merchant_id": merchantId.toString()},
       );
 
       if (response.statusCode == 200) {
         final decoded = json.decode(response.body);
-        if (decoded['status'] == true && decoded['data'] != null) {
-          shopDetail.value = UserShopDetailModel.fromJson(decoded['data']);
+
+        if (decoded['status'] == true &&
+            decoded['data'] != null) {
+          shopDetail.value =
+              UserShopDetailModel.fromJson(decoded['data']);
         } else {
           shopDetail.value = null;
-          AppSnackbar.error(decoded['message'] ?? "Failed to load shop details");
+
+          AppSnackbar.error(
+            decoded['message'] ??
+                "Failed to load shop details",
+          );
         }
       } else {
         shopDetail.value = null;
-        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
+
+        AppSnackbar.error(
+          ApiErrorHandler.handleResponse(response),
+        );
       }
     } catch (e) {
       shopDetail.value = null;
-      AppSnackbar.error(ApiErrorHandler.handleException(e));
+
+      AppSnackbar.error(
+        ApiErrorHandler.handleException(e),
+      );
     } finally {
       isShopLoading.value = false;
     }
   }
 
-  // ── Fetch products (paginated) ────────────────────────────
-  Future<void> fetchProducts(int merchantId,
-      {required bool isFirstPage}) async {
-    final token = box.read('auth_token');
-    if (token == null) return;
-
+  // ── Fetch Products ────────────────────────────────────────
+  Future<void> fetchProducts(
+      int merchantId, {
+        required bool isFirstPage,
+      }) async {
     try {
       if (isFirstPage) {
         isLoading.value = true;
@@ -102,26 +133,29 @@ class UserShopProductController extends GetxController {
         isLoadingMore.value = true;
       }
 
-      final uri = Uri.parse(productApi).replace(queryParameters: {
-        "page":     _currentPage.toString(),
-        "per_page": _perPage.toString(),
-      });
+      final uri = Uri.parse(productApi).replace(
+        queryParameters: {
+          "page": _currentPage.toString(),
+          "per_page": _perPage.toString(),
+        },
+      );
 
       final response = await http.post(
         uri,
-        headers: {
-          "Accept": "application/json",
-          "Authorization": "Bearer $token",
+        headers: getHeaders(),
+        body: {
+          "merchant_id": merchantId.toString(),
         },
-        body: {"merchant_id": merchantId.toString()},
       );
 
       if (response.statusCode == 200) {
         final decoded = json.decode(response.body);
+
         final List list = decoded['data'] ?? [];
 
-        final newItems =
-        list.map((e) => UserShopProductModel.fromJson(e)).toList();
+        final newItems = list
+            .map((e) => UserShopProductModel.fromJson(e))
+            .toList();
 
         if (isFirstPage) {
           products.value = newItems;
@@ -129,21 +163,30 @@ class UserShopProductController extends GetxController {
           products.addAll(newItems);
         }
 
-        // If we got fewer items than requested, no more pages exist
         if (newItems.length < _perPage) {
           hasMore.value = false;
         } else {
           _currentPage++;
         }
       } else {
-        if (isFirstPage) products.clear();
-        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
+        if (isFirstPage) {
+          products.clear();
+        }
+
+        AppSnackbar.error(
+          ApiErrorHandler.handleResponse(response),
+        );
       }
     } catch (e) {
-      if (isFirstPage) products.clear();
-      AppSnackbar.error(ApiErrorHandler.handleException(e));
+      if (isFirstPage) {
+        products.clear();
+      }
+
+      AppSnackbar.error(
+        ApiErrorHandler.handleException(e),
+      );
     } finally {
-      isLoading.value     = false;
+      isLoading.value = false;
       isLoadingMore.value = false;
     }
   }

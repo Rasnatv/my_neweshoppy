@@ -1,3 +1,4 @@
+
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -6,7 +7,7 @@ import 'package:http/http.dart' as http;
 import '../../../data/errors/api_error.dart';
 import '../../../data/models/homedatamodel.dart';
 import '../../merchantlogin/widget/successwidget.dart';
-
+import '../widget/guestrole.dart';
 
 class HomeAdModel {
   final String id;
@@ -32,45 +33,42 @@ class HomeAdModel {
   );
 }
 
-// ── Controller ────────────────────────────────────────────────────────────────
-
 class HomeDataController extends GetxController {
   final box = GetStorage();
 
-  final String _apiUrl =
-      "https://eshoppy.co.in/api/get-home-data";
+  final String _apiUrl = "https://eshoppy.co.in/api/get-home-data";
 
   final RxList<HomeEventModel> events = <HomeEventModel>[].obs;
   final RxList<HomeAdModel> advertisements = <HomeAdModel>[].obs;
   final RxBool isLoading = false.obs;
 
+  // ── Auth header — works with or without token ─────────────────────────────
+  Map<String, String> _authHeader() {
+    final token = box.read<String?>('auth_token');
+    return {
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      if (token != null && token.isNotEmpty) "Authorization": "Bearer $token",
+    };
+  }
+
   @override
   void onInit() {
     super.onInit();
 
-    if (_hasSavedLocation()) {
-      _fetchFromStorage();
-    }
   }
 
-  // ── Called by UserLocationController.saveLocation() after confirm ─────────
   Future<void> fetchHomeData({
     required String state,
     required String district,
     required String mainLocation,
   }) async {
-    final token = box.read("auth_token");
-
     try {
       isLoading(true);
 
       final response = await http.post(
         Uri.parse(_apiUrl),
-        headers: {
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $token",
-        },
+        headers: _authHeader(),
         body: jsonEncode({
           "state": state,
           "district": district,
@@ -94,8 +92,7 @@ class HomeDataController extends GetxController {
         } else {
           events.clear();
           advertisements.clear();
-          AppSnackbar.error(
-              decoded['message'] ?? 'Failed to load home data');
+          AppSnackbar.error(decoded['message'] ?? 'Failed to load home data');
         }
       } else {
         events.clear();
@@ -110,30 +107,28 @@ class HomeDataController extends GetxController {
     }
   }
 
-  // ── Called by UserLocationController.skipLocation() ──────────────────────
   void clearHomeData() {
     events.clear();
     advertisements.clear();
   }
 
-  // ── Called by reconnect trigger ───────────────────────────────────────────
   Future<void> refresh() async {
     events.clear();
     advertisements.clear();
     await _fetchFromStorage();
   }
 
-  // ── Reads saved location from storage and fetches ─────────────────────────
   Future<void> _fetchFromStorage() async {
-    final token = box.read('auth_token');
-    if (token == null) return;
+    // Allow guests to proceed without a token
+    if (!GuestService.isGuest) {
+      final token = box.read('auth_token');
+      if (token == null) return;
+    }
 
-    final state = box.read('state_$token') ?? '';
-    final district = box.read('district_$token') ?? '';
-    final mainLocation = box.read('main_location_$token') ?? '';
-
-    // Only fetch if at least one field is saved
-    if (state.isEmpty && district.isEmpty && mainLocation.isEmpty) return;
+    final storageKey = box.read('auth_token') ?? 'guest';
+    final state = box.read('state_$storageKey') ?? '';
+    final district = box.read('district_$storageKey') ?? '';
+    final mainLocation = box.read('main_location_$storageKey') ?? '';
 
     await fetchHomeData(
       state: state,
@@ -143,13 +138,12 @@ class HomeDataController extends GetxController {
   }
 
   bool _hasSavedLocation() {
-    final token = box.read('auth_token');
-    if (token == null) return false;
+    final storageKey = box.read('auth_token') ??
+        (GuestService.isGuest ? 'guest' : null);
+    if (storageKey == null) return false;
 
-    final state    = box.read('state_$token') ?? '';
-    final district = box.read('district_$token') ?? '';
-
-    // Require BOTH state and district — area alone is not enough
+    final state = box.read('state_$storageKey') ?? '';
+    final district = box.read('district_$storageKey') ?? '';
     return state.isNotEmpty && district.isNotEmpty;
   }
 }

@@ -20,7 +20,6 @@ class UserloginController extends GetxController {
 
   final GetStorage box = GetStorage();
 
-  // final String loginUrl = "https://rasma.astradevelops.in/e_shoppyy/public/api/login";
   final String loginUrl = "https://eshoppy.co.in/api/login";
 
 
@@ -130,6 +129,36 @@ class UserloginController extends GetxController {
     }
   }
 
+  // Future<bool> _saveAuthData(Map<String, dynamic> data) async {
+  //   final token =
+  //       data['auth_token'] ?? data['token'] ?? data['access_token'];
+  //
+  //   if (token == null || token.toString().trim().isEmpty) {
+  //     AppSnackbar.error("Authentication token missing");
+  //     return false;
+  //   }
+  //
+  //   final String cleanToken = token.toString().trim();
+  //
+  //   await box.write("auth_token", cleanToken);
+  //   await box.write("role", int.tryParse(data['role'].toString()) ?? 0);
+  //   await box.write("user_data", data);
+  //   await box.write("is_logged_in", true);
+  //
+  //   // ✅ Shield flag — prevents handleUnauthorized() from
+  //   // redirecting to login right after a fresh login
+  //   await box.write("just_logged_in", true);
+  //
+  //   final String? saved = box.read<String?>('auth_token');
+  //   debugPrint("✅ Token saved: $saved");
+  //
+  //   if (saved == null || saved.isEmpty) {
+  //     AppSnackbar.error("Failed to save session. Please try again.");
+  //     return false;
+  //   }
+  //
+  //   return true;
+  // }
   Future<bool> _saveAuthData(Map<String, dynamic> data) async {
     final token =
         data['auth_token'] ?? data['token'] ?? data['access_token'];
@@ -145,13 +174,12 @@ class UserloginController extends GetxController {
     await box.write("role", int.tryParse(data['role'].toString()) ?? 0);
     await box.write("user_data", data);
     await box.write("is_logged_in", true);
-
-    // ✅ Shield flag — prevents handleUnauthorized() from
-    // redirecting to login right after a fresh login
+    await box.remove("is_guest");      // ✅ THIS is the fix — clear guest flag on login
     await box.write("just_logged_in", true);
 
     final String? saved = box.read<String?>('auth_token');
     debugPrint("✅ Token saved: $saved");
+    debugPrint("✅ is_guest after login: ${box.read('is_guest')}"); // should print null
 
     if (saved == null || saved.isEmpty) {
       AppSnackbar.error("Failed to save session. Please try again.");
@@ -160,7 +188,6 @@ class UserloginController extends GetxController {
 
     return true;
   }
-
 
   void _navigateToHome(int role) {
     switch (role) {

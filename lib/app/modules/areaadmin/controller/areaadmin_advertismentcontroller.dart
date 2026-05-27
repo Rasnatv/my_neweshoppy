@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -197,38 +198,41 @@ class AreaAdminAdvertisementController extends GetxController {
     fetchLocations(district);
   }
 
-  // ─── Image Picker (2:1 ratio enforced) ───────
   Future<void> pickBannerImage() async {
     try {
       final picked = await _picker.pickImage(
         source: ImageSource.gallery,
         imageQuality: 80,
       );
-
       if (picked == null) return;
 
-      final file = File(picked.path);
-      final bytes = await file.readAsBytes();
-      final decodedImage = await decodeImageFromList(bytes);
+      // Step 1: Crop first — locked 2:1
+      final croppedFile = await ImageCropper().cropImage(
+        sourcePath: picked.path,
+        aspectRatio: const CropAspectRatio(ratioX: 2, ratioY: 1),
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Crop Banner',
+            toolbarColor: Colors.black,
+            toolbarWidgetColor: Colors.white,
+            lockAspectRatio: true,
+          ),
+          IOSUiSettings(
+            title: 'Crop Banner',
+            aspectRatioLockEnabled: true,
+          ),
+        ],
+      );
+      if (croppedFile == null) return;
 
-      final width  = decodedImage.width;
-      final height = decodedImage.height;
-      final ratio  = width / height;
+      // Step 2: Store — exact same variable as your old code
+      bannerImage.value = File(croppedFile.path);
 
-      debugPrint(">>> Image size: ${width}x${height}, ratio: $ratio");
-
-      if (ratio < 1.9 || ratio > 2.1) {
-        AppSnackbar.error(
-          "Invalid image ratio ${width}x${height}.\nPlease upload a 2:1 ratio image (e.g. 1200x600)",
-        );
-        return;
-      }
-
-      bannerImage.value = file;
     } catch (e) {
       AppSnackbar.error("Image error: $e");
     }
   }
+
 
   void removeBannerImage() => bannerImage.value = null;
 

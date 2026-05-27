@@ -10,6 +10,7 @@ import '../../merchantlogin/widget/successwidget.dart';
 import '../../userhome/controller/district _controller.dart';
 
 import '../../../data/errors/api_error.dart';
+import '../../userhome/widget/guestrole.dart';
 
 class UsersignupController extends GetxController {
   final formKey = GlobalKey<FormState>();
@@ -87,13 +88,16 @@ class UsersignupController extends GetxController {
         return;
       }
 
-      // ✅ SAVE DATA
       await box.write("auth_token", token);
       await box.write("is_logged_in", true);
       await box.write("role", 1);
       await box.write("user_data", data);
 
-      // OPTIONAL LOCATION FETCH
+// ✅ Clear guest data WITHOUT migrating guest location (fresh signup)
+      GuestService.clearGuestData();
+      await box.remove("is_guest");
+
+// OPTIONAL LOCATION FETCH
       if (Get.isRegistered<UserLocationController>()) {
         Get.find<UserLocationController>().fetchLocations();
       }
