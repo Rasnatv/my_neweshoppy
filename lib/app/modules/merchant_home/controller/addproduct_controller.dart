@@ -2,8 +2,7 @@
 
 import 'dart:convert';
 import 'dart:io';
-import 'package:eshoppy/app/modules/merchant_home/views/manageproducts.dart';
-import 'package:eshoppy/app/modules/merchant_home/views/merchant_home.dart';
+import 'package:entenaadu/app/modules/merchant_home/views/merchant_home.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';

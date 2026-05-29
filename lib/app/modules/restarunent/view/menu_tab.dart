@@ -569,8 +569,8 @@
 //     );
 //   }
 // }
-import 'package:eshoppy/app/modules/restarunent/view/restaurantcartpage.dart';
-import 'package:eshoppy/app/modules/userlogin/view/login.dart';
+import 'package:entenaadu/app/modules/restarunent/view/restaurantcartpage.dart';
+import 'package:entenaadu/app/modules/userlogin/view/login.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';

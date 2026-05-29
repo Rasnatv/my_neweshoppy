@@ -1,6 +1,6 @@
 
-import 'package:eshoppy/app/data/models/user_myordersmodel.dart';
-import 'package:eshoppy/app/modules/myoders/controller/my_orderscontroller.dart';
+import 'package:entenaadu/app/data/models/user_myordersmodel.dart';
+import 'package:entenaadu/app/modules/myoders/controller/my_orderscontroller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_colors.dart';

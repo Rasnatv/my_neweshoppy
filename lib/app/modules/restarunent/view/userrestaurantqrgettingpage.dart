@@ -1,6 +1,6 @@
 
 import 'dart:io';
-import 'package:eshoppy/app/modules/landingview/view/landing_screen.dart';
+import 'package:entenaadu/app/modules/landingview/view/landing_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gal/gal.dart';
