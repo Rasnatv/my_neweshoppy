@@ -161,8 +161,8 @@ class AdminEditCategoryController extends GetxController {
           }
 
           Get.off(AdminCategoryListPage());
+          Get.close(1);
         } else {
-          AppSnackbar.error(resBody['message'] ?? 'Update failed');
         }
       } else {
         // ✅ 401 → handleUnauthorized fires inside handleResponse

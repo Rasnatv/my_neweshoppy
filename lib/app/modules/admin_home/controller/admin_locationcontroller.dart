@@ -117,10 +117,6 @@ class LocationController extends GetxController {
     }
   }
 
-  // ── Fetch Locations ───────────────────────────────
-  /// Parses the new API shape:
-  /// { "data": [ { "state": "kerala", "districts": [ { "district": "kannur",
-  ///   "main_locations": ["caltex", ...] } ] } ] }
   Future<void> fetchLocations() async {
     if (authToken.isEmpty) {
       Get.offAllNamed('/login');
