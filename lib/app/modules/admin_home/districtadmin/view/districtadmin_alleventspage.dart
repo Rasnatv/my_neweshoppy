@@ -51,15 +51,7 @@ class DistrictAdminAllEventsPage extends StatelessWidget {
               letterSpacing: 0.1,
             ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            onPressed: () async {
-              await controller.fetchEvents();
-              AppSnackbar.success("Events refreshed");
-            },
-          ),
-        ],
+
       ),
       body: Obx(() {
         // ── LOADING ──

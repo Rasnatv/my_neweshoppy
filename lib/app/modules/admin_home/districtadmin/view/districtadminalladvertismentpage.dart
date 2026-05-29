@@ -31,13 +31,6 @@ class DistrictAdminAllAdvertisementsPage extends StatelessWidget {
               letterSpacing: 0.1,
             ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            onPressed: controller.fetchAdvertisements,
-            tooltip: 'Refresh',
-          ),
-        ],
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
