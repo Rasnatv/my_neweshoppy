@@ -27,12 +27,7 @@ class DistrictLocationListPage extends StatelessWidget {
               letterSpacing: 0.1,
             ),
           ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.refresh, color: Colors.white),
-              onPressed: controller.fetchLocations,
-            ),
-          ],
+
         ),
         body: Obx(() {
           if (controller.isLoading.value) {

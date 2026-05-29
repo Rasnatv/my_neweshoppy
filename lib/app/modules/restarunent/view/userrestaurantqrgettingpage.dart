@@ -292,58 +292,6 @@ class _QRPaymentPageState extends State<QRPaymentPage> {
           );
         }
 
-        if (controller.errorMessage.isNotEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFEF2F2),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Icon(Icons.wifi_off_rounded,
-                        size: 36, color: Color(0xFFDC2626)),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Something went wrong',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF111111),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    controller.errorMessage.value,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        fontSize: 13, color: Color(0xFF9CA3AF)),
-                  ),
-                  const SizedBox(height: 24),
-                  TextButton(
-                    onPressed: controller.fetchPaymentDetails,
-                    style: TextButton.styleFrom(
-                      backgroundColor: const Color(0xFF111111),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 28, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text('Try again',
-                        style: TextStyle(fontWeight: FontWeight.w600)),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-
         final data = controller.paymentResponse.value?.data ?? [];
 
         if (data.isEmpty) {

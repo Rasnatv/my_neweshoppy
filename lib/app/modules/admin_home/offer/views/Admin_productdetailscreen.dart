@@ -1,4 +1,4 @@
-import 'package:eshoppy/app/common/style/app_colors.dart';
+
 import 'package:eshoppy/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -10,30 +10,67 @@ import '../widget/admin_productdetail errorview.dart';
 import '../widget/loadingview.dart';
 import '../widget/section_cart.dart';
 
+// ─── Design tokens ────────────────────────────────────────────────────────────
+class _C {
+  static const bg         = Color(0xFFF0F1F8);
+  static const card       = Color(0xFFFFFFFF);
+  static const indigo     = Color(0xFF5B5EF4);
+  static const indigoSoft = Color(0xFFEEEEFF);
+  static const indigoMid  = Color(0xFFC7C9FD);
+  static const purple     = Color(0xFF8B5CF6);
+  static const purpleSoft = Color(0xFFF3EEFF);
+  static const green      = Color(0xFF0DBF82);
+  static const greenSoft  = Color(0xFFDFFAF0);
+  static const greenBdr   = Color(0xFFA7F0D2);
+  static const amber      = Color(0xFFF59E0B);
+  static const amberSoft  = Color(0xFFFEF3C7);
+  static const red        = Color(0xFFEF4444);
+  static const redSoft    = Color(0xFFFEE2E2);
+  static const border     = Color(0xFFE8EAF0);
+  static const textPrimary   = Color(0xFF13152B);
+  static const textSecondary = Color(0xFF6B7280);
+  static const textMuted     = Color(0xFF9CA3AF);
+}
+
+BoxDecoration _cardDecoration({double radius = 14}) => BoxDecoration(
+  color: _C.card,
+  borderRadius: BorderRadius.circular(radius),
+  boxShadow: [
+    BoxShadow(
+      color: const Color(0xFF14163C).withOpacity(0.06),
+      blurRadius: 8,
+      offset: const Offset(0, 1),
+    ),
+  ],
+);
+
+// ─── Screen ───────────────────────────────────────────────────────────────────
 class AdminSingleOfferProductScreen extends StatelessWidget {
   const AdminSingleOfferProductScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(AdminSingleOfferProductController());
-    return NetworkAwareWrapper(child: Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
-      body: Obx(() {
-        if (controller.isLoading.value) return const LoadingView();
-        if (controller.hasError.value) {
-          return ErrorView(
-            message: controller.errorMessage.value,
-            onRetry: controller.refreshProduct,
-          );
-        }
-        if (controller.product.value == null) return const LoadingView();
-        return _DetailContent(controller: controller);
-      }),
-    ));
+    return NetworkAwareWrapper(
+      child: Scaffold(
+        backgroundColor: _C.bg,
+        body: Obx(() {
+          if (controller.isLoading.value) return const LoadingView();
+          if (controller.hasError.value) {
+            return ErrorView(
+              message: controller.errorMessage.value,
+              onRetry: controller.refreshProduct,
+            );
+          }
+          if (controller.product.value == null) return const LoadingView();
+          return _DetailContent(controller: controller);
+        }),
+      ),
+    );
   }
 }
 
-
+// ─── Detail content ───────────────────────────────────────────────────────────
 class _DetailContent extends StatelessWidget {
   final AdminSingleOfferProductController controller;
   const _DetailContent({required this.controller});
@@ -41,7 +78,7 @@ class _DetailContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
-      color: const Color(0xFF6366F1),
+      color: _C.indigo,
       onRefresh: controller.refreshProduct,
       child: CustomScrollView(
         slivers: [
@@ -50,55 +87,53 @@ class _DetailContent extends StatelessWidget {
             child: Obx(() {
               final p = controller.product.value!;
               return Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(14, 14, 14, 32),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _HeaderSection(product: p, controller: controller),
-                    const SizedBox(height: 16),
-                    _PriceSection(controller: controller),
-                    const SizedBox(height: 16),
-                    _InfoGrid(product: p, controller: controller),
+                    // Header
+                    _HeaderCard(product: p, controller: controller),
+                    const SizedBox(height: 12),
+                    // Price
+                    _PriceCard(controller: controller),
+                    const SizedBox(height: 12),
+                    // IDs grid
+                    _InfoGrid(product: p),
+                    // Description
                     if (p.description.isNotEmpty) ...[
-                      const SizedBox(height: 16),
-                      SectionCard(
-                        title: 'Description',
-                        icon: Icons.description_outlined,
-                        child: Text(
-                          p.description,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFF4B5563),
-                            height: 1.6,
-                          ),
-                        ),
-                      ),
+                      const SizedBox(height: 12),
+                      _DescriptionCard(description: p.description),
                     ],
+                    // Common attributes
                     if (p.productAttributes != null &&
                         p.productAttributes!.commonAttributes.isNotEmpty) ...[
-                      const SizedBox(height: 16),
-                      _AttributesSection(attributes: p.productAttributes!),
+                      const SizedBox(height: 12),
+                      _AttributesCard(
+                          attributes: p.productAttributes!),
                     ],
+                    // Variants
                     if (p.productAttributes != null &&
                         p.productAttributes!.variants.isNotEmpty) ...[
-                      const SizedBox(height: 16),
-                      _VariantsSection(
+                      const SizedBox(height: 12),
+                      _VariantsCard(
                         variants: p.productAttributes!.variants,
                         controller: controller,
                       ),
                     ],
-                    const SizedBox(height: 32),
+                    const SizedBox(height:50 ),
                   ],
                 ),
               );
             }),
           ),
+
         ],
       ),
     );
   }
 }
 
+// ─── Image gallery app bar ────────────────────────────────────────────────────
 class _ImageGalleryAppBar extends StatefulWidget {
   final AdminSingleOfferProductController controller;
   const _ImageGalleryAppBar({required this.controller});
@@ -114,12 +149,9 @@ class _ImageGalleryAppBarState extends State<_ImageGalleryAppBar> {
   @override
   void initState() {
     super.initState();
-
     _pageController = PageController(
       initialPage: widget.controller.selectedVariantIndex.value,
     );
-
-    // ── React to variant taps → scroll gallery to matching image ──
     ever(widget.controller.selectedVariantIndex, (int idx) {
       if (!_pageController.hasClients) return;
       if ((_pageController.page?.round() ?? -1) == idx) return;
@@ -139,99 +171,61 @@ class _ImageGalleryAppBarState extends State<_ImageGalleryAppBar> {
 
   @override
   Widget build(BuildContext context) {
-    final controller = widget.controller;
-
+    final c = widget.controller;
     return Obx(() {
-      final images = controller.product.value?.productImages ?? [];
+      final images = c.product.value?.productImages ?? [];
       final pct =
-          double.tryParse(controller.product.value?.discountPercentage ?? '0') ?? 0;
+          double.tryParse(c.product.value?.discountPercentage ?? '0') ?? 0;
       final discountColor = pct >= 25
-          ? const Color(0xFF10B981)
+          ? _C.green
           : pct >= 10
-          ? const Color(0xFFF59E0B)
-          : const Color(0xFF6366F1);
+          ? _C.amber
+          : _C.indigo;
 
       return SliverAppBar(
-        expandedHeight: 320,
+        expandedHeight: 300,
         pinned: true,
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1A1D26),
+        backgroundColor: _C.card,
+        foregroundColor: _C.textPrimary,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
         leading: GestureDetector(
-          onTap: () => Get.back(),
+          onTap: Get.back,
           child: Container(
             margin: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.9),
+              color: Colors.white.withOpacity(0.92),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withOpacity(0.12),
                   blurRadius: 8,
                 ),
               ],
             ),
-            child: const Icon(
-              Icons.arrow_back,
-              size: 18,
-              color: Color(0xFF1A1D26),
-            ),
+            child: const Icon(Icons.arrow_back_ios_new_rounded,
+                size: 16, color: _C.textPrimary),
           ),
         ),
-        actions: [
-          Obx(() => IconButton(
-            icon: controller.isLoading.value
-                ? const SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Color(0xFF6366F1),
-              ),
-            )
-                : const Icon(Icons.refresh_rounded),
-            onPressed:
-            controller.isLoading.value ? null : controller.refreshProduct,
-          )),
-          const SizedBox(width: 4),
-        ],
         flexibleSpace: FlexibleSpaceBar(
           background: Stack(
             fit: StackFit.expand,
             children: [
-              // ── Image PageView ──────────────────────────────────
+              // ── PageView ──────────────────────────────────────
               images.isEmpty
-                  ? Container(
-                color: const Color(0xFFEEF0F5),
-                child: const Center(
-                  child: Icon(
-                    Icons.image_not_supported_outlined,
-                    size: 64,
-                    color: Color(0xFFD1D5DB),
-                  ),
-                ),
-              )
+                  ? _emptyImage()
                   : PageView.builder(
-                controller: _pageController, // ← KEY: attach the controller
+                controller: _pageController,
                 itemCount: images.length,
                 onPageChanged: (i) {
-                  // Swipe also updates both observables
-                  controller.currentImageIndex.value = i;
-                  controller.selectedVariantIndex.value = i;
+                  c.currentImageIndex.value = i;
+                  c.selectedVariantIndex.value = i;
                 },
                 itemBuilder: (_, i) => Image.network(
                   images[i],
                   fit: BoxFit.cover,
                   headers: {'Authorization': 'Bearer $_token'},
-                  errorBuilder: (_, __, ___) => Container(
-                    color: const Color(0xFFEEF0F5),
-                    child: const Center(
-                      child: Icon(
-                        Icons.image_not_supported_outlined,
-                        size: 48,
-                        color: Color(0xFFD1D5DB),
-                      ),
-                    ),
-                  ),
+                  errorBuilder: (_, __, ___) => _emptyImage(),
                   loadingBuilder: (_, child, progress) {
                     if (progress == null) return child;
                     return Container(
@@ -239,7 +233,7 @@ class _ImageGalleryAppBarState extends State<_ImageGalleryAppBar> {
                       child: const Center(
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Color(0xFF6366F1),
+                          color: _C.indigo,
                         ),
                       ),
                     );
@@ -247,28 +241,25 @@ class _ImageGalleryAppBarState extends State<_ImageGalleryAppBar> {
                 ),
               ),
 
-              // ── Gradient overlay ────────────────────────────────
+              // ── Bottom gradient ────────────────────────────────
               Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
+                bottom: 0, left: 0, right: 0,
                 child: Container(
-                  height: 80,
+                  height: 90,
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.bottomCenter,
                       end: Alignment.topCenter,
-                      colors: [Colors.black54, Colors.transparent],
+                      colors: [Color(0xCC13152B), Colors.transparent],
                     ),
                   ),
                 ),
               ),
 
-              // ── Discount badge ──────────────────────────────────
+              // ── Discount badge ─────────────────────────────────
               if (pct > 0)
                 Positioned(
-                  top: 60,
-                  right: 16,
+                  top: 56, right: 14,
                   child: Container(
                     padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -278,8 +269,8 @@ class _ImageGalleryAppBarState extends State<_ImageGalleryAppBar> {
                       boxShadow: [
                         BoxShadow(
                           color: discountColor.withOpacity(0.4),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
                         ),
                       ],
                     ),
@@ -287,20 +278,18 @@ class _ImageGalleryAppBarState extends State<_ImageGalleryAppBar> {
                       '${pct.toStringAsFixed(0)}% OFF',
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: FontWeight.w800,
-                        letterSpacing: 0.5,
+                        letterSpacing: 0.6,
                       ),
                     ),
                   ),
                 ),
 
-              // ── Dot indicators ──────────────────────────────────
+              // ── Dot indicators ─────────────────────────────────
               if (images.length > 1)
                 Positioned(
-                  bottom: 12,
-                  left: 0,
-                  right: 0,
+                  bottom: 10, left: 0, right: 0,
                   child: Obx(() => Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(
@@ -308,10 +297,10 @@ class _ImageGalleryAppBarState extends State<_ImageGalleryAppBar> {
                           (i) => AnimatedContainer(
                         duration: const Duration(milliseconds: 250),
                         margin: const EdgeInsets.symmetric(horizontal: 3),
-                        width: controller.currentImageIndex.value == i ? 18 : 6,
-                        height: 6,
+                        width: c.currentImageIndex.value == i ? 16 : 5,
+                        height: 5,
                         decoration: BoxDecoration(
-                          color: controller.currentImageIndex.value == i
+                          color: c.currentImageIndex.value == i
                               ? Colors.white
                               : Colors.white54,
                           borderRadius: BorderRadius.circular(3),
@@ -326,249 +315,242 @@ class _ImageGalleryAppBarState extends State<_ImageGalleryAppBar> {
       );
     });
   }
+
+  Widget _emptyImage() => Container(
+    color: const Color(0xFFDDE0F0),
+    child: const Center(
+      child: Icon(Icons.image_not_supported_outlined,
+          size: 56, color: Color(0xFF9DA3C8)),
+    ),
+  );
 }
 
-// ─────────────────────────────────────────────
-// Header
-// ─────────────────────────────────────────────
-class _HeaderSection extends StatelessWidget {
+// ─── Header card ──────────────────────────────────────────────────────────────
+class _HeaderCard extends StatelessWidget {
   final AdminSingleOfferProductModel product;
   final AdminSingleOfferProductController controller;
-  const _HeaderSection({required this.product, required this.controller});
+  const _HeaderCard({required this.product, required this.controller});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Text(
-                product.productName,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF1A1D26),
-                  height: 1.3,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Obx(() {
-              final qty = controller.selectedVariant?.stock ?? 0;
-              final isLow = qty > 0 && qty <= 5;
-              final outOfStock = qty <= 0;
-              final color = outOfStock
-                  ? const Color(0xFFEF4444)
-                  : isLow
-                  ? const Color(0xFFF59E0B)
-                  : const Color(0xFF10B981);
-              final bgColor = outOfStock
-                  ? const Color(0xFFFEE2E2)
-                  : isLow
-                  ? const Color(0xFFFEF3C7)
-                  : const Color(0xFFD1FAE5);
-
-              return Container(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: bgColor,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      outOfStock
-                          ? Icons.cancel_rounded
-                          : isLow
-                          ? Icons.warning_amber_rounded
-                          : Icons.check_circle_outline_rounded,
-                      size: 12,
-                      color: color,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      outOfStock ? 'Out of Stock' : '$qty in stock',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: color,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Container(
-              padding:
-              const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: const Color(0xFF6366F1).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                    color: const Color(0xFF6366F1).withOpacity(0.3)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.local_offer_rounded,
-                      size: 12, color: Color(0xFF6366F1)),
-                  const SizedBox(width: 4),
-                  Text(
-                    product.offerName,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF6366F1),
-                      fontWeight: FontWeight.w600,
-                    ),
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: _cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  product.productName,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: _C.textPrimary,
+                    height: 1.3,
                   ),
-                ],
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding:
-              const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                    color: const Color(0xFF10B981).withOpacity(0.3)),
+              const SizedBox(width: 8),
+              Obx(() {
+                final qty = controller.selectedVariant?.stock ?? 0;
+                final isLow = qty > 0 && qty <= 5;
+                final outOfStock = qty <= 0;
+                return _StockBadge(qty: qty, isLow: isLow, outOfStock: outOfStock);
+              }),
+            ],
+          ),
+          const SizedBox(height: 9),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              _TagChip(
+                label: product.offerName,
+                icon: Icons.local_offer_rounded,
+                color: _C.indigo,
+                bg: _C.indigoSoft,
+                border: _C.indigoMid,
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.storefront_rounded,
-                      size: 12, color: Color(0xFF10B981)),
-                  const SizedBox(width: 4),
-                  Text(
-                    product.merchantName,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF10B981),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
+              _TagChip(
+                label: product.merchantName,
+                icon: Icons.storefront_rounded,
+                color: _C.green,
+                bg: _C.greenSoft,
+                border: _C.greenBdr,
               ),
-            ),
-          ],
-        ),
-      ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
 
-// ─────────────────────────────────────────────
-// Price Section
-// ─────────────────────────────────────────────
-class _PriceSection extends StatelessWidget {
-  final AdminSingleOfferProductController controller;
-  const _PriceSection({required this.controller});
+class _StockBadge extends StatelessWidget {
+  final int qty;
+  final bool isLow;
+  final bool outOfStock;
+  const _StockBadge({required this.qty, required this.isLow, required this.outOfStock});
 
-  Color _discountColor(double pct) {
-    if (pct >= 25) return const Color(0xFF10B981);
-    if (pct >= 10) return const Color(0xFFF59E0B);
-    return const Color(0xFF6366F1);
+  @override
+  Widget build(BuildContext context) {
+    final color = outOfStock ? _C.red : isLow ? _C.amber : _C.green;
+    final bg    = outOfStock ? _C.redSoft : isLow ? _C.amberSoft : _C.greenSoft;
+    final icon  = outOfStock
+        ? Icons.cancel_rounded
+        : isLow
+        ? Icons.warning_amber_rounded
+        : Icons.check_circle_outline_rounded;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: color),
+          const SizedBox(width: 4),
+          Text(
+            outOfStock ? 'Out of Stock' : '$qty in stock',
+            style: TextStyle(
+                fontSize: 11, fontWeight: FontWeight.w700, color: color),
+          ),
+        ],
+      ),
+    );
   }
+}
+
+class _TagChip extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color color, bg, border;
+  const _TagChip({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.bg,
+    required this.border,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+                fontSize: 11, fontWeight: FontWeight.w600, color: color),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Price card ───────────────────────────────────────────────────────────────
+class _PriceCard extends StatelessWidget {
+  final AdminSingleOfferProductController controller;
+  const _PriceCard({required this.controller});
+
+  Color _discountColor(double pct) =>
+      pct >= 25 ? _C.green : pct >= 10 ? _C.amber : _C.indigo;
+  Color _discountBg(double pct) =>
+      pct >= 25 ? _C.greenSoft : pct >= 10 ? _C.amberSoft : _C.indigoSoft;
+  Color _discountBorder(double pct) =>
+      pct >= 25 ? _C.greenBdr : pct >= 10 ? const Color(0xFFFDE68A) : _C.indigoMid;
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final variant = controller.selectedVariant;
+      final variant  = controller.selectedVariant;
       final original = variant?.price ?? 0.0;
-      final offer = variant?.finalPrice ?? 0.0;
-      final saved = original - offer;
-      final pct =
+      final offer    = variant?.finalPrice ?? 0.0;
+      final saved    = original - offer;
+      final pct      =
           double.tryParse(controller.product.value?.discountPercentage ?? '0') ?? 0;
-      final color = _discountColor(pct);
+      final color    = _discountColor(pct);
+      final bg       = _discountBg(pct);
+      final border   = _discountBorder(pct);
 
       return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
+        padding: const EdgeInsets.all(14),
+        decoration: _cardDecoration(),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            // Left: prices
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Offer Price',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF9CA3AF),
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: const TextStyle(
+                        fontSize: 11, color: _C.textMuted, fontWeight: FontWeight.w500),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 3),
                   Text(
                     '₹${offer.round()}',
                     style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w900,
-                      color: color,
-                    ),
+                        fontSize: 26,
+                        fontWeight: FontWeight.w900,
+                        color: color,
+                        height: 1.1),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     '₹${original.round()}',
                     style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF9CA3AF),
-                      decoration: TextDecoration.lineThrough,
-                    ),
+                        fontSize: 13,
+                        color: _C.textMuted,
+                        decoration: TextDecoration.lineThrough,
+                        fontFeatures: [FontFeature.tabularFigures()]),
                   ),
                 ],
               ),
             ),
+            // Right: savings box
             Container(
-              padding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: bg,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: color.withOpacity(0.3)),
+                border: Border.all(color: border),
               ),
               child: Column(
                 children: [
-                  Text(
-                    'You Save',
-                    style: TextStyle(
-                        fontSize: 11, color: color, fontWeight: FontWeight.w500),
-                  ),
-                  const SizedBox(height: 4),
+                  Text('You Save',
+                      style: TextStyle(
+                          fontSize: 10, color: color, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 3),
                   Text(
                     '₹${saved.round()}',
                     style: TextStyle(
                         fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: color),
+                        fontWeight: FontWeight.w900,
+                        color: color,
+                        fontFeatures: const [FontFeature.tabularFigures()]),
                   ),
                   Text(
                     '${pct.toStringAsFixed(0)}% off',
                     style: TextStyle(
-                        fontSize: 11,
-                        color: color,
-                        fontWeight: FontWeight.w600),
+                        fontSize: 10, color: color, fontWeight: FontWeight.w700),
                   ),
                 ],
               ),
@@ -580,35 +562,33 @@ class _PriceSection extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-// Info Grid
-// ─────────────────────────────────────────────
+// ─── Info grid ────────────────────────────────────────────────────────────────
 class _InfoGrid extends StatelessWidget {
   final AdminSingleOfferProductModel product;
-  final AdminSingleOfferProductController controller;
-  const _InfoGrid({required this.product, required this.controller});
+  const _InfoGrid({required this.product});
 
   @override
   Widget build(BuildContext context) {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: 2.8,
+    return Row(
       children: [
-        _InfoTile(
-          label: 'Product ID',
-          value: '#${product.id}',
-          icon: Icons.tag_rounded,
-          color: const Color(0xFF6366F1),
+        Expanded(
+          child: _InfoTile(
+            label: 'Product ID',
+            value: '#${product.id}',
+            icon: Icons.numbers_rounded,
+            iconColor: _C.indigo,
+            iconBg: _C.indigoSoft,
+          ),
         ),
-        _InfoTile(
-          label: 'Offer ID',
-          value: '#${product.offerId}',
-          icon: Icons.local_offer_rounded,
-          color: const Color(0xFF8B5CF6),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _InfoTile(
+            label: 'Offer ID',
+            value: '#${product.offerId}',
+            icon: Icons.local_offer_rounded,
+            iconColor: _C.purple,
+            iconBg: _C.purpleSoft,
+          ),
         ),
       ],
     );
@@ -616,64 +596,48 @@ class _InfoGrid extends StatelessWidget {
 }
 
 class _InfoTile extends StatelessWidget {
-  final String label;
-  final String value;
+  final String label, value;
   final IconData icon;
-  final Color color;
-
+  final Color iconColor, iconBg;
   const _InfoTile({
     required this.label,
     required this.value,
     required this.icon,
-    required this.color,
+    required this.iconColor,
+    required this.iconBg,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      decoration: _cardDecoration(radius: 12),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: color, size: 14),
+                color: iconBg, borderRadius: BorderRadius.circular(8)),
+            child: Icon(icon, color: iconColor, size: 14),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 9),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: Color(0xFF9CA3AF),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+                Text(label,
+                    style: const TextStyle(
+                        fontSize: 10,
+                        color: _C.textMuted,
+                        fontWeight: FontWeight.w500)),
+                const SizedBox(height: 1),
                 Text(
                   value,
                   style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF1A1D26),
-                  ),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: _C.textPrimary,
+                      fontFeatures: [FontFeature.tabularFigures()]),
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
@@ -685,12 +649,39 @@ class _InfoTile extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-// Attributes Section
-// ─────────────────────────────────────────────
-class _AttributesSection extends StatelessWidget {
+// ─── Description card ─────────────────────────────────────────────────────────
+class _DescriptionCard extends StatelessWidget {
+  final String description;
+  const _DescriptionCard({required this.description});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: _cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SectionHeader(title: 'Description', icon: Icons.description_outlined),
+          const SizedBox(height: 10),
+          Text(
+            description,
+            style: const TextStyle(
+              fontSize: 13,
+              color: _C.textSecondary,
+              height: 1.65,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Attributes card ──────────────────────────────────────────────────────────
+class _AttributesCard extends StatelessWidget {
   final ProductAttributes attributes;
-  const _AttributesSection({required this.attributes});
+  const _AttributesCard({required this.attributes});
 
   String _capitalize(String s) =>
       s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
@@ -698,182 +689,207 @@ class _AttributesSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (attributes.commonAttributes.isEmpty) return const SizedBox.shrink();
-    return SectionCard(
-      title: 'Common Attributes',
-      icon: Icons.tune_rounded,
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: attributes.commonAttributes.entries.map((entry) {
-          return Container(
-            padding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF3F4F6),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFE5E7EB)),
-            ),
-            child: RichText(
-              text: TextSpan(
-                children: [
-                  TextSpan(
-                    text: '${_capitalize(entry.key)}: ',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF9CA3AF),
-                      fontWeight: FontWeight.w500,
-                    ),
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: _cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SectionHeader(title: 'Common Attributes', icon: Icons.tune_rounded),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 7,
+            runSpacing: 7,
+            children: attributes.commonAttributes.entries.map((e) {
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3F4F6),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: _C.border),
+                ),
+                child: RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: '${_capitalize(e.key)}: ',
+                        style: const TextStyle(
+                            fontSize: 12,
+                            color: _C.textMuted,
+                            fontWeight: FontWeight.w500),
+                      ),
+                      TextSpan(
+                        text: e.value.toString(),
+                        style: const TextStyle(
+                            fontSize: 12,
+                            color: _C.textPrimary,
+                            fontWeight: FontWeight.w700),
+                      ),
+                    ],
                   ),
-                  TextSpan(
-                    text: entry.value.toString(),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF1A1D26),
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }).toList(),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
       ),
     );
   }
 }
 
-// ─────────────────────────────────────────────
-// Variants Section
-// ─────────────────────────────────────────────
-class _VariantsSection extends StatelessWidget {
+// ─── Variants card ────────────────────────────────────────────────────────────
+class _VariantsCard extends StatelessWidget {
   final List<ProductVariant> variants;
   final AdminSingleOfferProductController controller;
-  const _VariantsSection({required this.variants, required this.controller});
+  const _VariantsCard({required this.variants, required this.controller});
 
   String _capitalize(String s) =>
       s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
 
   @override
   Widget build(BuildContext context) {
-    return SectionCard(
-      title: 'Variants',
-      icon: Icons.style_rounded,
-      child: Obx(() {
-        return Column(
-          children: variants.asMap().entries.map((entry) {
-            final i = entry.key;
-            final v = entry.value;
-            final isSelected = controller.selectedVariantIndex.value == i;
-            final isLow = v.stock > 0 && v.stock <= 5;
-            final outOfStock = v.stock <= 0;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: _cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SectionHeader(title: 'Variants', icon: Icons.style_rounded),
+          const SizedBox(height: 10),
+          Obx(() => Column(
+            children: variants.asMap().entries.map((entry) {
+              final i = entry.key;
+              final v = entry.value;
+              final isSelected = controller.selectedVariantIndex.value == i;
+              final isLow      = v.stock > 0 && v.stock <= 5;
+              final outOfStock = v.stock <= 0;
+              final stockColor = outOfStock ? _C.red : isLow ? _C.amber : _C.green;
+              final stockBg    = outOfStock ? _C.redSoft : isLow ? _C.amberSoft : _C.greenSoft;
 
-            return GestureDetector(
-              onTap: () => controller.selectVariant(i), // ← triggers gallery scroll
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin:
-                EdgeInsets.only(bottom: i < variants.length - 1 ? 10 : 0),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? const Color(0xFF6366F1).withOpacity(0.06)
-                      : const Color(0xFFF9FAFB),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
+              return GestureDetector(
+                onTap: () => controller.selectVariant(i),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  margin: EdgeInsets.only(
+                      bottom: i < variants.length - 1 ? 8 : 0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 11),
+                  decoration: BoxDecoration(
                     color: isSelected
-                        ? const Color(0xFF6366F1)
-                        : const Color(0xFFE5E7EB),
-                    width: isSelected ? 1.5 : 1,
+                        ? _C.indigoSoft
+                        : const Color(0xFFFAFBFD),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isSelected ? _C.indigo : _C.border,
+                      width: isSelected ? 1.5 : 1,
+                    ),
                   ),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Wrap(
-                        spacing: 6,
-                        runSpacing: 6,
-                        children: v.attributes.entries.map((e) {
-                          return Container(
+                  child: Row(
+                    children: [
+                      // Attribute chips
+                      Expanded(
+                        child: Wrap(
+                          spacing: 5,
+                          runSpacing: 5,
+                          children: v.attributes.entries.map((e) {
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 9, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: _C.indigo.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                '${_capitalize(e.key)}: ${e.value}',
+                                style: const TextStyle(
+                                    fontSize: 11,
+                                    color: _C.indigo,
+                                    fontWeight: FontWeight.w700),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      // Price + stock
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            '₹${v.finalPrice.round()}',
+                            style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: _C.indigo,
+                                fontFeatures: [FontFeature.tabularFigures()]),
+                          ),
+                          Text(
+                            '₹${v.price.round()}',
+                            style: const TextStyle(
+                                fontSize: 11,
+                                color: _C.textMuted,
+                                decoration: TextDecoration.lineThrough,
+                                fontFeatures: [FontFeature.tabularFigures()]),
+                          ),
+                          const SizedBox(height: 4),
+                          Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
+                                horizontal: 7, vertical: 3),
                             decoration: BoxDecoration(
-                              color:
-                              const Color(0xFF6366F1).withOpacity(0.1),
+                              color: stockBg,
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
-                              '${_capitalize(e.key)}: ${e.value}',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Color(0xFF6366F1),
-                                fontWeight: FontWeight.w600,
-                              ),
+                              outOfStock
+                                  ? 'Out of Stock'
+                                  : '${v.stock} in stock',
+                              style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: stockColor),
                             ),
-                          );
-                        }).toList(),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          '₹${v.finalPrice.round()}',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF6366F1),
-                          ),
-                        ),
-                        Text(
-                          '₹${v.price.round()}',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Color(0xFF9CA3AF),
-                            decoration: TextDecoration.lineThrough,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: outOfStock
-                                ? const Color(0xFFFEE2E2)
-                                : isLow
-                                ? const Color(0xFFFEF3C7)
-                                : const Color(0xFFD1FAE5),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            outOfStock
-                                ? 'Out of Stock'
-                                : '${v.stock} in stock',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: outOfStock
-                                  ? const Color(0xFFEF4444)
-                                  : isLow
-                                  ? const Color(0xFFF59E0B)
-                                  : const Color(0xFF10B981),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            );
-          }).toList(),
-        );
-      }),
+              );
+            }).toList(),
+          )),
+        ],
+      ),
     );
   }
 }
 
+// ─── Shared: Section header ───────────────────────────────────────────────────
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  const _SectionHeader({required this.title, required this.icon});
 
-
-
-
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 26,
+          height: 26,
+          decoration: BoxDecoration(
+              color: _C.indigoSoft, borderRadius: BorderRadius.circular(8)),
+          child: Icon(icon, size: 13, color: _C.indigo),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              color: _C.textPrimary,
+              letterSpacing: 0.1),
+        ),
+      ],
+    );
+  }
+}

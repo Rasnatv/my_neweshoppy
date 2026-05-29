@@ -75,7 +75,7 @@ class MerchantDashboardPage extends StatelessWidget {
                     delegate: SliverChildListDelegate([
                       _buildMenuCard(
                         icon: Icons.store_mall_directory_rounded,
-                        title: "Edit Shop",
+                        title: " MerchantProfile",
                         description: "Shop settings",
                         gradient: const LinearGradient(
                           colors: [Color(0xFF6366F1), Color(0xFF6366F1)],
@@ -155,8 +155,7 @@ class MerchantDashboardPage extends StatelessWidget {
               ],
             ),
 
-            // ---------------- FLOATING ADD BUTTON ----------------
-            floatingActionButton: _buildModernFAB(),
+
           ));
   }
 
@@ -374,57 +373,6 @@ class MerchantDashboardPage extends StatelessWidget {
                     fontSize: 12,
                     color: Colors.grey[600],
                     fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ---------------- MODERN FAB ----------------
-  Widget _buildModernFAB() {
-    return Container(
-      height: 60,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF11998E), Color(0xFF38EF7D)],
-        ),
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF11998E).withOpacity(0.4),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => Get.to(() => AddProductPage()),
-          //AddProductPage()),
-          borderRadius: BorderRadius.circular(30),
-          child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.add_circle_outline_rounded,
-                  color: Colors.white,
-                  size: 26,
-                ),
-                SizedBox(width: 12),
-                Text(
-                  "Add Product",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
                   ),
                 ),
               ],

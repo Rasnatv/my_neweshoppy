@@ -19,7 +19,7 @@ class AdvertisementUpdateController extends GetxController {
 
   final formKey = GlobalKey<FormState>();
   final advertisementController = TextEditingController();
-  final Rx<File?> bannerImage       = Rx<File?>(null);
+
 
   final RxBool isLoading = false.obs;
   final RxBool isFetching = false.obs;
@@ -176,9 +176,9 @@ class AdvertisementUpdateController extends GetxController {
         source: ImageSource.gallery,
         imageQuality: 80,
       );
+
       if (picked == null) return;
 
-      // Step 1: Crop first — locked 2:1
       final croppedFile = await ImageCropper().cropImage(
         sourcePath: picked.path,
         aspectRatio: const CropAspectRatio(ratioX: 2, ratioY: 1),
@@ -195,10 +195,16 @@ class AdvertisementUpdateController extends GetxController {
           ),
         ],
       );
+
       if (croppedFile == null) return;
 
-      // Step 2: Store — exact same variable as your old code
-      bannerImage.value = File(croppedFile.path);
+      // ✅ SAVE IMAGE
+      pickedImageFile.value = File(croppedFile.path);
+
+      // ✅ CONVERT TO BASE64
+      final bytes = await pickedImageFile.value!.readAsBytes();
+
+      base64Image.value = base64Encode(bytes);
 
     } catch (e) {
       AppSnackbar.error("Image error: $e");

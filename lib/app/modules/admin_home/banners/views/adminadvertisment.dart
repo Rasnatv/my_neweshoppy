@@ -102,13 +102,7 @@ class AdminAdvertisementPage extends StatelessWidget {
           )),
         ],
       ),
-      actions: [
-        IconButton(
-          onPressed: controller.fetchAdvertisements,
-          icon: const Icon(Icons.refresh_rounded, color: Colors.white),
-        ),
-        const SizedBox(width: 4),
-      ],
+
     );
   }
 

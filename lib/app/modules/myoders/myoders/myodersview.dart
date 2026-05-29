@@ -1,5 +1,4 @@
 
-
 import 'package:eshoppy/app/data/models/user_myordersmodel.dart';
 import 'package:eshoppy/app/modules/myoders/controller/my_orderscontroller.dart';
 import 'package:flutter/material.dart';
@@ -14,46 +13,42 @@ class MyOrdersView extends StatelessWidget {
 
   static Color get primary => AppColors.kPrimary;
 
+  // ── Design Tokens ────────────────────────────────────────────────────────────
+  static const Color _bg = Color(0xFFF7F8FC);
+  static const Color _surface = Colors.white;
+  static const Color _textPrimary = Color(0xFF0D1117);
+  static const Color _textSecondary = Color(0xFF6B7280);
+  static const Color _textMuted = Color(0xFFADB5BD);
+  static const Color _divider = Color(0xFFEEF0F4);
+  static const Color _successGreen = Color(0xFF10B981);
+  static const Color _cardShadowColor = Color(0x0F000000);
+
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(MyOrdersController());
 
     return NetworkAwareWrapper(
       child: Scaffold(
-        backgroundColor: const Color(0xFFF5F6FA),
-        appBar: AppBar(
-          backgroundColor: primary,
-          iconTheme: const IconThemeData(color: Colors.white),
-          elevation: 0.5,
-          shadowColor: Colors.black12,
-          title: const Text(
-            'My Orders',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 17,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.1,
-            ),
-          ),
-        ),
+        backgroundColor: _bg,
+        appBar: _buildAppBar(),
         body: Obx(() {
-          if (controller.isLoading.value) {
-            return Center(child: CircularProgressIndicator(color: primary));
-          }
-          if (controller.hasError.value) {
-            return _buildErrorState(controller);
-          }
-          if (controller.orders.isEmpty) {
-            return _buildEmptyState();
-          }
+          if (controller.isLoading.value) return _buildLoadingState();
+          if (controller.hasError.value) return _buildErrorState(controller);
+          if (controller.orders.isEmpty) return _buildEmptyState();
           return RefreshIndicator(
             color: primary,
+            displacement: 20,
+            strokeWidth: 2,
             onRefresh: controller.fetchMyOrders,
             child: ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 110),
               itemCount: controller.orders.length,
               itemBuilder: (context, index) {
-                return _buildOrderCard(controller.orders[index], controller);
+                return _buildOrderCard(
+                  controller.orders[index],
+                  controller,
+                  index,
+                );
               },
             ),
           );
@@ -62,17 +57,54 @@ class MyOrdersView extends StatelessWidget {
     );
   }
 
-  // ── Order Card ───────────────────────────────────────────────────────────────
-  Widget _buildOrderCard(MyOrdersModel order, MyOrdersController controller) {
+  // ── AppBar ───────────────────────────────────────────────────────────────────
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor:AppColors.kPrimary,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: _textPrimary),
+      elevation: 0,
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(1),
+        child: Container(height: 1, color: _divider),
+      ),
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'My Orders',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 17,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.1,
+        ),)
+        ],
+      ),
+
+    );
+  }
+
+  // ── Loading State ────────────────────────────────────────────────────────────
+  Widget _buildLoadingState() {
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+      itemCount: 4,
+      itemBuilder: (_, i) => _buildSkeletonCard(i),
+    );
+  }
+
+  Widget _buildSkeletonCard(int i) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        color: _surface,
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 14,
+            color: _cardShadowColor,
+            blurRadius: 20,
             offset: const Offset(0, 4),
           ),
         ],
@@ -80,28 +112,101 @@ class MyOrdersView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Card Header ────────────────────────────────────────────────
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              color: primary.withOpacity(0.05),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(18),
+          Row(
+            children: [
+              _shimmer(38, 38, radius: 10),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _shimmer(120, 13),
+                  const SizedBox(height: 6),
+                  _shimmer(80, 10),
+                ],
               ),
-            ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              _shimmer(56, 56, radius: 12),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _shimmer(double.infinity, 13),
+                    const SizedBox(height: 6),
+                    _shimmer(100, 10),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _shimmer(double w, double h, {double radius = 8}) {
+    return Container(
+      width: w,
+      height: h,
+      decoration: BoxDecoration(
+        color: const Color(0xFFEEF0F4),
+        borderRadius: BorderRadius.circular(radius),
+      ),
+    );
+  }
+
+  // ── Order Card ───────────────────────────────────────────────────────────────
+  Widget _buildOrderCard(
+      MyOrdersModel order, MyOrdersController controller, int index) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: _surface,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: _cardShadowColor,
+            blurRadius: 24,
+            offset: const Offset(0, 6),
+          ),
+          BoxShadow(
+            color: Colors.white.withOpacity(0.9),
+            blurRadius: 0,
+            offset: const Offset(0, -1),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Card Header ──────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
             child: Row(
               children: [
+                // Order icon badge
                 Container(
-                  width: 38,
-                  height: 38,
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
-                    color: primary.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(10),
+                    gradient: LinearGradient(
+                      colors: [
+                        primary.withOpacity(0.15),
+                        primary.withOpacity(0.06),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     Icons.receipt_long_rounded,
                     color: primary,
-                    size: 20,
+                    size: 19,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -112,26 +217,27 @@ class MyOrdersView extends StatelessWidget {
                       Text(
                         order.orderId,
                         style: const TextStyle(
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF1A1A1A),
-                          letterSpacing: 0.3,
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w700,
+                          color: _textPrimary,
+                          letterSpacing: -0.1,
                         ),
                       ),
                       const SizedBox(height: 3),
                       Row(
                         children: [
                           Icon(
-                            Icons.calendar_today_rounded,
+                            Icons.access_time_rounded,
                             size: 11,
-                            color: Colors.grey.shade500,
+                            color: _textMuted,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             controller.formatDate(order.orderDate),
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              color: Colors.grey.shade500,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: _textMuted,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ],
@@ -139,13 +245,37 @@ class MyOrdersView extends StatelessWidget {
                     ],
                   ),
                 ),
+                // Item count pill
+                Container(
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _bg,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: _divider),
+                  ),
+                  child: Text(
+                    '${order.items.length} ${order.items.length == 1 ? 'item' : 'items'}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: _textSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
 
-          // ── Items List ─────────────────────────────────────────────────
+          // ── Thin separator ───────────────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+            child: Container(height: 1, color: _divider),
+          ),
+
+          // ── Items List ────────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
             child: Column(
               children: order.items
                   .map((item) => _buildItemRow(item, controller))
@@ -153,49 +283,49 @@ class MyOrdersView extends StatelessWidget {
             ),
           ),
 
-          // ── Footer ─────────────────────────────────────────────────────
+          // ── Footer ────────────────────────────────────────────────────────
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: const BoxDecoration(
-              color: Color(0xFFF9FAFB),
-              borderRadius: BorderRadius.vertical(
-                bottom: Radius.circular(18),
+            margin: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  primary.withOpacity(0.04),
+                  primary.withOpacity(0.08),
+                ],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
               ),
-              border: Border(
-                top: BorderSide(color: Color(0xFFF0F0F0)),
-              ),
+              borderRadius: BorderRadius.circular(14),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Row(
                   children: [
-                    const Text(
-                      'Order Total',
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        color: Color(0xFF888888),
-                      ),
+                    Icon(
+                      Icons.payments_rounded,
+                      size: 16,
+                      color: primary.withOpacity(0.7),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '₹${controller.formatPrice(order.totalAmount)}',
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Total ',
                       style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: primary,
-                        letterSpacing: 0.2,
+                        fontSize: 12,
+                        color: _textSecondary,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
                 Text(
-                  '${order.items.length} ${order.items.length == 1 ? 'item' : 'items'}',
+                  '₹${controller.formatPrice(order.totalAmount)}',
                   style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade500,
-                    fontWeight: FontWeight.w500,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: primary,
+                    letterSpacing: -0.3,
                   ),
                 ),
               ],
@@ -209,159 +339,195 @@ class MyOrdersView extends StatelessWidget {
   // ── Item Row ─────────────────────────────────────────────────────────────────
   Widget _buildItemRow(OrderProduct item, MyOrdersController controller) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(10),
-        onTap: () {
-          // ── Same pattern as CartScreen ──
-          // type == 1  →  offer product detail
-          // type == 0  →  normal product detail
-          if (item.type == 1) {
-            Get.to(() => UserOfferProductDetailScreen(
-              offerProductId: item.productId,
-              preSelectedVariantId: item.variant?.variantId,
-            ));
-          } else {
-            Get.to(() => ProductDetailPage(
-              productId: item.productId,
-              preSelectedVariantId: item.variant?.variantId,
-            ));
-          }
-        },
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Product image
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Image.network(
-                item.displayImage,
-                width: 56,
-                height: 56,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF0F0F0),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(
-                    Icons.image_not_supported_outlined,
-                    color: Colors.grey,
-                    size: 22,
-                  ),
-                ),
-                loadingBuilder: (_, child, progress) => progress == null
-                    ? child
-                    : Container(
-                  width: 56,
-                  height: 56,
-                  color: const Color(0xFFF0F0F0),
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: primary,
-                      value: progress.expectedTotalBytes != null
-                          ? progress.cumulativeBytesLoaded /
-                          progress.expectedTotalBytes!
-                          : null,
-                    ),
-                  ),
-                ),
-              ),
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () {
+            if (item.type == 1) {
+              Get.to(() => UserOfferProductDetailScreen(
+                offerProductId: item.productId,
+                preSelectedVariantId: item.variant?.variantId,
+              ));
+            } else {
+              Get.to(() => ProductDetailPage(
+                productId: item.productId,
+                preSelectedVariantId: item.variant?.variantId,
+              ));
+            }
+          },
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: _bg,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: _divider, width: 1),
             ),
-            const SizedBox(width: 12),
-
-            // Product details
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Product name
-                  Text(
-                    item.productName,
-                    style: const TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF1A1A1A),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // ── Product Image ──────────────────────────────────────────
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.network(
+                    item.displayImage,
+                    width: 58,
+                    height: 58,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      width: 58,
+                      height: 58,
+                      color: _divider,
+                      child: const Icon(
+                        Icons.image_not_supported_outlined,
+                        color: _textMuted,
+                        size: 22,
+                      ),
+                    ),
+                    loadingBuilder: (_, child, progress) => progress == null
+                        ? child
+                        : Container(
+                      width: 58,
+                      height: 58,
+                      color: _divider,
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          strokeWidth: 1.5,
+                          color: primary,
+                          value: progress.expectedTotalBytes != null
+                              ? progress.cumulativeBytesLoaded /
+                              progress.expectedTotalBytes!
+                              : null,
+                        ),
+                      ),
                     ),
                   ),
+                ),
+                const SizedBox(width: 12),
 
-                  // Variant attributes as badge chips
-                  if (item.variant != null &&
-                      item.variant!.attributes.isNotEmpty) ...[
-                    const SizedBox(height: 5),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 4,
-                      children: item.variant!.attributes.entries.map((e) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: primary.withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
-                              color: primary.withOpacity(0.2),
-                              width: 0.8,
-                            ),
-                          ),
-                          child: Text(
-                            '${_cap(e.key)}: ${_cap(e.value)}',
-                            style: TextStyle(
-                              fontSize: 10.5,
-                              color: primary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ],
-
-                  const SizedBox(height: 5),
-
-                  // Price line
-                  Row(
+                // ── Product Details ────────────────────────────────────────
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (item.variant != null &&
-                          item.variant!.finalPrice < item.variant!.price) ...[
-                        Text(
-                          '₹${controller.formatPrice(item.variant!.price)}',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Color(0xFFAAAAAA),
-                            decoration: TextDecoration.lineThrough,
-                          ),
-                        ),
-                        const SizedBox(width: 5),
-                      ],
                       Text(
-                        '₹${controller.formatPrice(item.price)}  ×  ${item.quantity}',
+                        item.productName,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF888888),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: _textPrimary,
+                          height: 1.3,
                         ),
+                      ),
+
+                      // Variant chips
+                      if (item.variant != null &&
+                          item.variant!.attributes.isNotEmpty) ...[
+                        const SizedBox(height: 5),
+                        Wrap(
+                          spacing: 5,
+                          runSpacing: 4,
+                          children:
+                          item.variant!.attributes.entries.map((e) {
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 7, vertical: 2.5),
+                              decoration: BoxDecoration(
+                                color: _surface,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: _divider),
+                              ),
+                              child: Text(
+                                '${_cap(e.key)}: ${_cap(e.value)}',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: _textSecondary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ],
+
+                      const SizedBox(height: 5),
+
+                      // Price row
+                      Row(
+                        children: [
+                          if (item.variant != null &&
+                              item.variant!.finalPrice <
+                                  item.variant!.price) ...[
+                            Text(
+                              '₹${controller.formatPrice(item.variant!.price)}',
+                              style: const TextStyle(
+                                fontSize: 10.5,
+                                color: _textMuted,
+                                decoration: TextDecoration.lineThrough,
+                                decorationColor: _textMuted,
+                              ),
+                            ),
+                            const SizedBox(width: 5),
+                          ],
+                          Text(
+                            '₹${controller.formatPrice(item.price)}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: _textSecondary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 6),
+                            width: 3,
+                            height: 3,
+                            decoration: const BoxDecoration(
+                              color: _textMuted,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          Text(
+                            'Qty ${item.quantity}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: _textMuted,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
+                ),
+                const SizedBox(width: 8),
 
-            // Item total
-            Text(
-              '₹${controller.formatPrice(item.total)}',
-              style: TextStyle(
-                fontSize: 13.5,
-                fontWeight: FontWeight.w700,
-                color: primary,
-              ),
+                // ── Item Total ─────────────────────────────────────────────
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '₹${controller.formatPrice(item.total)}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: primary,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 16,
+                      color: _textMuted,
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -374,42 +540,67 @@ class MyOrdersView extends StatelessWidget {
   Widget _buildEmptyState() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(40),
+        padding: const EdgeInsets.symmetric(horizontal: 40),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: primary.withOpacity(0.08),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.shopping_bag_outlined,
-                size: 46,
-                color: primary.withOpacity(0.6),
-              ),
+            // Icon container with layered rings
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: primary.withOpacity(0.04),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                Container(
+                  width: 90,
+                  height: 90,
+                  decoration: BoxDecoration(
+                    color: primary.withOpacity(0.07),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: primary.withOpacity(0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.shopping_bag_outlined,
+                    size: 28,
+                    color: primary,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 28),
             const Text(
               'No Orders Yet',
               style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF2D3748),
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: _textPrimary,
+                letterSpacing: -0.5,
               ),
             ),
             const SizedBox(height: 10),
             Text(
-              'You haven\'t placed any orders yet.\nStart shopping to see your orders here.',
+              "You haven't placed any orders yet.\nStart shopping to see your orders here.",
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13.5,
-                color: Colors.grey.shade500,
-                height: 1.6,
+                color: _textSecondary,
+                height: 1.7,
               ),
             ),
+            const SizedBox(height: 32),
+
           ],
         ),
       ),
@@ -420,30 +611,60 @@ class MyOrdersView extends StatelessWidget {
   Widget _buildErrorState(MyOrdersController controller) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.symmetric(horizontal: 36),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline_rounded,
-                size: 60, color: Colors.red.shade300),
-            const SizedBox(height: 16),
-            Text(
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.wifi_off_rounded,
+                size: 32,
+                color: Colors.red.shade400,
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Something went wrong',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                color: _textPrimary,
+                letterSpacing: -0.3,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Obx(() => Text(
               controller.errorMessage.value,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 14, color: Color(0xFF555555)),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: controller.fetchMyOrders,
-              icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Retry'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primary,
-                foregroundColor: Colors.white,
-                padding:
-                const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+              style: const TextStyle(
+                fontSize: 13,
+                color: _textSecondary,
+                height: 1.6,
+              ),
+            )),
+            const SizedBox(height: 28),
+            SizedBox(
+              height: 46,
+              child: OutlinedButton.icon(
+                onPressed: controller.fetchMyOrders,
+                icon: const Icon(Icons.refresh_rounded, size: 18),
+                label: const Text(
+                  'Try Again',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: primary,
+                  side: BorderSide(color: primary, width: 1.5),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 28),
                 ),
               ),
             ),

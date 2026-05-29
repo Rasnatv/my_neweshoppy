@@ -441,7 +441,6 @@ class AdminEventUpdateController extends GetxController {
       pickedImageFile.value = file;
       pickedImageBase64.value = 'data:$mime;base64,${base64Encode(rawBytes)}';
     } catch (e) {
-      AppSnackbar.error('Something went wrong while picking image');
     }
   }
 

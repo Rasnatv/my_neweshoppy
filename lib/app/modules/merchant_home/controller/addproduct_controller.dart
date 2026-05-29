@@ -2,6 +2,8 @@
 
 import 'dart:convert';
 import 'dart:io';
+import 'package:eshoppy/app/modules/merchant_home/views/manageproducts.dart';
+import 'package:eshoppy/app/modules/merchant_home/views/merchant_home.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -427,7 +429,7 @@ class ProductController extends GetxController {
       if (response.statusCode == 201 || body['status'] == true) {
         AppSnackbar.success(body['message'] ?? "Product added successfully");
         _clearForm();
-        Get.back();
+       Get.offAll(MerchantDashboardPage());
       } else {
         AppSnackbar.error(ApiErrorHandler.handleResponse(response));
       }

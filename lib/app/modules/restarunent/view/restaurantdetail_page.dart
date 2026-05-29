@@ -462,7 +462,7 @@ class _CircleButton extends StatelessWidget {
                 ),
               ],
             ),
-            child: Icon(icon, color: Colors.white, size: 17),
+            child: Icon(icon, color: Colors.white, size:20),
           ),
           if (badge != null)
             Positioned(

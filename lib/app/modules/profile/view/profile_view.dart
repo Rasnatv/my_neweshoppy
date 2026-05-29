@@ -171,7 +171,7 @@ class ProfileView extends StatelessWidget {
                     onTap: AuthService.showLogoutDialog,
                   ),
 
-                const SizedBox(height: 60),
+                const SizedBox(height: 200),
               ],
             ),
           ),

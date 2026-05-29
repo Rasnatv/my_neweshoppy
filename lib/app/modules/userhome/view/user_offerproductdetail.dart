@@ -693,37 +693,6 @@ class _UserOfferProductDetailScreenState
             ),
           )),
 
-          // Low-stock warning
-          Obx(() {
-            final stock = controller.selectedVariant.value?.stock ?? 0;
-            if (stock <= 0 || stock > 5) return const SizedBox.shrink();
-            return Container(
-              margin: const EdgeInsets.only(top: 4),
-              padding:
-              const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: _amber.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: _amber.withOpacity(0.4)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.warning_amber_rounded,
-                      size: 14, color: _amber),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Only $stock left in stock!',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: _amber,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
         ],
       ),
     );

@@ -73,6 +73,26 @@ class _ManageProductsPageState extends State<ManageProductsPage> {
         child:
         Container(height: 0.5, color: Colors.white.withOpacity(0.2)),
       ),
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: 12),
+          child: ElevatedButton.icon(
+            onPressed: () => Get.to(() => AddProductPage()),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,         // white button on colored bar
+              foregroundColor: AppColors.kPrimary,   // primary-colored icon + text
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
+              minimumSize: const Size(0, 34),        // compact height for AppBar
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            icon: const Icon(Icons.add_rounded, size: 17),
+            label: const Text('Add Product', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+          ),
+        ),
+      ],
     );
   }
 
@@ -166,35 +186,6 @@ class _ManageProductsPageState extends State<ManageProductsPage> {
       ),
     );
   }
-
-  // Widget _buildEmptyState() {
-  //   return Center(
-  //     child: Column(
-  //       mainAxisAlignment: MainAxisAlignment.center,
-  //       children: [
-  //         Container(
-  //           width: 100,
-  //           height: 100,
-  //           decoration: BoxDecoration(
-  //             color: Colors.white,
-  //             borderRadius: BorderRadius.circular(24),
-  //           ),
-  //           child: const Icon(Icons.inventory_2_outlined,
-  //               size: 44, color: Color(0xFF00796B)),
-  //         ),
-  //         const SizedBox(height: 24),
-  //         const Text('No products yet',
-  //             style: TextStyle(
-  //                 fontSize: 18,
-  //                 fontWeight: FontWeight.w700,
-  //                 color: Color(0xFF263238))),
-  //         const SizedBox(height: 8),
-  //         const Text('Your product list will appear here',
-  //             style: TextStyle(fontSize: 14, color: Color(0xFF90A4AE))),
-  //       ],
-  //     ),
-  //   );
-  // }
   Widget _buildEmptyState() {
     return Center(
       child: Column(

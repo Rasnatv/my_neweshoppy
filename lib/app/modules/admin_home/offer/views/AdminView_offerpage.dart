@@ -62,32 +62,11 @@ class OffersListingScreen extends StatelessWidget {
           )),
         ],
       ),
-      actions: [
-        Obx(() => IconButton(
-          icon: controller.isLoading.value
-              ? const SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: Color(0xFF6366F1),
-            ),
-          )
-              : const Icon(Icons.refresh_rounded),
-          onPressed: controller.isLoading.value
-              ? null
-              : controller.refreshOffers,
-          tooltip: 'Refresh',
-        )),
-        const SizedBox(width: 8),
-      ],
+
     );
   }
 }
 
-// ─────────────────────────────────────────────
-// Main Content
-// ─────────────────────────────────────────────
 
 class _OffersContent extends StatelessWidget {
   final AdminViewOfferController controller;
