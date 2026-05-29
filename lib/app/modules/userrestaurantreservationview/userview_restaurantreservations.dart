@@ -8,16 +8,16 @@ import 'package:intl/intl.dart';
 
 class _T {
   static const teal       = Color(0xFF009688);
-  static const tealLight  = Color(0xFFE0F2F1);
+  static const tealLight  = Color(0xFFE1F5EE);
   static const tealMint   = Color(0xFF9FE1CB);
   static const tealDark   = Color(0xFF085041);
   static const tealMid    = Color(0xFF0F6E56);
-  static const bg         = Color(0xFFF0F4F3);
+  static const bg         = Color(0xFFF4F6F5);
   static const card       = Color(0xFFFFFFFF);
   static const text       = Color(0xFF1A2E2A);
   static const textSub    = Color(0xFF607D78);
-  static const border     = Color(0xFFE2EEEC);
-  static const sep        = Color(0xFFEBF4F2);
+  static const border     = Color(0xFFE8EFED);
+  static const sep        = Color(0xFFF0F4F2);
 }
 
 // ── Entry Point ────────────────────────────────────────────────────────────
@@ -37,28 +37,39 @@ class BookedOrdersPage extends StatelessWidget {
       appBar: _buildAppBar(ctrl),
       body: Obx(() {
         if (ctrl.isLoading.value) return const _LoadingState();
-        if (ctrl.isEmpty)         return const _EmptyState();
+        if (ctrl.isEmpty) return const _EmptyState();
+
+        // Group restaurants by date
+        final grouped = <String, List<BookingRestaurant>>{};
+        for (final r in ctrl.restaurants) {
+          for (final d in r.dates) {
+            grouped.putIfAbsent(d.bookingDate, () => []);
+            if (!grouped[d.bookingDate]!.any((x) => x.restaurantName == r.restaurantName)) {
+              grouped[d.bookingDate]!.add(r);
+            }
+          }
+        }
+        final sortedDates = grouped.keys.toList()..sort();
 
         return RefreshIndicator(
           color: _T.teal,
           onRefresh: ctrl.fetchOrders,
-          child: CustomScrollView(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(14, 16, 14, 32),
             physics: const BouncingScrollPhysics(),
-            slivers: [
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 14),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                        (context, index) => _RestaurantCard(
-                      restaurant: ctrl.restaurants[index],
-                      isLast: index == ctrl.restaurants.length - 1,
-                    ),
-                    childCount: ctrl.restaurants.length,
-                  ),
-                ),
-              ),
-              const SliverPadding(padding: EdgeInsets.only(bottom: 28)),
+            children: [
+              for (final date in sortedDates) ...[
+                _DateSectionLabel(dateStr: date),
+                const SizedBox(height: 8),
+                for (final restaurant in ctrl.restaurants)
+                  for (final bookingDate in restaurant.dates)
+                    if (bookingDate.bookingDate == date)
+                      _ReservationCard(
+                        restaurant: restaurant,
+                        bookingDate: bookingDate,
+                      ),
+                const SizedBox(height: 12),
+              ],
             ],
           ),
         );
@@ -75,99 +86,138 @@ class BookedOrdersPage extends StatelessWidget {
       'My Reservations',
       style: TextStyle(
         color: Colors.white,
-        fontSize: 16,
+        fontSize: 17,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.1,
       ),
     ),
-    // actions: [
-    //   Obx(() => !ctrl.isLoading.value
-    //       ? IconButton(
-    //     icon: const Icon(Icons.refresh_rounded, color: Colors.white),
-    //     onPressed: ctrl.fetchOrders,
-    //   )
-    //       : const SizedBox.shrink()),
-    // ],
+
   );
 }
 
-// ── Restaurant Card ────────────────────────────────────────────────────────
+// ── Upcoming Badge ─────────────────────────────────────────────────────────
 
-class _RestaurantCard extends StatelessWidget {
-  final BookingRestaurant restaurant;
-  final bool isLast;
-
-  const _RestaurantCard({
-    required this.restaurant,
-    required this.isLast,
-  });
+class _UpcomingBadge extends StatelessWidget {
+  final int count;
+  const _UpcomingBadge({required this.count});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.only(bottom: isLast ? 0 : 12),
-      decoration: BoxDecoration(
-        color: _T.card,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _T.border),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A009688),
-            blurRadius: 12,
-            offset: Offset(0, 3),
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: _T.tealLight,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          '$count upcoming',
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: _T.tealDark,
           ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _RestaurantHeader(restaurant: restaurant),
-            ...restaurant.dates.asMap().entries.map((e) {
-              final isFirst = e.key == 0;
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (!isFirst)
-                    const Divider(
-                        color: _T.sep, height: 1, indent: 14, endIndent: 14),
-                  _DateSection(bookingDate: e.value),
-                ],
-              );
-            }),
-            const SizedBox(height: 6),
-          ],
         ),
       ),
     );
   }
 }
 
-// ── Restaurant Header ──────────────────────────────────────────────────────
+// ── Date Section Label ─────────────────────────────────────────────────────
 
-class _RestaurantHeader extends StatelessWidget {
+class _DateSectionLabel extends StatelessWidget {
+  final String dateStr;
+  const _DateSectionLabel({required this.dateStr});
+
+  String get _label {
+    try {
+      final dt        = DateTime.parse(dateStr);
+      final todayOnly = _dateOnly(DateTime.now());
+      final dateOnly  = _dateOnly(dt);
+      if (dateOnly == todayOnly)
+        return 'Today — ${DateFormat('dd MMM').format(dt)}';
+      if (dateOnly == todayOnly.add(const Duration(days: 1)))
+        return 'Tomorrow — ${DateFormat('dd MMM').format(dt)}';
+      return DateFormat('EEE — dd MMM yyyy').format(dt);
+    } catch (_) {
+      return dateStr;
+    }
+  }
+
+  static DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      _label.toUpperCase(),
+      style: const TextStyle(
+        fontSize: 10,
+        fontWeight: FontWeight.w600,
+        color: _T.textSub,
+        letterSpacing: 0.8,
+      ),
+    );
+  }
+}
+
+// ── Reservation Card ───────────────────────────────────────────────────────
+
+class _ReservationCard extends StatelessWidget {
   final BookingRestaurant restaurant;
-  const _RestaurantHeader({required this.restaurant});
+  final BookingDate bookingDate;
+
+  const _ReservationCard({
+    required this.restaurant,
+    required this.bookingDate,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
-      color: _T.tealLight,
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: _T.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _T.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _CardHeader(restaurant: restaurant),
+          const Divider(height: 1, color: _T.sep),
+          for (final slot in bookingDate.timeSlots)
+            _TimelineSlot(slot: slot),
+          _CardFooter(dateTotal: bookingDate.dateTotal),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Card Header ────────────────────────────────────────────────────────────
+
+class _CardHeader extends StatelessWidget {
+  final BookingRestaurant restaurant;
+  const _CardHeader({required this.restaurant});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
       child: Row(
         children: [
           Container(
-            width: 38,
-            height: 38,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
-              color: _T.teal,
-              borderRadius: BorderRadius.circular(11),
+              color: _T.tealLight,
+              borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.storefront_rounded,
-                color: Colors.white, size: 19),
+                color: _T.tealMid, size: 20),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -175,354 +225,233 @@ class _RestaurantHeader extends StatelessWidget {
                 Text(
                   restaurant.restaurantName,
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: _T.tealDark,
+                    color: _T.text,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Dine-in reservation',
+                  'Dine-in · ${restaurant.totalOrders} item${restaurant.totalOrders > 1 ? 's' : ''}',
+                  style: const TextStyle(fontSize: 12, color: _T.textSub),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+            decoration: BoxDecoration(
+              color: _T.tealLight,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              '₹${restaurant.restaurantTotal.toStringAsFixed(0)}',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: _T.tealDark,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Timeline Slot ──────────────────────────────────────────────────────────
+
+class _TimelineSlot extends StatelessWidget {
+  final BookingTimeSlot slot;
+  const _TimelineSlot({required this.slot});
+
+  @override
+  Widget build(BuildContext context) {
+    final mealType = slot.orders.isNotEmpty ? slot.orders.first.mealType : '';
+    final tableNo  = slot.orders.isNotEmpty ? slot.orders.first.tableNo  : '';
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Timeline column ──────────────────────────────────────────
+          SizedBox(
+            width: 46,
+            child: Column(
+              children: [
+                Container(
+                  width: 10,
+                  height: 10,
+                  decoration: const BoxDecoration(
+                    color: _T.teal,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                Container(
+                  width: 1.5,
+                  height: 28,
+                  color: _T.tealMint,
+                ),
+                Text(
+                  slot.timeSlot.replaceAll(' ', '\n'),
+                  textAlign: TextAlign.center,
                   style: const TextStyle(
-                      fontSize: 11, color: _T.tealMid),
+                    fontSize: 10,
+                    color: _T.textSub,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 4),
+
+          // ── Slot body ────────────────────────────────────────────────
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Chips row
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    if (mealType.isNotEmpty)
+                      _Chip(
+                        icon: mealType.toLowerCase() == 'dinner'
+                            ? Icons.nights_stay_outlined
+                            : Icons.wb_sunny_outlined,
+                        label: '${mealType[0].toUpperCase()}${mealType.substring(1).toLowerCase()}',
+                        highlighted: true,
+                      ),
+                    if (tableNo.isNotEmpty)
+                      _Chip(
+                          icon: Icons.chair_alt_rounded, label: tableNo),
+                    _Chip(
+                      icon: Icons.group_outlined,
+                      label: '${slot.guests} guest${slot.guests > 1 ? 's' : ''}',
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+
+                // Food items
+                ...slot.orders.asMap().entries.map((e) {
+                  return Column(
+                    children: [
+                      if (e.key > 0)
+                        const Divider(
+                            height: 1, color: _T.sep,
+                            indent: 50, endIndent: 0),
+                      _OrderItem(order: e.value),
+                    ],
+                  );
+                }),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Chip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool highlighted;
+  const _Chip({required this.icon, required this.label, this.highlighted = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: highlighted ? _T.tealLight : const Color(0xFFF4F6F5),
+        border: Border.all(
+          color: highlighted ? _T.tealMint : _T.border,
+        ),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon,
+              size: 11,
+              color: highlighted ? _T.tealMid : _T.textSub),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: highlighted ? _T.tealDark : _T.text,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Order Item ─────────────────────────────────────────────────────────────
+
+class _OrderItem extends StatelessWidget {
+  final BookingOrder order;
+  const _OrderItem({required this.order});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 7),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Image.network(
+              order.image,
+              width: 42,
+              height: 42,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _Thumb(),
+              loadingBuilder: (_, child, progress) =>
+              progress == null ? child : _Thumb(loading: true),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  order.foodName,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: _T.text,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  '₹${order.price.toStringAsFixed(0)} each · Qty ${order.quantity}',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: _T.textSub,
+                  ),
                 ),
               ],
             ),
           ),
           const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '₹${restaurant.restaurantTotal.toStringAsFixed(0)}',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: _T.teal,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                '${restaurant.totalOrders} item${restaurant.totalOrders > 1 ? 's' : ''}',
-                style: const TextStyle(fontSize: 10, color: _T.tealMid),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Date Section ───────────────────────────────────────────────────────────
-
-class _DateSection extends StatelessWidget {
-  final BookingDate bookingDate;
-  const _DateSection({required this.bookingDate});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _DateHeader(bookingDate: bookingDate),
-        ...bookingDate.timeSlots.asMap().entries.map((e) {
-          final isFirst = e.key == 0;
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (!isFirst)
-                const Divider(
-                    color: _T.sep, height: 1, indent: 14, endIndent: 14),
-              _TimeSlotBlock(slot: e.value),
-            ],
-          );
-        }),
-      ],
-    );
-  }
-}
-
-// ── Date Header ────────────────────────────────────────────────────────────
-
-class _DateHeader extends StatelessWidget {
-  final BookingDate bookingDate;
-  const _DateHeader({required this.bookingDate});
-
-  String get _label {
-    try {
-      final dt        = DateTime.parse(bookingDate.bookingDate);
-      final todayOnly = _dateOnly(DateTime.now());
-      final dateOnly  = _dateOnly(dt);
-      if (dateOnly == todayOnly)
-        return 'Today, ${DateFormat('dd MMM').format(dt)}';
-      if (dateOnly == todayOnly.add(const Duration(days: 1)))
-        return 'Tomorrow, ${DateFormat('dd MMM').format(dt)}';
-      return DateFormat('EEE, dd MMM yyyy').format(dt);
-    } catch (_) {
-      return bookingDate.bookingDate;
-    }
-  }
-
-  static DateTime _dateOnly(DateTime d) =>
-      DateTime(d.year, d.month, d.day);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
-      child: Row(
-        children: [
-          const Icon(Icons.calendar_today_outlined,
-              size: 13, color: _T.tealMid),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              _label,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: _T.tealDark,
-              ),
-            ),
-          ),
           Text(
-            '₹${bookingDate.dateTotal.toStringAsFixed(0)}',
+            '₹${order.totalPrice.toStringAsFixed(0)}',
             style: const TextStyle(
-                fontSize: 11, fontWeight: FontWeight.w500, color: _T.tealMid),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Time Slot Block ────────────────────────────────────────────────────────
-
-class _TimeSlotBlock extends StatelessWidget {
-  final BookingTimeSlot slot;
-  const _TimeSlotBlock({required this.slot});
-
-  @override
-  Widget build(BuildContext context) {
-    final mealType =
-    slot.orders.isNotEmpty ? slot.orders.first.mealType : '';
-    final tableNo =
-    slot.orders.isNotEmpty ? slot.orders.first.tableNo : '';
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // ── Time slot strip ──────────────────────────────────────────────
-        Container(
-          margin: const EdgeInsets.fromLTRB(10, 4, 10, 8),
-          decoration: BoxDecoration(
-            color: _T.tealLight,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: _T.tealMint),
-          ),
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
-                child: Row(
-                  children: [
-                    const Icon(Icons.access_time_rounded,
-                        size: 13, color: _T.tealDark),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        slot.timeSlot,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: _T.tealDark,
-                        ),
-                      ),
-                    ),
-                    if (mealType.isNotEmpty) _MealBadge(mealType: mealType),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
-                child: Row(
-                  children: [
-                    if (tableNo.isNotEmpty) ...[
-                      _SlotChip(
-                          icon: Icons.chair_alt_rounded, label: tableNo),
-                      const SizedBox(width: 10),
-                    ],
-                    _SlotChip(
-                      icon: Icons.group_outlined,
-                      label:
-                      '${slot.guests} guest${slot.guests > 1 ? 's' : ''}',
-                    ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: _T.teal,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        '₹${slot.total.toStringAsFixed(0)}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // ── Orders ───────────────────────────────────────────────────────
-        ...slot.orders.asMap().entries.map((e) {
-          return Column(
-            children: [
-              if (e.key > 0)
-                const Divider(
-                    color: _T.sep,
-                    height: 1,
-                    indent: 84,
-                    endIndent: 14),
-              _OrderRow(order: e.value),
-            ],
-          );
-        }),
-      ],
-    );
-  }
-}
-
-class _SlotChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  const _SlotChip({required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) => Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Icon(icon, size: 12, color: _T.tealMid),
-      const SizedBox(width: 4),
-      Text(label,
-          style: const TextStyle(
-              fontSize: 11,
-              color: _T.tealDark,
-              fontWeight: FontWeight.w500)),
-    ],
-  );
-}
-
-class _MealBadge extends StatelessWidget {
-  final String mealType;
-  const _MealBadge({required this.mealType});
-
-  @override
-  Widget build(BuildContext context) {
-    final display =
-        '${mealType[0].toUpperCase()}${mealType.substring(1).toLowerCase()}';
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: _T.teal,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        display,
-        style: const TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          color: Colors.white,
-        ),
-      ),
-    );
-  }
-}
-
-// ── Order Row ──────────────────────────────────────────────────────────────
-
-class _OrderRow extends StatelessWidget {
-  final BookingOrder order;
-  const _OrderRow({required this.order});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // ── Food image ─────────────────────────────────────────────────
-          ClipRRect(
-            borderRadius: BorderRadius.circular(13),
-            child: Image.network(
-              order.image,
-              width: 58,
-              height: 58,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _FoodPlaceholder(),
-              loadingBuilder: (_, child, progress) =>
-              progress == null ? child : _FoodPlaceholder(loading: true),
-            ),
-          ),
-          const SizedBox(width: 12),
-
-          // ── Details ────────────────────────────────────────────────────
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        order.foodName,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: _T.text,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '₹${order.totalPrice.toStringAsFixed(0)}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: _T.teal,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 5,
-                  runSpacing: 4,
-                  children: [
-                    _InfoPill(
-                      icon: Icons.currency_rupee_rounded,
-                      label: '₹${order.price.toStringAsFixed(0)} each',
-                    ),
-                    _InfoPill(
-                      icon: Icons.shopping_bag_outlined,
-                      label: 'Qty ${order.quantity}',
-                    ),
-                  ],
-                ),
-              ],
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: _T.teal,
             ),
           ),
         ],
@@ -531,58 +460,62 @@ class _OrderRow extends StatelessWidget {
   }
 }
 
-class _FoodPlaceholder extends StatelessWidget {
+class _Thumb extends StatelessWidget {
   final bool loading;
-  const _FoodPlaceholder({this.loading = false});
+  const _Thumb({this.loading = false});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 58,
-      height: 58,
+      width: 42,
+      height: 42,
       decoration: BoxDecoration(
         color: _T.tealLight,
-        borderRadius: BorderRadius.circular(13),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: loading
           ? const Center(
         child: SizedBox(
-          width: 20,
-          height: 20,
+          width: 18,
+          height: 18,
           child: CircularProgressIndicator(
               strokeWidth: 2, color: _T.teal),
         ),
       )
-          : const Icon(Icons.fastfood_rounded, color: _T.tealMint, size: 24),
+          : const Icon(Icons.fastfood_rounded, color: _T.tealMint, size: 20),
     );
   }
 }
 
-class _InfoPill extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  const _InfoPill({required this.icon, required this.label});
+// ── Card Footer ────────────────────────────────────────────────────────────
+
+class _CardFooter extends StatelessWidget {
+  final double dateTotal;
+  const _CardFooter({required this.dateTotal});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-      decoration: BoxDecoration(
-        color: _T.tealLight,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: _T.tealMint),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: _T.sep)),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 10, color: _T.tealDark),
-          const SizedBox(width: 3),
+          const Icon(Icons.receipt_long_outlined,
+              size: 14, color: _T.textSub),
+          const SizedBox(width: 6),
+          const Text(
+            'Booking total',
+            style: TextStyle(fontSize: 12, color: _T.textSub),
+          ),
+          const Spacer(),
           Text(
-            label,
+            '₹${dateTotal.toStringAsFixed(0)}',
             style: const TextStyle(
-              fontSize: 10,
-              color: _T.tealDark,
-              fontWeight: FontWeight.w500,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: _T.text,
             ),
           ),
         ],
@@ -621,22 +554,23 @@ class _EmptyState extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 88,
-          height: 88,
+          width: 80,
+          height: 80,
           decoration: const BoxDecoration(
             color: _T.tealLight,
             shape: BoxShape.circle,
           ),
           child: const Icon(Icons.restaurant_menu_rounded,
-              color: _T.tealMint, size: 40),
+              color: _T.tealMint, size: 36),
         ),
         const SizedBox(height: 20),
         const Text(
           'No reservations yet',
           style: TextStyle(
-              color: _T.text,
-              fontSize: 18,
-              fontWeight: FontWeight.w600),
+            color: _T.text,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         const SizedBox(height: 8),
         const Text(

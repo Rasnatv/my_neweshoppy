@@ -49,12 +49,7 @@ class AreaAdminhomepage extends StatelessWidget {
             ),
           ),
           actions: [
-            // ✅ Refresh button
-            IconButton(
-              icon: const Icon(Icons.refresh_rounded, color: Colors.white),
-              onPressed: _refreshAll,
-              tooltip: 'Refresh',
-            ),
+
             IconButton(
               icon: const Icon(Icons.exit_to_app_rounded, color: Colors.white),
               onPressed: () => AuthService.showLogoutDialog(),
@@ -191,7 +186,7 @@ class AreaAdminhomepage extends StatelessWidget {
         Expanded(
           child: _buildStatCard(
             icon: Icons.payments_rounded,
-            value: '100',
+            value: '0',
             label: 'Total payments',
             color: const Color(0xFF10B981),
           ),

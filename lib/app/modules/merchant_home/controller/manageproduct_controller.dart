@@ -123,24 +123,36 @@ class ManageproductController extends GetxController {
     });
   }
 
-  /// ================= DELETE PRODUCT =================
   Future<void> deleteProduct(int productId) async {
+    // Track whether the loading dialog is actually open
+    bool dialogOpen = false;
+
     try {
       Get.dialog(
-        const Center(child: CircularProgressIndicator()),
+        const Center(
+          child: CircularProgressIndicator(),
+        ),
         barrierDismissible: false,
       );
+      dialogOpen = true;
 
-      final response = await http.delete(
-        Uri.parse(
-            'https://eshoppy.co.in/api/delete-product'),
+      final response = await http
+          .delete(
+        Uri.parse('https://eshoppy.co.in/api/delete-product'),
         headers: headers,
-        body: {
-          "product_id": productId.toString(),
-        },
+        body: {"product_id": productId.toString()},
+      )
+          .timeout(
+        const Duration(seconds: 20), // ← CRITICAL: was missing before
+        onTimeout: () =>
+        throw SocketException('Request timed out. Please try again.'),
       );
 
-      Get.back();
+      // Always close dialog before any further action
+      if (dialogOpen && Get.isDialogOpen == true) {
+        Get.back();
+        dialogOpen = false;
+      }
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
@@ -148,24 +160,26 @@ class ManageproductController extends GetxController {
         if (body['status'] == true || body['status'] == 1) {
           products.removeWhere((p) => p.id == productId);
           AppSnackbar.success(
-              body['message'] ?? "Product deleted successfully");
+              body['message'] ?? 'Product deleted successfully');
         } else {
-          AppSnackbar.warning(body['message'] ?? "Delete failed");
+          AppSnackbar.warning(body['message'] ?? 'Delete failed');
         }
       } else {
         final msg = ApiErrorHandler.handleResponse(response);
         AppSnackbar.error(msg);
       }
     } catch (e) {
-      Get.back();
+      // Only call Get.back() if dialog is still open — prevents popping the page
+      if (dialogOpen && Get.isDialogOpen == true) {
+        Get.back();
+      }
       final msg = ApiErrorHandler.handleException(e);
       AppSnackbar.error(msg);
     }
   }
-
-  /// ================= REFRESH =================
   Future<void> refreshProducts() async => fetchProducts();
 }
+
 
 
 class Product {

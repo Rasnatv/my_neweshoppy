@@ -65,26 +65,7 @@ class AdminOfferProductScreen extends StatelessWidget {
           ),
         ],
       ),
-      actions: [
-        // Only wraps the icon that actually changes reactively
-        Obx(() => IconButton(
-          icon: controller.isLoading.value
-              ? const SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: Color(0xFF6366F1),
-            ),
-          )
-              : const Icon(Icons.refresh_rounded),
-          onPressed: controller.isLoading.value
-              ? null
-              : controller.refreshProducts,
-          tooltip: 'Refresh',
-        )),
-        const SizedBox(width: 8),
-      ],
+
     );
   }
 }

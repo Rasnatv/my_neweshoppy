@@ -82,14 +82,6 @@ class MerchantOrdersView extends StatelessWidget {
                     )),
                   ],
 
-                  // ── Refresh Button ────────────────────────────
-                  IconButton(
-                    icon: const Icon(
-                      Icons.refresh_rounded,
-                      color: Colors.white,
-                    ),
-                    onPressed: controller.fetchMerchantOrders,
-                  ),
                 ],
               );
             }),

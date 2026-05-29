@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 
@@ -18,6 +19,7 @@ class AdvertisementUpdateController extends GetxController {
 
   final formKey = GlobalKey<FormState>();
   final advertisementController = TextEditingController();
+
 
   final RxBool isLoading = false.obs;
   final RxBool isFetching = false.obs;
@@ -168,33 +170,41 @@ class AdvertisementUpdateController extends GetxController {
     }
   }
 
-  Future<void> pickBanner() async {
+  Future<void> pickBannerImage() async {
     try {
       final picked = await picker.pickImage(
         source: ImageSource.gallery,
-        imageQuality: 85,
+        imageQuality: 80,
       );
 
       if (picked == null) return;
 
-      final file = File(picked.path);
-      final bytes = await file.readAsBytes();
-      final decodedImage = await decodeImageFromList(bytes);
+      final croppedFile = await ImageCropper().cropImage(
+        sourcePath: picked.path,
+        aspectRatio: const CropAspectRatio(ratioX: 2, ratioY: 1),
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Crop Banner',
+            toolbarColor: Colors.black,
+            toolbarWidgetColor: Colors.white,
+            lockAspectRatio: true,
+          ),
+          IOSUiSettings(
+            title: 'Crop Banner',
+            aspectRatioLockEnabled: true,
+          ),
+        ],
+      );
 
-      final width  = decodedImage.width;
-      final height = decodedImage.height;
-      final ratio  = width / height;
+      if (croppedFile == null) return;
 
-      if (ratio < 1.9 || ratio > 2.1) {
-        AppSnackbar.error(
-          "Invalid image ratio ${width}x${height}.\nPlease upload a 2:1 ratio image (e.g. 1200x600)",
-        );
-        return;
-      }
+      // ✅ SAVE IMAGE
+      pickedImageFile.value = File(croppedFile.path);
 
-      // ✅ Fix: set pickedImageFile instead of bannerImage
-      pickedImageFile.value = file;
-      base64Image.value = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+      // ✅ CONVERT TO BASE64
+      final bytes = await pickedImageFile.value!.readAsBytes();
+
+      base64Image.value = base64Encode(bytes);
 
     } catch (e) {
       AppSnackbar.error("Image error: $e");

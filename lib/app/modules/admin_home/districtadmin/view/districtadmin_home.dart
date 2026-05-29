@@ -166,7 +166,7 @@ class Districtadminhomepage extends StatelessWidget {
         Expanded(
           child: _buildStatCard(
             icon: Icons.payments_rounded,
-            value: '100',
+            value: '0',
             label: 'Total payments',
             color: const Color(0xFF10B981),
           ),

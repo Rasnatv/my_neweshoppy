@@ -6,6 +6,7 @@ import 'package:entenaadu/app/modules/merchant_home/views/myadvetisment.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 
@@ -28,6 +29,7 @@ class UpdateAdvertisementController extends GetxController {
 
   // ── Text controller ───────────────────────────────────────
   final advertisementController = TextEditingController();
+  final picker    = ImagePicker();
 
   // ── Observable state ──────────────────────────────────────
   final Rx<updateAdvertisementModel?> advertisement =
@@ -118,35 +120,44 @@ class UpdateAdvertisementController extends GetxController {
     showMode.value = hasArea ? 'area' : 'district';
   }
 
-  // ── Image picker with 2:1 ratio validation ────────────────
-  Future<void> pickBannerImage(ImageSource source) async {
+  Future<void> pickBannerImage([ImageSource source = ImageSource.gallery]) async {
     try {
-      final picker = ImagePicker();
-      final XFile? xFile = await picker.pickImage(
+      final XFile? picked = await picker.pickImage(
         source: source,
         imageQuality: 85,
       );
+      if (picked == null) return;
 
-      if (xFile == null) return;
+      // Step 1: Crop first — locked 2:1
+      final croppedFile = await ImageCropper().cropImage(
+        sourcePath: picked.path,
+        aspectRatio: const CropAspectRatio(ratioX: 2, ratioY: 1),
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Crop Banner',
+            toolbarColor: Colors.black,
+            toolbarWidgetColor: Colors.white,
+            lockAspectRatio: true,
+          ),
+          IOSUiSettings(
+            title: 'Crop Banner',
+            aspectRatioLockEnabled: true,
+          ),
+        ],
+      );
+      if (croppedFile == null) return;
 
-      final file  = File(xFile.path);
-      final bytes = await file.readAsBytes();
-
-      final decodedImage = await decodeImageFromList(bytes);
-      final width  = decodedImage.width;
-      final height = decodedImage.height;
-      final ratio  = width / height;
-
-      debugPrint(">>> Banner size: ${width}x${height}, ratio: $ratio");
-
-      if (ratio < 1.9 || ratio > 2.1) {
-        AppSnackbar.warning(
-          "Please upload a 2:1 ratio image (e.g. 1200×600, 800×400).\nYour image: ${width}×${height}",
-        );
+      // Step 2: Size check after crop
+      final File file   = File(croppedFile.path);
+      final int fileSize = await file.length();
+      if (fileSize > 1024 * 1024) {
+        AppSnackbar.warning("Image must be less than 1 MB after cropping.");
         return;
       }
 
-      final ext      = xFile.path.split('.').last.toLowerCase();
+      // Step 3: Read bytes + build base64
+      final bytes    = await file.readAsBytes();
+      final ext      = croppedFile.path.split('.').last.toLowerCase();
       final mimeType = ext == 'png' ? 'image/png' : 'image/jpeg';
 
       pickedImageFile.value = file;

@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../common/style/app_colors.dart';
 import '../../../widgets/networkconnection_checkpage.dart';
+import '../../landingview/view/landing_screen.dart';
 import '../../merchantlogin/view/merchant_registration.dart';
+import '../../userhome/widget/guestrole.dart';
 import '../../userlogin/view/user_signup.dart';
 import '../../userlogin/widget/usersignin_form.dart';
 import '../../forgotpassowrd/view/forgotpassword.dart';
@@ -58,6 +60,7 @@ class _LoginScreenState extends State<LoginScreen>
   late final AnimationController _enter;
   late final List<Animation<double>> _fades;
   late final List<Animation<Offset>>  _slides;
+  AnimationController? _sheetController;
 
   // Added 1 more item for admin button (index 5)
   static const _count  = 6;
@@ -108,6 +111,7 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   void dispose() {
     _enter.dispose();
+    _sheetController?.dispose();
     super.dispose();
   }
 
@@ -142,6 +146,8 @@ class _LoginScreenState extends State<LoginScreen>
                       _buildForgotPassword(),
                       const SizedBox(height:15 ),
                       _buildSignUpSection(),
+                      const SizedBox(height: 16),   // ← add this
+                      _buildContinueAsGuest(),       // ← add this
                     ],
                   )),
                   const SizedBox(height: 28),
@@ -386,6 +392,68 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
+  /// afTER uPDATION
+  ///
+  ///
+  ///
+  Widget _buildContinueAsGuest() {
+    final controller = Get.find<UserloginController>();
+    return Obx(() {
+      if (controller.selectedRole.value != 1) return const SizedBox.shrink();
+      return GestureDetector(
+        onTap: () {
+          GuestService.enterGuestMode();  // ← add this line only
+          Get.offAll(
+                () => LandingView(),
+            transition: Transition.fadeIn,
+            duration: const Duration(milliseconds: 400),
+          );
+        },
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppColors.kPrimary,
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.kPrimary.withOpacity(0.08),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.person_outline_rounded,
+                size: 18,
+
+                color: AppColors.kPrimary,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                "Continue as Guest",
+                style: TextStyle(
+                   color: AppColors.kPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    });
+  }
+
   // ─── Admin access button ──────────────────────────────────────────────────
   Widget _buildAdminAccessButton() {
     return Column(
@@ -481,14 +549,17 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   void _showSignupBottomSheet(BuildContext context) {
+    _sheetController?.dispose();
+    _sheetController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 380),
+    );
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      transitionAnimationController: AnimationController(
-        vsync: this,
-        duration: const Duration(milliseconds: 380),
-      ),
+      transitionAnimationController: _sheetController,
       builder: (_) => const _SignupBottomSheet(),
     );
   }

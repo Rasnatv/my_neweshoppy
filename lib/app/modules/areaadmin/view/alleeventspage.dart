@@ -59,14 +59,7 @@ class AreaAdminAllEventsPage extends StatelessWidget {
               letterSpacing: 0.1,
             ),
         ),
-        actions: [
-          // ✅ Pull-to-refresh button in AppBar
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            onPressed: controller.fetchEvents,
-            tooltip: 'Refresh',
-          ),
-        ],
+
       ),
       body: Obx(() {
         // ── Loading ──────────────────────────────────────────────────────────

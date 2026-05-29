@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../merchantlogin/widget/successwidget.dart';
@@ -176,35 +177,48 @@ class MerchantAdvertisementController extends GetxController {
     }
   }
 
-  // ── PICK BANNER ───────────────────────────────────────────
-  Future<void> pickBanner() async {
-    try {
-      final picked = await picker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 85,
-      );
-      if (picked == null) return;
+  Future<void> pickBannerImage() async {
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 90,
+    );
+    if (picked == null) return;
 
-      final file  = File(picked.path);
-      final bytes = await file.readAsBytes();
-      final decodedImage = await decodeImageFromList(bytes);
+    File file = File(picked.path);
 
-      final width  = decodedImage.width;
-      final height = decodedImage.height;
-      final ratio  = width / height;
-
-      if (ratio < 1.9 || ratio > 2.1) {
-        AppSnackbar.error(
-          "Invalid ratio ${width}x${height}. Please upload a 2:1 image (e.g. 1200x600)",
-        );
-        return;
-      }
-
-      bannerImage.value = file;
-    } catch (e) {
-      AppSnackbar.error("Image error: $e");
+    final int bytes = await file.length();
+    if (bytes > 1024 * 1024) {
+      errorBanner.value = "Image must be less than 1 MB";
+      return;
     }
+
+    final croppedFile = await ImageCropper().cropImage(
+      sourcePath: file.path,
+      aspectRatio: const CropAspectRatio(ratioX: 2, ratioY: 1),
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: 'Crop Banner',
+          toolbarColor: Colors.black,
+          toolbarWidgetColor: Colors.white,
+          lockAspectRatio: true,
+        ),
+        IOSUiSettings(
+          title: 'Crop Banner',
+          aspectRatioLockEnabled: true,
+        ),
+      ],
+    );
+    if (croppedFile == null) return;
+
+    bannerImage.value = File(croppedFile.path);
+    errorBanner.value = null;
   }
+
+  void removeBannerImage() {
+    bannerImage.value  = null;
+    errorBanner.value  = "Please select a banner image";
+  }
+
 
   void removeBanner() {
     bannerImage.value = null;

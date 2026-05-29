@@ -1,7 +1,6 @@
 
 import 'dart:io';
-import 'package:entenaadu/app/modules/landingview/view/landing_screen.dart';
-import 'package:entenaadu/app/modules/userhome/view/userhome.dart';
+import 'package:eshoppy/app/modules/landingview/view/landing_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gal/gal.dart';
@@ -15,10 +14,10 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../common/style/app_colors.dart';
 import '../../../data/models/resaturantqrmodel.dart';
 import '../../userhome/widget/qrgettingpage/actionbutton.dart';
-import '../../userhome/widget/qrgettingpage/bottom_paybar.dart';
 import '../controller/qrgettingcontroller.dart';
 import '../controller/restaurant_maincartcontroller.dart';
 
+// ── UPI App Model ─────────────────────────────────────────────────────────────
 class _UpiApp {
   final String name;
   final String scheme;
@@ -50,20 +49,7 @@ const _upiApps = [
     color: Color(0xFF5F259F),
     bgColor: Color(0xFFF3E8FF),
   ),
-  _UpiApp(
-    name: 'Paytm',
-    scheme: 'paytmmp://pay',
-    icon: Icons.account_balance_wallet_rounded,
-    color: Color(0xFF00BAF2),
-    bgColor: Color(0xFFE0F7FE),
-  ),
-  _UpiApp(
-    name: 'WhatsApp Pay',
-    scheme: 'whatsapp://pay',
-    icon: Icons.chat_rounded,
-    color: Color(0xFF25D366),
-    bgColor: Color(0xFFE8FAF0),
-  ),
+
 ];
 
 // ── UPI App Picker ────────────────────────────────────────────────────────────
@@ -81,7 +67,6 @@ Future<_UpiApp?> _showUpiAppPicker(BuildContext context) async {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Handle bar
           Center(
             child: Container(
               width: 40,
@@ -93,7 +78,6 @@ Future<_UpiApp?> _showUpiAppPicker(BuildContext context) async {
             ),
           ),
           const SizedBox(height: 20),
-
           const Text(
             'Pay with',
             style: TextStyle(
@@ -108,18 +92,18 @@ Future<_UpiApp?> _showUpiAppPicker(BuildContext context) async {
             style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
           ),
           const SizedBox(height: 16),
-
-          // App list
           ..._upiApps.map(
                 (app) => GestureDetector(
               onTap: () => Navigator.of(context).pop(app),
               child: Container(
                 margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF9FAFB),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
+                  border: Border.all(
+                      color: const Color(0xFFE5E7EB), width: 0.5),
                 ),
                 child: Row(
                   children: [
@@ -155,438 +139,27 @@ Future<_UpiApp?> _showUpiAppPicker(BuildContext context) async {
   );
 }
 
+// ── Open UPI App only (no sheet, no delay) ───────────────────────────────────
 Future<void> handlePay(
     List<PaymentDetailModel> data, BuildContext context) async {
-  // Step 1: choose app
   final selectedApp = await _showUpiAppPicker(context);
   if (selectedApp == null) return;
 
   try {
-    // Step 2: open ONLY the app (no params)
     final uri = Uri.parse(selectedApp.scheme);
-    final launched = await launchUrl(
-      uri,
-      mode: LaunchMode.externalApplication,
-    );
-
+    final launched =
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!launched) {
-      _snack(
-        '${selectedApp.name} not installed',
-        'Please install ${selectedApp.name}',
-      );
+      _snack('${selectedApp.name} not installed',
+          'Please install ${selectedApp.name}');
     }
-  } catch (e) {
-    _snack(
-      'Error',
-      'Could not open ${selectedApp.name}',
-    );
+  } catch (_) {
+    _snack('Error', 'Could not open ${selectedApp.name}');
   }
-
-  await Future.delayed(const Duration(seconds: 2));
-  if (context.mounted) {
-    _showTransactionSheet(context, data);
-  }
+  // ✅ No delay, no sheet — user comes back and fills the form already on page
 }
 
-void _showTransactionSheet(
-    BuildContext context, List<PaymentDetailModel> data) {
-  final txnController = TextEditingController();
-  final formKey = GlobalKey<FormState>();
-  final RxString screenshotPath = ''.obs;
-  final RxBool isSubmitting = false.obs;
-
-  final payController = Get.find<PaymentgettController>();
-
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    useSafeArea: false,                    // ✅ AnimatedPadding handles insets
-    backgroundColor: Colors.transparent,
-    builder: (ctx) => AnimatedPadding(     // ✅ wraps the entire sheet
-      duration: const Duration(milliseconds: 150),
-      curve: Curves.easeOut,
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(ctx).viewInsets.bottom, // ✅ uses ctx, not context
-      ),
-      child: DraggableScrollableSheet(
-        initialChildSize: 0.75,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (_, scrollController) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-          child: Form(
-            key: formKey,
-            child: ListView(
-              controller: scrollController,
-              children: [
-                // ── Handle bar
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE5E7EB),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // ── Title
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFD1FAE5),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(Icons.check_circle_rounded,
-                          color: Color(0xFF059669), size: 20),
-                    ),
-                    const SizedBox(width: 12),
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Payment Done?',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF111111),
-                          ),
-                        ),
-                        Text(
-                          'Enter your UPI transaction ID to confirm',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF9CA3AF),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-
-                // ── Payment summary
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF9FAFB),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                        color: const Color(0xFFE5E7EB), width: 0.5),
-                  ),
-                  child: Column(
-                    children: [
-                      ...data.map(
-                            (item) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                item.restaurantName,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Color(0xFF374151),
-                                ),
-                              ),
-                              Text(
-                                '₹${item.totalPrice.toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF111111),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const Divider(height: 12, color: Color(0xFFE5E7EB)),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Total paid',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF111111),
-                            ),
-                          ),
-                          Text(
-                            '₹${data.fold(0.0, (s, i) => s + i.totalPrice).toStringAsFixed(2)}',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF059669),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // ── Transaction ID field
-                const Text(
-                  'Transaction ID',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF374151),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                TextFormField(
-                  controller: txnController,
-                  textCapitalization: TextCapitalization.characters,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(12),
-                  ],
-                  // ✅ onTap scroll hack removed — AnimatedPadding handles it
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontFamily: 'monospace',
-                    color: Color(0xFF111111),
-                    letterSpacing: 0.5,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'e.g. 407312345678',
-                    hintStyle: const TextStyle(
-                        color: Color(0xFFD1D5DB), fontSize: 13),
-                    filled: true,
-                    fillColor: const Color(0xFFF9FAFB),
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 14),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                          color: Color(0xFFE5E7EB), width: 0.5),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                          color: Color(0xFFE5E7EB), width: 0.5),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                          color: Color(0xFF4F46E5), width: 1.5),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                          color: Color(0xFFDC2626), width: 1),
-                    ),
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.paste_rounded,
-                          size: 18, color: Color(0xFF9CA3AF)),
-                      onPressed: () async {
-                        final clip =
-                        await Clipboard.getData(Clipboard.kTextPlain);
-                        if (clip?.text != null) {
-                          txnController.text = clip!.text!;
-                        }
-                      },
-                    ),
-                  ),
-                  validator: (val) {
-                    if (val == null || val.trim().isEmpty) {
-                      return 'Please enter your transaction ID';
-                    }
-                    if (val.trim().length < 12) {
-                      return 'Transaction ID must be 12 digits';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Find it in your UPI app under payment history',
-                  style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
-                ),
-                const SizedBox(height: 16),
-
-                // ── Payment Screenshot
-                const Text(
-                  'Payment Screenshot',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF374151),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Obx(
-                      () => screenshotPath.value.isEmpty
-                      ? GestureDetector(
-                    onTap: () async {
-                      final picker = ImagePicker();
-                      final picked = await picker.pickImage(
-                          source: ImageSource.gallery,
-                          imageQuality: 70);
-                      if (picked != null) {
-                        screenshotPath.value = picked.path;
-                      }
-                    },
-                    child: Container(
-                      width: double.infinity,
-                      padding:
-                      const EdgeInsets.symmetric(vertical: 16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF9FAFB),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                            color: const Color(0xFFE5E7EB), width: 1),
-                      ),
-                      child: const Column(
-                        children: [
-                          Icon(Icons.upload_rounded,
-                              size: 24, color: Color(0xFF9CA3AF)),
-                          SizedBox(height: 6),
-                          Text(
-                            'Tap to upload screenshot',
-                            style: TextStyle(
-                                fontSize: 12,
-                                color: Color(0xFF9CA3AF)),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                      : Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.file(
-                          File(screenshotPath.value),
-                          width: double.infinity,
-                          height: 140,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      Positioned(
-                        top: 6,
-                        right: 6,
-                        child: GestureDetector(
-                          onTap: () => screenshotPath.value = '',
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: Colors.black54,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: const Icon(Icons.close,
-                                size: 14, color: Colors.white),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // ── Confirm button
-                Obx(
-                      () => SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: isSubmitting.value
-                          ? null
-                          : () async {
-                        if (!formKey.currentState!.validate()) return;
-
-                        isSubmitting.value = true;
-                        final txnId = txnController.text.trim();
-                        final screenshot = screenshotPath.value;
-                        bool allSuccess = true;
-
-                        for (final item in data) {
-                          final success =
-                          await payController.storeTransaction(
-                            restaurantId: item.restaurantId,
-                            transactionId: txnId,
-                            screenshotPath: screenshot.isNotEmpty
-                                ? screenshot
-                                : null,
-                          );
-                          if (!success) {
-                            allSuccess = false;
-                            break;
-                          }
-                        }
-
-                        isSubmitting.value = false;
-
-                        if (allSuccess) {
-                          Get.back();
-                          _onPaymentConfirmed(txnId, data);
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: isSubmitting.value
-                            ? const Color(0xFF9CA3AF)
-                            : const Color(0xFF0F5151),
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding:
-                        const EdgeInsets.symmetric(vertical: 15),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14)),
-                      ),
-                      child: isSubmitting.value
-                          ? const SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2),
-                      )
-                          : const Text(
-                        'Confirm Payment',
-                        style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-
-                // ── Pay Later
-                SizedBox(
-                  width: double.infinity,
-                  child: TextButton(
-                    onPressed: () => Get.back(),
-                    child: const Text(
-                      'Pay Later',
-                      style: TextStyle(
-                          fontSize: 13, color: Color(0xFF9CA3AF)),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-              ],
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
-}
-
+// ── Payment Confirmed ─────────────────────────────────────────────────────────
 void _onPaymentConfirmed(String txnId, List<PaymentDetailModel> data) {
   try {
     final cartController = Get.find<FinalCartController>();
@@ -616,8 +189,7 @@ Future<void> _downloadQr(String url, String restaurantName) async {
     if (!status.isGranted && !status.isLimited) {
       final mediaStatus = await Permission.photos.request();
       if (!mediaStatus.isGranted) {
-        _snack('Permission denied',
-            'Please allow storage access in settings');
+        _snack('Permission denied', 'Please allow storage access in settings');
         return;
       }
     }
@@ -653,9 +225,43 @@ void _snack(String title, String message,
   );
 }
 
+// ── Initials helpers ──────────────────────────────────────────────────────────
+const _avatarPalettes = [
+  [Color(0xFF6366F1), Color(0xFF4F46E5)],
+  [Color(0xFF0EA5E9), Color(0xFF0284C7)],
+  [Color(0xFF10B981), Color(0xFF059669)],
+  [Color(0xFFF59E0B), Color(0xFFD97706)],
+  [Color(0xFFEC4899), Color(0xFFDB2777)],
+];
+
+List<Color> _avatarColors(String name) =>
+    _avatarPalettes[name.codeUnitAt(0) % _avatarPalettes.length];
+
+String _initials(String name) {
+  final parts = name.trim().split(' ');
+  if (parts.length >= 2) return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+  return name.substring(0, name.length.clamp(0, 2)).toUpperCase();
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
-class QRPaymentPage extends StatelessWidget {
+class QRPaymentPage extends StatefulWidget {
   const QRPaymentPage({super.key});
+
+  @override
+  State<QRPaymentPage> createState() => _QRPaymentPageState();
+}
+
+class _QRPaymentPageState extends State<QRPaymentPage> {
+  final _txnController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  String _screenshotPath = '';
+  bool _isSubmitting = false;
+
+  @override
+  void dispose() {
+    _txnController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -686,58 +292,6 @@ class QRPaymentPage extends StatelessWidget {
           );
         }
 
-        if (controller.errorMessage.isNotEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFEF2F2),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Icon(Icons.wifi_off_rounded,
-                        size: 36, color: Color(0xFFDC2626)),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Something went wrong',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF111111),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    controller.errorMessage.value,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        fontSize: 13, color: Color(0xFF9CA3AF)),
-                  ),
-                  const SizedBox(height: 24),
-                  TextButton(
-                    onPressed: controller.fetchPaymentDetails,
-                    style: TextButton.styleFrom(
-                      backgroundColor: const Color(0xFF111111),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 28, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text('Try again',
-                        style: TextStyle(fontWeight: FontWeight.w600)),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-
         final data = controller.paymentResponse.value?.data ?? [];
 
         if (data.isEmpty) {
@@ -751,41 +305,513 @@ class QRPaymentPage extends StatelessWidget {
 
         return Column(
           children: [
+            // ── Scrollable body ──────────────────────────────────────────────
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                itemCount: data.length,
-                itemBuilder: (_, index) =>
-                    _RestaurantPaymentCard(item: data[index]),
+              child: Form(
+                key: _formKey,
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                  children: [
+                    // ── Restaurant QR cards ──────────────────────────────────
+                    ...data.map(
+                          (item) => _RestaurantPaymentCard(item: item),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    // ── Divider with label ───────────────────────────────────
+                    Row(
+                      children: [
+                        const Expanded(
+                            child: Divider(color: Color(0xFFE5E7EB))),
+                        Padding(
+                          padding:
+                          const EdgeInsets.symmetric(horizontal: 12),
+                          child: Text(
+                            'After paying, confirm below',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey.shade500,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        const Expanded(
+                            child: Divider(color: Color(0xFFE5E7EB))),
+                      ],
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // ── Confirm section card ─────────────────────────────────
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                            color: const Color(0xFFE5E7EB), width: 0.5),
+                      ),
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Section title
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFD1FAE5),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(
+                                    Icons.check_circle_rounded,
+                                    color: Color(0xFF059669),
+                                    size: 18),
+                              ),
+                              const SizedBox(width: 10),
+                              const Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Confirm Payment',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF111111),
+                                    ),
+                                  ),
+                                  Text(
+                                    'Enter details after completing UPI payment',
+                                    style: TextStyle(
+                                        fontSize: 11,
+                                        color: Color(0xFF9CA3AF)),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          // Payment summary
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF9FAFB),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                  color: const Color(0xFFE5E7EB),
+                                  width: 0.5),
+                            ),
+                            child: Column(
+                              children: [
+                                ...data.map(
+                                      (item) => Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 4),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          item.restaurantName,
+                                          style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Color(0xFF374151)),
+                                        ),
+                                        Text(
+                                          '₹${item.totalPrice.toStringAsFixed(2)}',
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xFF111111),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const Divider(
+                                    height: 12, color: Color(0xFFE5E7EB)),
+                                Row(
+                                  mainAxisAlignment:
+                                  MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text(
+                                      'Total paid',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF111111),
+                                      ),
+                                    ),
+                                    Text(
+                                      '₹${data.fold(0.0, (s, i) => s + i.totalPrice).toStringAsFixed(2)}',
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFF059669),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          // ── Transaction ID ───────────────────────────────
+                          const Text(
+                            'Transaction ID',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF374151),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          TextFormField(
+                            controller: _txnController,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                              LengthLimitingTextInputFormatter(12),
+                            ],
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontFamily: 'monospace',
+                              color: Color(0xFF111111),
+                              letterSpacing: 0.5,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'e.g. 407312345678',
+                              hintStyle: const TextStyle(
+                                  color: Color(0xFFD1D5DB), fontSize: 13),
+                              filled: true,
+                              fillColor: const Color(0xFFF9FAFB),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 14),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                    color: Color(0xFFE5E7EB), width: 0.5),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                    color: Color(0xFFE5E7EB), width: 0.5),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                    color: Color(0xFF4F46E5), width: 1.5),
+                              ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                    color: Color(0xFFDC2626), width: 1),
+                              ),
+                              suffixIcon: IconButton(
+                                icon: const Icon(Icons.paste_rounded,
+                                    size: 18, color: Color(0xFF9CA3AF)),
+                                onPressed: () async {
+                                  final clip = await Clipboard.getData(
+                                      Clipboard.kTextPlain);
+                                  if (clip?.text != null) {
+                                    _txnController.text = clip!.text!;
+                                  }
+                                },
+                              ),
+                            ),
+                            validator: (val) {
+                              if (val == null || val.trim().isEmpty) {
+                                return 'Please enter your transaction ID';
+                              }
+                              if (val.trim().length < 12) {
+                                return 'Transaction ID must be 12 digits';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            'Find it in your UPI app under payment history',
+                            style: TextStyle(
+                                fontSize: 11, color: Color(0xFF9CA3AF)),
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          // ── Payment Screenshot ───────────────────────────
+                          const Text(
+                            'Payment Screenshot',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF374151),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          _screenshotPath.isEmpty
+                              ? GestureDetector(
+                            onTap: _pickScreenshot,
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 20),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF9FAFB),
+                                borderRadius:
+                                BorderRadius.circular(12),
+                                border: Border.all(
+                                    color: const Color(0xFFE5E7EB),
+                                    width: 1),
+                              ),
+                              child: const Column(
+                                children: [
+                                  Icon(Icons.upload_rounded,
+                                      size: 26,
+                                      color: Color(0xFF9CA3AF)),
+                                  SizedBox(height: 6),
+                                  Text(
+                                    'Tap to upload screenshot',
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFF9CA3AF)),
+                                  ),
+                                  SizedBox(height: 2),
+                                  Text(
+                                    'Optional but recommended',
+                                    style: TextStyle(
+                                        fontSize: 10,
+                                        color: Color(0xFFD1D5DB)),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                              : Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius:
+                                BorderRadius.circular(12),
+                                child: Image.file(
+                                  File(_screenshotPath),
+                                  width: double.infinity,
+                                  height: 160,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              Positioned(
+                                top: 6,
+                                right: 6,
+                                child: GestureDetector(
+                                  onTap: () => setState(
+                                          () => _screenshotPath = ''),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(5),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black54,
+                                      borderRadius:
+                                      BorderRadius.circular(20),
+                                    ),
+                                    child: const Icon(Icons.close,
+                                        size: 14,
+                                        color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                bottom: 6,
+                                right: 6,
+                                child: GestureDetector(
+                                  onTap: _pickScreenshot,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black54,
+                                      borderRadius:
+                                      BorderRadius.circular(10),
+                                    ),
+                                    child: const Text(
+                                      'Change',
+                                      style: TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.white),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          // ── Confirm Payment button ───────────────────────
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: _isSubmitting
+                                  ? null
+                                  : () =>
+                                  _submitPayment(context, data, controller),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: _isSubmitting
+                                    ? const Color(0xFF9CA3AF)
+                                    : const Color(0xFF0F5151),
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 15),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14)),
+                              ),
+                              child: _isSubmitting
+                                  ? const SizedBox(
+                                height: 18,
+                                width: 18,
+                                child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2),
+                              )
+                                  : const Text(
+                                'Confirm Payment',
+                                style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+                  ],
+                ),
               ),
             ),
-            BottomPayBar(total: controller.grandTotal, data: data),
+
+            // ── Bottom Pay Bar ───────────────────────────────────────────────
+            _BottomPayBar(
+              total: controller.grandTotal,
+              data: data,
+            ),
           ],
         );
       }),
     );
   }
+
+  Future<void> _pickScreenshot() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+        source: ImageSource.gallery, imageQuality: 70);
+    if (picked != null) {
+      setState(() => _screenshotPath = picked.path);
+    }
+  }
+
+  Future<void> _submitPayment(
+      BuildContext context,
+      List<PaymentDetailModel> data,
+      PaymentgettController payController,
+      ) async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSubmitting = true);
+
+    final txnId = _txnController.text.trim();
+    bool allSuccess = true;
+
+    for (final item in data) {
+      final success = await payController.storeTransaction(
+        restaurantId: item.restaurantId,
+        transactionId: txnId,
+        screenshotPath: _screenshotPath.isNotEmpty ? _screenshotPath : null,
+      );
+      if (!success) {
+        allSuccess = false;
+        break;
+      }
+    }
+
+    setState(() => _isSubmitting = false);
+
+    if (allSuccess) {
+      _onPaymentConfirmed(txnId, data);
+    }
+  }
 }
 
-// ── Initials Avatar ───────────────────────────────────────────────────────────
-const _avatarPalettes = [
-  [Color(0xFF6366F1), Color(0xFF4F46E5)],
-  [Color(0xFF0EA5E9), Color(0xFF0284C7)],
-  [Color(0xFF10B981), Color(0xFF059669)],
-  [Color(0xFFF59E0B), Color(0xFFD97706)],
-  [Color(0xFFEC4899), Color(0xFFDB2777)],
-];
+// ── Bottom Pay Bar ────────────────────────────────────────────────────────────
+class _BottomPayBar extends StatelessWidget {
+  final double total;
+  final List<PaymentDetailModel> data;
 
-List<Color> _avatarColors(String name) =>
-    _avatarPalettes[name.codeUnitAt(0) % _avatarPalettes.length];
+  const _BottomPayBar({required this.total, required this.data});
 
-String _initials(String name) {
-  final parts = name.trim().split(' ');
-  if (parts.length >= 2) return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-  return name.substring(0, name.length.clamp(0, 2)).toUpperCase();
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+          16, 12, 16, 12 + MediaQuery.of(context).padding.bottom),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: Color(0xFFE5E7EB), width: 0.5)),
+      ),
+      child: Row(
+        children: [
+          // Total amount
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Total Amount',
+                style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+              ),
+              Text(
+                '₹${total.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF111111),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 16),
+          // Pay button
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: () => handlePay(data, context),
+              icon: const Icon(Icons.payment_rounded, size: 18),
+              label: const Text(
+                'Pay with UPI',
+                style:
+                TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.restaurantclr,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-// ── Payment Card ──────────────────────────────────────────────────────────────
+// ── Restaurant Payment Card (QR + actions only) ───────────────────────────────
 class _RestaurantPaymentCard extends StatelessWidget {
   final PaymentDetailModel item;
   const _RestaurantPaymentCard({required this.item});
@@ -807,7 +833,7 @@ class _RestaurantPaymentCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
+            // ── Header ──────────────────────────────────────────────────────
             Row(
               children: [
                 Container(
@@ -854,6 +880,24 @@ class _RestaurantPaymentCard extends StatelessWidget {
                     ),
                   ],
                 ),
+                const Spacer(),
+                // Amount chip
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD1FAE5),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '₹${item.totalPrice.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF059669),
+                    ),
+                  ),
+                ),
               ],
             ),
 
@@ -861,7 +905,7 @@ class _RestaurantPaymentCard extends StatelessWidget {
             const Divider(height: 1, color: Color(0xFFF1F2F4)),
             const SizedBox(height: 12),
 
-            // QR code
+            // ── QR Code ─────────────────────────────────────────────────────
             if (item.hasQrCode)
               Center(
                 child: Container(
@@ -876,14 +920,14 @@ class _RestaurantPaymentCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                     child: Image.network(
                       item.qrCodeUrl,
-                      height: 140,
-                      width: 140,
+                      height: 160,
+                      width: 160,
                       fit: BoxFit.contain,
                       loadingBuilder: (context, child, progress) {
                         if (progress == null) return child;
                         return SizedBox(
-                          height: 140,
-                          width: 140,
+                          height: 160,
+                          width: 160,
                           child: Center(
                             child: CircularProgressIndicator(
                               value: progress.expectedTotalBytes != null
@@ -897,8 +941,8 @@ class _RestaurantPaymentCard extends StatelessWidget {
                         );
                       },
                       errorBuilder: (_, __, ___) => const SizedBox(
-                        height: 140,
-                        width: 140,
+                        height: 160,
+                        width: 160,
                         child: Icon(Icons.qr_code_2_rounded,
                             size: 64, color: Color(0xFFD1D5DB)),
                       ),
@@ -922,8 +966,8 @@ class _RestaurantPaymentCard extends StatelessWidget {
                     SizedBox(width: 6),
                     Text(
                       'QR code not available',
-                      style:
-                      TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+                      style: TextStyle(
+                          fontSize: 11, color: Color(0xFF9CA3AF)),
                     ),
                   ],
                 ),
@@ -931,7 +975,7 @@ class _RestaurantPaymentCard extends StatelessWidget {
 
             const SizedBox(height: 10),
 
-            // How to pay tip
+            // ── How to pay tip ───────────────────────────────────────────────
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -960,7 +1004,7 @@ class _RestaurantPaymentCard extends StatelessWidget {
                         ),
                         SizedBox(height: 4),
                         Text(
-                          '1. Save the QR and scan it in any UPI app  \n2. Or copy the UPI ID and paste it manually',
+                          '1. Tap "Pay with UPI" below → scan this QR\n2. Or copy the UPI ID and paste it manually\n3. Come back and confirm with transaction ID',
                           style: TextStyle(
                             fontSize: 11,
                             color: Color(0xFFB45309),
@@ -976,7 +1020,7 @@ class _RestaurantPaymentCard extends StatelessWidget {
 
             const SizedBox(height: 12),
 
-            // Actions row
+            // ── Action buttons ───────────────────────────────────────────────
             Row(
               children: [
                 if (item.hasQrCode)
@@ -1001,34 +1045,6 @@ class _RestaurantPaymentCard extends StatelessWidget {
                       onTap: () => _copyUpi(item.upiId.trim()),
                     ),
                   ),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-            const Divider(height: 1, color: Color(0xFFF1F2F4)),
-            const SizedBox(height: 12),
-
-            // Amount
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Amount due',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF9CA3AF),
-                    letterSpacing: 0.3,
-                  ),
-                ),
-                Text(
-                  '₹${item.totalPrice.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF111111),
-                    letterSpacing: -0.3,
-                  ),
-                ),
               ],
             ),
           ],

@@ -153,7 +153,7 @@ class MerchantAddAdvertisementPage extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         GestureDetector(
-          onTap: controller.pickBanner,
+          onTap: controller.pickBannerImage,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             width: double.infinity,

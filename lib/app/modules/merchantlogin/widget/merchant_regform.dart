@@ -60,6 +60,7 @@ class MerchantRegform extends StatelessWidget {
         size: 20,
       ),
       filled: true,
+      errorMaxLines: 3,
       fillColor: const Color(0xFFF8F9FA),
       contentPadding: const EdgeInsets.symmetric(
         horizontal: 20,

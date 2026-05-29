@@ -29,16 +29,17 @@ class FinalCartBinding extends Bindings {
 class RestaurantFinalCart extends StatelessWidget {
   RestaurantFinalCart({super.key});
 
-  final FinalCartController controller = _getController();
-
   static const _primary = Color(0xFF0F5151);
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Single controller instance — resolved once in build, passed to ALL children
+    final controller = _getController();
+
     return NetworkAwareWrapper(
       child: Scaffold(
         backgroundColor: const Color(0xFFF2F4F3),
-        appBar: _buildAppBar(),
+        appBar: _buildAppBar(controller),
         body: Obx(() {
           if (controller.isLoading.value) {
             return const Center(
@@ -55,14 +56,17 @@ class RestaurantFinalCart extends StatelessWidget {
             itemBuilder: (context, index) {
               final restaurant = controller.restaurants[index];
               return _RestaurantCard(
-                restaurant: restaurant,
+                // ✅ Pass controller + id — no snapshot models
+                controller: controller,
+                restaurantId: restaurant.restaurantId,
                 onRemoveRestaurant: () =>
-                    _confirmRemoveRestaurant(context, restaurant),
+                    _confirmRemoveRestaurant(context, restaurant, controller),
               );
             },
           );
         }),
 
+        // ✅ bottomNavigationBar — pass controller, reads reactively inside
         bottomNavigationBar: Obx(() {
           if (controller.isLoading.value || controller.isEmpty) {
             return const SizedBox(height: 0);
@@ -70,25 +74,19 @@ class RestaurantFinalCart extends StatelessWidget {
           if (controller.restaurants.length != 1) {
             return const SizedBox(height: 0);
           }
-          return _PlaceOrderBar(
-            grandTotal: controller.grandTotal,
-            restaurantCount: controller.restaurants.length,
-            totalBookings: controller.totalBookingCount,
-            totalItems: controller.totalItemCount,
-          );
+          return _PlaceOrderBar(controller: controller);
         }),
       ),
     );
   }
 
-  AppBar _buildAppBar() {
+  AppBar _buildAppBar(FinalCartController controller) {
     return AppBar(
-      automaticallyImplyLeading:false,
+      automaticallyImplyLeading: false,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back),
-        onPressed: () {
-          Get.offAll(() => RestaurantListPage()); // ← your LandingView
-        },),
+        onPressed: () => Get.offAll(() => RestaurantListPage()),
+      ),
       iconTheme: const IconThemeData(color: Colors.white),
       backgroundColor: _primary,
       foregroundColor: Colors.white,
@@ -108,8 +106,7 @@ class RestaurantFinalCart extends StatelessWidget {
           if (count == 0) return const SizedBox.shrink();
           return Container(
             margin: const EdgeInsets.only(right: 16),
-            padding:
-            const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.2),
               borderRadius: BorderRadius.circular(20),
@@ -128,25 +125,27 @@ class RestaurantFinalCart extends StatelessWidget {
   }
 
   void _confirmRemoveRestaurant(
-      BuildContext context, FinalCartRestaurantModel restaurant) {
+      BuildContext context,
+      FinalCartRestaurantModel restaurant,
+      FinalCartController controller) {
     DeleteConfirmDialog.show(
       context: context,
       title: 'Remove Restaurant?',
-      message:
-      'All bookings from "${restaurant.restaurantName}" will be removed.',
-      onConfirm: () =>
-          controller.removeRestaurant(restaurant.restaurantId),
+      message: 'All bookings from "${restaurant.restaurantName}" will be removed.',
+      onConfirm: () => controller.removeRestaurant(restaurant.restaurantId),
     );
   }
 }
 
 // ── RESTAURANT CARD ───────────────────────────────────────────────────────────
 class _RestaurantCard extends StatelessWidget {
-  final FinalCartRestaurantModel restaurant;
+  final FinalCartController controller; // ✅ passed in, not looked up
+  final int restaurantId;
   final VoidCallback onRemoveRestaurant;
 
   const _RestaurantCard({
-    required this.restaurant,
+    required this.controller,
+    required this.restaurantId,
     required this.onRemoveRestaurant,
   });
 
@@ -154,12 +153,14 @@ class _RestaurantCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ Safe lookup — never throws "not found"
-    final controller = _getController();
-
     return Obx(() {
-      final isDeleting =
-      controller.isDeletingRestaurant(restaurant.restaurantId);
+      // ✅ Fresh lookup by ID from the passed-in controller
+      final freshRestaurant = controller.restaurants
+          .firstWhereOrNull((r) => r.restaurantId == restaurantId);
+
+      if (freshRestaurant == null) return const SizedBox.shrink();
+
+      final isDeleting = controller.isDeletingRestaurant(restaurantId);
       final showCardButton = controller.restaurants.length > 1;
 
       return AnimatedOpacity(
@@ -182,7 +183,7 @@ class _RestaurantCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _RestaurantHeader(
-                restaurant: restaurant,
+                restaurant: freshRestaurant,
                 onRemove: onRemoveRestaurant,
                 isDeleting: isDeleting,
               ),
@@ -190,17 +191,18 @@ class _RestaurantCard extends StatelessWidget {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
-                itemCount: restaurant.bookings.length,
+                itemCount: freshRestaurant.bookings.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   return _BookingCard(
-                    booking: restaurant.bookings[index],
-                    restaurantId: restaurant.restaurantId,
+                    controller: controller, // ✅ same instance passed down
+                    bookingId: freshRestaurant.bookings[index].bookingId,
+                    restaurantId: restaurantId,
                   );
                 },
               ),
 
-              // ── Total + optional per-card button ──────────────────────
+              // ── Restaurant total + optional button ─────────────────
               Padding(
                 padding: const EdgeInsets.all(14),
                 child: Column(
@@ -216,14 +218,16 @@ class _RestaurantCard extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            '${restaurant.bookings.length} ${restaurant.bookings.length == 1 ? 'booking' : 'bookings'} · ${restaurant.totalItemCount} items',
+                            '${freshRestaurant.bookings.length} '
+                                '${freshRestaurant.bookings.length == 1 ? 'booking' : 'bookings'}'
+                                ' · ${freshRestaurant.totalItemCount} items',
                             style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
                                 color: Colors.grey.shade700),
                           ),
                           Text(
-                            '₹${FinalCartController.formatPrice(restaurant.restaurantTotal)}',
+                            '₹${FinalCartController.formatPrice(freshRestaurant.restaurantTotal)}',
                             style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
@@ -238,23 +242,16 @@ class _RestaurantCard extends StatelessWidget {
                         width: double.infinity,
                         child: ElevatedButton.icon(
                           onPressed: () {
-                            Get.toNamed(
-                              '/payment',
-                              arguments: [
-                                restaurant.restaurantId.toString()
-                              ],
-                            );
+                            Get.toNamed('/payment',
+                                arguments: [restaurantId.toString()]);
                           },
                           icon: const Icon(
-                              Icons.check_circle_outline_rounded,
-                              size: 18),
-                          label: const Text(
-                            'Confirm Booking',
-                            style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.2),
-                          ),
+                              Icons.check_circle_outline_rounded, size: 18),
+                          label: const Text('Confirm Booking',
+                              style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.2)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _primary,
                             foregroundColor: Colors.white,
@@ -367,118 +364,133 @@ class _RestaurantHeader extends StatelessWidget {
 
 // ── BOOKING CARD ──────────────────────────────────────────────────────────────
 class _BookingCard extends StatelessWidget {
-  final FinalCartBookingModel booking;
+  final FinalCartController controller; // ✅ passed in
+  final int? bookingId;
   final int restaurantId;
 
-  const _BookingCard({required this.booking, required this.restaurantId});
+  const _BookingCard({
+    required this.controller,
+    required this.bookingId,
+    required this.restaurantId,
+  });
 
-  // ✅ Safe lookup
-  FinalCartController get _controller => _getController();
   static const _primary = Color(0xFF0F5151);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFA),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE0EEEE), width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Booking Meta ───────────────────────────────────────────────
-          Container(
-            padding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: _primary.withOpacity(0.05),
-              borderRadius:
-              const BorderRadius.vertical(top: Radius.circular(16)),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _MetaRow(
-                          icon: Icons.calendar_today_rounded,
-                          text: _formatDate(booking.bookingDate)),
-                      const SizedBox(height: 2),
-                      _MetaRow(
-                          icon: Icons.access_time_rounded,
-                          text: booking.timeSlot),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                        color: _primary.withOpacity(0.3), width: 1),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.table_restaurant_rounded,
-                          size: 11, color: _primary),
-                      const SizedBox(width: 4),
-                      Text(booking.tableNo,
-                          style: const TextStyle(
-                              fontSize: 11,
-                              color: _primary,
-                              fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+    return Obx(() {
+      // ✅ Fresh lookup every rebuild
+      final freshRestaurant = controller.restaurants
+          .firstWhereOrNull((r) => r.restaurantId == restaurantId);
+      if (freshRestaurant == null) return const SizedBox.shrink();
 
-          // ── Items ──────────────────────────────────────────────────────
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(12),
-            itemCount: booking.items.length,
-            separatorBuilder: (_, __) => const Divider(
-                height: 16, thickness: 1, color: Color(0xFFEEF0F0)),
-            itemBuilder: (context, index) {
-              final item = booking.items[index];
-              return _ItemRow(
-                item: item,
-                restaurantId: restaurantId,
-                bookingId: booking.bookingId,
-              );
-            },
-          ),
+      final freshBooking = freshRestaurant.bookings
+          .firstWhereOrNull((b) => b.bookingId == bookingId);
+      if (freshBooking == null) return const SizedBox.shrink();
 
-          // ── Booking Total ──────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Text('Booking total: ',
-                    style: TextStyle(
-                        fontSize: 12, color: Colors.grey.shade500)),
-                Text(
-                  '₹${FinalCartController.formatPrice(booking.bookingTotal)}',
-                  style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: _primary),
-                ),
-              ],
+      return Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFA),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE0EEEE), width: 1),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Booking Meta ─────────────────────────────────────────
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: _primary.withOpacity(0.05),
+                borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(16)),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _MetaRow(
+                            icon: Icons.calendar_today_rounded,
+                            text: _formatDate(freshBooking.bookingDate)),
+                        const SizedBox(height: 2),
+                        _MetaRow(
+                            icon: Icons.access_time_rounded,
+                            text: freshBooking.timeSlot),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                          color: _primary.withOpacity(0.3), width: 1),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.table_restaurant_rounded,
+                            size: 11, color: _primary),
+                        const SizedBox(width: 4),
+                        Text(freshBooking.tableNo,
+                            style: const TextStyle(
+                                fontSize: 11,
+                                color: _primary,
+                                fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
-    );
+
+            // ── Items ────────────────────────────────────────────────
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(12),
+              itemCount: freshBooking.items.length,
+              separatorBuilder: (_, __) => const Divider(
+                  height: 16, thickness: 1, color: Color(0xFFEEF0F0)),
+              itemBuilder: (context, index) {
+                final item = freshBooking.items[index];
+                return _ItemRow(
+                  controller: controller, // ✅ same instance passed down
+                  cartId: item.cartId,
+                  restaurantId: restaurantId,
+                  bookingId: freshBooking.bookingId,
+                  itemName: item.itemName,
+                );
+              },
+            ),
+
+            // ── Booking Total — fresh from freshBooking inside Obx ───
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text('Booking total: ',
+                      style:
+                      TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                  Text(
+                    '₹${FinalCartController.formatPrice(freshBooking.bookingTotal)}',
+                    style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: _primary),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    });
   }
 
   String _formatDate(String dateStr) {
@@ -493,30 +505,45 @@ class _BookingCard extends StatelessWidget {
 
 // ── ITEM ROW ──────────────────────────────────────────────────────────────────
 class _ItemRow extends StatelessWidget {
-  final FinalCartItemModel item;
+  final FinalCartController controller; // ✅ passed in
+  final String cartId;
   final int restaurantId;
-  final int bookingId;
+  final int? bookingId;
+  final String itemName;
 
   const _ItemRow({
-    required this.item,
+    required this.controller,
+    required this.cartId,
     required this.restaurantId,
     required this.bookingId,
+    required this.itemName,
   });
 
-  // ✅ Safe lookup
-  FinalCartController get _controller => _getController();
   static const _primary = Color(0xFF0F5151);
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final isItemDeleting = _controller.isDeletingItem(item.cartId);
+      // ✅ Fresh lookup every rebuild using the passed-in controller
+      final restaurant = controller.restaurants
+          .firstWhereOrNull((r) => r.restaurantId == restaurantId);
+      if (restaurant == null) return const SizedBox.shrink();
+
+      final freshBooking = restaurant.bookings
+          .firstWhereOrNull((b) => b.bookingId == bookingId);
+      if (freshBooking == null) return const SizedBox.shrink();
+
+      final freshItem =
+      freshBooking.items.firstWhereOrNull((i) => i.cartId == cartId);
+      if (freshItem == null) return const SizedBox.shrink();
+
+      final isItemDeleting = controller.isDeletingItem(freshItem.cartId);
       final isQtyUpdating =
-      _controller.isAnyQuantityUpdating(item.cartId);
+      controller.isAnyQuantityUpdating(freshItem.cartId);
       final isDecreasing =
-      _controller.isUpdatingQuantity(item.cartId, 'decrease');
+      controller.isUpdatingQuantity(freshItem.cartId, 'decrease');
       final isIncreasing =
-      _controller.isUpdatingQuantity(item.cartId, 'increase');
+      controller.isUpdatingQuantity(freshItem.cartId, 'increase');
       final isBusy = isItemDeleting || isQtyUpdating;
 
       return AnimatedOpacity(
@@ -525,14 +552,14 @@ class _ItemRow extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Top Row: Image + Name + Delete ──────────────────────────
+            // ── Top Row ─────────────────────────────────────────────
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: Image.network(
-                    item.itemImage,
+                    freshItem.itemImage,
                     width: 58,
                     height: 58,
                     fit: BoxFit.cover,
@@ -554,17 +581,18 @@ class _ItemRow extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item.itemName,
+                        freshItem.itemName,
                         style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '₹${FinalCartController.formatPrice(item.price)} / item',
+                        '₹${FinalCartController.formatPrice(freshItem.price)} / item',
                         style: TextStyle(
                             fontSize: 11, color: Colors.grey.shade500),
                       ),
@@ -573,8 +601,9 @@ class _ItemRow extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 GestureDetector(
-                  onTap:
-                  isBusy ? null : () => _confirmRemoveItem(context),
+                  onTap: isBusy
+                      ? null
+                      : () => _confirmRemoveItem(context),
                   child: Container(
                     width: 32,
                     height: 32,
@@ -587,18 +616,15 @@ class _ItemRow extends StatelessWidget {
                     alignment: Alignment.center,
                     child: isItemDeleting
                         ? const SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.red),
-                    )
-                        : Icon(
-                      Icons.delete_outline_rounded,
-                      size: 17,
-                      color: isBusy
-                          ? Colors.red.withOpacity(0.3)
-                          : Colors.red,
-                    ),
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.red))
+                        : Icon(Icons.delete_outline_rounded,
+                        size: 17,
+                        color: isBusy
+                            ? Colors.red.withOpacity(0.3)
+                            : Colors.red),
                   ),
                 ),
               ],
@@ -606,10 +632,11 @@ class _ItemRow extends StatelessWidget {
 
             const SizedBox(height: 10),
 
-            // ── Bottom Row: Stepper + Total ──────────────────────────────
+            // ── Bottom Row ───────────────────────────────────────────
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                // Stepper
                 Container(
                   decoration: BoxDecoration(
                     color: _primary.withOpacity(0.05),
@@ -624,30 +651,28 @@ class _ItemRow extends StatelessWidget {
                         icon: Icons.remove_rounded,
                         iconColor: _primary,
                         isLoading: isDecreasing,
-                        onTap: isBusy || item.quantity <= 1
+                        onTap: isBusy || freshItem.quantity <= 1
                             ? null
-                            : () => _controller.updateQuantity(
+                            : () => controller.updateQuantity(
                           restaurantId: restaurantId,
                           bookingId: bookingId,
-                          cartId: item.cartId,
+                          cartId: freshItem.cartId,
                           action: 'decrease',
                         ),
                       ),
                       Container(
-                        constraints:
-                        const BoxConstraints(minWidth: 36),
+                        constraints: const BoxConstraints(minWidth: 36),
                         alignment: Alignment.center,
                         padding:
                         const EdgeInsets.symmetric(horizontal: 2),
                         child: isQtyUpdating
                             ? const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: _primary),
-                        )
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: _primary))
                             : Text(
-                          '${item.quantity}',
+                          '${freshItem.quantity}',
                           style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
@@ -660,18 +685,20 @@ class _ItemRow extends StatelessWidget {
                         isLoading: isIncreasing,
                         onTap: isBusy
                             ? null
-                            : () => _controller.updateQuantity(
+                            : () => controller.updateQuantity(
                           restaurantId: restaurantId,
                           bookingId: bookingId,
-                          cartId: item.cartId,
+                          cartId: freshItem.cartId,
                           action: 'increase',
                         ),
                       ),
                     ],
                   ),
                 ),
+
+                // ✅ Total price — always fresh from freshItem inside Obx
                 Text(
-                  '₹${FinalCartController.formatPrice(item.totalPrice)}',
+                  '₹${FinalCartController.formatPrice(freshItem.totalPrice)}',
                   style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
@@ -689,11 +716,11 @@ class _ItemRow extends StatelessWidget {
     DeleteConfirmDialog.show(
       context: context,
       title: 'Remove Item?',
-      message: '"${item.itemName}" will be removed from your cart.',
-      onConfirm: () => _controller.removeCartItem(
+      message: '"$itemName" will be removed from your cart.',
+      onConfirm: () => controller.removeCartItem(
         restaurantId: restaurantId,
         bookingId: bookingId,
-        cartId: item.cartId,
+        cartId: cartId,
       ),
     );
   }
@@ -723,13 +750,10 @@ class _StepperButton extends StatelessWidget {
         alignment: Alignment.center,
         child: isLoading
             ? SizedBox(
-          width: 13,
-          height: 13,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: iconColor,
-          ),
-        )
+            width: 13,
+            height: 13,
+            child: CircularProgressIndicator(
+                strokeWidth: 2, color: iconColor))
             : Icon(icon,
             size: 16,
             color: onTap == null ? Colors.grey : iconColor),
@@ -765,18 +789,11 @@ class _MetaRow extends StatelessWidget {
 }
 
 // ── PLACE ORDER BAR ───────────────────────────────────────────────────────────
+// ✅ Receives controller, reads ALL values inside its own Obx — fully reactive
 class _PlaceOrderBar extends StatelessWidget {
-  final double grandTotal;
-  final int restaurantCount;
-  final int totalBookings;
-  final int totalItems;
+  final FinalCartController controller;
 
-  const _PlaceOrderBar({
-    required this.grandTotal,
-    required this.restaurantCount,
-    required this.totalBookings,
-    required this.totalItems,
-  });
+  const _PlaceOrderBar({required this.controller});
 
   static const _primary = Color(0xFF0F5151);
 
@@ -786,8 +803,7 @@ class _PlaceOrderBar extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius:
-        const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.08),
@@ -798,78 +814,88 @@ class _PlaceOrderBar extends StatelessWidget {
       ),
       child: SafeArea(
         top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Grand Total',
-                        style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade500,
-                            fontWeight: FontWeight.w500)),
-                    const SizedBox(height: 2),
-                    Text(
-                      '₹${FinalCartController.formatPrice(grandTotal)}',
-                      style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: _primary),
-                    ),
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      '$restaurantCount ${restaurantCount == 1 ? 'restaurant' : 'restaurants'} · $totalBookings ${totalBookings == 1 ? 'booking' : 'bookings'}',
-                      style: TextStyle(
-                          fontSize: 11, color: Colors.grey.shade500),
-                    ),
-                    const SizedBox(height: 2),
-                    Text('$totalItems items • incl. GST',
+        // ✅ Obx is HERE inside the widget — reads live values every time
+        child: Obx(() {
+          final grandTotal = controller.grandTotal;
+          final restaurantCount = controller.restaurants.length;
+          final totalBookings = controller.totalBookingCount;
+          final totalItems = controller.totalItemCount;
+
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Grand Total',
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade500,
+                              fontWeight: FontWeight.w500)),
+                      const SizedBox(height: 2),
+                      Text(
+                        '₹${FinalCartController.formatPrice(grandTotal)}',
                         style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: _primary)),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  final ctrl = _getController();
-                  final List<String> restaurantIds = ctrl.restaurants
-                      .map((r) => r.restaurantId.toString())
-                      .toList();
-                  Get.toNamed('/payment', arguments: restaurantIds);
-                },
-                icon: const Icon(Icons.check_circle_outline_rounded,
-                    size: 20),
-                label: const Text('Confirm Booking',
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.3)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18)),
-                  elevation: 0,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: _primary),
+                      ),
+                    ],
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        '$restaurantCount '
+                            '${restaurantCount == 1 ? 'restaurant' : 'restaurants'}'
+                            ' · $totalBookings '
+                            '${totalBookings == 1 ? 'booking' : 'bookings'}',
+                        style: TextStyle(
+                            fontSize: 11, color: Colors.grey.shade500),
+                      ),
+                      const SizedBox(height: 2),
+                      Text('$totalItems items • incl. GST',
+                          style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: _primary)),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    final List<String> restaurantIds = controller.restaurants
+                        .map((r) => r.restaurantId.toString())
+                        .toList();
+                    Get.toNamed('/payment', arguments: restaurantIds);
+                  },
+                  icon: const Icon(Icons.check_circle_outline_rounded,
+                      size: 20),
+                  label: const Text('Confirm Booking',
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.3)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18)),
+                    elevation: 0,
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
+            ],
+          );
+        }),
       ),
     );
   }
@@ -901,20 +927,19 @@ class _EmptyCartView extends StatelessWidget {
                   color: Colors.black87)),
           const SizedBox(height: 8),
           Text('Book a table at a restaurant to get started',
-              style:
-              TextStyle(fontSize: 14, color: Colors.grey.shade500)),
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade500)),
           const SizedBox(height: 32),
           ElevatedButton.icon(
-            onPressed: () => Get.back(),
+            onPressed: () => Get.offAll(RestaurantListPage()),
             icon: const Icon(Icons.arrow_back_rounded, size: 18),
             label: const Text('Browse Restaurants',
-                style: TextStyle(
-                    fontWeight: FontWeight.bold, fontSize: 15)),
+                style:
+                TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
             style: ElevatedButton.styleFrom(
               backgroundColor: _primary,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 28, vertical: 14),
+              padding:
+              const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14)),
               elevation: 0,

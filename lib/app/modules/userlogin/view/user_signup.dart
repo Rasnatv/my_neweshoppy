@@ -184,7 +184,6 @@ class _UserSignupState extends State<UserSignup> with TickerProviderStateMixin {
             TextFormField(
               controller: controller.addressController,
               style: DInputDecoration.inputTextStyle,
-              maxLines: 2,
               decoration: DInputDecoration.of("Address", Icons.location_on_outlined),
               validator: (v) => DValidator.validateEmptyText("Address", v),
             ),
@@ -213,7 +212,6 @@ class _UserSignupState extends State<UserSignup> with TickerProviderStateMixin {
 
             const SizedBox(height: 20),
 
-// Confirm Password
             Obx(
                   () => TextFormField(
                 controller: controller.confirmPasswordController,

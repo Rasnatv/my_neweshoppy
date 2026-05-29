@@ -13,6 +13,7 @@ import '../controller/district _controller.dart';
 import '../controller/homedatacontroller.dart';
 import '../controller/usercategory_controller.dart';
 import '../widget/categorygrid.dart';
+import '../widget/guestrole.dart';
 import '../widget/promotionbanner.dart';
 import '../view/selectlocationpage.dart';
 import '../view/user_eventsection.dart';
@@ -286,21 +287,43 @@ class _UserhomeState extends State<Userhome> with TickerProviderStateMixin {
       }
     });
   }
-
+  //
   Future<void> _initHomeData() async {
     final box = homeDataController.box;
-    final token = box.read('auth_token');
-    if (token == null) return;
+    final token = box.read<String?>('auth_token');
 
-    final state        = box.read('state_$token') ?? '';
-    final district     = box.read('district_$token') ?? '';
-    final mainLocation = box.read('main_location_$token') ?? '';
+    final storageKey = GuestService.isGuest
+        ? 'guest'
+        : (token != null ? token : null);
 
-    // state + district is enough to show events, banners AND categories
+    if (storageKey == null) return;
+
+    // ── Migrate guest location to token after login ──────────────────
+    if (!GuestService.isGuest && token != null) {
+      final tokenState    = box.read('state_$token') ?? '';
+      final tokenDistrict = box.read('district_$token') ?? '';
+
+      // If token has no location yet but guest had one, copy it over
+      if (tokenState.isEmpty && tokenDistrict.isEmpty) {
+        final guestState    = box.read('state_guest') ?? '';
+        final guestDistrict = box.read('district_guest') ?? '';
+        final guestMain     = box.read('main_location_guest') ?? '';
+
+        if (guestState.isNotEmpty && guestDistrict.isNotEmpty) {
+          box.write('state_$token',         guestState);
+          box.write('district_$token',      guestDistrict);
+          box.write('main_location_$token', guestMain);
+        }
+      }
+    }
+
+    final state        = box.read('state_$storageKey') ?? '';
+    final district     = box.read('district_$storageKey') ?? '';
+    final mainLocation = box.read('main_location_$storageKey') ?? '';
+
     final hasPartial = state.isNotEmpty && district.isNotEmpty;
 
     if (hasPartial) {
-      // Run both in parallel — mainLocation may be '' and that's fine
       await Future.wait([
         homeDataController.fetchHomeData(
           state: state,
@@ -314,12 +337,10 @@ class _UserhomeState extends State<Userhome> with TickerProviderStateMixin {
         ),
       ]);
     } else {
-      // Nothing selected — clear everything
       homeDataController.clearHomeData();
       categoryController.categories.clear();
     }
   }
-
   /// Called after returning from SelectLocationPage
   Future<void> _refreshAfterLocationChange() async {
     setState(() => _isLoading = true);
@@ -467,7 +488,7 @@ class _UserhomeState extends State<Userhome> with TickerProviderStateMixin {
         const SliverToBoxAdapter(child: SizedBox(height: 12)),
         UserOfferSection(),
 
-        const SliverToBoxAdapter(child: SizedBox(height: 50)),
+        const SliverToBoxAdapter(child: SizedBox(height: 150)),
       ],
     );
   }

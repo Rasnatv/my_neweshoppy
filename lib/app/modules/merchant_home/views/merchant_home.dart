@@ -4,7 +4,9 @@ import 'package:get/get.dart';
 
 import '../../../common/style/app_colors.dart';
 import '../../../core/utils/auth_service.dart';
+import '../../../widgets/delete_widget.dart';
 import '../../../widgets/networkconnection_checkpage.dart';
+import '../controller/merchant_deleteaccountcontroller.dart';
 import 'addproductpage.dart';
 import 'merchant_changepassword.dart';
 import 'merchant_gallerypage.dart';
@@ -73,7 +75,7 @@ class MerchantDashboardPage extends StatelessWidget {
                     delegate: SliverChildListDelegate([
                       _buildMenuCard(
                         icon: Icons.store_mall_directory_rounded,
-                        title: "Edit Shop",
+                        title: " MerchantProfile",
                         description: "Shop settings",
                         gradient: const LinearGradient(
                           colors: [Color(0xFF6366F1), Color(0xFF6366F1)],
@@ -153,8 +155,7 @@ class MerchantDashboardPage extends StatelessWidget {
               ],
             ),
 
-            // ---------------- FLOATING ADD BUTTON ----------------
-            floatingActionButton: _buildModernFAB(),
+
           ));
   }
 
@@ -209,6 +210,29 @@ class MerchantDashboardPage extends StatelessWidget {
                   ),
                   Row(
                     children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: IconButton(
+                          onPressed: () {
+                            final controller = Get.put(DeleteAccountController());
+                            DeleteConfirmDialog.show(
+                              context: Get.context!,
+                              title: 'Delete Account',
+                              message:
+                              'Are you sure you want to permanently delete your merchant account? This action cannot be undone.',
+                              onConfirm: controller.deleteAccount,
+                            );
+                          },
+                          icon: const Icon(
+                            Icons.delete_outline_rounded,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                      ),
                       const SizedBox(width: 8),
                       Container(
                         decoration: BoxDecoration(
@@ -223,7 +247,10 @@ class MerchantDashboardPage extends StatelessWidget {
                             size: 24,
                           ),
                         ),
+
                       ),
+
+
                     ],
                   ),
                 ],
@@ -346,57 +373,6 @@ class MerchantDashboardPage extends StatelessWidget {
                     fontSize: 12,
                     color: Colors.grey[600],
                     fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ---------------- MODERN FAB ----------------
-  Widget _buildModernFAB() {
-    return Container(
-      height: 60,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF11998E), Color(0xFF38EF7D)],
-        ),
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF11998E).withOpacity(0.4),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => Get.to(() => AddProductPage()),
-          //AddProductPage()),
-          borderRadius: BorderRadius.circular(30),
-          child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.add_circle_outline_rounded,
-                  color: Colors.white,
-                  size: 26,
-                ),
-                SizedBox(width: 12),
-                Text(
-                  "Add Product",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
                   ),
                 ),
               ],

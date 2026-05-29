@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../data/errors/api_error.dart';
@@ -43,6 +44,43 @@ class CreateOfferController extends GetxController {
   }
 
 
+  // Future<void> pickBanner() async {
+  //   try {
+  //     final XFile? xFile = await _picker.pickImage(
+  //       source: ImageSource.gallery,
+  //       imageQuality: 85,
+  //     );
+  //     if (xFile == null) return;
+  //
+  //     final file  = File(xFile.path);
+  //     final bytes = await file.readAsBytes();
+  //
+  //     // ── 2:1 ratio validation ───────────────────────────────
+  //     final decodedImage = await decodeImageFromList(bytes);
+  //     final width  = decodedImage.width;
+  //     final height = decodedImage.height;
+  //     final ratio  = width / height;
+  //
+  //     debugPrint(">>> Banner size: ${width}x${height}, ratio: $ratio");
+  //
+  //     if (ratio < 1.9 || ratio > 2.1) {
+  //       AppSnackbar.warning(
+  //         "Please upload a 2:1 ratio image (e.g. 1200×600, 800×400).\nYour image: ${width}×${height}",
+  //       );
+  //       return;
+  //     }
+  //
+  //     // ── Valid — store file & base64 ────────────────────────
+  //     final ext      = xFile.path.split('.').last.toLowerCase();
+  //     final mimeType = ext == 'png' ? 'image/png' : 'image/jpeg';
+  //
+  //     pickedBannerFile.value = file;
+  //     bannerBase64.value     = 'data:$mimeType;base64,${base64Encode(bytes)}';
+  //
+  //   } catch (e) {
+  //     AppSnackbar.error(ApiErrorHandler.handleException(e));
+  //   }
+  // }
   Future<void> pickBanner() async {
     try {
       final XFile? xFile = await _picker.pickImage(
@@ -51,28 +89,39 @@ class CreateOfferController extends GetxController {
       );
       if (xFile == null) return;
 
-      final file  = File(xFile.path);
-      final bytes = await file.readAsBytes();
+      // Step 1: Crop first — locked 2:1
+      final croppedFile = await ImageCropper().cropImage(
+        sourcePath: xFile.path,
+        aspectRatio: const CropAspectRatio(ratioX: 2, ratioY: 1),
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Crop Banner',
+            toolbarColor: Colors.black,
+            toolbarWidgetColor: Colors.white,
+            lockAspectRatio: true,
+          ),
+          IOSUiSettings(
+            title: 'Crop Banner',
+            aspectRatioLockEnabled: true,
+          ),
+        ],
+      );
+      if (croppedFile == null) return;
 
-      // ── 2:1 ratio validation ───────────────────────────────
-      final decodedImage = await decodeImageFromList(bytes);
-      final width  = decodedImage.width;
-      final height = decodedImage.height;
-      final ratio  = width / height;
-
-      debugPrint(">>> Banner size: ${width}x${height}, ratio: $ratio");
-
-      if (ratio < 1.9 || ratio > 2.1) {
-        AppSnackbar.warning(
-          "Please upload a 2:1 ratio image (e.g. 1200×600, 800×400).\nYour image: ${width}×${height}",
-        );
+      // Step 2: Size check after crop
+      final File file    = File(croppedFile.path);
+      final int fileSize = await file.length();
+      if (fileSize > 1024 * 1024) {
+        AppSnackbar.warning("Image must be less than 1 MB after cropping.");
         return;
       }
 
-      // ── Valid — store file & base64 ────────────────────────
-      final ext      = xFile.path.split('.').last.toLowerCase();
+      // Step 3: Read bytes + build base64
+      final bytes    = await file.readAsBytes();
+      final ext      = croppedFile.path.split('.').last.toLowerCase();
       final mimeType = ext == 'png' ? 'image/png' : 'image/jpeg';
 
+      // Step 4: Store — exact same variables as your old code
       pickedBannerFile.value = file;
       bannerBase64.value     = 'data:$mimeType;base64,${base64Encode(bytes)}';
 
@@ -80,7 +129,6 @@ class CreateOfferController extends GetxController {
       AppSnackbar.error(ApiErrorHandler.handleException(e));
     }
   }
-
   // ── Show picker options (camera + gallery) ─────────────────
   void showImagePickerOptions(BuildContext context) {
     showModalBottomSheet(

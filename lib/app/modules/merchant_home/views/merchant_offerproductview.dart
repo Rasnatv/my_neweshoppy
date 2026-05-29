@@ -39,26 +39,6 @@ class OfferProductScreen extends StatelessWidget {
             ),
           ),
           iconTheme: const IconThemeData(color: Colors.white),
-          actions: [
-            Obx(
-                  () => controller.isRefreshing.value
-                  ? const Padding(
-                padding: EdgeInsets.all(16),
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                ),
-              )
-                  : IconButton(
-                icon: const Icon(Icons.refresh, color: Colors.white),
-                onPressed: controller.fetchOfferProduct,
-              ),
-            ),
-          ],
         ),
         body: Obx(() {
           if (controller.isLoading.value) {

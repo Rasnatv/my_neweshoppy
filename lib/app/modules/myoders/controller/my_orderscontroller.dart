@@ -24,41 +24,98 @@ class MyOrdersController extends GetxController {
     fetchMyOrders();
   }
 
+  // Future<void> fetchMyOrders() async {
+  //   try {
+  //     isLoading.value = true;
+  //     hasError.value = false;
+  //     errorMessage.value = '';
+  //
+  //     final response = await http.get(
+  //       Uri.parse('https://eshoppy.co.in/api/my-orders'),
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Accept': 'application/json',
+  //         'Authorization': 'Bearer $_token',
+  //       },
+  //     );
+  //
+  //     if (response.statusCode == 200) {
+  //       final body = jsonDecode(response.body);
+  //       if (body['status'] == true) {
+  //         final List data = body['data'];
+  //         orders.value = data.map((e) => MyOrdersModel.fromJson(e)).toList();
+  //       } else {
+  //         hasError.value = true;
+  //         errorMessage.value = body['message'] ?? 'Failed to load orders';
+  //         AppSnackbar.warning(errorMessage.value);
+  //       }
+  //     } else {
+  //       final error = ApiErrorHandler.handleResponse(response);
+  //       hasError.value = true;
+  //       errorMessage.value = error;
+  //       AppSnackbar.error(error);
+  //     }
+  //   } catch (e) {
+  //     final error = ApiErrorHandler.handleException(e);
+  //     hasError.value = true;
+  //     errorMessage.value = error;
+  //     AppSnackbar.error(error);
+  //   } finally {
+  //     isLoading.value = false;
+  //   }
+  // }
   Future<void> fetchMyOrders() async {
     try {
       isLoading.value = true;
       hasError.value = false;
       errorMessage.value = '';
 
+      final token = _token;
+
+      final headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      };
+
+      // ✅ Add token only if available
+      if (token.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+
       final response = await http.get(
         Uri.parse('https://eshoppy.co.in/api/my-orders'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $_token',
-        },
+        headers: headers,
       );
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
+
         if (body['status'] == true) {
           final List data = body['data'];
-          orders.value = data.map((e) => MyOrdersModel.fromJson(e)).toList();
+
+          orders.value =
+              data.map((e) => MyOrdersModel.fromJson(e)).toList();
         } else {
           hasError.value = true;
-          errorMessage.value = body['message'] ?? 'Failed to load orders';
+          errorMessage.value =
+              body['message'] ?? 'Failed to load orders';
+
           AppSnackbar.warning(errorMessage.value);
         }
       } else {
         final error = ApiErrorHandler.handleResponse(response);
+
         hasError.value = true;
         errorMessage.value = error;
+
         AppSnackbar.error(error);
       }
     } catch (e) {
       final error = ApiErrorHandler.handleException(e);
+
       hasError.value = true;
       errorMessage.value = error;
+
       AppSnackbar.error(error);
     } finally {
       isLoading.value = false;

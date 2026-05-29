@@ -1,5 +1,5 @@
-
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -8,28 +8,44 @@ import 'package:http/http.dart' as http;
 import '../../../data/errors/api_error.dart';
 import '../../../data/models/restaurantmaincartmodel.dart';
 import '../../merchantlogin/widget/successwidget.dart';
+import '../../userhome/widget/guestrole.dart';
 
 class FinalCartController extends GetxController {
   static const int maxQty = 10;
 
-  // ── Storage ────────────────────────────────────────────────────────────────
-  final _box = GetStorage();
-  final RxInt cartItemCount = 0.obs;
+  // ─────────────────────────────────────────────────────────────
+  // STORAGE
+  // ─────────────────────────────────────────────────────────────
 
-  // ── Observable state ───────────────────────────────────────────────────────
+  final _box = GetStorage();
+
+  // ─────────────────────────────────────────────────────────────
+  // OBSERVABLES
+  // ─────────────────────────────────────────────────────────────
+
+  final RxInt cartItemCount = 0.obs;
   final RxList<FinalCartRestaurantModel> restaurants =
       <FinalCartRestaurantModel>[].obs;
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
 
-  // ── Deletion loading states ────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────
+  // DELETE LOADING STATES
+  // ─────────────────────────────────────────────────────────────
+
   final RxSet<int> deletingRestaurants = <int>{}.obs;
   final RxSet<String> deletingCartItems = <String>{}.obs;
 
-  // ── Quantity update loading states ─────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────
+  // QUANTITY UPDATE STATES
+  // ─────────────────────────────────────────────────────────────
+
   final RxSet<String> updatingQuantityItems = <String>{}.obs;
 
-  // ── Computed ───────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────
+  // COMPUTED VALUES
+  // ─────────────────────────────────────────────────────────────
+
   bool get isEmpty => restaurants.isEmpty;
 
   double get grandTotal =>
@@ -41,26 +57,66 @@ class FinalCartController extends GetxController {
   int get totalItemCount =>
       restaurants.fold(0, (sum, r) => sum + r.totalItemCount);
 
-  // ── Lifecycle ──────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────
+  // LIFECYCLE
+  // ─────────────────────────────────────────────────────────────
+
   @override
   void onInit() {
     super.onInit();
+
+    // ✅ Fix stale guest flag — token presence is the source of truth.
+    _fixStaleGuestFlag();
+
     fetchFinalCart();
   }
 
-  // ── Auth token helper ──────────────────────────────────────────────────────
-  String get _authToken => _box.read('auth_token') ?? '';
+  /// Clears stale `is_guest=true` that may remain from a previous guest
+  /// session when the user has since logged in and a token was saved.
+  void _fixStaleGuestFlag() {
+    final token = _authToken;
+    if (token.isNotEmpty && GuestService.isGuest) {
+      _box.remove('is_guest');
+      _box.write('is_logged_in', true);
+      debugPrint('🔧 Stale guest flag cleared — user has a valid token');
+    }
+  }
 
-  // ── API base ───────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────
+  // TOKEN
+  // ─────────────────────────────────────────────────────────────
+
+  String get _authToken => _box.read<String>('auth_token') ?? '';
+
+  // ─────────────────────────────────────────────────────────────
+  // API BASE
+  // ─────────────────────────────────────────────────────────────
+
   static const String _baseUrl = 'https://eshoppy.co.in/api';
 
-  Map<String, String> get _headers => {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-    'Authorization': 'Bearer $_authToken',
-  };
+  // ─────────────────────────────────────────────────────────────
+  // HEADERS
+  // ─────────────────────────────────────────────────────────────
 
-  // ── Fetch Final Cart ───────────────────────────────────────────────────────
+  Map<String, String> get _headers {
+    final token = _authToken;
+
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
+
+    if (token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    return headers;
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // FETCH FINAL CART
+  // ─────────────────────────────────────────────────────────────
+
   Future<void> fetchFinalCart() async {
     try {
       isLoading.value = true;
@@ -71,65 +127,78 @@ class FinalCartController extends GetxController {
         headers: _headers,
       );
 
+      debugPrint('📦 Cart status: ${response.statusCode}');
+      debugPrint('📦 Cart body: ${response.body}');
+
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = jsonDecode(response.body);
         final FinalCartResponseModel cartResponse =
         FinalCartResponseModel.fromJson(jsonData);
 
         if (cartResponse.status == 1) {
-          restaurants.assignAll(cartResponse.data);
+          // ✅ Full reassign — forces GetX to detect the change
+          restaurants.value = cartResponse.data;
+          debugPrint('✅ Restaurants loaded: ${restaurants.length}');
         } else {
-          final msg = cartResponse.message.isNotEmpty
-              ? cartResponse.message
-              : 'Failed to fetch cart.';
-          errorMessage.value = msg;
+          // Empty cart — not an error
+          restaurants.value = [];
+          debugPrint('ℹ️ Cart empty: ${cartResponse.message}');
         }
       } else {
         final msg = ApiErrorHandler.handleResponse(response);
-        errorMessage.value = msg;
-        AppSnackbar.error(msg);
+        if (msg.isNotEmpty) {
+          errorMessage.value = msg;
+          AppSnackbar.error(msg);
+        }
       }
     } catch (e) {
       final msg = ApiErrorHandler.handleException(e);
-      errorMessage.value = msg;
-      AppSnackbar.error(msg);
-      debugPrint('fetchFinalCart error: $e');
+      if (msg.isNotEmpty) {
+        errorMessage.value = msg;
+        AppSnackbar.error(msg);
+      }
+      debugPrint('❌ fetchFinalCart error: $e');
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Alias so other pages can call fetchCart() without knowing the internal name.
+  /// Alias
   Future<void> fetchCart() => fetchFinalCart();
 
-  // ── Update Quantity ────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────
+  // UPDATE QUANTITY
+  // ─────────────────────────────────────────────────────────────
+
   Future<void> updateQuantity({
     required int restaurantId,
-    required int bookingId,
+    required int? bookingId,
     required String cartId,
     required String action,
   }) async {
+    // ── Local guard: max qty check ──────────────────────────────
     final rIndex =
     restaurants.indexWhere((r) => r.restaurantId == restaurantId);
-    if (rIndex == -1) return;
-
-    final bIndex = restaurants[rIndex]
-        .bookings
-        .indexWhere((b) => b.bookingId == bookingId);
-    if (bIndex == -1) return;
-
-    final iIndex = restaurants[rIndex]
-        .bookings[bIndex]
-        .items
-        .indexWhere((i) => i.cartId == cartId);
-    if (iIndex == -1) return;
-
-    final currentItem = restaurants[rIndex].bookings[bIndex].items[iIndex];
-
-    if (action == 'increase' && currentItem.quantity >= maxQty) {
-      AppSnackbar.warning(
-          'Limit Reached. Maximum $maxQty items can be purchased at a time.');
-      return;
+    if (rIndex != -1) {
+      final bIndex = restaurants[rIndex]
+          .bookings
+          .indexWhere((b) => b.bookingId == bookingId);
+      if (bIndex != -1) {
+        final iIndex = restaurants[rIndex]
+            .bookings[bIndex]
+            .items
+            .indexWhere((i) => i.cartId == cartId);
+        if (iIndex != -1) {
+          final currentQty =
+              restaurants[rIndex].bookings[bIndex].items[iIndex].quantity;
+          if (action == 'increase' && currentQty >= maxQty) {
+            AppSnackbar.warning(
+              'Limit Reached. Maximum $maxQty items can be purchased at a time.',
+            );
+            return;
+          }
+        }
+      }
     }
 
     final key = '${cartId}_$action';
@@ -145,105 +214,37 @@ class FinalCartController extends GetxController {
         }),
       );
 
+      debugPrint('🔄 Update qty status: ${response.statusCode}');
+      debugPrint('🔄 Update qty body: ${response.body}');
+
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
 
         if (jsonData['status'] == 1) {
-          final data = jsonData['data'] as Map<String, dynamic>;
-          final newQuantity = (data['quantity'] as num).toInt();
-          final newTotalPrice = (data['total_price'] as num).toDouble();
-          final newPrice = (data['price'] as num).toDouble();
-
-          if (newQuantity <= 0) {
-            _removeItemLocally(
-              restaurantId: restaurantId,
-              bookingId: bookingId,
-              cartId: cartId,
-            );
-          } else {
-            _updateItemLocally(
-              restaurantId: restaurantId,
-              bookingId: bookingId,
-              cartId: cartId,
-              newQuantity: newQuantity,
-              newTotalPrice: newTotalPrice,
-              newPrice: newPrice,
-            );
-          }
+          // ✅ Re-fetch from server — always in sync
+          await fetchFinalCart();
         } else {
           final msg =
               jsonData['message'] ?? 'Could not update quantity. Try again.';
           AppSnackbar.error(msg);
         }
       } else {
-        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
+        final msg = ApiErrorHandler.handleResponse(response);
+        if (msg.isNotEmpty) AppSnackbar.error(msg);
       }
     } catch (e) {
-      AppSnackbar.error(ApiErrorHandler.handleException(e));
+      final msg = ApiErrorHandler.handleException(e);
+      if (msg.isNotEmpty) AppSnackbar.error(msg);
+      debugPrint('❌ updateQuantity error: $e');
     } finally {
       updatingQuantityItems.remove(key);
     }
   }
 
-  // ── Internal: update item locally ─────────────────────────────────────────
-  void _updateItemLocally({
-    required int restaurantId,
-    required int bookingId,
-    required String cartId,
-    required int newQuantity,
-    required double newTotalPrice,
-    required double newPrice,
-  }) {
-    final rIndex =
-    restaurants.indexWhere((r) => r.restaurantId == restaurantId);
-    if (rIndex == -1) return;
+  // ─────────────────────────────────────────────────────────────
+  // REMOVE RESTAURANT
+  // ─────────────────────────────────────────────────────────────
 
-    final restaurant = restaurants[rIndex];
-    final bIndex =
-    restaurant.bookings.indexWhere((b) => b.bookingId == bookingId);
-    if (bIndex == -1) return;
-
-    final booking = restaurant.bookings[bIndex];
-    final iIndex = booking.items.indexWhere((i) => i.cartId == cartId);
-    if (iIndex == -1) return;
-
-    final oldItem = booking.items[iIndex];
-    final updatedItem = FinalCartItemModel(
-      cartId: oldItem.cartId,
-      itemName: oldItem.itemName,
-      itemImage: oldItem.itemImage,
-      price: newPrice,
-      quantity: newQuantity,
-      totalPrice: newTotalPrice,
-    );
-
-    final updatedItems = List<FinalCartItemModel>.from(booking.items);
-    updatedItems[iIndex] = updatedItem;
-
-    final updatedBooking = FinalCartBookingModel(
-      bookingId: booking.bookingId,
-      bookingDate: booking.bookingDate,
-      timeSlot: booking.timeSlot,
-      tableNo: booking.tableNo,
-      items: updatedItems,
-      bookingTotal: updatedItems.fold(0.0, (s, i) => s + i.totalPrice),
-    );
-
-    final updatedBookings =
-    List<FinalCartBookingModel>.from(restaurant.bookings);
-    updatedBookings[bIndex] = updatedBooking;
-
-    restaurants[rIndex] = FinalCartRestaurantModel(
-      restaurantId: restaurant.restaurantId,
-      restaurantName: restaurant.restaurantName,
-      restaurantLocation: restaurant.restaurantLocation,
-      bookings: updatedBookings,
-    );
-
-    restaurants.refresh();
-  }
-
-  // ── Delete Entire Restaurant ───────────────────────────────────────────────
   Future<void> removeRestaurant(int restaurantId) async {
     deletingRestaurants.add(restaurantId);
 
@@ -254,26 +255,38 @@ class FinalCartController extends GetxController {
         body: jsonEncode({'restaurant_id': restaurantId}),
       );
 
+      debugPrint('🗑️ Delete restaurant status: ${response.statusCode}');
+      debugPrint('🗑️ Delete restaurant body: ${response.body}');
+
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
         if (jsonData['status'] == 1) {
-          restaurants.removeWhere((r) => r.restaurantId == restaurantId);
-          restaurants.refresh();
+          // ✅ Re-fetch — cart UI refreshes automatically
+          await fetchFinalCart();
+        } else {
+          final msg = jsonData['message'] ?? 'Could not remove restaurant.';
+          AppSnackbar.error(msg);
         }
       } else {
-        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
+        final msg = ApiErrorHandler.handleResponse(response);
+        if (msg.isNotEmpty) AppSnackbar.error(msg);
       }
     } catch (e) {
-      AppSnackbar.error(ApiErrorHandler.handleException(e));
+      final msg = ApiErrorHandler.handleException(e);
+      if (msg.isNotEmpty) AppSnackbar.error(msg);
+      debugPrint('❌ removeRestaurant error: $e');
     } finally {
       deletingRestaurants.remove(restaurantId);
     }
   }
 
-  // ── Delete Single Cart Item ────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────
+  // REMOVE CART ITEM
+  // ─────────────────────────────────────────────────────────────
+
   Future<void> removeCartItem({
     required int restaurantId,
-    required int bookingId,
+    required int? bookingId,
     required String cartId,
   }) async {
     deletingCartItems.add(cartId);
@@ -285,78 +298,39 @@ class FinalCartController extends GetxController {
         body: jsonEncode({'cart_id': int.tryParse(cartId) ?? cartId}),
       );
 
+      debugPrint('🗑️ Delete item status: ${response.statusCode}');
+      debugPrint('🗑️ Delete item body: ${response.body}');
+
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
         if (jsonData['status'] == 1) {
-          _removeItemLocally(
-            restaurantId: restaurantId,
-            bookingId: bookingId,
-            cartId: cartId,
-          );
+
+          await fetchFinalCart();
+        } else {
+          final msg = jsonData['message'] ?? 'Could not remove item.';
+          AppSnackbar.error(msg);
         }
       } else {
-        AppSnackbar.error(ApiErrorHandler.handleResponse(response));
+        final msg = ApiErrorHandler.handleResponse(response);
+        if (msg.isNotEmpty) AppSnackbar.error(msg);
       }
     } catch (e) {
-      AppSnackbar.error(ApiErrorHandler.handleException(e));
-      debugPrint('removeCartItem error: $e');
+      final msg = ApiErrorHandler.handleException(e);
+      if (msg.isNotEmpty) AppSnackbar.error(msg);
+      debugPrint('❌ removeCartItem error: $e');
     } finally {
       deletingCartItems.remove(cartId);
     }
   }
 
-  // ── Internal: remove item locally ─────────────────────────────────────────
-  void _removeItemLocally({
-    required int restaurantId,
-    required int bookingId,
-    required String cartId,
-  }) {
-    final rIndex =
-    restaurants.indexWhere((r) => r.restaurantId == restaurantId);
-    if (rIndex == -1) return;
+  // ─────────────────────────────────────────────────────────────
+  // REMOVE BOOKING
+  // Deletes all items in a booking one by one.
+  // Each removeCartItem call already re-fetches, so the UI
+  // stays in sync after every item removal.
+  // ─────────────────────────────────────────────────────────────
 
-    final restaurant = restaurants[rIndex];
-    final bIndex =
-    restaurant.bookings.indexWhere((b) => b.bookingId == bookingId);
-    if (bIndex == -1) return;
-
-    final booking = restaurant.bookings[bIndex];
-    final updatedItems =
-    booking.items.where((i) => i.cartId != cartId).toList();
-
-    final updatedBooking = FinalCartBookingModel(
-      bookingId: booking.bookingId,
-      bookingDate: booking.bookingDate,
-      timeSlot: booking.timeSlot,
-      tableNo: booking.tableNo,
-      items: updatedItems,
-      bookingTotal: updatedItems.fold(0.0, (s, i) => s + i.totalPrice),
-    );
-
-    final updatedBookings =
-    List<FinalCartBookingModel>.from(restaurant.bookings);
-    if (updatedItems.isEmpty) {
-      updatedBookings.removeAt(bIndex);
-    } else {
-      updatedBookings[bIndex] = updatedBooking;
-    }
-
-    if (updatedBookings.isEmpty) {
-      restaurants.removeAt(rIndex);
-    } else {
-      restaurants[rIndex] = FinalCartRestaurantModel(
-        restaurantId: restaurant.restaurantId,
-        restaurantName: restaurant.restaurantName,
-        restaurantLocation: restaurant.restaurantLocation,
-        bookings: updatedBookings,
-      );
-    }
-
-    restaurants.refresh();
-  }
-
-  // ── Remove Booking (all items in a booking) ────────────────────────────────
-  Future<void> removeBooking(int restaurantId, int bookingId) async {
+  Future<void> removeBooking(int restaurantId, int? bookingId) async {
     final rIndex =
     restaurants.indexWhere((r) => r.restaurantId == restaurantId);
     if (rIndex == -1) return;
@@ -366,20 +340,28 @@ class FinalCartController extends GetxController {
         .firstWhereOrNull((b) => b.bookingId == bookingId);
     if (booking == null) return;
 
-    for (final item in booking.items) {
+    // Copy item list before iterating — list mutates after each re-fetch
+    final itemIds = booking.items.map((i) => i.cartId).toList();
+
+    for (final cartId in itemIds) {
       await removeCartItem(
         restaurantId: restaurantId,
         bookingId: bookingId,
-        cartId: item.cartId,
+        cartId: cartId,
       );
     }
   }
 
-  // ── Format price helper ────────────────────────────────────────────────────
-  static String formatPrice(double price) =>
-      price % 1 == 0 ? price.toInt().toString() : price.toStringAsFixed(2);
+  // ─────────────────────────────────────────────────────────────
+  // HELPERS
+  // ─────────────────────────────────────────────────────────────
 
-  // ── UI helpers ─────────────────────────────────────────────────────────────
+  static String formatPrice(double price) {
+    return price % 1 == 0
+        ? price.toInt().toString()
+        : price.toStringAsFixed(2);
+  }
+
   bool isDeletingRestaurant(int restaurantId) =>
       deletingRestaurants.contains(restaurantId);
 
@@ -391,4 +373,7 @@ class FinalCartController extends GetxController {
   bool isAnyQuantityUpdating(String cartId) =>
       updatingQuantityItems.contains('${cartId}_increase') ||
           updatingQuantityItems.contains('${cartId}_decrease');
+
+  bool get isGuestUser => GuestService.isGuest;
+  bool get isLoggedInUser => GuestService.isLoggedIn;
 }

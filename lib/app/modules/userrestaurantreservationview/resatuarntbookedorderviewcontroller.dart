@@ -1,5 +1,7 @@
 
 import 'dart:convert';
+
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
@@ -41,7 +43,8 @@ class BookingOrder {
       foodName: json['food_name'] as String,
       price: double.tryParse(json['price'].toString()) ?? 0.0,
       quantity: json['quantity'] as int,
-      totalPrice: double.tryParse(json['total_price'].toString()) ?? 0.0,
+      totalPrice:
+      double.tryParse(json['total_price'].toString()) ?? 0.0,
       image: json['image'] as String,
       mealType: json['meal_type'] as String,
       tableNo: json['table_no'] as String,
@@ -52,8 +55,8 @@ class BookingOrder {
 
 class BookingTimeSlot {
   final String timeSlot;
-  final int guests;       // moved up from order level
-  final double total;     // slot-level total (replaces time_total)
+  final int guests;
+  final double total;
   final List<BookingOrder> orders;
 
   BookingTimeSlot({
@@ -69,7 +72,11 @@ class BookingTimeSlot {
       guests: json['guests'] as int,
       total: double.tryParse(json['total'].toString()) ?? 0.0,
       orders: (json['orders'] as List)
-          .map((o) => BookingOrder.fromJson(o as Map<String, dynamic>))
+          .map(
+            (o) => BookingOrder.fromJson(
+          o as Map<String, dynamic>,
+        ),
+      )
           .toList(),
     );
   }
@@ -91,7 +98,11 @@ class BookingDate {
     return BookingDate(
       bookingDate: json['booking_date'] as String,
       timeSlots: (json['time_slots'] as List)
-          .map((t) => BookingTimeSlot.fromJson(t as Map<String, dynamic>))
+          .map(
+            (t) => BookingTimeSlot.fromJson(
+          t as Map<String, dynamic>,
+        ),
+      )
           .toList(),
     );
   }
@@ -112,16 +123,27 @@ class BookingRestaurant {
       dates.fold(0.0, (s, d) => s + d.dateTotal);
 
   int get totalOrders => dates.fold(
-      0,
-          (s, d) =>
-      s + d.timeSlots.fold(0, (s2, t) => s2 + t.orders.length));
+    0,
+        (s, d) => s +
+        d.timeSlots.fold(
+          0,
+              (s2, t) => s2 + t.orders.length,
+        ),
+  );
 
-  factory BookingRestaurant.fromJson(Map<String, dynamic> json) {
+  factory BookingRestaurant.fromJson(
+      Map<String, dynamic> json,
+      ) {
     return BookingRestaurant(
       restaurantId: json['restaurant_id'] as int,
-      restaurantName: json['restaurant_name'] as String,
+      restaurantName:
+      json['restaurant_name'] as String,
       dates: (json['dates'] as List)
-          .map((d) => BookingDate.fromJson(d as Map<String, dynamic>))
+          .map(
+            (d) => BookingDate.fromJson(
+          d as Map<String, dynamic>,
+        ),
+      )
           .toList(),
     );
   }
@@ -132,13 +154,18 @@ class BookingRestaurant {
 class BookingController extends GetxController {
   final _box = GetStorage();
 
-  final RxList<BookingRestaurant> restaurants = <BookingRestaurant>[].obs;
+  final RxList<BookingRestaurant> restaurants =
+      <BookingRestaurant>[].obs;
+
   final RxBool isLoading = false.obs;
 
   bool get isEmpty => restaurants.isEmpty;
 
   double get grandTotal =>
-      restaurants.fold(0.0, (s, r) => s + r.restaurantTotal);
+      restaurants.fold(
+        0.0,
+            (s, r) => s + r.restaurantTotal,
+      );
 
   @override
   void onInit() {
@@ -150,37 +177,84 @@ class BookingController extends GetxController {
     isLoading.value = true;
 
     try {
-      final token = _box.read<String>('auth_token') ?? '';
+      final token =
+          _box.read<String>('auth_token') ?? '';
+
+      // ✅ Guest user check
+      if (token.isEmpty) {
+        restaurants.clear();
+
+        WidgetsBinding.instance
+            .addPostFrameCallback((_) {
+
+        });
+
+        return;
+      }
+
+      final headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      };
+
+      // ✅ Optional Authorization
+      if (token.isNotEmpty) {
+        headers['Authorization'] =
+        'Bearer $token';
+      }
 
       final response = await http.get(
-        Uri.parse('https://eshoppy.co.in/api/user/orders'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          if (token.isNotEmpty) 'Authorization': 'Bearer $token',
-        },
+        Uri.parse(
+          'https://eshoppy.co.in/api/user/orders',
+        ),
+        headers: headers,
       );
 
       if (response.statusCode == 200) {
-        final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+        final decoded =
+        jsonDecode(response.body)
+        as Map<String, dynamic>;
 
         if (decoded['status'] == 1) {
-          final List<dynamic> data = decoded['data'] as List;
+          final List<dynamic> data =
+          decoded['data'] as List;
+
           restaurants.assignAll(
-            data.map((r) =>
-                BookingRestaurant.fromJson(r as Map<String, dynamic>)),
+            data.map(
+                  (r) => BookingRestaurant.fromJson(
+                r as Map<String, dynamic>,
+              ),
+            ),
           );
         } else {
-          final msg = decoded['message']?.toString() ?? '';
-          AppSnackbar.error(msg);
+          final msg =
+              decoded['message']?.toString() ??
+                  'Something went wrong';
+
+          WidgetsBinding.instance
+              .addPostFrameCallback((_) {
+            AppSnackbar.error(msg);
+          });
         }
       } else {
-        final msg = ApiErrorHandler.handleResponse(response);
-        AppSnackbar.error(msg);
+        final msg =
+        ApiErrorHandler.handleResponse(
+          response,
+        );
+
+        WidgetsBinding.instance
+            .addPostFrameCallback((_) {
+          AppSnackbar.error(msg);
+        });
       }
     } catch (e) {
-      final msg = ApiErrorHandler.handleException(e);
-      AppSnackbar.error(msg);
+      final msg =
+      ApiErrorHandler.handleException(e);
+
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) {
+        AppSnackbar.error(msg);
+      });
     } finally {
       isLoading.value = false;
     }
