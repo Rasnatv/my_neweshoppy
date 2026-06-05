@@ -20,6 +20,7 @@ class CreateOfferPage extends StatelessWidget {
         elevation: 0,
         backgroundColor: AppColors.kPrimary,
         foregroundColor: Colors.white,
+        centerTitle: false,
         title: const Text(
           'Create New Offer',
           style: TextStyle(

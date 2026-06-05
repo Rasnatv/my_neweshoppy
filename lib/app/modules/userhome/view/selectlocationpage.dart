@@ -22,6 +22,7 @@ class SelectLocationPage extends StatelessWidget {
           backgroundColor: AppColors.kPrimary,
           automaticallyImplyLeading: true,
           iconTheme: const IconThemeData(color: Colors.white),
+          centerTitle: false,
           title: const Text(
             'Select Location',
             style: TextStyle(

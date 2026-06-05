@@ -23,6 +23,7 @@ class WishlistScreen extends StatelessWidget {
         appBar: AppBar(
           backgroundColor: AppColors.kPrimary,
           iconTheme: const IconThemeData(color: Colors.white),
+          centerTitle: false,
           title: const Text(
             "Wishlist",
             style: TextStyle(

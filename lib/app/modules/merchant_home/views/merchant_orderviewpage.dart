@@ -20,6 +20,7 @@ class MerchantOrdersView extends StatelessWidget {
           backgroundColor: AppColors.kPrimary,
           automaticallyImplyLeading: true,
           iconTheme: const IconThemeData(color: Colors.white),
+          centerTitle: false,
           title: const Text(
             'Received Orders',
             style: TextStyle(

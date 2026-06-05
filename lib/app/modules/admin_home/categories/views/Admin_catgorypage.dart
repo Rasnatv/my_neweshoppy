@@ -22,6 +22,7 @@ class AddCategoryPage extends StatelessWidget {
       appBar: AppBar(
         iconTheme: IconThemeData(color:Colors.white),
         elevation: 0,
+        centerTitle: false,
         title: Text(
           "Add Category",
           style: TextStyle(

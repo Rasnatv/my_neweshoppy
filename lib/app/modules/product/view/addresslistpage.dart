@@ -72,6 +72,7 @@ class AddressListPage extends StatelessWidget {
       shadowColor: Colors.black12,
       automaticallyImplyLeading: true,
       iconTheme: IconThemeData(color: Colors.white),
+      centerTitle: false,
       title: const Text(
         'Select Address',
         style: TextStyle(

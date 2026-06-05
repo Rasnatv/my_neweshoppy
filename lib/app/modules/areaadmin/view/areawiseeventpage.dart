@@ -24,6 +24,7 @@ class AreaAdminAddEventPage extends StatelessWidget {
       appBar: AppBar(
         automaticallyImplyLeading: true,
         iconTheme: IconThemeData(color: Colors.white),
+        centerTitle: false,
         title: Text(
           "Create Event",
             style: TextStyle(

@@ -30,6 +30,7 @@ class MerchantProductDetailPage extends StatelessWidget {
     return AppBar(
       automaticallyImplyLeading: true,
       iconTheme: const IconThemeData(color: Colors.white),
+      centerTitle: false,
       title: const Text(
         'Edit Product',
         style: TextStyle(

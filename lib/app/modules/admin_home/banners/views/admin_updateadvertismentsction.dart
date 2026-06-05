@@ -54,6 +54,7 @@ class _AdminEditAdvertisementPageState
       surfaceTintColor: Colors.transparent,
       automaticallyImplyLeading: true,
       iconTheme: const IconThemeData(color: Colors.white),
+      centerTitle: false,
       title: const Text(
         "Edit Advertisement",
         style: TextStyle(

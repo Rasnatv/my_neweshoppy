@@ -24,6 +24,7 @@ class AdminAddEventPage extends StatelessWidget {
           onPressed: () => Get.back(result: true), // ✅ always return true on back
         ),
         iconTheme: IconThemeData(color: Colors.white),
+        centerTitle: false,
         title: Text(
           'Create Event',
           style: TextStyle(

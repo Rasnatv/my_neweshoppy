@@ -32,6 +32,7 @@ class ShopProductPage extends StatelessWidget {
             backgroundColor: AppColors.kPrimary,
             automaticallyImplyLeading: true,
             iconTheme: IconThemeData(color: Colors.white),
+            centerTitle: false,
             title: const Text(
               "Shop Products",
               style: TextStyle(

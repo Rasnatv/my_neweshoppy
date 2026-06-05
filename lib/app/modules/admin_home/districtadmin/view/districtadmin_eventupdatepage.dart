@@ -33,6 +33,7 @@ class DistrictAdminUpdateEventPage extends StatelessWidget {
           surfaceTintColor: Colors.transparent,
           automaticallyImplyLeading: true,
           iconTheme: const IconThemeData(color: Colors.white),
+          centerTitle: false,
           title: const Text(
             'Update Event',
             style: TextStyle(

@@ -19,6 +19,7 @@ class AllEventsPage extends StatelessWidget {
         automaticallyImplyLeading: true,
         iconTheme: IconThemeData(color:Colors.white),
         backgroundColor: AppColors.kPrimary,
+        centerTitle: false,
         title: const Text("All Events", style: TextStyle(
           color: Colors.white,
           fontSize: 17,

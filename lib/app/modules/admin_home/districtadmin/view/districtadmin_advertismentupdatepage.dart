@@ -36,6 +36,7 @@ class DistrictAdvertisementUpdatePage extends StatelessWidget{
       elevation: 0,
       iconTheme: IconThemeData(color: Colors.white),
       automaticallyImplyLeading: true,
+      centerTitle: false,
       title: const Text(
         'Update Advertisement',
         style: TextStyle(

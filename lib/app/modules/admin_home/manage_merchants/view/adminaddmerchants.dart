@@ -279,6 +279,7 @@ class AdminAddMerchantPage extends StatelessWidget {
       child: Scaffold(
         backgroundColor: const Color(0xFFF5F7FA),
         appBar: AppBar(
+          centerTitle: false,
           title: const Text(
             "Add New Merchant",
             style: TextStyle(

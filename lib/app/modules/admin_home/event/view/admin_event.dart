@@ -31,6 +31,7 @@ class AdminEventPage extends StatelessWidget {
       appBar: AppBar(
         iconTheme: IconThemeData(color: Colors.white),
         backgroundColor: AppColors.kPrimary,
+        centerTitle: false,
         title: Text("All Events", style: TextStyle(
           color: Colors.white,
           fontSize: 17,

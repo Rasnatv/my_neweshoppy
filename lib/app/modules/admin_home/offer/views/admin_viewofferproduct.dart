@@ -42,6 +42,7 @@ class AdminOfferProductScreen extends StatelessWidget {
       foregroundColor: Colors.white,
       automaticallyImplyLeading: true,
       iconTheme:IconThemeData(color:Colors.white),
+      centerTitle: false,
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

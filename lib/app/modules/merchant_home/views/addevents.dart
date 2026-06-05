@@ -33,6 +33,7 @@ class AddEventPage extends StatelessWidget {
             icon: const Icon(Icons.arrow_back, size: 18, color: Colors.white),
             onPressed: () => Get.back(),
           ),
+          centerTitle: false,
           title: const Text(
             "Add Event",
             style: TextStyle(

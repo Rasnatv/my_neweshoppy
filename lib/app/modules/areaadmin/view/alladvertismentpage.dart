@@ -22,6 +22,7 @@ class AreaAdminAllAdvertismentViewPage extends StatelessWidget {
       appBar: AppBar(
         iconTheme: IconThemeData(color: Colors.white),
         backgroundColor: AppColors.welcomecardclr,
+        centerTitle: false,
         title: const Text("All Advertisements",style: TextStyle(
           color: Colors.white,
           fontSize: 17,

@@ -39,6 +39,7 @@ class RestaurantBookingPage extends StatelessWidget {
         appBar: AppBar(
           iconTheme: const IconThemeData(color: Colors.white),
           elevation: 0,
+          centerTitle: false,
           title: const Text(
             'Book Your Table',
             style: TextStyle(

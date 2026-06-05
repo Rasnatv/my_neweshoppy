@@ -56,13 +56,16 @@ class _ManageProductsPageState extends State<ManageProductsPage> {
       automaticallyImplyLeading: true,
       iconTheme: const IconThemeData(color: Colors.white),
       titleSpacing: 0,
+      centerTitle: false,
       title: const Text(
         'Manage Products',
+
         style: TextStyle(
           color: Colors.white,
           fontSize: 17,
           fontWeight: FontWeight.w600,
           letterSpacing: 0.1,
+
         ),
       ),
       backgroundColor: AppColors.kPrimary,

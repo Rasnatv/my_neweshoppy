@@ -29,6 +29,7 @@ class OfferProductScreen extends StatelessWidget {
         appBar: AppBar(
           automaticallyImplyLeading: true,
           backgroundColor: AppColors.kPrimary,
+          centerTitle: false,
           title: const Text(
             "Offer Products",
             style: TextStyle(

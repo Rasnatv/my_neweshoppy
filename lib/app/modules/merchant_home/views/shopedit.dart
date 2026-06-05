@@ -38,6 +38,7 @@ class MerchantSettingPage extends StatelessWidget {
       onPressed: () => Get.back(result: true),
     ),
     iconTheme: const IconThemeData(color: Colors.white),
+    centerTitle: false,
     title: const Text(
       "Edit Profile",
       style: TextStyle(

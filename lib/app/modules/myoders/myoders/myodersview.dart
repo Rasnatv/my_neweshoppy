@@ -68,6 +68,7 @@ class MyOrdersView extends StatelessWidget {
         preferredSize: const Size.fromHeight(1),
         child: Container(height: 1, color: _divider),
       ),
+      centerTitle: false,
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

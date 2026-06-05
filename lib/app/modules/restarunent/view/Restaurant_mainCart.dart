@@ -4,7 +4,6 @@ import 'package:entenaadu/app/widgets/networkconnection_checkpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-
 import '../../../data/models/restaurantmaincartmodel.dart';
 import '../../../widgets/delete_widget.dart';
 import '../controller/restaurant_maincartcontroller.dart';
@@ -90,6 +89,7 @@ class RestaurantFinalCart extends StatelessWidget {
       backgroundColor: _primary,
       foregroundColor: Colors.white,
       elevation: 0,
+      centerTitle: false,
       title: const Text(
         'My Cart',
         style: TextStyle(

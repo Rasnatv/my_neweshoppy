@@ -28,6 +28,7 @@ class Districtadminhomepage extends StatelessWidget {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: AppColors.welcomecardclr,
+        centerTitle: false,
         title: const Text(
           "DistrictAdmin",
           style: TextStyle(

@@ -19,6 +19,7 @@ class AddProductPage extends StatelessWidget {
         elevation: 0,
         backgroundColor: AppColors.kPrimary,
         foregroundColor: Colors.white,
+        centerTitle: false,
         title: const Text(
           "Add New Product",
           style: TextStyle(

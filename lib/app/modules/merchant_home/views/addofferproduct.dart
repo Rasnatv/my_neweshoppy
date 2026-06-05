@@ -29,6 +29,7 @@ class AddOfferProductPage extends StatelessWidget {
           elevation: 0,
           backgroundColor: AppColors.kPrimary,
           foregroundColor: Colors.white,
+          centerTitle: false,
           title: Text(
             'Add Products · Offer #${controller.offerId}',
             style: const TextStyle(

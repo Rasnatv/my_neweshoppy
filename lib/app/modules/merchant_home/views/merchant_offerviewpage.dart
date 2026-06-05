@@ -51,6 +51,7 @@ class MerchantOfferViewPage extends StatelessWidget {
     elevation: 0,
     systemOverlayStyle: SystemUiOverlayStyle.light,
     foregroundColor: Colors.white,
+    centerTitle: false,
     title: const Text(
       'My Offers',
       style: TextStyle(

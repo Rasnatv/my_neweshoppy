@@ -32,6 +32,7 @@ class EditProfilePage extends StatelessWidget {
           elevation: 0,
           backgroundColor: AppColors.kPrimary,
           iconTheme: const IconThemeData(color: Colors.white),
+          centerTitle: false,
           title: const Text(
             'Edit Profile',
             style: TextStyle(

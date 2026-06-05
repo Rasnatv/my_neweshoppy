@@ -33,6 +33,7 @@ class AdminAddAdvertisementPage extends StatelessWidget {
               onPressed: () => Get.back(result: true),
             ),
             iconTheme: const IconThemeData(color: Colors.white),
+            centerTitle: false,
             title: const Text(
               "Create Advertisement",
               style: TextStyle(

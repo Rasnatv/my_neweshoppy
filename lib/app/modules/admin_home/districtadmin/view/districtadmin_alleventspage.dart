@@ -42,6 +42,7 @@ class DistrictAdminAllEventsPage extends StatelessWidget {
         elevation: 0,
         automaticallyImplyLeading: true,
         iconTheme: IconThemeData(color: Colors.white),
+        centerTitle: false,
         title: const Text(
           'All Events',
             style: TextStyle(

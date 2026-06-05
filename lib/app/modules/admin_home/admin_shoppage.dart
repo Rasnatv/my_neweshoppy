@@ -20,6 +20,7 @@ class AdminShopPage extends StatelessWidget {
       appBar: AppBar(
         iconTheme: IconThemeData(color: Colors.white),
         elevation: 0,
+        centerTitle: false,
         title: Text(
           "Registered Shops",style: TextStyle(
           color: Colors.white,

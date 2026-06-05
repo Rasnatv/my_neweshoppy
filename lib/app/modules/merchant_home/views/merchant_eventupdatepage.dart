@@ -39,6 +39,7 @@ class EventUpdatePage extends StatelessWidget {
       surfaceTintColor: Colors.transparent,
       // automaticallyImplyLeading: true,
       iconTheme: IconThemeData(color: Colors.white),
+      centerTitle: false,
       title: const Text(
         'Update Event',
         style: TextStyle(

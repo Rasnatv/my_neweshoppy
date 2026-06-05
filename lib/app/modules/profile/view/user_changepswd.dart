@@ -78,6 +78,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
           backgroundColor: AppColors.kPrimary,
           automaticallyImplyLeading: true,
           iconTheme: const IconThemeData(color: Colors.white),
+          centerTitle: false,
           title: const Text(
             'Change Password',
             style: TextStyle(

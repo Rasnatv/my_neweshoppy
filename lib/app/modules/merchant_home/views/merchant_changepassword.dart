@@ -22,6 +22,7 @@ class MerchantChangePasswordScreen extends StatelessWidget {
         iconTheme: const IconThemeData(
           color: Colors.white, // back arrow color
         ),
+        centerTitle: false,
         title: Text(
           "Change Password",  style: TextStyle(
           color: Colors.white,

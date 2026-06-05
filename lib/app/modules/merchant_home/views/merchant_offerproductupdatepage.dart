@@ -105,6 +105,7 @@ class _UpdateOfferProductPageState extends State<UpdateOfferProductPage> {
             automaticallyImplyLeading: true,
             iconTheme: const IconThemeData(color: Colors.white),
             backgroundColor: AppColors.kPrimary,
+            centerTitle: false,
             title: const Text(
               'Update Offer Product',
               style: TextStyle(

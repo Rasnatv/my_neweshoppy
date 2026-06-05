@@ -64,6 +64,7 @@ class MerchantEventsPage extends StatelessWidget {
           automaticallyImplyLeading: true,
           backgroundColor: AppColors.kPrimary,
           iconTheme: const IconThemeData(color: Colors.white),
+          centerTitle: false,
           title: const Text(
             "My Events",
             style: TextStyle(
