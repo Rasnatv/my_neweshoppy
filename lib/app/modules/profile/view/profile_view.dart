@@ -190,6 +190,7 @@ class ProfileView extends StatelessWidget {
         statusBarIconBrightness: Brightness.dark,
       ),
       titleSpacing: 20,
+      centerTitle: false,
       title: const Text(
         'My Profile',
         style: TextStyle(

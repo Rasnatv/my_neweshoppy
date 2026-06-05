@@ -28,6 +28,7 @@ class AdminMerchantDetailPage extends StatelessWidget {
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF1A1A1A),
         elevation: 0.5,
+        centerTitle: false,
         title: const Text(
           'Merchant Detail',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),

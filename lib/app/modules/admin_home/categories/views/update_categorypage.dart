@@ -32,6 +32,7 @@ class EditCategoryPage extends StatelessWidget {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         elevation: 0,
+        centerTitle: false,
         title: Text(
           "Edit Category",
           style: AppTextStyle.rTextNunitoWhite17w700,

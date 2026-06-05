@@ -22,6 +22,7 @@ class AreaAdminUpdateAdvertisementPage extends StatelessWidget {
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         iconTheme: IconThemeData(color: Colors.white),
+        centerTitle: false,
         title: Text(
           "Update Advertisement",
             style: TextStyle(

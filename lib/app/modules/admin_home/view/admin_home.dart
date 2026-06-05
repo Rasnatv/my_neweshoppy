@@ -29,6 +29,7 @@ class AdminDashboard extends StatelessWidget {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: AppColors.kPrimary,
+        centerTitle: false,
         title: Text(
           "Admin Dashboard",
           style: AppTextStyle.rTextNunitoWhite17w700,

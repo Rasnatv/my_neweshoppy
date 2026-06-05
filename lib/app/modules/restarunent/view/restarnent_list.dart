@@ -69,6 +69,7 @@ class RestaurantListPage extends StatelessWidget {
           surfaceTintColor: Colors.transparent,
           iconTheme: const IconThemeData(color: _P.textDark),
           titleSpacing: 0,
+          centerTitle: false,
           title: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(

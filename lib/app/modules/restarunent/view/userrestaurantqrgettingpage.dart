@@ -271,6 +271,7 @@ class _QRPaymentPageState extends State<QRPaymentPage> {
       appBar: AppBar(
         automaticallyImplyLeading: true,
         iconTheme: const IconThemeData(color: Colors.white),
+        centerTitle: false,
         title: const Text(
           'Payment',
           style: TextStyle(

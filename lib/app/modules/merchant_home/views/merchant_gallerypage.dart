@@ -23,6 +23,7 @@ class MerchantGalleryPage extends StatelessWidget {
         appBar: AppBar(
           backgroundColor: AppColors.kPrimary,
           iconTheme: const IconThemeData(color: Colors.white),
+          centerTitle: false,
           title: const Text(
             "Merchant Gallery",
             style: TextStyle(

@@ -28,6 +28,7 @@ class RestaurantCartPage extends StatelessWidget {
         elevation: 0,
         automaticallyImplyLeading: true,
         foregroundColor: Colors.white,
+        centerTitle: false,
         title: const Text(
           'Purchased items',
             style: TextStyle(

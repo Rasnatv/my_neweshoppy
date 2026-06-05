@@ -31,6 +31,7 @@ class AdminMerchantEditPage extends StatelessWidget {
           icon: const Icon(Icons.close),
           onPressed: () => Get.back(),
         ),
+        centerTitle: false,
         title: const Text(
           'Edit Merchant',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),

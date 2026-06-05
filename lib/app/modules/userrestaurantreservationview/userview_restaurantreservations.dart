@@ -82,6 +82,7 @@ class BookedOrdersPage extends StatelessWidget {
     elevation: 0,
     automaticallyImplyLeading: true,
     iconTheme: const IconThemeData(color: Colors.white),
+    centerTitle: false,
     title: const Text(
       'My Reservations',
       style: TextStyle(

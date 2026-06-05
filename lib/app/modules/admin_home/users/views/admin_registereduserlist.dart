@@ -17,6 +17,7 @@ class AdminUserListPage extends StatelessWidget {
         appBar: AppBar(
           automaticallyImplyLeading: true,
           iconTheme: const IconThemeData(color: Colors.white),
+          centerTitle: false,
           title: const Text(
             'Registered Users',
             style: TextStyle(

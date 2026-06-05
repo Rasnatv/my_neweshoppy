@@ -46,6 +46,7 @@ class AdminEventUpdatePage extends StatelessWidget {
           // ... rest of your appbar
 
       iconTheme: const IconThemeData(color: Colors.white),
+      centerTitle: false,
       title: const Text(
         'Update Event',
         style: TextStyle(

@@ -24,6 +24,7 @@ class AdminCategoryListPage extends StatelessWidget {
 
       appBar: AppBar(
         iconTheme: IconThemeData(color: Colors.white),
+        centerTitle: false,
         title: Text(
           "Categories",
           style: TextStyle(

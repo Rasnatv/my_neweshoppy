@@ -40,6 +40,7 @@ class AreaAdminhomepage extends StatelessWidget {
           elevation: 0,
           iconTheme: const IconThemeData(color: Colors.white),
           backgroundColor: AppColors.welcomecardclr,
+          centerTitle: false,
           title: const Text(
             "Area Admin",
             style: TextStyle(

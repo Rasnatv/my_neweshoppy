@@ -89,6 +89,7 @@ class RestaurantFinalCart extends StatelessWidget {
       backgroundColor: _primary,
       foregroundColor: Colors.white,
       elevation: 0,
+      centerTitle: false,
       title: const Text(
         'My Cart',
         style: TextStyle(

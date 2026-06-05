@@ -25,6 +25,8 @@ class DistrictAdminAddEventPage extends StatelessWidget {
         appBar: AppBar(
           iconTheme: const IconThemeData(color: Colors.white),
           automaticallyImplyLeading: true,
+          centerTitle: false,
+
           title: const Text(
             "Create District Event",
             style: TextStyle(

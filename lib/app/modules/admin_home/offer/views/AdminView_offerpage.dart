@@ -40,6 +40,7 @@ class OffersListingScreen extends StatelessWidget {
       elevation: 0,
       backgroundColor: AppColors.kPrimary,
      iconTheme: IconThemeData(color: Colors.white),
+      centerTitle: false,
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

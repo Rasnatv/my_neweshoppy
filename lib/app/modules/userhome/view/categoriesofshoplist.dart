@@ -22,6 +22,7 @@ class Categoriesofshoplist extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.kPrimary,
         iconTheme: IconThemeData(color: Colors.white),
+        centerTitle: false,
         title: Text(
           "Shops",
           style: TextStyle(

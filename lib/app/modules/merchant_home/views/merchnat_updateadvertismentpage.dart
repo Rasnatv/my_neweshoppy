@@ -47,6 +47,7 @@ class UpdateAdvertisementPage extends StatelessWidget {
         icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
         onPressed: () => Get.back(),
       ),
+        centerTitle: false,
       title: const Text(
         'Update Advertisement',
         style: TextStyle(

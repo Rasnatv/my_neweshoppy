@@ -86,6 +86,7 @@ class AdminAdvertisementPage extends StatelessWidget {
       elevation: 0,
       automaticallyImplyLeading: true,
       iconTheme: IconThemeData(color: Colors.white),
+      centerTitle: false,
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

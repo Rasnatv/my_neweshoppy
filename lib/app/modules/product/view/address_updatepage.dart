@@ -31,6 +31,7 @@ class EditAddressPage extends StatelessWidget {
         elevation: 0.5,
        automaticallyImplyLeading: true,
         iconTheme: IconThemeData(color: Colors.white),
+        centerTitle: false,
         title: const Text(
           'Edit Address',
           style: TextStyle(

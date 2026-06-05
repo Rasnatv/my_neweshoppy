@@ -18,6 +18,7 @@ class AreaAdminAddAdvertisementPage extends StatelessWidget {
     return NetworkAwareWrapper(child: Scaffold(
       appBar: AppBar(
         iconTheme: IconThemeData(color: Colors.white),
+        centerTitle: false,
         title: Text(
           "Add Advertisement",
             style: TextStyle(

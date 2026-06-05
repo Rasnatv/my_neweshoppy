@@ -22,6 +22,7 @@ class DistrictAdminAllAdvertisementsPage extends StatelessWidget {
         iconTheme: IconThemeData(color: Colors.white),
         backgroundColor: AppColors.welcomecardclr,
         elevation: 0,
+        centerTitle: false,
         title: const Text(
           'All Advertisements',
             style: TextStyle(

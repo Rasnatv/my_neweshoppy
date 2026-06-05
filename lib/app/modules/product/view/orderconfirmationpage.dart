@@ -28,6 +28,7 @@ class OrderConfirmationPage extends StatelessWidget {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Get.back(),
         ),
+        centerTitle: false,
         title: const Text(
           'Order Confirmation',
           style: TextStyle(

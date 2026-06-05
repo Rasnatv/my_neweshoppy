@@ -40,6 +40,7 @@ class MyAdvertisements extends StatelessWidget {
           backgroundColor: AppColors.kPrimary,
           automaticallyImplyLeading: true,
           iconTheme: IconThemeData(color: Colors.white),
+          centerTitle: false,
           title: Text(
             "My Advertisements",
             style: TextStyle(

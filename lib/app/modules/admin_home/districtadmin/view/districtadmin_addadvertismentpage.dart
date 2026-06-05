@@ -20,6 +20,7 @@ class DistrictAdminAddAdvertisementPage extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           iconTheme: IconThemeData(color: Colors.white),
+          centerTitle: false,
           title: Text(
             "Add Advertisement",
             style: TextStyle(

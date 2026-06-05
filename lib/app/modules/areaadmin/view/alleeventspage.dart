@@ -50,6 +50,7 @@ class AreaAdminAllEventsPage extends StatelessWidget {
         iconTheme: IconThemeData(color: Colors.white),
         backgroundColor: AppColors.welcomecardclr,
         elevation: 0,
+        centerTitle: false,
         title: const Text(
           'All Events',
             style: TextStyle(

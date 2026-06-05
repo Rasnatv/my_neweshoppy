@@ -43,6 +43,7 @@ class AdminProductDetailScreen extends StatelessWidget {
       elevation: 0,
      automaticallyImplyLeading: true,
       iconTheme: IconThemeData(color: Colors.white),
+      centerTitle: false,
       title: const Text(
         'Product Details',
         style: TextStyle(

@@ -20,6 +20,7 @@ class AdminAddLocationPage extends StatelessWidget {
           elevation: 0,
           backgroundColor: AppColors.kPrimary,
           iconTheme: const IconThemeData(color: Colors.white),
+          centerTitle: false,
           title: const Text(
             "Add Location",
             style: TextStyle(

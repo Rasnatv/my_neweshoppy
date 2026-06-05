@@ -18,6 +18,7 @@ class AllOffersPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.kPrimary,
         iconTheme: IconThemeData(color: Colors.white),
+        centerTitle: false,
         title: const Text("All Offers",style: TextStyle(
           color: Colors.white,
           fontSize: 17,
