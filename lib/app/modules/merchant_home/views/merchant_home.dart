@@ -75,7 +75,7 @@ class MerchantDashboardPage extends StatelessWidget {
                     delegate: SliverChildListDelegate([
                       _buildMenuCard(
                         icon: Icons.store_mall_directory_rounded,
-                        title: " MerchantProfile",
+                        title: " Profile",
                         description: "Shop settings",
                         gradient: const LinearGradient(
                           colors: [Color(0xFF6366F1), Color(0xFF6366F1)],
