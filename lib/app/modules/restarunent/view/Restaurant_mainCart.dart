@@ -9,7 +9,6 @@ import '../../../data/models/restaurantmaincartmodel.dart';
 import '../../../widgets/delete_widget.dart';
 import '../controller/restaurant_maincartcontroller.dart';
 
-// ── Helper: always returns a live FinalCartController ─────────────────────────
 FinalCartController _getController() {
   if (Get.isRegistered<FinalCartController>()) {
     return Get.find<FinalCartController>();
@@ -25,7 +24,7 @@ class FinalCartBinding extends Bindings {
   }
 }
 
-// ── Main Page ─────────────────────────────────────────────────────────────────
+
 class RestaurantFinalCart extends StatelessWidget {
   RestaurantFinalCart({super.key});
 

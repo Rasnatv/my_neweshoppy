@@ -860,15 +860,156 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
+// class _RestaurantBanner extends StatelessWidget {
+//   const _RestaurantBanner();
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return Padding(
+//       padding: const EdgeInsets.symmetric(horizontal: 20),
+//       child: Container(
+//         height: 165,
+//         decoration: BoxDecoration(
+//           borderRadius: BorderRadius.circular(24),
+//           boxShadow: [
+//             BoxShadow(
+//               color: Colors.black.withOpacity(0.12),
+//               blurRadius: 24,
+//               offset: const Offset(0, 10),
+//             ),
+//           ],
+//         ),
+//         child: ClipRRect(
+//           borderRadius: BorderRadius.circular(24),
+//           child: Stack(
+//             children: [
+//               Positioned.fill(
+//                 child: Image.asset(
+//                   "assets/images/logo/restaurantimag.png",
+//                   fit: BoxFit.cover,
+//                 ),
+//               ),
+//               Positioned.fill(
+//                 child: Container(
+//                   decoration: const BoxDecoration(
+//                     gradient: LinearGradient(
+//                       begin: Alignment.centerLeft,
+//                       end: Alignment.centerRight,
+//                       colors: [Color(0xCC000000), Colors.transparent],
+//                     ),
+//                   ),
+//                 ),
+//               ),
+//               Positioned(
+//                 left: 22,
+//                 top: 22,
+//                 bottom: 22,
+//                 child: Column(
+//                   crossAxisAlignment: CrossAxisAlignment.start,
+//                   mainAxisAlignment: MainAxisAlignment.center,
+//                   children: [
+//                     Container(
+//                       padding: const EdgeInsets.symmetric(
+//                           horizontal: 10, vertical: 4),
+//                       decoration: BoxDecoration(
+//                         color: kPurplePrimary,
+//                         borderRadius: BorderRadius.circular(6),
+//                       ),
+//                       child: const Text(
+//                         "NEW",
+//                         style: TextStyle(
+//                           color: Colors.white,
+//                           fontSize: 10,
+//                           fontWeight: FontWeight.w900,
+//                           letterSpacing: 1.2,
+//                         ),
+//                       ),
+//                     ),
+//                     const SizedBox(height: 10),
+//                     const Text(
+//                       "Restaurant\nBooking",
+//                       style: TextStyle(
+//                         color: Colors.white,
+//                         fontSize: 22,
+//                         fontWeight: FontWeight.w900,
+//                         height: 1.2,
+//                         letterSpacing: 0.3,
+//                       ),
+//                     ),
+//                     const SizedBox(height: 6),
+//                     Text(
+//                       "Find your perfect stay",
+//                       style: TextStyle(
+//                         color: Colors.white.withOpacity(0.85),
+//                         fontSize: 12,
+//                         fontWeight: FontWeight.w500,
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//               ),
+//               Positioned(
+//                 right: 16,
+//                 top: 0,
+//                 bottom: 0,
+//                 child: Center(
+//                   child: InkWell(
+//                     onTap: () => Get.to(() => RestaurantListPage()),
+//                     borderRadius: BorderRadius.circular(16),
+//                     child: Container(
+//                       padding: const EdgeInsets.symmetric(
+//                           horizontal: 18, vertical: 12),
+//                       decoration: BoxDecoration(
+//                         color: Colors.white,
+//                         borderRadius: BorderRadius.circular(16),
+//                         boxShadow: [
+//                           BoxShadow(
+//                             color: Colors.black.withOpacity(0.18),
+//                             blurRadius: 14,
+//                             offset: const Offset(0, 5),
+//                           ),
+//                         ],
+//                       ),
+//                       child: const Row(
+//                         mainAxisSize: MainAxisSize.min,
+//                         children: [
+//                           Text(
+//                             "Book Now",
+//                             style: TextStyle(
+//                               color: kPurplePrimary,
+//                               fontWeight: FontWeight.w800,
+//                               fontSize: 13,
+//                               letterSpacing: 0.3,
+//                             ),
+//                           ),
+//                           SizedBox(width: 6),
+//                           Icon(Icons.arrow_forward_rounded,
+//                               color: kPurplePrimary, size: 15),
+//                         ],
+//                       ),
+//                     ),
+//                   ),
+//                 ),
+//               ),
+//             ],
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
 class _RestaurantBanner extends StatelessWidget {
   const _RestaurantBanner();
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final bannerHeight = screenWidth * 0.38; // responsive height ~38% of width
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
-        height: 165,
+        height: bannerHeight, // ✅ responsive instead of fixed 165
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
@@ -882,28 +1023,43 @@ class _RestaurantBanner extends StatelessWidget {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(24),
           child: Stack(
+            fit: StackFit.expand, // ✅ forces all children to fill the stack
             children: [
-              Positioned.fill(
-                child: Image.asset(
-                  "assets/images/logo/restaurantimag.png",
-                  fit: BoxFit.cover,
-                ),
+              // ✅ ColorFiltered as fallback background if image fails
+              Container(color: Colors.grey.shade800),
+
+              Image.asset(
+                "assets/images/logo/restaurantimag.png",
+                fit: BoxFit.cover,       // ✅ covers full area
+                width: double.infinity,
+                height: double.infinity,
+                alignment: Alignment.center, // ✅ center crop
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: Colors.grey.shade700,
+                    child: const Icon(Icons.broken_image,
+                        color: Colors.white54, size: 48),
+                  );
+                },
               ),
-              Positioned.fill(
-                child: Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                      colors: [Color(0xCC000000), Colors.transparent],
-                    ),
+
+              // Gradient overlay
+              Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [Color(0xDD000000), Colors.transparent],
                   ),
                 ),
               ),
+
+              // Left text content
               Positioned(
                 left: 22,
-                top: 22,
-                bottom: 22,
+                top: 0,
+                bottom: 0,
+                right: 140, // ✅ prevent text from overlapping the button
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -948,6 +1104,8 @@ class _RestaurantBanner extends StatelessWidget {
                   ],
                 ),
               ),
+
+              // Right button
               Positioned(
                 right: 16,
                 top: 0,
